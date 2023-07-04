@@ -30,8 +30,7 @@ vendor:
 	$(GO) mod vendor
 .PHONY: vendor
 
-# build: cmd/ui/dist
-build:
+build: cmd/ui/dist
 	$(MAKE) -C cmd build
 .PHONY: build
 
@@ -40,7 +39,8 @@ build:
 cmd/ui/dist:
 	@echo "copy dist npm files into cmd/ui folder"
 	mkdir -p cmd/ui/dist
-	cp -r $(UI_FOLDER)ui/dist cmd/ui/
+# TODO: Uncomment when ui is added
+# cp -r $(UI_FOLDER)ui/dist cmd/ui/
 
 npm-build:
 	$(MAKE) -C ui/ build

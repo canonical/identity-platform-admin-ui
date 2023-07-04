@@ -1,0 +1,50 @@
+name: container publish
+run-name: Publish container from ${{ inputs.rock }} to ghcr.io/canonical/identity-platform-admin-ui
+
+on:
+  workflow_call:
+    inputs:
+      rock:
+        type: string
+        required: true
+        description: "rock path to download"
+    outputs:
+      image:
+        description: "container image"
+        value: ${{ jobs.publish.outputs.image }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.set.outputs.image }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.rock }}
+
+    - name: Install Skopeo
+      run: sudo snap install --devmode --channel edge skopeo
+
+    - name: Upload ROCK to ghcr.io with latest
+      id: latest
+      if: github.ref_type == 'branch'
+      run: |
+        sudo skopeo --insecure-policy copy oci-archive:$(realpath ./"${{ inputs.rock }}") docker://ghcr.io/canonical/identity-platform-admin-ui:"${{ github.sha }}" --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+        sudo skopeo --insecure-policy copy oci-archive:$(realpath ./"${{ inputs.rock }}") docker://ghcr.io/canonical/identity-platform-admin-ui:latest --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+        echo "image=ghcr.io/canonical/identity-platform-admin-ui:${{ github.sha }}" >> "$GITHUB_ENV"
+    - name: Upload ROCK to ghcr.io with stable
+      id: stable
+      if: github.ref_type == 'tag'
+      run: |
+        sudo skopeo --insecure-policy copy oci-archive:$(realpath ./"${{ inputs.rock }}") docker://ghcr.io/canonical/identity-platform-admin-ui:"${{ github.ref_name }}" --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+        sudo skopeo --insecure-policy copy oci-archive:$(realpath ./"${{ inputs.rock }}") docker://ghcr.io/canonical/identity-platform-admin-ui:stable --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+        echo "image=ghcr.io/canonical/identity-platform-admin-ui:${{ github.ref_name }}" >> "$GITHUB_ENV"
+    - name: Set output of image
+      id: set
+      run: echo "image=$image" >> "$GITHUB_OUTPUT"
+

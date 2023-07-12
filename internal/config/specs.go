@@ -9,4 +9,6 @@ type EnvSpec struct {
 	LogFile  string `envconfig:"log_file" default:"log.txt"`
 
 	Port int `envconfig:"port" default:"8080"`
+
+	HydraAdminURL string `envconfig:"hydra_admin_url"`
 }

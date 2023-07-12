@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
@@ -32,7 +33,9 @@ func main() {
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.JaegerEndpoint, logger))
 
-	router := web.NewRouter(tracer, monitor, logger)
+	hClient := ih.NewClient(specs.HydraAdminURL)
+
+	router := web.NewRouter(hClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

@@ -10,5 +10,5 @@ type EnvSpec struct {
 
 	Port int `envconfig:"port" default:"8080"`
 
-	HydraAdminURL string `envconfig:"hydra_admin_url"`
+	HydraAdminURL string `envconfig:"hydra_admin_url" required:"true"`
 }

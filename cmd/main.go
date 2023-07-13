@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"syscall"
 	"time"
@@ -29,11 +30,12 @@ func main() {
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
+	debug := strings.ToLower(specs.LogLevel) == "debug"
 
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.JaegerEndpoint, logger))
 
-	hClient := ih.NewClient(specs.HydraAdminURL)
+	hClient := ih.NewClient(specs.HydraAdminURL, debug)
 
 	router := web.NewRouter(hClient, tracer, monitor, logger)
 

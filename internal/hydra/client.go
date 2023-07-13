@@ -12,12 +12,12 @@ func (c *Client) OAuth2Api() client.OAuth2Api {
 	return c.c.OAuth2Api
 }
 
-func NewClient(url string) *Client {
+func NewClient(url string, debug bool) *Client {
 	c := new(Client)
 
 	configuration := client.NewConfiguration()
 
-	configuration.Debug = true
+	configuration.Debug = debug
 	configuration.Servers = []client.ServerConfiguration{
 		{
 			URL: url,

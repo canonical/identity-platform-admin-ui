@@ -26,24 +26,36 @@ type IdentityData struct {
 	Error      *kClient.GenericError
 }
 
+// TODO @shipperizer verify during integration test if this is actually the format
+type KratosError struct {
+	Error *kClient.GenericError `json:"error,omitempty"`
+}
+
 func (s *Service) buildListRequest(ctx context.Context, page, size int64, credID string) kClient.IdentityApiListIdentitiesRequest {
-	return s.kratos.ListIdentities(ctx).Page(page).PerPage(size).CredentialsIdentifier(credID)
+	r := s.kratos.ListIdentities(ctx).Page(page).PerPage(size)
+
+	if credID != "" {
+		r = r.CredentialsIdentifier(credID)
+	}
+
+	return r
 }
 
 func (s *Service) parseError(r *http.Response) *kClient.GenericError {
-	gerr := kClient.NewGenericErrorWithDefaults()
+	gerr := KratosError{Error: kClient.NewGenericErrorWithDefaults()}
 
 	defer r.Body.Close()
 	body, _ := io.ReadAll(r.Body)
 
-	if err := json.Unmarshal(body, gerr); err != nil {
-		gerr.SetMessage("unable to parse kratos error response")
-		gerr.SetCode(http.StatusInternalServerError)
+	if err := json.Unmarshal(body, &gerr); err != nil {
+		gerr.Error.SetMessage("unable to parse kratos error response")
+		gerr.Error.SetCode(http.StatusInternalServerError)
 	}
 
-	return gerr
+	return gerr.Error
 }
 
+// TODO @shipperizer fix pagination
 func (s *Service) ListIdentities(ctx context.Context, page, size int64, credID string) (*IdentityData, error) {
 	_, span := s.tracer.Start(ctx, "kratos.IdentityApi.ListIdentities")
 	defer span.End()
@@ -110,7 +122,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 		return data, err
 	}
 
-	identity, rr, err := s.kratos.CreateIdentityExecute(
+	id, rr, err := s.kratos.CreateIdentityExecute(
 		s.kratos.CreateIdentity(ctx).CreateIdentityBody(*bodyID),
 	)
 
@@ -121,8 +133,8 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 		data.Error = s.parseError(rr)
 	}
 
-	if identity != nil {
-		data.Identities = []kClient.Identity{*identity}
+	if id != nil {
+		data.Identities = []kClient.Identity{*id}
 	} else {
 		data.Identities = []kClient.Identity{}
 	}

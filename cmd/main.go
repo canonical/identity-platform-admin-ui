@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"syscall"
 	"time"
 
+	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
@@ -28,11 +30,14 @@ func main() {
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
+	debug := strings.ToLower(specs.LogLevel) == "debug"
 
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.JaegerEndpoint, logger))
 
-	router := web.NewRouter(tracer, monitor, logger)
+	hClient := ih.NewClient(specs.HydraAdminURL, debug)
+
+	router := web.NewRouter(hClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

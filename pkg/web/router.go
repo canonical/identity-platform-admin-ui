@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 
+	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -10,11 +11,12 @@ import (
 	middleware "github.com/go-chi/chi/v5/middleware"
 	trace "go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
+func NewRouter(hydraClient *ih.Client, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
 	router := chi.NewMux()
 
 	middlewares := make(chi.Middlewares, 0)
@@ -35,6 +37,10 @@ func NewRouter(tracer trace.Tracer, monitor monitoring.MonitorInterface, logger 
 
 	router.Use(middlewares...)
 
+	clients.NewAPI(
+		clients.NewService(hydraClient, tracer, monitor, logger),
+		logger,
+	).RegisterEndpoints(router)
 	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
 	metrics.NewAPI(logger).RegisterEndpoints(router)
 

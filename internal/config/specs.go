@@ -2,8 +2,12 @@ package config
 
 // EnvSpec is the basic environment configuration setup needed for the app to start
 type EnvSpec struct {
-	JaegerEndpoint string `envconfig:"jaeger_endpoint"`
-	TracingEnabled bool   `envconfig:"tracing_enabled" default:"true"`
+	OtelGRPCEndpoint string `envconfig:"otel_grpc_endpoint"`
+	OtelHTTPEndpoint string `envconfig:"otel_http_endpoint"`
+	TracingEnabled   bool   `envconfig:"tracing_enabled" default:"true"`
+
+	Debug     bool   `envconfig:"debug" default:"false"`
+	KratosURL string `envconfig:"kratos_url" required:"true"`
 
 	LogLevel string `envconfig:"log_level" default:"error"`
 	LogFile  string `envconfig:"log_file" default:"log.txt"`

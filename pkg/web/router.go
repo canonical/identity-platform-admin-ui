@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
+	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -12,11 +13,12 @@ import (
 	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
+	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(hydraClient *ih.Client, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
+func NewRouter(hydraClient *ih.Client, kratos *ik.Client, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
 	router := chi.NewMux()
 
 	middlewares := make(chi.Middlewares, 0)
@@ -37,12 +39,16 @@ func NewRouter(hydraClient *ih.Client, tracer trace.Tracer, monitor monitoring.M
 
 	router.Use(middlewares...)
 
+	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
+	metrics.NewAPI(logger).RegisterEndpoints(router)
+	identities.NewAPI(
+		identities.NewService(kratos.IdentityApi(), tracer, monitor, logger),
+		logger,
+	).RegisterEndpoints(router)
 	clients.NewAPI(
 		clients.NewService(hydraClient, tracer, monitor, logger),
 		logger,
 	).RegisterEndpoints(router)
-	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
-	metrics.NewAPI(logger).RegisterEndpoints(router)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

@@ -57,7 +57,7 @@ func (s *Service) parseError(r *http.Response) *kClient.GenericError {
 
 // TODO @shipperizer fix pagination
 func (s *Service) ListIdentities(ctx context.Context, page, size int64, credID string) (*IdentityData, error) {
-	_, span := s.tracer.Start(ctx, "kratos.IdentityApi.ListIdentities")
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.ListIdentities")
 	defer span.End()
 
 	identities, rr, err := s.kratos.ListIdentitiesExecute(
@@ -122,7 +122,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 		return data, err
 	}
 
-	id, rr, err := s.kratos.CreateIdentityExecute(
+	identity, rr, err := s.kratos.CreateIdentityExecute(
 		s.kratos.CreateIdentity(ctx).CreateIdentityBody(*bodyID),
 	)
 
@@ -133,8 +133,8 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 		data.Error = s.parseError(rr)
 	}
 
-	if id != nil {
-		data.Identities = []kClient.Identity{*id}
+	if identity != nil {
+		data.Identities = []kClient.Identity{*identity}
 	} else {
 		data.Identities = []kClient.Identity{}
 	}

@@ -32,7 +32,7 @@ func main() {
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
 
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
-	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.JaegerEndpoint, logger))
+	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
 	hClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
 	kClient := ik.NewClient(specs.KratosURL, specs.Debug)

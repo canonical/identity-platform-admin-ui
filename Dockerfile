@@ -1,0 +1,17 @@
+FROM golang:1.20 AS builder
+
+ARG SKAFFOLD_GO_GCFLAGS
+ARG TARGETOS
+ARG TARGETARCH
+
+ENV GO111MODULE=on
+ENV CGO_ENABLED=0
+ENV GOOS=$TARGETOS
+ENV GOARCH=$TARGETARCH
+
+RUN apt-get update
+RUN apt-get install -y build-essential git
+
+WORKDIR /var/app
+
+COPY . .

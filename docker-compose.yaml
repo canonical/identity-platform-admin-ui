@@ -1,0 +1,65 @@
+version: '3.7'
+services:
+  kratos-migrate:
+    image: oryd/kratos:v1.0.0
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true&mode=rwc
+    command: -c /etc/config/kratos/kratos.yml migrate sql -e --yes
+    restart: on-failure
+    volumes:
+      - ./kratos.yaml:/etc/config/kratos/kratos.yml    
+  kratos:
+    depends_on:
+      - kratos-migrate
+    image: oryd/kratos:v1.0.0
+    ports:
+      - '4433' # public
+      - '4434' # admin
+    restart: unless-stopped
+    environment:
+      - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      - LOG_LEVEL=trace
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    volumes:
+      - ./kratos.yaml:/etc/config/kratos/kratos.yml
+      # - ./microsoft-schema.jsonnet:/etc/config/kratos/microsoft_schema.jsonnet
+      - ./identity.schema.json:/etc/config/kratos/identity.schema.json
+  # TODO @shipperizer add hydra-migrate
+  # hydra:
+  #   image: oryd/hydra:v1.10.6
+  #   ports:
+  #     - "5004" # Public port
+  #     - "5001" # Admin port
+  #   command: serve all --dev
+  #   environment:
+  #     - URLS_SELF_ISSUER=http://127_0_0_1:5004/
+  #     - URLS_CONSENT=http://127_0_0_1:5002/consent
+  #     - URLS_LOGIN=http://127_0_0_1:5002/login
+  #     - URLS_LOGOUT=http://127_0_0_1:5002/logout
+  #     - DSN=memory
+  #     - SECRETS_SYSTEM=mysecret1234
+  #     - LOG_LEVEL=debug
+  #     - OAUTH2_EXPOSE_INTERNAL_ERRORS=1
+  #     - WEBFINGER_OIDC_DISCOVERY_USERINFO_URL=http://hydra:4444/userinfo
+  #     - OIDC_DYNAMIC_CLIENT_REGISTRATION_ENABLED=true
+  #   restart: unless-stopped
+  local:
+    # TODO @shipperizer find an automated way to run rockcraft before this 
+    image: ghcr.io/canonical/identity-platform-admin-ui:dev
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: builder
+    volumes:
+      - .:/var/app
+    environment:
+      - TRACING_ENABLED=true
+      - DEBUG=true
+      - KRATOS_URL=kratos:4434
+      - HYDRA_ADMIN_URL=hydra:5001
+    depends_on:
+      - kratos
+      # - hydra
+    ports:
+      - 8080
+

@@ -2,6 +2,7 @@ package identities
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,9 +13,15 @@ import (
 	"testing"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	"github.com/go-chi/chi/v5"
 	gomock "github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"github.com/kelseyhightower/envconfig"
+	"go.opentelemetry.io/otel/trace"
 
+	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	kClient "github.com/ory/kratos-client-go"
 )
 
@@ -708,5 +715,200 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 
 	if rr.Status != int(*gerr.Code) {
 		t.Errorf("expected code to be %v got %v", *gerr.Code, rr.Status)
+	}
+}
+
+func TestIntegrationHandleListSuccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode.")
+	}
+
+	type EnvSpec struct {
+		KratosURL     string `envconfig:"kratos_url" required:"true"`
+		HydraAdminURL string `envconfig:"hydra_admin_url" required:"true"`
+	}
+
+	specs := new(EnvSpec)
+
+	if err := envconfig.Process("", specs); err != nil {
+		t.Fatalf("issues with environment sourcing: %s", err)
+	}
+
+	logger := logging.NewLogger("debug", "log.txt")
+	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
+	kratos := ik.NewClient(specs.KratosURL, true)
+
+	service := NewService(kratos.IdentityApi(), trace.NewNoopTracerProvider().Tracer("identity-admin-ui"), monitor, logger)
+
+	identityIDs := make([]uuid.UUID, 0)
+	identities := make([]kClient.Identity, 0)
+
+	for i := 0; i < 10; i++ {
+		ID := uuid.New()
+		identityIDs = append(identityIDs, ID)
+
+		i := kClient.CreateIdentityBody{
+			Traits:      map[string]interface{}{"email": ID.String()},
+			Credentials: kClient.NewIdentityWithCredentials(),
+		}
+
+		identity, _, _ := kratos.IdentityApi().CreateIdentity(context.Background()).CreateIdentityBody(i).Execute()
+		identities = append(identities, *identity)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/identities", nil)
+	values := req.URL.Query()
+	values.Add("page", "1")
+	values.Add("size", "100")
+	req.URL.RawQuery = values.Encode()
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(service, logger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	IDs := make([]kClient.Identity, 0)
+
+	// types.Response.Data is an interface, this means that all needs to be cast step by step
+	for _, ii := range rr.Data.([]interface{}) {
+		identity := new(kClient.Identity)
+
+		i, ok := ii.(map[string]interface{})
+
+		if !ok {
+			t.Errorf("cannot cast to map[string]interface{}")
+		}
+
+		identity.Id = i["id"].(string)
+		identity.SchemaId = i["schema_id"].(string)
+		identity.SchemaUrl = i["schema_url"].(string)
+
+		traits := make(map[string]string, 0)
+
+		for k, v := range i["traits"].(map[string]interface{}) {
+			traits[k] = v.(string)
+		}
+
+		identity.Traits = traits
+
+		IDs = append(IDs, *identity)
+	}
+
+	if len(IDs) != 10 {
+		t.Fatalf("invalid result, expected 10 identities got: %v", IDs)
+	}
+
+	if !reflect.DeepEqual(IDs, identities) {
+		t.Fatalf("invalid result, expected: %v, got: %v", identities, IDs)
+	}
+}
+
+func TestIntegrationHandleGetSuccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode.")
+	}
+
+	type EnvSpec struct {
+		KratosURL     string `envconfig:"kratos_url" required:"true"`
+		HydraAdminURL string `envconfig:"hydra_admin_url" required:"true"`
+	}
+
+	specs := new(EnvSpec)
+
+	if err := envconfig.Process("", specs); err != nil {
+		t.Fatalf("issues with environment sourcing: %s", err)
+	}
+
+	logger := logging.NewLogger("debug", "log.txt")
+	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
+	kratos := ik.NewClient(specs.KratosURL, true)
+
+	service := NewService(kratos.IdentityApi(), trace.NewNoopTracerProvider().Tracer("identity-admin-ui"), monitor, logger)
+
+	ID := uuid.New()
+
+	i := kClient.CreateIdentityBody{
+		Traits:      map[string]interface{}{"email": ID.String()},
+		Credentials: kClient.NewIdentityWithCredentials(),
+	}
+
+	identity, _, _ := kratos.IdentityApi().CreateIdentity(context.Background()).CreateIdentityBody(i).Execute()
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/identities/%s", identity.Id), nil)
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(service, logger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	IDs := make([]kClient.Identity, 0)
+
+	// types.Response.Data is an interface, this means that all needs to be cast step by step
+	for _, ii := range rr.Data.([]interface{}) {
+		identity := new(kClient.Identity)
+
+		i, ok := ii.(map[string]interface{})
+
+		if !ok {
+			t.Errorf("cannot cast to map[string]interface{}")
+		}
+
+		identity.Id = i["id"].(string)
+		identity.SchemaId = i["schema_id"].(string)
+		identity.SchemaUrl = i["schema_url"].(string)
+
+		traits := make(map[string]string, 0)
+
+		for k, v := range i["traits"].(map[string]interface{}) {
+			traits[k] = v.(string)
+		}
+
+		identity.Traits = traits
+
+		IDs = append(IDs, *identity)
+	}
+
+	if len(IDs) != 1 {
+		t.Fatalf("invalid result, expected 1 identity got: %v", IDs)
+	}
+
+	if !reflect.DeepEqual(IDs[0], identity) {
+		t.Fatalf("invalid result, expected: %v, got: %v", identity, IDs[0])
 	}
 }

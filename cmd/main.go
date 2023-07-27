@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 
 	"syscall"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
+	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -30,14 +30,14 @@ func main() {
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
-	debug := strings.ToLower(specs.LogLevel) == "debug"
 
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
-	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.JaegerEndpoint, logger))
+	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
-	hClient := ih.NewClient(specs.HydraAdminURL, debug)
+	hClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
+	kClient := ik.NewClient(specs.KratosURL, specs.Debug)
 
-	router := web.NewRouter(hClient, tracer, monitor, logger)
+	router := web.NewRouter(hClient, kClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

@@ -15,4 +15,7 @@ type EnvSpec struct {
 
 	KratosURL     string `envconfig:"kratos_url" required:"true"`
 	HydraAdminURL string `envconfig:"hydra_admin_url" required:"true"`
+
+	ConfigMapName      string `envconfig:"configmap_name" required:"true"`
+	ConfigMapNamespace string `envconfig:"configmap_namespace" required:"true"`
 }

@@ -2,7 +2,7 @@ package identities
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
@@ -97,7 +97,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -152,7 +152,7 @@ func (a *API) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	credID := chi.URLParam(r, "id")
 
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.1.0...v1.2.0) (2023-08-10)
+
+
+### Features
+
+* add idp handlers ([405bad3](https://github.com/canonical/identity-platform-admin-ui/commit/405bad314cb3b3a79b0455b74b7a123cb09818b7))
+* add idp service ([4f04546](https://github.com/canonical/identity-platform-admin-ui/commit/4f04546e2a1f75f16ce36a1bea051ce012d8e44c))
+* wire up main and router with new dependencies ([7c218d3](https://github.com/canonical/identity-platform-admin-ui/commit/7c218d3ea8fd9413e808afa7f54a265a3e1dec6d))
+
+
+### Bug Fixes
+
+* add otel tracing to hydra client ([64871cd](https://github.com/canonical/identity-platform-admin-ui/commit/64871cdb232a92ebb11b4ed0d05282898cdc9f9d))
+* create k8s coreV1 package ([ff260f9](https://github.com/canonical/identity-platform-admin-ui/commit/ff260f927d1930fb587ac515962fe4605b2d9223))
+* drop unused const ([bb3bd28](https://github.com/canonical/identity-platform-admin-ui/commit/bb3bd28a0f1df6904d5f6355b9bcc198276d8db7))
+* use io pkg instead of ioutil ([909459c](https://github.com/canonical/identity-platform-admin-ui/commit/909459c1041391d6906e20ecbe9c129523c8774f))
+* use new instead of & syntax ([9908ddc](https://github.com/canonical/identity-platform-admin-ui/commit/9908ddc30301816b623d0bf8e064cae1c1dd91f6))
+
 ## [1.1.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.0.0...v1.1.0) (2023-07-27)
 
 

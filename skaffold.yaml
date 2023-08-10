@@ -1,0 +1,28 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+build:
+  artifacts:
+  - image: ghcr.io/canonical/identity-platform-admin-ui
+    sync:
+      infer:
+      - "cmd/main.go"
+      - "go.mod"
+      - "go.sum"
+    docker:
+    platforms: ["linux/amd64"]        
+  local:
+    push: false
+
+manifests:
+  rawYaml:
+    - "deployments/kubectl/*"
+
+deploy:
+  kubectl:
+
+portForward:
+- resourceType: service
+  resourceName: identity-platform-admin-ui
+  namespace: default
+  port: 80
+  localPort: 8000

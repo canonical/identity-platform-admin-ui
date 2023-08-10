@@ -18,14 +18,6 @@ import (
 	kClient "github.com/ory/kratos-client-go"
 )
 
-const (
-	BASE_URL                     = "https://example.com"
-	HANDLE_CREATE_FLOW_URL       = BASE_URL + "/api/kratos/self-service/login/browser"
-	HANDLE_UPDATE_LOGIN_FLOW_URL = BASE_URL + "/api/kratos/self-service/login"
-	HANDLE_GET_LOGIN_FLOW_URL    = BASE_URL + "/api/kratos/self-service/login/flows"
-	HANDLE_ERROR_URL             = BASE_URL + "/api/kratos/self-service/errors"
-)
-
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go

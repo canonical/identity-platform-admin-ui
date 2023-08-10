@@ -25,7 +25,9 @@ func NewClient(url string, debug bool) *Client {
 			URL: url,
 		},
 	}
-	configuration.HTTPClient = &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+
+	configuration.HTTPClient = new(http.Client)
+	configuration.HTTPClient.Transport = otelhttp.NewTransport(http.DefaultTransport)
 
 	c.c = client.NewAPIClient(configuration)
 

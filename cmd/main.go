@@ -11,6 +11,7 @@ import (
 	"time"
 
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
+	"github.com/canonical/identity-platform-admin-ui/internal/k8s"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
@@ -18,6 +19,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
 
@@ -37,7 +39,19 @@ func main() {
 	hClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
 	kClient := ik.NewClient(specs.KratosURL, specs.Debug)
 
-	router := web.NewRouter(hClient, kClient, tracer, monitor, logger)
+	k8sCoreV1, err := k8s.NewCoreV1Client()
+
+	if err != nil {
+		panic(err)
+	}
+
+	idpConfig := &idp.Config{
+		K8s:       k8sCoreV1,
+		Name:      specs.ConfigMapName,
+		Namespace: specs.ConfigMapNamespace,
+	}
+
+	router := web.NewRouter(idpConfig, hClient, kClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-platform-admin-ui
+data:
+  PORT: "8000"
+  LOG_LEVEL: DEBUG
+  TRACING_ENABLED: "false" 
+  KRATOS_URL: http://kratos.svc.cluster.local:4434
+  HYDRA_ADMIN_URL: http://hydra.svc.cluster.local:4445
+  CONFIGMAP_NAME: idps
+  CONFIGMAP_NAMESPACE: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: idps
+data:
+  "idps.yaml": |
+    - id: microsoft_af675f353bd7451588e2b8032e315f6f
+      client_id: af675f35-3bd7-4515-88e2-b8032e315f6f
+      provider: microsoft
+      client_secret: 3y38Q~aslkdhaskjhd~W0xWDB.123u98asd
+      microsoft_tenant: e1574293-28de-4e94-87d5-b61c76fc14e1
+      mapper_url: file:///etc/config/kratos/microsoft_schema.jsonnet
+      scope:
+        - profile
+        - email
+        - address
+        - phone
+    - id: google_18fa2999e6c9475aa49515d933d8e8ce
+      client_id: 18fa2999-e6c9-475a-a495-15d933d8e8ce
+      provider: google
+      client_secret: 3y38Q~aslkdhaskjhd~W0xWDB.123u98asd
+      mapper_url: file:///etc/config/kratos/google_schema.jsonnet
+      scope:
+        - profile
+        - email
+        - address
+        - phone
+    - id: aws_18fa2999e6c9475aa49589d941d8e1zy
+      client_id: 18fa2999-e6c9-475a-a495-89d941d8e1zy
+      provider: aws
+      client_secret: 3y38Q~aslkdhaskjhd~W0xWDB.123u98asd
+      mapper_url: file:///etc/config/kratos/google_schema.jsonnet
+      scope:
+        - profile
+        - email
+        - address
+        - phone

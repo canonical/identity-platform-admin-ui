@@ -16,3 +16,5 @@ jobs:
         with:
           configurationFile: renovate-config.js
           token: ${{ github.token }}
+        env:
+          LOG_LEVEL: 'debug'

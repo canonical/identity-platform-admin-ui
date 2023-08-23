@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Enable automerge
+      - name: Approve PR
         run: gh pr review --approve || true
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

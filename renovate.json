@@ -22,6 +22,14 @@
     {
       "groupName": "UI deps",
       "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
+      "automerge": true,
+      "schedule": ["every weekday"]
+    },
+    {
+      "groupName": "UI deps",
+      "matchManagers": ["npm"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
       "schedule": ["every weekday"]

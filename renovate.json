@@ -12,7 +12,6 @@
     "helpers:pinGitHubActionDigests"
   ],
   "automergeType": "branch",
-  "baseBranches": ["IAM-414-renovate"],
   "packageRules": [
     {
       "groupName": "github actions",

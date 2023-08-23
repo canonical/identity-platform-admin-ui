@@ -20,6 +20,13 @@
       "schedule": ["every weekday"]
     },
     {
+      "groupName": "UI deps",
+      "matchManagers": ["npm"],
+      "extends": [":automergeMinor"],
+      "schedule": ["every weekday"],
+      "prPriority": 4
+    },
+    {
       "groupName": "internal dependencies",
       "groupSlug": "internal",
       "packagePatterns": [
@@ -27,13 +34,8 @@
           "^canonicalwebteam",
           "^vanilla-framework"
       ],
-      "schedule": ["at any time"]
-    },
-    {
-      "groupName": "UI deps",
-      "matchManagers": ["npm"],
-      "extends": [":automergeMinor"],
-      "schedule": ["every weekday"]
+      "schedule": ["at any time"],
+      "prPriority": 5
     },
     {
       "groupName": "Go deps",

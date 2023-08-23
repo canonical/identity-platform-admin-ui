@@ -7,10 +7,14 @@ data:
   PORT: "8000"
   LOG_LEVEL: DEBUG
   TRACING_ENABLED: "false" 
-  KRATOS_URL: http://kratos.svc.cluster.local:4434
-  HYDRA_ADMIN_URL: http://hydra.svc.cluster.local:4445
-  CONFIGMAP_NAME: idps
-  CONFIGMAP_NAMESPACE: default
+  KRATOS_PUBLIC_URL: http://kratos.iam.svc.cluster.local:4433
+  KRATOS_ADMIN_URL: http://kratos.iam.svc.cluster.local:4434
+  HYDRA_ADMIN_URL: http://hydra.iam.svc.cluster.local:4445
+  IDP_CONFIGMAP_NAME: idps
+  IDP_CONFIGMAP_NAMESPACE: default
+  SCHEMAS_CONFIGMAP_NAME: identity-schemas
+  SCHEMAS_CONFIGMAP_NAMESPACE: default
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -49,3 +53,58 @@ data:
         - email
         - address
         - phone
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-schemas
+data:
+  "default.schema": "default"
+  "admin_v0": |
+    {
+            "id": "admin_v0",
+            "schema": {
+                "$id": "https://schemas.canonical.com/presets/kratos/admin_v0.json",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "properties": {
+                    "additionalProperties": true,
+                    "traits": {
+                        "properties": {
+                            "email": {
+                                "format": "email",
+                                "minLength": 3,
+                                "ory.sh/kratos": {
+                                    "verification": {
+                                        "via": "email"
+                                    }
+                                },
+                                "title": "E-Mail",
+                                "type": "string"
+                            },
+                            "name": {
+                                "title": "Name",
+                                "type": "string"
+                            },
+                            "phone_number": {
+                                "title": "Phone Number",
+                                "type": "string"
+                            },
+                            "username": {
+                                "ory.sh/kratos": {
+                                    "credentials": {
+                                        "password": {
+                                            "identifier": true
+                                        }
+                                    }
+                                },
+                                "title": "Username",
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "title": "Admin Account",
+                "type": "object"
+            }
+        }

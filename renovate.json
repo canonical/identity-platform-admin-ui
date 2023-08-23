@@ -31,20 +31,18 @@
     },
     {
       "depTypeList": ["devDependencies"],
-      "extends": [":automergeMinor", ":automergePatch", ":automergeDigest"],
+      "automerge": true,
       "schedule": ["every weekday"]
     },
     {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-      "extends": [":automergeMinor", ":automergePatch", ":automergeDigest"],
+      "extends": [":automergeMinor"],
       "schedule": ["every weekday"]
     },
     {
       "groupName": "renovate packages",
       "matchSourceUrlPrefixes": ["https://github.com/renovatebot/"],
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
       "schedule": ["every weekday"]
     }

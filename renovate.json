@@ -20,25 +20,25 @@
       "schedule": ["every weekday"]
     },
     {
-      "groupName": "UI deps",
-      "matchManagers": ["npm"],
-      "matchDepTypes": ["devDependencies"],
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-      "automerge": true,
-      "schedule": ["every weekday"]
+      "groupName": "internal dependencies",
+      "groupSlug": "internal",
+      "packagePatterns": [
+          "^@canonical",
+          "^canonicalwebteam",
+          "^vanilla-framework"
+      ],
+      "schedule": ["at any time"]
     },
     {
-      "groupName": "UI deps",
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-      "automerge": true,
+      "depTypeList": ["devDependencies"],
+      "extends": [":automergeMinor", ":automergePatch", ":automergeDigest"],
       "schedule": ["every weekday"]
     },
     {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-      "automerge": true,
+      "extends": [":automergeMinor", ":automergePatch", ":automergeDigest"],
       "schedule": ["every weekday"]
     },
     {

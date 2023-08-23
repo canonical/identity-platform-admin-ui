@@ -30,8 +30,9 @@
       "schedule": ["at any time"]
     },
     {
-      "matchDepTypes": ["devDependencies"],
-      "automerge": true,
+      "groupName": "UI deps",
+      "matchManagers": ["npm"],
+      "extends": [":automergeMinor"],
       "schedule": ["every weekday"]
     },
     {

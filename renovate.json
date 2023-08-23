@@ -30,7 +30,7 @@
       "schedule": ["at any time"]
     },
     {
-      "depTypeList": ["devDependencies"],
+      "matchDepTypes": ["devDependencies"],
       "automerge": true,
       "schedule": ["every weekday"]
     },

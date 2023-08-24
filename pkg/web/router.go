@@ -16,10 +16,11 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
+	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, hydraClient *ih.Client, kratos *ik.Client, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
+func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, hydraClient *ih.Client, kratos *ik.Client, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
 	router := chi.NewMux()
 
 	middlewares := make(chi.Middlewares, 0)
@@ -54,6 +55,9 @@ func NewRouter(idpConfig *idp.Config, hydraClient *ih.Client, kratos *ik.Client,
 		idp.NewService(idpConfig, tracer, monitor, logger),
 		logger,
 	).RegisterEndpoints(router)
-
+	schemas.NewAPI(
+		schemas.NewService(schemasConfig, tracer, monitor, logger),
+		logger,
+	).RegisterEndpoints(router)
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

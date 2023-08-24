@@ -20,6 +20,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
+	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
 
@@ -36,8 +37,9 @@ func main() {
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
-	hClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
-	kClient := ik.NewClient(specs.KratosURL, specs.Debug)
+	hAdminClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
+	kAdminClient := ik.NewClient(specs.KratosAdminURL, specs.Debug)
+	kPublicClient := ik.NewClient(specs.KratosPublicURL, specs.Debug)
 
 	k8sCoreV1, err := k8s.NewCoreV1Client()
 
@@ -47,11 +49,17 @@ func main() {
 
 	idpConfig := &idp.Config{
 		K8s:       k8sCoreV1,
-		Name:      specs.ConfigMapName,
-		Namespace: specs.ConfigMapNamespace,
+		Name:      specs.IDPConfigMapName,
+		Namespace: specs.IDPConfigMapNamespace,
 	}
 
-	router := web.NewRouter(idpConfig, hClient, kClient, tracer, monitor, logger)
+	schemasConfig := &schemas.Config{
+		K8s:       k8sCoreV1,
+		Kratos:    kPublicClient.IdentityApi(),
+		Name:      specs.SchemasConfigMapName,
+		Namespace: specs.SchemasConfigMapNamespace,
+	}
+	router := web.NewRouter(idpConfig, schemasConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

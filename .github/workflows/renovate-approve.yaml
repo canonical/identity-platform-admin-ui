@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Approve PR
-        run: gh pr review --approve || true
+        run:
+          gh pr review --approve
+          gh pr merge --auto
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}

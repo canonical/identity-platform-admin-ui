@@ -16,6 +16,7 @@
     {
       "groupName": "github actions",
       "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
       "schedule": ["every weekday"]
     },
@@ -27,17 +28,6 @@
       "prPriority": 4
     },
     {
-      "groupName": "internal dependencies",
-      "groupSlug": "internal",
-      "packagePatterns": [
-          "^@canonical",
-          "^canonicalwebteam",
-          "^vanilla-framework"
-      ],
-      "schedule": ["at any time"],
-      "prPriority": 5
-    },
-    {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
       "extends": [":automergeMinor"],
@@ -46,6 +36,7 @@
     {
       "groupName": "renovate packages",
       "matchSourceUrlPrefixes": ["https://github.com/renovatebot/"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
       "schedule": ["every weekday"]
     }

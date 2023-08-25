@@ -19,14 +19,14 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
-      "schedule": ["every weekday"]
+      "schedule": ["at any time"]
     },
     {
       "groupName": "UI deps",
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
-      "schedule": ["every weekday"],
+      "schedule": ["at any time"],
       "prPriority": 4
     },
     {
@@ -45,14 +45,14 @@
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
-      "schedule": ["every weekday"]
+      "schedule": ["at any time"]
     },
     {
       "groupName": "renovate packages",
       "matchSourceUrlPrefixes": ["https://github.com/renovatebot/"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
-      "schedule": ["every weekday"]
+      "schedule": ["at any time"]
     }
   ]
 }

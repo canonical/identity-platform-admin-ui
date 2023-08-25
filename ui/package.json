@@ -45,7 +45,7 @@
     "@testing-library/user-event": "14.4.3",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "autoprefixer": "10.4.15",
-    "eslint": "8.47.0",
+    "eslint": "8.48.0",
     "eslint-config-prettier": "8.10.0",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "7.33.2",

@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.20 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.21 AS builder
 
 LABEL org.opencontainers.image.source=https://github.com/canonical/identity-platform-admin-ui
 

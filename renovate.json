@@ -28,6 +28,18 @@
       "prPriority": 4
     },
     {
+      "groupName": "internal UI dependencies",
+      "groupSlug": "internal",
+      "packagePatterns": [
+          "^@canonical",
+          "^canonicalwebteam",
+          "^vanilla-framework"
+      ],
+      "extends": [":automergeMinor"],
+      "schedule": ["at any time"],
+      "prPriority": 5
+    },
+    {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
       "extends": [":automergeMinor"],

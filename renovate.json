@@ -9,9 +9,10 @@
     ":rebaseStalePrs",
     ":semanticCommits",
     ":semanticCommitScope(deps)",
-    "helpers:pinGitHubActionDigests"
+    "helpers:pinGitHubActionDigests",
   ],
   "automergeType": "branch",
+  "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
       "groupName": "github actions",
@@ -23,7 +24,8 @@
     {
       "groupName": "UI deps",
       "matchManagers": ["npm"],
-      "extends": [":automergeMinor"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
+      "automerge": true,
       "schedule": ["every weekday"],
       "prPriority": 4
     },
@@ -42,7 +44,7 @@
     {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
-      "extends": [":automergeMinor"],
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "schedule": ["every weekday"]
     },
     {

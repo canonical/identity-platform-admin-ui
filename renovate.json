@@ -11,7 +11,7 @@
     ":semanticCommitScope(deps)",
     "helpers:pinGitHubActionDigests",
   ],
-  "automergeType": "branch",
+  "automergeType": "pr",
   "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {

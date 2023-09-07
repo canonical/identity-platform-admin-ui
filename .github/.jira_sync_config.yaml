@@ -10,7 +10,7 @@ settings:
   # (Optional) Jira project components that should be attached to the created issue
   # Component names are case-sensitive
   components:
-    - Kratos
+    - Admin UI
 
   # (Optional) GitHub labels. Only issues with one of those labels will be synchronized.
   # If not specified, all issues will be synchronized
@@ -19,7 +19,7 @@ settings:
     - custom
 
   # (Optional) (Default: false) Add a new comment in GitHub with a link to Jira created issue
-  add_gh_comment: false
+  add_gh_comment: true
 
   # (Optional) (Default: true) Synchronize issue description from GitHub to Jira
   sync_description: true
@@ -28,7 +28,7 @@ settings:
   sync_comments: true
 
   # (Optional) (Default: None) Parent Epic key to link the issue to
-  epic_key: "IAM-19"
+  epic_key: "IAM-469"
 
   # (Optional) Dictionary mapping GitHub issue labels to Jira issue types.
   # If label on the issue is not in specified list, this issue will be created as a Bug

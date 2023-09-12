@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.3.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.2.0...v1.3.0) (2023-09-12)
+
+
+### Features
+
+* add schemas endpoints ([c9be3dc](https://github.com/canonical/identity-platform-admin-ui/commit/c9be3dcf364b62c9900233f56cc448d51a5f3cf7))
+* add schemas service layer and interfaces ([83917cf](https://github.com/canonical/identity-platform-admin-ui/commit/83917cf291f031a01d8882364ac3e50aedfd99e5))
+* added ca-certificates package to stage-packages ([16f6683](https://github.com/canonical/identity-platform-admin-ui/commit/16f6683218d02e3c60923007a59cf36c2bb5f5d2))
+* wire up schemas pkg ([513ce61](https://github.com/canonical/identity-platform-admin-ui/commit/513ce612809910c78bfc4f4647246ce4f90a1c42))
+
+
+### Bug Fixes
+
+* **deps:** update dependency @canonical/react-components to v0.47.0 ([#94](https://github.com/canonical/identity-platform-admin-ui/issues/94)) ([a2c7e03](https://github.com/canonical/identity-platform-admin-ui/commit/a2c7e0318bbeb20d3cb7aaf86122b8dd1ada49fc))
+* **deps:** update dependency vanilla-framework to v4 ([#95](https://github.com/canonical/identity-platform-admin-ui/issues/95)) ([35c21ae](https://github.com/canonical/identity-platform-admin-ui/commit/35c21aea82d6c6b4cb1501d771bd249d44d476e4))
+* **deps:** update dependency vanilla-framework to v4.3.0 ([#99](https://github.com/canonical/identity-platform-admin-ui/issues/99)) ([049629c](https://github.com/canonical/identity-platform-admin-ui/commit/049629c98e36c433e144595e6b4ad25f1f6872d9))
+* **deps:** update go deps (minor) ([#75](https://github.com/canonical/identity-platform-admin-ui/issues/75)) ([54f9421](https://github.com/canonical/identity-platform-admin-ui/commit/54f9421d686543e552e04d9790843db83d90c103))
+* **deps:** update go deps to v1.17.0 (minor) ([#71](https://github.com/canonical/identity-platform-admin-ui/issues/71)) ([472dc50](https://github.com/canonical/identity-platform-admin-ui/commit/472dc5067964d4fc183c677d82cf3a791d646cd0))
+* **deps:** update go deps to v1.18.0 (minor) ([#100](https://github.com/canonical/identity-platform-admin-ui/issues/100)) ([129c7ee](https://github.com/canonical/identity-platform-admin-ui/commit/129c7eeedb143af2422063f20ae83b066543fcba))
+* **deps:** update module github.com/google/uuid to v1.3.1 ([#53](https://github.com/canonical/identity-platform-admin-ui/issues/53)) ([840b068](https://github.com/canonical/identity-platform-admin-ui/commit/840b0689e8b75c3bd001e8804a1f2bec471ec47d))
+* **deps:** update module go.opentelemetry.io/otel/exporters/stdout/stdouttrace to v1.17.0 ([#72](https://github.com/canonical/identity-platform-admin-ui/issues/72)) ([9fd027b](https://github.com/canonical/identity-platform-admin-ui/commit/9fd027b2a1818676b973882e67009bf494a01cd6))
+* fix renovate config ([700cc51](https://github.com/canonical/identity-platform-admin-ui/commit/700cc515c2af7a56d5e5781ecd38de0cb29aaaa4))
+
 ## [1.2.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.1.0...v1.2.0) (2023-08-10)
 
 

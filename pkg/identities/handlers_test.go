@@ -285,6 +285,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 	identityBody := kClient.NewCreateIdentityBodyWithDefaults()
 	identityBody.SchemaId = identity.SchemaId
 	identityBody.Traits = map[string]interface{}{"name": "name"}
+	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
 	payload, _ := json.Marshal(identityBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/identities", bytes.NewReader(payload))
@@ -360,6 +361,7 @@ func TestHandleCreateFailAndPropagatesKratosError(t *testing.T) {
 	identityBody := kClient.NewCreateIdentityBodyWithDefaults()
 	identityBody.SchemaId = "test.json"
 	identityBody.Traits = map[string]interface{}{"name": "name"}
+	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
 	payload, err := json.Marshal(identityBody)
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/identities", bytes.NewReader(payload))
@@ -453,6 +455,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 	identityBody.SchemaId = identity.SchemaId
 	identityBody.SetState(kClient.IDENTITYSTATE_ACTIVE)
 	identityBody.Traits = map[string]interface{}{"name": "name"}
+	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
 	payload, _ := json.Marshal(identityBody)
 
@@ -530,6 +533,7 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 	identityBody.SchemaId = "test.json"
 	identityBody.Traits = map[string]interface{}{"name": "name"}
 	identityBody.SetState(kClient.IDENTITYSTATE_ACTIVE)
+	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
 	payload, err := json.Marshal(identityBody)
 	req := httptest.NewRequest(http.MethodPut, "/api/v0/identities/test", bytes.NewReader(payload))

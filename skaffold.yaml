@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta6
 kind: Config
 build:
   artifacts:
-  - image: ghcr.io/canonical/identity-platform-admin-ui
+  - image: "ghcr.io/canonical/identity-platform-admin-ui"
     sync:
       infer:
       - "cmd/main.go"
@@ -12,6 +12,12 @@ build:
     platforms: ["linux/amd64"]        
   local:
     push: false
+
+test:
+  - image: "ghcr.io/canonical/identity-platform-admin-ui"
+    structureTests:
+      - './structure-tests.yaml'
+
 
 manifests:
   rawYaml:

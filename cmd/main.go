@@ -19,6 +19,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/internal/version"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
@@ -30,6 +31,16 @@ func main() {
 
 	if err := envconfig.Process("", specs); err != nil {
 		panic(fmt.Errorf("issues with environment sourcing: %s", err))
+	}
+
+	flags := config.NewFlags()
+
+	switch {
+	case flags.ShowVersion:
+		fmt.Printf("App Version: %s\n", version.Version)
+		os.Exit(0)
+	default:
+		break
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)

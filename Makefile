@@ -5,6 +5,9 @@ GO_BIN?=app
 GO?=go
 GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 UI_FOLDER?=
+MICROK8S_REGISTRY_FLAG?=SKAFFOLD_DEFAULT_REPO=localhost:32000
+SKAFFOLD?=skaffold
+
 
 .EXPORT_ALL_VARIABLES:
 
@@ -45,3 +48,7 @@ cmd/ui/dist:
 npm-build:
 	$(MAKE) -C ui/ build
 .PHONY: npm-build
+
+
+up:
+	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --port-forward

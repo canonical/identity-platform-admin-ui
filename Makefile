@@ -50,5 +50,6 @@ npm-build:
 .PHONY: npm-build
 
 
-up:
-	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --port-forward
+dev:
+	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --mute-logs=all --port-forward
+.PHONY: dev

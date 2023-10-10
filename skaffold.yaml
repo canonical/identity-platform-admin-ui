@@ -25,6 +25,27 @@ manifests:
 
 deploy:
   kubectl:
+  helm:
+    releases:
+      - name: postgresql
+        remoteChart: oci://registry-1.docker.io/bitnamicharts/postgresql
+        valuesFiles: ["deployments/helm/postgresql/values.yaml"]
+      - name: kratos
+        remoteChart: kratos
+        repo: https://k8s.ory.sh/helm/charts
+        valuesFiles: ["deployments/helm/kratos/values.yaml"]
+        wait: false
+      - name: hydra
+        remoteChart: hydra
+        repo: https://k8s.ory.sh/helm/charts
+        valuesFiles: ["deployments/helm/hydra/values.yaml"]
+        wait: false
+      - name: oathkeeper
+        remoteChart: oathkeeper
+        repo: https://k8s.ory.sh/helm/charts
+        setValues:
+          demo: "true"
+        wait: false
 
 portForward:
 - resourceType: service

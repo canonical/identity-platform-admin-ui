@@ -2,11 +2,14 @@ package status
 
 import (
 	"runtime/debug"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/version"
 )
 
 type BuildInfo struct {
-	Version string `json:"version"`
-	Name    string `json:"name"`
+	Version    string `json:"version"`
+	CommitHash string `json:"commit_hash"`
+	Name       string `json:"name"`
 }
 
 func buildInfo() *BuildInfo {
@@ -18,7 +21,8 @@ func buildInfo() *BuildInfo {
 
 	buildInfo := new(BuildInfo)
 	buildInfo.Name = info.Main.Path
-	buildInfo.Version = gitRevision(info.Settings)
+	buildInfo.Version = version.Version
+	buildInfo.CommitHash = gitRevision(info.Settings)
 
 	return buildInfo
 }

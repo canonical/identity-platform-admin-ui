@@ -24,6 +24,6 @@ FROM gcr.io/distroless/static:nonroot
 
 LABEL org.opencontainers.image.source=https://github.com/canonical/identity-platform-admin-ui
 
-COPY --from=builder /go/bin/app /app
+COPY --from=builder /go/bin/app /usr/bin/identity-platform-admin-ui
 
-CMD ["/app"]
+CMD ["/usr/bin/identity-platform-admin-ui"]

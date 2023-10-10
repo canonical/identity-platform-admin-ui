@@ -20,7 +20,7 @@ spec:
         prometheus.io/port: "8000"
     spec:
       containers:
-      - image: ghcr.io/canonical/identity-platform-admin-ui
+      - image: identity-platform-admin-ui
         name: identity-platform-admin-ui
         envFrom:
           - configMapRef:

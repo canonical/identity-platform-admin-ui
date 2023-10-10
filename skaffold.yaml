@@ -8,7 +8,11 @@ build:
       - "cmd/main.go"
       - "go.mod"
       - "go.sum"
-    docker:
+    custom:
+      buildCommand: ./build.sh
+      dependencies:
+        paths: 
+          - rockcraft.yaml
     platforms: ["linux/amd64"]        
   local:
     push: true

@@ -27,3 +27,146 @@ This is the Admin UI for the Canonical Identity Platform.
 - `SCHEMAS_CONFIGMAP_NAME`: name of the k8s config map containing Identity Schemas
 - `SCHEMAS_CONFIGMAP_NAMESPACE`: namespace of the k8s config map containing Identity Schemas
 
+
+## Development setup
+
+As a requirement, please make sure to:
+* have `rockcraft`, `skopeo`, `yq`, [`skaffold`](https://github.com/GoogleContainerTools/skaffold), [`container-structure-test`](https://github.com/GoogleContainerTools/container-structure-test) and `docker` installed
+* microk8s `registry` addon is enabled and operating at `localhost:32000`
+* `GNU make` is available on the path (and installed)
+
+
+Simply run `make dev` to get a working environment in k8s
+
+
+Below an exaple of how to query some endpoints
+
+
+```shell
+shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/identities
+HTTP/1.1 200 OK
+Content-Length: 86
+Content-Type: application/json
+Date: Wed, 11 Oct 2023 10:05:37 GMT
+Vary: Origin
+
+{
+    "_meta": {
+        "page": 1,
+        "size": 100
+    },
+    "data": [],
+    "message": "List of identities",
+    "status": 200
+}
+```
+
+
+```shell
+shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/idps      
+HTTP/1.1 200 OK
+Content-Length: 1520
+Content-Type: application/json
+Date: Wed, 11 Oct 2023 10:05:43 GMT
+Vary: Origin
+
+{
+    "_meta": null,
+    "data": [
+        {
+            "apple_private_key": "",
+            "apple_private_key_id": "",
+            "apple_team_id": "",
+            "auth_url": "",
+            "client_id": "af675f35-3bd7-4515-88e2-b8032e315f6f",
+            "client_secret": "3y38Q~aslkdhaskjhd~W0xWDB.123u98asd",
+            "id": "microsoft_af675f353bd7451588e2b8032e315f6f",
+            "issuer_url": "",
+            "label": "",
+            "mapper_url": "file:///etc/config/kratos/microsoft_schema.jsonnet",
+            "microsoft_tenant": "e1574293-28de-4e94-87d5-b61c76fc14e1",
+            "provider": "microsoft",
+            "requested_claims": null,
+            "scope": [
+                "profile",
+                "email",
+                "address",
+                "phone"
+            ],
+            "subject_source": "",
+            "token_url": ""
+        },
+        {
+            "apple_private_key": "",
+            "apple_private_key_id": "",
+            "apple_team_id": "",
+            "auth_url": "",
+            "client_id": "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+            "client_secret": "3y38Q~aslkdhaskjhd~W0xWDB.123u98asd",
+            "id": "google_18fa2999e6c9475aa49515d933d8e8ce",
+            "issuer_url": "",
+            "label": "",
+            "mapper_url": "file:///etc/config/kratos/google_schema.jsonnet",
+            "microsoft_tenant": "",
+            "provider": "google",
+            "requested_claims": null,
+            "scope": [
+                "profile",
+                "email",
+                "address",
+                "phone"
+            ],
+            "subject_source": "",
+            "token_url": ""
+        },
+        {
+            "apple_private_key": "",
+            "apple_private_key_id": "",
+            "apple_team_id": "",
+            "auth_url": "",
+            "client_id": "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+            "client_secret": "3y38Q~aslkdhaskjhd~W0xWDB.123u98asd",
+            "id": "aws_18fa2999e6c9475aa49589d941d8e1zy",
+            "issuer_url": "",
+            "label": "",
+            "mapper_url": "file:///etc/config/kratos/google_schema.jsonnet",
+            "microsoft_tenant": "",
+            "provider": "aws",
+            "requested_claims": null,
+            "scope": [
+                "profile",
+                "email",
+                "address",
+                "phone"
+            ],
+            "subject_source": "",
+            "token_url": ""
+        }
+    ],
+    "message": "List of IDPs",
+    "status": 200
+}
+```
+
+```shell
+shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/clients     
+HTTP/1.1 200 OK
+Content-Length: 316
+Content-Type: application/json
+Date: Wed, 11 Oct 2023 10:05:47 GMT
+Vary: Origin
+
+{
+    "_links": {
+        "first": "/api/v0/clients?page=eyJvZmZzZXQiOiIwIiwidiI6Mn0&size=200",
+        "next": "/api/v0/clients?page=eyJvZmZzZXQiOiIyMDAiLCJ2IjoyfQ&size=200",
+        "prev": "/api/v0/clients?page=eyJvZmZzZXQiOiItMjAwIiwidiI6Mn0&size=200"
+    },
+    "_meta": {
+        "total_count": "0"
+    },
+    "data": [],
+    "message": "List of clients",
+    "status": 200
+}
+```

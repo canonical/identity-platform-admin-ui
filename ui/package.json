@@ -6,7 +6,7 @@
     "@canonical/react-components": "0.47.0",
     "react": "18.2.0",
     "react-toastify": "9.1.3",
-    "sass-embedded": "1.69.2",
+    "sass-embedded": "1.69.4",
     "vanilla-framework": "4.5.0"
   },
   "engines": {

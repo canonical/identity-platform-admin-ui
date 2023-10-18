@@ -1,0 +1,6 @@
+demo: true
+service:
+  proxy:
+    enabled: false
+  metrics:
+    enabled: false

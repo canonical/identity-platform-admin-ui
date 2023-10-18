@@ -10,10 +10,13 @@ data:
   KRATOS_PUBLIC_URL: http://kratos-public.default.svc.cluster.local
   KRATOS_ADMIN_URL: http://kratos-public.default.svc.cluster.local
   HYDRA_ADMIN_URL: http://hydra-admin.default.svc.cluster.local:4445
+  OATHKEEPER_PUBLIC_URL: http://oathkeeper-api.default.svc.cluster.local:4456
   IDP_CONFIGMAP_NAME: idps
   IDP_CONFIGMAP_NAMESPACE: default
   SCHEMAS_CONFIGMAP_NAME: identity-schemas
   SCHEMAS_CONFIGMAP_NAMESPACE: default
+  RULES_CONFIGMAP_NAME: oathkeeper-rules
+  RULES_CONFIGMAP_NAMESPACE: default
 
 ---
 apiVersion: v1
@@ -108,3 +111,27 @@ data:
                 "type": "object"
             }
         }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oathkeeper-rules
+data:
+  "ADMIN_RULE_mocked_rule1.json": |
+    {
+        "authenticators": [{"handler":"cookie_session"}],
+        "authorizer":{"handler":"allow"},
+        "id":"mocked_rule1",
+        "match":{"methods":["GET","POST"]},
+        "mutators":[{"handler":"header"}],
+        "upstream":{}
+    }
+  "ADMIN_RULE_mocked_rule2.json": |
+    {
+        "authenticators":[{"handler":"cookie_session"}],
+        "authorizer":{"handler":"deny"},
+        "id":"mocked_rule2",
+        "match":{"methods":["PUT","DELETE"]},
+        "mutators":[{"handler":"header"}],
+        "upstream":{}
+    }

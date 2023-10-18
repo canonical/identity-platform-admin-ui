@@ -13,13 +13,17 @@ type EnvSpec struct {
 
 	Debug bool `envconfig:"debug" default:"false"`
 
-	KratosPublicURL string `envconfig:"kratos_public_url" required:"true"`
-	KratosAdminURL  string `envconfig:"kratos_admin_url" required:"true"`
-	HydraAdminURL   string `envconfig:"hydra_admin_url" required:"true"`
+	KratosPublicURL     string `envconfig:"kratos_public_url" required:"true"`
+	KratosAdminURL      string `envconfig:"kratos_admin_url" required:"true"`
+	HydraAdminURL       string `envconfig:"hydra_admin_url" required:"true"`
+	OathkeeperPublicURL string `envconfig:"oathkeeper_public_url" required:"true"`
 
 	IDPConfigMapName      string `envconfig:"idp_configmap_name" required:"true"`
 	IDPConfigMapNamespace string `envconfig:"idp_configmap_namespace" required:"true"`
 
 	SchemasConfigMapName      string `envconfig:"schemas_configmap_name" required:"true"`
 	SchemasConfigMapNamespace string `envconfig:"schemas_configmap_namespace" required:"true"`
+
+	RulesConfigMapName      string `envconfig:"rules_configmap_name" required:"true"`
+	RulesConfigMapNamespace string `envconfig:"rules_configmap_namespace" required:"true"`
 }

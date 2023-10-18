@@ -11,16 +11,18 @@ import (
 	"time"
 
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
-	"github.com/canonical/identity-platform-admin-ui/internal/k8s"
+	k8s "github.com/canonical/identity-platform-admin-ui/internal/k8s"
 	"github.com/kelseyhightower/envconfig"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
+	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/version"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
+	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
@@ -51,6 +53,7 @@ func main() {
 	hAdminClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
 	kAdminClient := ik.NewClient(specs.KratosAdminURL, specs.Debug)
 	kPublicClient := ik.NewClient(specs.KratosPublicURL, specs.Debug)
+	oPublicClient := io.NewClient(specs.OathkeeperPublicURL, specs.Debug)
 
 	k8sCoreV1, err := k8s.NewCoreV1Client()
 
@@ -70,7 +73,10 @@ func main() {
 		Name:      specs.SchemasConfigMapName,
 		Namespace: specs.SchemasConfigMapNamespace,
 	}
-	router := web.NewRouter(idpConfig, schemasConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
+
+	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
+
+	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

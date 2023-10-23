@@ -9,7 +9,6 @@
 This is the Admin UI for the Canonical Identity Platform.
 
 
-
 ## Environment Variables
 
 - `OTEL_GRPC_ENDPOINT`: address of the open telemetry grpc endpoint, used for tracing
@@ -31,19 +30,31 @@ This is the Admin UI for the Canonical Identity Platform.
 ## Development setup
 
 As a requirement, please make sure to:
-* have `rockcraft`, `skopeo`, `yq`, [`skaffold`](https://github.com/GoogleContainerTools/skaffold), [`container-structure-test`](https://github.com/GoogleContainerTools/container-structure-test) and `docker` installed
-* microk8s `registry` addon is enabled and operating at `localhost:32000`
-* `GNU make` is available on the path (and installed)
+* have `rockcraft`, `yq`, `skopeo` and `make` installed
+
+      snap install rockcraft
+      snap install yq
+      apt install skopeo
+      apt install make
+
+* microk8s is installed with the `registry` addon operating at `localhost:32000` and kubectl configured to use it
+
+      snap install microk8s --classic
+      microk8s status --wait-ready
+      microk8s enable registry
+      # ensure kubectl is configured to use microk8s
+      microk8s.kubectl config view --raw > $HOME/.kube/config
 
 
-Simply run `make dev` to get a working environment in k8s
+* ensure [`skaffold`](https://github.com/GoogleContainerTools/skaffold), [`container-structure-test`](https://github.com/GoogleContainerTools/container-structure-test) and [`docker`](https://docs.docker.com/engine/install/ubuntu/) are installed according to their documentation
+
+Run `make dev` to get a working environment in k8s
 
 
-Below an exaple of how to query some endpoints
-
+## Endpoint examples
 
 ```shell
-shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/identities
+> http :8000/api/v0/identities
 HTTP/1.1 200 OK
 Content-Length: 86
 Content-Type: application/json
@@ -61,9 +72,8 @@ Vary: Origin
 }
 ```
 
-
 ```shell
-shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/idps      
+> http :8000/api/v0/idps      
 HTTP/1.1 200 OK
 Content-Length: 1520
 Content-Type: application/json
@@ -149,7 +159,7 @@ Vary: Origin
 ```
 
 ```shell
-shipperizer in ~/shipperizer/identity-platform-admin-ui on IAM-515 ● λ http :8000/api/v0/clients     
+> http :8000/api/v0/clients     
 HTTP/1.1 200 OK
 Content-Length: 316
 Content-Type: application/json

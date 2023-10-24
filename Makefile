@@ -42,8 +42,7 @@ build: cmd/ui/dist
 cmd/ui/dist:
 	@echo "copy dist npm files into cmd/ui folder"
 	mkdir -p cmd/ui/dist
-# TODO: Uncomment when ui is added
-# cp -r $(UI_FOLDER)ui/dist cmd/ui/
+	cp -r $(UI_FOLDER)ui/dist cmd/ui/
 
 npm-build:
 	$(MAKE) -C ui/ build

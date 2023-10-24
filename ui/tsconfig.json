@@ -1,17 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "outDir": "./public/js/dist",
+    "baseUrl": ".",
+    "paths": {
+      "api/*": ["src/api/*"],
+      "components/*": ["src/components/*"],
+      "pages/*": ["src/pages/*"],
+      "types/*": ["src/types/*"],
+      "util/*": ["src/util/*"]
+    },
+    "target": "ES2020",
     "module": "esnext",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "noFallthroughCasesInSwitch": true,
@@ -19,17 +24,17 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
-    "sourceMap": true,
-    "strictNullChecks": true,
-    "incremental": true,
+    "sourceMap": true
   },
   "include": [
-    "next-env.d.ts",
+    "./src",
     ".eslintrc.js",
-    "**/*.ts",
-    "**/*.tsx"
+    "babel.config.js",
+    "vite.config.ts"
   ],
-  "exclude": [
-    "node_modules"
+  "paths": [
+    {
+      "*": ["types/*.d.ts"]
+    }
   ]
 }

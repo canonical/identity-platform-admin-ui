@@ -1,14 +1,15 @@
-NPM?=npm
+YARN?=yarn
 
 
 build: install
-	$(NPM) run build --frozen=lockfile
+	$(YARN) install --frozen=lockfile
+	$(YARN) build
 .PHONY=build
 
 install:
-	$(NPM) install
+	$(YARN) install
 .PHONY=install
 
 test:
-	$(NPM) ci 
+	$(YARN) ci
 .PHONY=test

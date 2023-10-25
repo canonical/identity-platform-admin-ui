@@ -2,25 +2,42 @@
 
 This is the Admin UI for the Canonical identity platform.
 
-### `npm dev`
+### Development server
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Haproxy needs to be installed
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+    apt install haproxy
 
-### `npm test`
+and configured
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    vim /etc/haproxy/haproxy.cfg
 
-### `npm run build`
+use this content for the file
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+    global
+      daemon
+    
+    defaults
+      mode  http
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    frontend iam_frontend
+      bind 172.17.0.1:8000
+      default_backend iam_admin_be
+
+    backend iam_admin_be
+      server admin_be 127.0.0.1:8000
+
+and restart it
+
+    service haproxy restart
+
+Start the build server as described in the main README.md in the root of this repo
+
+    make dev
+
+Install dotrun as described in https://github.com/canonical/dotrun#installation Launch it from the `ui/` directory of this repo
+
+    dotrun
+
+browse to https://localhost:8411/ to reach iam-admin-ui.

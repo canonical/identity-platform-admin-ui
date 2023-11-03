@@ -12,3 +12,5 @@ hydra:
       consent: https://my-idp/consent
   automigration:
     enabled: true
+maester:
+  enabled: false

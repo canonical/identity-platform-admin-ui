@@ -25,6 +25,8 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Post("/api/v0/schemas", a.handleCreate)
 	mux.Patch("/api/v0/schemas/{id}", a.handlePartialUpdate)
 	mux.Delete("/api/v0/schemas/{id}", a.handleRemove)
+	mux.Get("/api/v0/schemas/default", a.handleDetailDefault)
+	mux.Put("/api/v0/schemas/default", a.handleUpdateDefault)
 }
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
@@ -222,6 +224,89 @@ func (a *API) handleRemove(w http.ResponseWriter, r *http.Request) {
 		types.Response{
 			Data:    nil,
 			Message: "Identity Schemas deleted",
+			Status:  http.StatusOK,
+		},
+	)
+}
+
+func (a *API) handleDetailDefault(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	defaultSchema, err := a.service.GetDefaultSchema(r.Context())
+
+	if err != nil {
+		rr := types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(rr)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		types.Response{
+			Data:    defaultSchema,
+			Message: "Detail of Default Identity Schema",
+			Status:  http.StatusOK,
+		},
+	)
+}
+
+func (a *API) handleUpdateDefault(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Error parsing request payload",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
+	schema := new(DefaultSchema)
+	if err := json.Unmarshal(body, schema); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Error parsing JSON payload",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+
+	}
+
+	defaultSchema, err := a.service.UpdateDefaultSchema(r.Context(), schema)
+
+	if err != nil {
+		rr := types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(rr)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		types.Response{
+			Data:    defaultSchema,
+			Message: "Default Identity Schema updated",
 			Status:  http.StatusOK,
 		},
 	)

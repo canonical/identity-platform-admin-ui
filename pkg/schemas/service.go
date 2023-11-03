@@ -29,6 +29,10 @@ type IdentitySchemaData struct {
 	Error           *kClient.GenericError
 }
 
+type DefaultSchema struct {
+	ID string `json:"schema_id"`
+}
+
 // TODO @shipperizer verify during integration test if this is actually the format
 type KratosError struct {
 	Error *kClient.GenericError `json:"error,omitempty"`
@@ -221,6 +225,53 @@ func (s *Service) DeleteSchema(ctx context.Context, ID string) error {
 
 	return nil
 
+}
+
+func (s *Service) GetDefaultSchema(ctx context.Context) (*DefaultSchema, error) {
+	ctx, span := s.tracer.Start(ctx, "schemas.Service.GetDefaultSchema")
+	defer span.End()
+
+	cm, err := s.k8s.ConfigMaps(s.cmNamespace).Get(ctx, s.cmName, metaV1.GetOptions{})
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	ID, ok := cm.Data[DEFAULT_SCHEMA]
+
+	if !ok {
+		return nil, fmt.Errorf("default schema %s missing", DEFAULT_SCHEMA)
+	}
+
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = ID
+
+	return defaultSchema, nil
+}
+
+func (s *Service) UpdateDefaultSchema(ctx context.Context, schemaID *DefaultSchema) (*DefaultSchema, error) {
+	ctx, span := s.tracer.Start(ctx, "schemas.Service.UpdateDefaultSchema")
+	defer span.End()
+
+	cm, err := s.k8s.ConfigMaps(s.cmNamespace).Get(ctx, s.cmName, metaV1.GetOptions{})
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	if _, ok := cm.Data[schemaID.ID]; !ok || schemaID.ID == DEFAULT_SCHEMA {
+		return nil, fmt.Errorf("schema with ID %s not available", schemaID.ID)
+	}
+
+	cm.Data[DEFAULT_SCHEMA] = schemaID.ID
+
+	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
+		return nil, err
+	}
+
+	return schemaID, nil
 }
 
 func (s *Service) schemas(schemas map[string]string) map[string]*kClient.IdentitySchemaContainer {

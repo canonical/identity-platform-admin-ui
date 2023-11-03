@@ -12,4 +12,6 @@ type ServiceInterface interface {
 	EditSchema(context.Context, string, *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error)
 	CreateSchema(context.Context, *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error)
 	DeleteSchema(context.Context, string) error
+	GetDefaultSchema(context.Context) (*DefaultSchema, error)
+	UpdateDefaultSchema(context.Context, *DefaultSchema) (*DefaultSchema, error)
 }

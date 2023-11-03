@@ -1408,3 +1408,355 @@ func TestDeleteSchemaFails(t *testing.T) {
 		t.Fatalf("expected error not to be nil")
 	}
 }
+
+func TestGetDefaultSchemaSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = defaultSchemaID
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data[DEFAULT_SCHEMA] = defaultSchemaID
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+
+	if ds.ID != defaultSchemaID {
+		t.Fatalf("expected default schema id to be %s not %s", defaultSchemaID, ds.ID)
+	}
+
+	if err != nil {
+		t.Fatalf("expected error to be nil not  %v", err)
+	}
+}
+
+func TestGetDefaultSchemaNoDefaultSchema(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = defaultSchemaID
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data["wrong_key"] = defaultSchemaID
+
+	error_msg := fmt.Sprintf("default schema %s missing", DEFAULT_SCHEMA)
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+
+	if ds != nil {
+		t.Fatalf("expected returned value to be nil not %s", ds)
+	}
+
+	if err.Error() != error_msg {
+		t.Fatalf("expected error to be %s not  %s", error_msg, err.Error())
+	}
+}
+
+func TestGetDefaultSchemaFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(nil, fmt.Errorf("mock_error"))
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+
+	if ds != nil {
+		t.Fatalf("expected returned value to be nil not %s", ds)
+	}
+
+	if err.Error() != "mock_error" {
+		t.Fatalf("expected error to be mock_error not %s", err.Error())
+	}
+}
+
+func TestUpdateDefaultSchemaSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchemaUpdateID := "mock_update"
+	defaultSchemaUpdate := new(DefaultSchema)
+	defaultSchemaUpdate.ID = defaultSchemaUpdateID
+
+	schema1 := map[string]interface{}{
+		"$id": "mock_default",
+	}
+	schemaId1 := "mock_default"
+	schema2 := map[string]interface{}{
+		"$id": "mock_update",
+	}
+	schemaId2 := "mock_update"
+
+	schemas := []kClient.IdentitySchemaContainer{
+		{
+			Id:     &schemaId1,
+			Schema: schema1,
+		},
+		{
+			Id:     &schemaId2,
+			Schema: schema2,
+		},
+	}
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data[DEFAULT_SCHEMA] = defaultSchemaID
+	for _, sc := range schemas {
+		rawSchema, _ := json.Marshal(sc.Schema)
+
+		cm.Data[*sc.Id] = string(rawSchema)
+	}
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.UpdateDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
+		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
+			if configMap.Data[DEFAULT_SCHEMA] != defaultSchemaUpdateID {
+				t.Fatalf("expected default schema id to be %s not %s", defaultSchemaUpdateID, configMap.Data[DEFAULT_SCHEMA])
+			}
+
+			return cm, nil
+		},
+	)
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+
+	if ds.ID != defaultSchemaUpdateID {
+		t.Fatalf("expected default schema id to be %s not %s", defaultSchemaID, ds.ID)
+	}
+
+	if err != nil {
+		t.Fatalf("expected error to be nil not  %v", err)
+	}
+}
+
+func TestUpdateDefaultSchemaIdNotFound(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchemaUpdateID := "mock_update"
+	defaultSchemaUpdate := new(DefaultSchema)
+	defaultSchemaUpdate.ID = defaultSchemaUpdateID
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data[DEFAULT_SCHEMA] = defaultSchemaID
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.UpdateDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+
+	if ds != nil {
+		t.Fatalf("expected default schema id to be nil not %s", ds.ID)
+	}
+
+	error_msg := fmt.Sprintf("schema with ID %s not available", defaultSchemaUpdateID)
+	if err.Error() != error_msg {
+		t.Fatalf("expected error to be %s not  %s", error_msg, err.Error())
+	}
+}
+
+func TestUpdateDefaultSchemaIdIsDefaultKey(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchemaUpdateID := DEFAULT_SCHEMA
+	defaultSchemaUpdate := new(DefaultSchema)
+	defaultSchemaUpdate.ID = defaultSchemaUpdateID
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data[DEFAULT_SCHEMA] = defaultSchemaID
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.UpdateDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+
+	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+
+	if ds != nil {
+		t.Fatalf("expected default schema id to be nil not %s", ds.ID)
+	}
+
+	error_msg := fmt.Sprintf("schema with ID %s not available", defaultSchemaUpdateID)
+	if err.Error() != error_msg {
+		t.Fatalf("expected error to be %s not  %s", error_msg, err.Error())
+	}
+}
+
+func TestUpdateDefaultSchemaFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	defaultSchemaID := "mock_default"
+	defaultSchemaUpdateID := "mock_update"
+	defaultSchemaUpdate := new(DefaultSchema)
+	defaultSchemaUpdate.ID = defaultSchemaUpdateID
+
+	schema1 := map[string]interface{}{
+		"$id": "mock_default",
+	}
+	schemaId1 := "mock_default"
+	schema2 := map[string]interface{}{
+		"$id": "mock_update",
+	}
+	schemaId2 := "mock_update"
+
+	schemas := []kClient.IdentitySchemaContainer{
+		{
+			Id:     &schemaId1,
+			Schema: schema1,
+		},
+		{
+			Id:     &schemaId2,
+			Schema: schema2,
+		},
+	}
+
+	cm := new(v1.ConfigMap)
+	cm.Data = make(map[string]string)
+	cm.Data[DEFAULT_SCHEMA] = defaultSchemaID
+	for _, sc := range schemas {
+		rawSchema, _ := json.Marshal(sc.Schema)
+
+		cm.Data[*sc.Id] = string(rawSchema)
+	}
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.UpdateDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
+		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
+			if configMap.Data[DEFAULT_SCHEMA] != defaultSchemaUpdateID {
+				t.Fatalf("expected default schema id to be %s not %s", defaultSchemaUpdateID, configMap.Data[DEFAULT_SCHEMA])
+			}
+
+			return nil, fmt.Errorf("mock_error")
+		},
+	)
+
+	_, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+
+	if err.Error() != "mock_error" {
+		t.Fatalf("expected error message to be mock_error not  %s", err.Error())
+	}
+}

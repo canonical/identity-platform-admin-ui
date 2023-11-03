@@ -250,8 +250,8 @@ func (s *Service) GetDefaultSchema(ctx context.Context) (*DefaultSchema, error) 
 	return defaultSchema, nil
 }
 
-func (s *Service) UpdateDefaultSchema(ctx context.Context, schema *DefaultSchema) (*DefaultSchema, error) {
-	ctx, span := s.tracer.Start(ctx, "schemas.Service.GetDefaultSchema")
+func (s *Service) UpdateDefaultSchema(ctx context.Context, schemaID *DefaultSchema) (*DefaultSchema, error) {
+	ctx, span := s.tracer.Start(ctx, "schemas.Service.UpdateDefaultSchema")
 	defer span.End()
 
 	cm, err := s.k8s.ConfigMaps(s.cmNamespace).Get(ctx, s.cmName, metaV1.GetOptions{})
@@ -261,17 +261,17 @@ func (s *Service) UpdateDefaultSchema(ctx context.Context, schema *DefaultSchema
 		return nil, err
 	}
 
-	if _, ok := cm.Data[DEFAULT_SCHEMA]; !ok {
-		return nil, fmt.Errorf("default schema %s missing", DEFAULT_SCHEMA)
+	if _, ok := cm.Data[schemaID.ID]; !ok || schemaID.ID == DEFAULT_SCHEMA {
+		return nil, fmt.Errorf("schema with ID %s not available", schemaID.ID)
 	}
 
-	cm.Data[DEFAULT_SCHEMA] = schema.ID
+	cm.Data[DEFAULT_SCHEMA] = schemaID.ID
 
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return nil, err
 	}
 
-	return schema, nil
+	return schemaID, nil
 }
 
 func (s *Service) schemas(schemas map[string]string) map[string]*kClient.IdentitySchemaContainer {

@@ -964,3 +964,236 @@ func TestHandleRemoveFails(t *testing.T) {
 		t.Errorf("expected code to be %v got %v", http.StatusInternalServerError, rr.Status)
 	}
 }
+
+func TestHandleDetailDefaultSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	defaultSchemaID := "mock_default"
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = defaultSchemaID
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/schemas/default", nil)
+
+	mockService.EXPECT().GetDefaultSchema(gomock.Any()).Return(defaultSchema, nil)
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
+	}
+
+	type Response struct {
+		Data *DefaultSchema `json:"data"`
+	}
+
+	rr := new(Response)
+
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Data.ID != defaultSchemaID {
+		t.Fatalf("invalid result, expected default id %s, got: %v", defaultSchemaID, rr.Data.ID)
+	}
+}
+
+func TestHandleDetailDefaultFail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/schemas/default", nil)
+
+	mockService.EXPECT().GetDefaultSchema(gomock.Any()).Return(nil, fmt.Errorf("mock_error"))
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("expected HTTP status code %v got %v", http.StatusInternalServerError, res.StatusCode)
+	}
+
+	type Response struct {
+		Message string `json:"message"`
+	}
+
+	rr := new(Response)
+
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Message != "mock_error" {
+		t.Fatalf("invalid result, expected error message %s, got: %v", "mock_error", rr.Message)
+	}
+}
+
+func TestHandleUpdateDefaultSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	defaultSchemaID := "mock_default"
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = defaultSchemaID
+
+	payload, _ := json.Marshal(defaultSchema)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v0/schemas/default", bytes.NewReader(payload))
+
+	mockService.EXPECT().UpdateDefaultSchema(gomock.Any(), gomock.Any()).Return(defaultSchema, nil)
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
+	}
+
+	type Response struct {
+		Data *DefaultSchema `json:"data"`
+	}
+
+	rr := new(Response)
+
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Data.ID != defaultSchemaID {
+		t.Fatalf("invalid result, expected default id %s, got: %v", defaultSchemaID, rr.Data.ID)
+	}
+}
+
+func TestHandleUpdateDefaultBadRequest(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v0/schemas/default", strings.NewReader("test"))
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Status != http.StatusBadRequest {
+		t.Errorf("expected code to be %v got %v", http.StatusBadRequest, rr.Status)
+	}
+}
+
+func TestHandleUpdateDefaultFail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	defaultSchemaID := "mock_default"
+	defaultSchema := new(DefaultSchema)
+	defaultSchema.ID = defaultSchemaID
+
+	payload, _ := json.Marshal(defaultSchema)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v0/schemas/default", bytes.NewReader(payload))
+
+	mockService.EXPECT().UpdateDefaultSchema(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, schema *DefaultSchema) (*DefaultSchema, error) {
+
+			if schema.ID != defaultSchemaID {
+				t.Fatalf("invalid ID, expected %s got %s", defaultSchemaID, schema.ID)
+			}
+
+			return nil, fmt.Errorf("mock_error")
+		},
+	)
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("expected HTTP status code 500 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Status != http.StatusInternalServerError {
+		t.Errorf("expected code to be %v got %v", http.StatusInternalServerError, rr.Status)
+	}
+}

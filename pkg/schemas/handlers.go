@@ -27,7 +27,6 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Delete("/api/v0/schemas/{id}", a.handleRemove)
 	mux.Get("/api/v0/schemas/default", a.handleDetailDefault)
 	mux.Put("/api/v0/schemas/default", a.handleUpdateDefault)
-
 }
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {

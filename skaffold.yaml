@@ -47,8 +47,7 @@ deploy:
       - name: oathkeeper
         remoteChart: oathkeeper
         repo: https://k8s.ory.sh/helm/charts
-        setValues:
-          demo: "true"
+        valuesFiles: ["deployments/helm/oathkeeper/values.yaml"]
         wait: false
 
 portForward:

@@ -8,6 +8,8 @@ globalEnvVars:
     value: "https://kratos.iam.admin"
   - key: "HYDRA_ADMIN_URL"
     value: "https://hydra.iam.admin"
+  - key: "OATHKEEPER_PUBLIC_URL"
+    value: "https://oathkeeper.iam.public"
   - key: "IDP_CONFIGMAP_NAME"
     value: idps
   - key: "IDP_CONFIGMAP_NAMESPACE"
@@ -15,6 +17,10 @@ globalEnvVars:
   - key: "SCHEMAS_CONFIGMAP_NAME"
     value: identity-schemas
   - key: "SCHEMAS_CONFIGMAP_NAMESPACE"
+    value: default
+  - key: "RULES_CONFIGMAP_NAME"
+    value: oathkeeper-rules
+  - key: "RULES_CONFIGMAP_NAMESPACE"
     value: default
 
 fileExistenceTests:

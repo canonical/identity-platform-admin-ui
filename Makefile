@@ -7,6 +7,7 @@ GOFLAGS?=-ldflags=-w -ldflags=-s -a -buildvcs
 UI_FOLDER?=
 MICROK8S_REGISTRY_FLAG?=SKAFFOLD_DEFAULT_REPO=localhost:32000
 SKAFFOLD?=skaffold
+CONFIGMAP?=deployments/kubectl/configMap.yaml
 
 
 .EXPORT_ALL_VARIABLES:
@@ -50,5 +51,6 @@ npm-build:
 
 
 dev:
+	microk8s.kubectl apply -f $(CONFIGMAP)
 	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --mute-logs=all --port-forward
 .PHONY: dev

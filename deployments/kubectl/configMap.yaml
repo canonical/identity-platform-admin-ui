@@ -10,10 +10,13 @@ data:
   KRATOS_PUBLIC_URL: http://kratos-public.default.svc.cluster.local
   KRATOS_ADMIN_URL: http://kratos-public.default.svc.cluster.local
   HYDRA_ADMIN_URL: http://hydra-admin.default.svc.cluster.local:4445
+  OATHKEEPER_PUBLIC_URL: http://oathkeeper-api.default.svc.cluster.local:4456
   IDP_CONFIGMAP_NAME: idps
   IDP_CONFIGMAP_NAMESPACE: default
   SCHEMAS_CONFIGMAP_NAME: identity-schemas
   SCHEMAS_CONFIGMAP_NAMESPACE: default
+  RULES_CONFIGMAP_NAME: oathkeeper-rules
+  RULES_CONFIGMAP_NAMESPACE: default
 
 ---
 apiVersion: v1
@@ -108,3 +111,86 @@ data:
                 "type": "object"
             }
         }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oathkeeper-rules
+  labels:
+    app.kubernetes.io/managed-by: "Helm"
+  annotations:
+    meta.helm.sh/release-name: "oathkeeper"
+    meta.helm.sh/release-namespace: "default"
+data:
+  "admin_ui_rules.json": |
+    [
+      {
+        "id": "admin-rule-1",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/noop/authorizer/allow/mutator/noop",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "noop"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "noop"
+          }
+        ]
+      },
+      {
+        "id": "admin-rule-2",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/anonymous/authorizer/allow/mutator/header",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "anonymous"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "header"
+          }
+        ]
+      },
+      {
+        "id": "admin-rule-3",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/anonymous/authorizer/allow/mutator/id_token",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "anonymous"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "id_token"
+          }
+        ]
+      }
+    ]

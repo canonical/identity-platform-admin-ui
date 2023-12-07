@@ -1,7 +1,7 @@
 name: identity-platform-admin-ui
 
 base: bare
-build-base: ubuntu:22.04
+build-base: ubuntu@22.04
 version: '1.3.0' # x-release-please-version
 summary: Canonical Identity platform Admin UI
 description: |
@@ -29,7 +29,7 @@ parts:
     source: .
     source-type: local
     build-snaps:
-      - go/1.19/stable
+      - go/1.21/stable
       - node/18/stable
     build-packages:
       - make

@@ -7,8 +7,8 @@ import (
 	reflect "reflect"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	"go.opentelemetry.io/otel/trace"
+	gomock "go.uber.org/mock/gomock"
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"

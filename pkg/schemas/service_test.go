@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
+	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

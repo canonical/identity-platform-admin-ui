@@ -13,7 +13,7 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	kClient "github.com/ory/kratos-client-go"
 )

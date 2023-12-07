@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
+	gomock "go.uber.org/mock/gomock"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/cors v1.2.1
-	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.4.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/ory/hydra-client-go/v2 v2.1.1
@@ -22,6 +21,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.19.0
 	go.opentelemetry.io/otel/sdk v1.19.0
 	go.opentelemetry.io/otel/trace v1.19.0
+	go.uber.org/mock v0.3.0
 	go.uber.org/zap v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1

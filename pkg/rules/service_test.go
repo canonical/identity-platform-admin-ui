@@ -36,6 +36,7 @@ func TestListRulesSuccess(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -102,6 +103,7 @@ func TestListRulesFails(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -163,6 +165,7 @@ func TestGetRuleSuccess(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -229,6 +232,7 @@ func TestGetRuleFails(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -289,6 +293,7 @@ func TestUpdateRuleSuccess(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -347,7 +352,7 @@ func TestUpdateRuleSuccess(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	ruleUpdate := oathkeeper.Rule{
 		Id: &rules2_id,
@@ -378,7 +383,7 @@ func TestUpdateRuleSuccess(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, "mock_config", gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 		func(ctx context.Context, cm *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
-			rules := cm.Data[ADMIN_UI_RULE_FILE]
+			rules := cm.Data[config.File]
 
 			if ruleIncludedInMarshalledList(ruleUpdate, rules) {
 				t.Fatalf("expected result to be %v not %v", string(ruleUpdatedRaw), rules)
@@ -410,6 +415,7 @@ func TestUpdateRuleNotFound(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -468,7 +474,7 @@ func TestUpdateRuleNotFound(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	ruleUpdate := oathkeeper.Rule{
 		Id: &rules3_id,
@@ -515,6 +521,7 @@ func TestUpdateRuleIdMismatch(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -573,7 +580,7 @@ func TestUpdateRuleIdMismatch(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	rule_update := oathkeeper.Rule{
 		Id: &rules3_id,
@@ -619,6 +626,7 @@ func TestCreateRuleSuccess(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -677,7 +685,7 @@ func TestCreateRuleSuccess(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	ruleCreate := oathkeeper.Rule{
 		Id: &rules3_id,
@@ -708,7 +716,7 @@ func TestCreateRuleSuccess(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, "mock_config", gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 		func(ctx context.Context, cm *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
-			rules := cm.Data[ADMIN_UI_RULE_FILE]
+			rules := cm.Data[config.File]
 			if ruleIncludedInMarshalledList(ruleCreate, rules) {
 				t.Fatalf("expected result to be %v not %v", string(ruleCreatedRaw), rules)
 			}
@@ -738,6 +746,7 @@ func TestCreateRuleAlreadyExists(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -795,7 +804,7 @@ func TestCreateRuleAlreadyExists(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	ruleCreate := oathkeeper.Rule{
 		Id: &rules1_id,
@@ -843,6 +852,7 @@ func TestDeleteRuleSuccess(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -879,16 +889,16 @@ func TestDeleteRuleSuccess(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	mockTracer.EXPECT().Start(ctx, "rules.Service.DeleteRule").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockCoreV1.EXPECT().ConfigMaps(config.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, "mock_config", gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 		func(ctx context.Context, cm *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
-			rules := cm.Data[ADMIN_UI_RULE_FILE]
+			rules := cm.Data[config.File]
 			if !isMarshalledRuleListEmpty(rules) {
-				t.Fatalf("expected rule %s to contain empty list, not %s", ADMIN_UI_RULE_FILE, rules)
+				t.Fatalf("expected rule %s to contain empty list, not %s", config.File, rules)
 			}
 
 			return cm, nil
@@ -916,6 +926,7 @@ func TestDeleteRuleFailure(t *testing.T) {
 	ctx := context.Background()
 	config := Config{
 		Name:      "mock_config",
+		File:      "admin_ui_rules.json",
 		Namespace: "mock_namespace",
 		K8s:       mockCoreV1,
 		OkClient:  mockOathkeeperApiApi,
@@ -952,7 +963,7 @@ func TestDeleteRuleFailure(t *testing.T) {
 	rawRuleList, _ := json.Marshal(ruleList)
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[ADMIN_UI_RULE_FILE] = string(rawRuleList)
+	cm.Data[config.File] = string(rawRuleList)
 
 	ruleForDeletion := "mocked_rule3:deny"
 

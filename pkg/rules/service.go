@@ -14,21 +14,19 @@ import (
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-const (
-	ADMIN_UI_RULE_FILE = "admin_ui_rules.json"
-)
-
 type Config struct {
 	Name      string
+	File      string
 	Namespace string
 	K8s       coreV1.CoreV1Interface
 	OkClient  oathkeeper.ApiApi
 }
 
-func NewConfig(cmName, cmNamespace string, k8s coreV1.CoreV1Interface, oathkeeper oathkeeper.ApiApi) *Config {
+func NewConfig(cmName, cmFile, cmNamespace string, k8s coreV1.CoreV1Interface, oathkeeper oathkeeper.ApiApi) *Config {
 	rulesConfig := Config{
 		K8s:       k8s,
 		Name:      cmName,
+		File:      cmFile,
 		Namespace: cmNamespace,
 		OkClient:  oathkeeper,
 	}
@@ -40,6 +38,7 @@ type Service struct {
 	oathkeeper oathkeeper.ApiApi
 
 	cmName      string
+	cmFileName  string
 	cmNamespace string
 
 	k8s coreV1.CoreV1Interface
@@ -114,7 +113,7 @@ func (s *Service) UpdateRule(ctx context.Context, id string, updatedRule oathkee
 		return err
 	}
 
-	cm.Data[ADMIN_UI_RULE_FILE] = rawRuleList
+	cm.Data[s.cmFileName] = rawRuleList
 
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return err
@@ -152,7 +151,7 @@ func (s *Service) CreateRule(ctx context.Context, newRule oathkeeper.Rule) error
 		return err
 	}
 
-	cm.Data[ADMIN_UI_RULE_FILE] = rawRuleList
+	cm.Data[s.cmFileName] = rawRuleList
 
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return err
@@ -188,7 +187,7 @@ func (s *Service) DeleteRule(ctx context.Context, id string) error {
 		return err
 	}
 
-	cm.Data[ADMIN_UI_RULE_FILE] = rawRuleList
+	cm.Data[s.cmFileName] = rawRuleList
 
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return err
@@ -204,7 +203,7 @@ func (s *Service) extractAdminRules(data map[string]string) (map[string]*oathkee
 	ruleMap := make(map[string]*oathkeeper.Rule)
 
 	ruleList := make([]*oathkeeper.Rule, 0)
-	rawRuleList, ok := data[ADMIN_UI_RULE_FILE]
+	rawRuleList, ok := data[s.cmFileName]
 	if !ok {
 		return ruleMap, nil
 	}
@@ -273,6 +272,7 @@ func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorI
 	s.oathkeeper = config.OkClient
 	s.k8s = config.K8s
 	s.cmName = config.Name
+	s.cmFileName = config.File
 	s.cmNamespace = config.Namespace
 
 	s.monitor = monitor

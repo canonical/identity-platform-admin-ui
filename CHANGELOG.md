@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.3.0...v1.4.0) (2024-01-04)
+
+
+### Features
+
+* added unit tests for pkg/rules package ([e36bbd3](https://github.com/canonical/identity-platform-admin-ui/commit/e36bbd3aa2b95e8bb9ce0f4cd57c42c4c16e7c8a))
+* implemented interface for manipulating Oathkeeper rules ([e36bbd3](https://github.com/canonical/identity-platform-admin-ui/commit/e36bbd3aa2b95e8bb9ce0f4cd57c42c4c16e7c8a))
+
+
+### Bug Fixes
+
+* fixed issue with make dev ([0d81544](https://github.com/canonical/identity-platform-admin-ui/commit/0d81544849133ea268e55c3338b4131d0a2e61b4))
+* fixed issues with make dev ([0d81544](https://github.com/canonical/identity-platform-admin-ui/commit/0d81544849133ea268e55c3338b4131d0a2e61b4))
+* make rules cm file name configurable ([3f05b59](https://github.com/canonical/identity-platform-admin-ui/commit/3f05b59bbe7571d7bc1f0d99c72ff5381e9aa54d))
+
 ## [1.3.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.2.0...v1.3.0) (2023-11-03)
 
 

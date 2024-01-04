@@ -7,19 +7,86 @@ service:
   metrics:
     enabled: false
 oathkeeper:
-  managedAccessRules: false
+  managedAccessRules: true
+  accessRules: |
+    [
+      {
+        "id": "admin-rule-1",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/noop/authorizer/allow/mutator/noop",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "noop"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "noop"
+          }
+        ]
+      },
+      {
+        "id": "admin-rule-2",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/anonymous/authorizer/allow/mutator/header",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "anonymous"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "header"
+          }
+        ]
+      },
+      {
+        "id": "admin-rule-3",
+        "upstream": {
+          "url": "https://httpbin.org/anything"
+        },
+        "match": {
+          "url": "http://<[^/]+>/authenticator/anonymous/authorizer/allow/mutator/id_token",
+          "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        },
+        "authenticators": [
+          {
+            "handler": "anonymous"
+          }
+        ],
+        "authorizer": {
+          "handler": "allow"
+        },
+        "mutators": [
+          {
+            "handler": "id_token"
+          }
+        ]
+      }
+    ]
   config:
     access_rules:
       repositories:
-        - file:///etc/rules/admin_ui_rules.json
+        - file:///etc/rules/access-rules.json
     authenticators:
       anonymous:
         enabled: true
-      jwt:
-        enabled: true
-        config:
-          jwks_urls:
-            - "https://raw.githubusercontent.com/ory/k8s/master/helm/charts/oathkeeper/demo/authenticator.jwt.jwks.json"
       noop:
         enabled: true
       unauthorized:
@@ -40,17 +107,9 @@ oathkeeper:
         config:
           headers:
             X-User: "<nil>"
-      id_token:
-        enabled: true
-        config:
-          issuer_url: http://oathkeeper/
-          jwks_url: https://raw.githubusercontent.com/ory/k8s/master/helm/charts/oathkeeper/demo/mutator.id_token.jwks.json
       noop:
         enabled: true
     serve:
-      proxy:
-        cors:
-          enabled: true
       api:
         cors:
           enabled: true

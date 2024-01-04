@@ -51,6 +51,5 @@ npm-build:
 
 
 dev:
-	microk8s.kubectl apply -f $(CONFIGMAP)
 	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --mute-logs=all --port-forward
 .PHONY: dev

@@ -25,5 +25,6 @@ type EnvSpec struct {
 	SchemasConfigMapNamespace string `envconfig:"schemas_configmap_namespace" required:"true"`
 
 	RulesConfigMapName      string `envconfig:"rules_configmap_name" required:"true"`
+	RulesConfigFileName     string `envconfig:"rules_configmap_file_name" default:"admin_ui_rules.json"`
 	RulesConfigMapNamespace string `envconfig:"rules_configmap_namespace" required:"true"`
 }

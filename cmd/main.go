@@ -74,7 +74,7 @@ func main() {
 		Namespace: specs.SchemasConfigMapNamespace,
 	}
 
-	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
+	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
 
 	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
 

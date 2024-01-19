@@ -33,4 +33,4 @@ fileExistenceTests:
 commandTests:
   - name: "application version"
     command: "/usr/bin/identity-platform-admin-ui"
-    args: ["-version"]
+    args: ["version"]

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -6,15 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-
 	"syscall"
 	"time"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	k8s "github.com/canonical/identity-platform-admin-ui/internal/k8s"
-	"github.com/kelseyhightower/envconfig"
-
-	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
@@ -25,9 +22,25 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
+	"github.com/kelseyhightower/envconfig"
+	"github.com/spf13/cobra"
 )
 
-func main() {
+// serveCmd represents the serve command
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Serve starts the web server",
+	Long:  `Launch the web application, list of environment variables is available in the README.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		serve()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(serveCmd)
+}
+
+func serve() {
 
 	specs := new(config.EnvSpec)
 

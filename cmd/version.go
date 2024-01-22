@@ -1,11 +1,9 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +13,7 @@ var versionCmd = &cobra.Command{
 	Short: "Get the application's version.",
 	Long:  `Get the application's version.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("TODO")
+		fmt.Printf("App Version: %s\n", version.Version)
 	},
 }
 

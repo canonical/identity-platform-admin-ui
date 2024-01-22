@@ -1,0 +1,27 @@
+model
+  schema 1.1
+
+type admin
+  relations
+    define accessible: [group:*, role:*, api:*]
+
+type user
+
+type role
+  relations
+    define assignee: [user, group#member]
+
+type group
+  relations
+    define member: [user, group#member]
+
+type api
+  relations
+    define admin: [role#assignee, group#member]
+    define can_create: editor or admin
+    define can_delete: [user, role#assignee, group#member] or admin
+    define can_edit: editor or admin
+    define can_list: viewer or admin
+    define can_view: viewer or admin
+    define editor: [user, role#assignee, group#member]
+    define viewer: [user, role#assignee, group#member] or editor

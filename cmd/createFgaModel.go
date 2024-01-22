@@ -1,31 +1,63 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/url"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	fga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/spf13/cobra"
 )
 
 // createFgaModelCmd represents the createFgaModel command
 var createFgaModelCmd = &cobra.Command{
 	Use:   "create-fga-model",
-	Short: "Create the openfga model.",
-	Long:  `Create the openfga model.`,
+	Short: "Creates an openfga model",
+	Long:  `Creates an openfga model`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("TODO")
+		apiUrl, _ := cmd.Flags().GetString("fga-api-url")
+		apiToken, _ := cmd.Flags().GetString("fga-api-token")
+		storeId, _ := cmd.Flags().GetString("store-id")
+		createModel(apiUrl, apiToken, storeId)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(createFgaModelCmd)
 
-	// Here you will define your flags and configuration settings.
+	createFgaModelCmd.Flags().String("fga-api-url", "", "The openfga API URL")
+	createFgaModelCmd.Flags().String("fga-api-token", "", "The openfga API token")
+	createFgaModelCmd.Flags().String("fga-store-id", "", "The openfga store to create the model in")
+	createFgaModelCmd.MarkFlagRequired("fga-api-url")
+	createFgaModelCmd.MarkFlagRequired("fga-api-token")
+	createFgaModelCmd.MarkFlagRequired("fga-store-id")
+}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createFgaModelCmd.PersistentFlags().String("foo", "", "A help for foo")
+func createModel(apiUrl, apiToken, storeId string) {
+	logger := logging.NewNoopLogger()
+	tracer := tracing.NewNoopTracer()
+	monitor := monitoring.NewNoopMonitor("", logger)
+	scheme, host, err := parseURL(apiUrl)
+	if err != nil {
+		panic(err)
+	}
+	cfg := fga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
+	fgaClient := fga.NewClient(cfg)
+	modelId, err := fgaClient.WriteModel(context.Background(), []byte(authorization.AuthModel))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created model: %s\n", modelId)
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createFgaModelCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func parseURL(s string) (string, string, error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		return "", "", err
+	}
+	return u.Scheme, u.Host, nil
 }

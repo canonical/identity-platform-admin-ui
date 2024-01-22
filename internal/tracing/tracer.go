@@ -128,3 +128,7 @@ func NewTracer(cfg *Config) *Tracer {
 
 	return t
 }
+
+func NewNoopTracer() *Tracer {
+	return NewTracer(NewNoopConfig())
+}

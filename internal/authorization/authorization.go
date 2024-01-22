@@ -2,13 +2,11 @@ package authorization
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	fga "github.com/openfga/go-sdk"
 )
 
 var ErrInvalidAuthModel = fmt.Errorf("Invalid authorization model schema")
@@ -57,13 +55,7 @@ func (a *Authorizer) ValidateModel(ctx context.Context) error {
 	ctx, span := a.tracer.Start(ctx, "authorization.Authorizer.ValidateModel")
 	defer span.End()
 
-	var builtinAuthorizationModel fga.AuthorizationModel
-	err := json.Unmarshal([]byte(AuthModel), &builtinAuthorizationModel)
-	if err != nil {
-		return err
-	}
-
-	eq, err := a.client.CompareModel(ctx, builtinAuthorizationModel)
+	eq, err := a.client.CompareModel(ctx, AuthModel)
 	if err != nil {
 		return err
 	}

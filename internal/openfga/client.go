@@ -2,7 +2,6 @@ package openfga
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -75,18 +74,12 @@ func (c *Client) ReadModel(ctx context.Context) (*openfga.AuthorizationModel, er
 	return authModel.AuthorizationModel, nil
 }
 
-func (c *Client) WriteModel(ctx context.Context, model []byte) (string, error) {
+func (c *Client) WriteModel(ctx context.Context, authModel *client.ClientWriteAuthorizationModelRequest) (string, error) {
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.WriteModel")
 	defer span.End()
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-
-	authModel := new(client.ClientWriteAuthorizationModelRequest)
-
-	if err := json.Unmarshal(model, authModel); err != nil {
-		return "", err
-	}
 
 	data, err := c.c.WriteAuthorizationModelExecute(
 		c.c.WriteAuthorizationModel(ctx).Body(*authModel),

@@ -10,6 +10,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	fga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,7 @@ var createFgaModelCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		apiUrl, _ := cmd.Flags().GetString("fga-api-url")
 		apiToken, _ := cmd.Flags().GetString("fga-api-token")
-		storeId, _ := cmd.Flags().GetString("store-id")
+		storeId, _ := cmd.Flags().GetString("fga-store-id")
 		createModel(apiUrl, apiToken, storeId)
 	},
 }
@@ -47,7 +48,12 @@ func createModel(apiUrl, apiToken, storeId string) {
 	}
 	cfg := fga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
 	fgaClient := fga.NewClient(cfg)
-	modelId, err := fgaClient.WriteModel(context.Background(), []byte(authorization.AuthModel))
+	authModelReq := client.ClientWriteAuthorizationModelRequest{
+		TypeDefinitions: authorization.AuthModel.TypeDefinitions,
+		SchemaVersion:   authorization.AuthModel.SchemaVersion,
+		Conditions:      authorization.AuthModel.Conditions,
+	}
+	modelId, err := fgaClient.WriteModel(context.Background(), &authModelReq)
 	if err != nil {
 		panic(err)
 	}

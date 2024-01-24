@@ -11,9 +11,9 @@ build:
     custom:
       buildCommand: ./build.sh
       dependencies:
-        paths: 
+        paths:
           - rockcraft.yaml
-    platforms: ["linux/amd64"]        
+    platforms: ["linux/amd64"]
   local:
     push: true
 
@@ -49,6 +49,11 @@ deploy:
         repo: https://k8s.ory.sh/helm/charts
         valuesFiles: ["deployments/helm/oathkeeper/values.yaml"]
         wait: false
+      - name: openfga
+        remoteChart: openfga
+        repo: https://openfga.github.io/helm-charts
+        valuesFiles: ["deployments/helm/openfga/values.yaml"]
+        wait: false
 
 portForward:
 - resourceType: service
@@ -81,3 +86,8 @@ portForward:
   namespace: default
   port: 4456
   localPort: 14456
+- resourceType: service
+  resourceName: openfga
+  namespace: default
+  port: 8080
+  localPort: 14457

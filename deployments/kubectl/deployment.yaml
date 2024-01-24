@@ -8,8 +8,8 @@ spec:
   selector:
     matchLabels:
       app: identity-platform-admin-ui
-  strategy: 
-    type: Recreate    
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:

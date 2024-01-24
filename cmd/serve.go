@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	k8s "github.com/canonical/identity-platform-admin-ui/internal/k8s"
@@ -16,6 +17,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
@@ -77,6 +79,20 @@ func serve() {
 	}
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
+
+	var authzClient authorization.AuthzClientInterface
+	if specs.AuthorizationEnabled {
+		logger.Info("Authorization is enabled")
+		cfg := openfga.NewConfig(specs.ApiScheme, specs.ApiHost, specs.StoreId, specs.ApiToken, specs.AuthorizationModelId, specs.Debug, tracer, monitor, logger)
+		authzClient = openfga.NewClient(cfg)
+	} else {
+		logger.Info("Authorization is disabled, using noop authorizer")
+		authzClient = openfga.NewNoopClient(tracer, monitor, logger)
+	}
+	authorizer := authorization.NewAuthorizer(authzClient, tracer, monitor, logger)
+	if authorizer.ValidateModel(context.Background()) != nil {
+		panic("Invalid authorization model provided")
+	}
 
 	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
 

@@ -34,6 +34,10 @@ func (c *NoopClient) Check(ctx context.Context, user string, relation string, ob
 	return true, nil
 }
 
+func (c *NoopClient) WriteTuple(ctx context.Context, user string, relation string, object string) error {
+	return nil
+}
+
 func (c *NoopClient) ReadModel(ctx context.Context) (*openfga.AuthorizationModel, error) {
 	return nil, nil
 }

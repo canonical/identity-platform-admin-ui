@@ -11,7 +11,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	fga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
@@ -49,8 +49,8 @@ func createModel(apiUrl, apiToken, storeId string) {
 	if err != nil {
 		panic(err)
 	}
-	cfg := fga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
-	fgaClient := fga.NewClient(cfg)
+	cfg := openfga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
+	fgaClient := openfga.NewClient(cfg)
 	authModelReq := client.ClientWriteAuthorizationModelRequest{
 		TypeDefinitions: authorization.AuthModel.TypeDefinitions,
 		SchemaVersion:   authorization.AuthModel.SchemaVersion,

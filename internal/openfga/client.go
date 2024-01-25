@@ -144,6 +144,23 @@ func (c *Client) Check(ctx context.Context, user string, relation string, object
 	return check.GetAllowed(), nil
 }
 
+func (c *Client) WriteTuple(ctx context.Context, user, relation, object string) error {
+	ctx, span := c.tracer.Start(ctx, "openfga.Client.WriteTuple")
+	defer span.End()
+
+	r := c.APIClient().OpenFgaApi.Write(ctx)
+	body := openfga.NewWriteRequest()
+	body.SetWrites(*openfga.NewWriteRequestWrites(
+		[]openfga.TupleKey{
+			*openfga.NewTupleKey(user, relation, object),
+		},
+	))
+	r = r.Body(*body)
+	_, _, err := c.APIClient().OpenFgaApi.WriteExecute(r)
+
+	return err
+}
+
 func (c *Client) CompareModel(ctx context.Context, model openfga.AuthorizationModel) (bool, error) {
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.ReadModel")
 	defer span.End()

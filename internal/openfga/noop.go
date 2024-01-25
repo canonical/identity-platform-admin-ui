@@ -38,6 +38,10 @@ func (c *NoopClient) WriteTuple(ctx context.Context, user string, relation strin
 	return nil
 }
 
+func (c *NoopClient) DeleteTuple(ctx context.Context, user string, relation string, object string) error {
+	return nil
+}
+
 func (c *NoopClient) ReadModel(ctx context.Context) (*openfga.AuthorizationModel, error) {
 	return nil, nil
 }

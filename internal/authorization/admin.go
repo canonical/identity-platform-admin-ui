@@ -28,12 +28,21 @@ func (a *AdminAuthorizer) CreateAdmin(ctx context.Context, username string) erro
 	return err
 }
 
-func (a *Authorizer) CheckAdmin(ctx context.Context, username string) (bool, error) {
-	ctx, span := a.tracer.Start(ctx, "authorization.Authorizer.CheckAdmin")
+func (a *AdminAuthorizer) RemoveAdmin(ctx context.Context, username string) error {
+	ctx, span := a.tracer.Start(ctx, "authorization.AdminAuthorizer.RemoveAdmin")
 	defer span.End()
 
 	user := fmt.Sprintf("user:%s", username)
-	allowed, err := a.Check(ctx, user, "admin", ADMIN_OBJECT)
+	err := a.client.DeleteTuple(ctx, user, "admin", ADMIN_OBJECT)
+	return err
+}
+
+func (a *AdminAuthorizer) CheckAdmin(ctx context.Context, username string) (bool, error) {
+	ctx, span := a.tracer.Start(ctx, "authorization.AdminAuthorizer.CheckAdmin")
+	defer span.End()
+
+	user := fmt.Sprintf("user:%s", username)
+	allowed, err := a.client.Check(ctx, user, "admin", ADMIN_OBJECT)
 
 	return allowed, err
 }

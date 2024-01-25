@@ -161,6 +161,23 @@ func (c *Client) WriteTuple(ctx context.Context, user, relation, object string) 
 	return err
 }
 
+func (c *Client) DeleteTuple(ctx context.Context, user, relation, object string) error {
+	ctx, span := c.tracer.Start(ctx, "openfga.Client.DeleteTuple")
+	defer span.End()
+
+	r := c.APIClient().OpenFgaApi.Write(ctx)
+	body := openfga.NewWriteRequest()
+	body.SetDeletes(*openfga.NewWriteRequestDeletes(
+		[]openfga.TupleKeyWithoutCondition{
+			*openfga.NewTupleKeyWithoutCondition(user, relation, object),
+		},
+	))
+	r = r.Body(*body)
+	_, _, err := c.APIClient().OpenFgaApi.WriteExecute(r)
+
+	return err
+}
+
 func (c *Client) CompareModel(ctx context.Context, model openfga.AuthorizationModel) (bool, error) {
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.ReadModel")
 	defer span.End()

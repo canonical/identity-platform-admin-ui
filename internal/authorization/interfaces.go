@@ -22,4 +22,5 @@ type AuthzClientInterface interface {
 	ReadModel(context.Context) (*fga.AuthorizationModel, error)
 	CompareModel(context.Context, fga.AuthorizationModel) (bool, error)
 	WriteTuple(ctx context.Context, user, relation, object string) error
+	DeleteTuple(ctx context.Context, user, relation, object string) error
 }

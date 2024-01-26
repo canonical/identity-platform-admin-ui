@@ -11,6 +11,7 @@ primary:
       init.sql: |
         CREATE DATABASE kratos;
         CREATE DATABASE hydra;
+        CREATE DATABASE openfga;
 
 auth:
   database: "iam"

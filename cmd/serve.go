@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -6,43 +6,47 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-
 	"syscall"
 	"time"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	k8s "github.com/canonical/identity-platform-admin-ui/internal/k8s"
-	"github.com/kelseyhightower/envconfig"
-
-	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"github.com/canonical/identity-platform-admin-ui/internal/version"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
+	"github.com/kelseyhightower/envconfig"
+	"github.com/spf13/cobra"
 )
 
-func main() {
+// serveCmd represents the serve command
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Serve starts the web server",
+	Long:  `Launch the web application, list of environment variables is available in the README.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		serve()
+	},
+}
+
+func init() {
+	rootCmd.AddCommand(serveCmd)
+}
+
+func serve() {
 
 	specs := new(config.EnvSpec)
 
 	if err := envconfig.Process("", specs); err != nil {
 		panic(fmt.Errorf("issues with environment sourcing: %s", err))
-	}
-
-	flags := config.NewFlags()
-
-	switch {
-	case flags.ShowVersion:
-		fmt.Printf("App Version: %s\n", version.Version)
-		os.Exit(0)
-	default:
-		break
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
@@ -75,6 +79,20 @@ func main() {
 	}
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
+
+	var authzClient authorization.AuthzClientInterface
+	if specs.AuthorizationEnabled {
+		logger.Info("Authorization is enabled")
+		cfg := openfga.NewConfig(specs.ApiScheme, specs.ApiHost, specs.StoreId, specs.ApiToken, specs.AuthorizationModelId, specs.Debug, tracer, monitor, logger)
+		authzClient = openfga.NewClient(cfg)
+	} else {
+		logger.Info("Authorization is disabled, using noop authorizer")
+		authzClient = openfga.NewNoopClient(tracer, monitor, logger)
+	}
+	authorizer := authorization.NewAuthorizer(authzClient, tracer, monitor, logger)
+	if authorizer.ValidateModel(context.Background()) != nil {
+		panic("Invalid authorization model provided")
+	}
 
 	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
 

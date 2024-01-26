@@ -1,0 +1,7 @@
+datastore:
+  engine: postgres
+  uri: "postgres://iam:iam@postgresql.default.svc.cluster.local/openfga?sslmode=disable"
+authn:
+  preshared:
+    keys:
+      - "42"

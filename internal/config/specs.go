@@ -27,4 +27,11 @@ type EnvSpec struct {
 	RulesConfigMapName      string `envconfig:"rules_configmap_name" required:"true"`
 	RulesConfigFileName     string `envconfig:"rules_configmap_file_name" default:"admin_ui_rules.json"`
 	RulesConfigMapNamespace string `envconfig:"rules_configmap_namespace" required:"true"`
+
+	ApiScheme            string `envconfig:"openfga_api_scheme" default:""`
+	ApiHost              string `envconfig:"openfga_api_host"`
+	ApiToken             string `envconfig:"openfga_api_token"`
+	StoreId              string `envconfig:"openfga_store_id"`
+	AuthorizationModelId string `envconfig:"openfga_authorization_model_id" default:""`
+	AuthorizationEnabled bool   `envconfig:"authorization_enabled" default:"false"`
 }

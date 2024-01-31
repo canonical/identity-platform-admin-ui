@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.4.0...v1.5.0) (2024-01-26)
+
+
+### Features
+
+* use cobra-cli ([8f061d3](https://github.com/canonical/identity-platform-admin-ui/commit/8f061d3168545cb8d5a04770cd06549a29ba3c2d))
+
+
+### Bug Fixes
+
+* add config for openfga integration ([bc751e2](https://github.com/canonical/identity-platform-admin-ui/commit/bc751e2842b6791c96a9316d26ebbb3d0e500944))
+* add logic for create-fga-model ([7fc9a6c](https://github.com/canonical/identity-platform-admin-ui/commit/7fc9a6c4bba714cfba23e6a880e3314c9fc68126))
+* add noop tracer ([f97484c](https://github.com/canonical/identity-platform-admin-ui/commit/f97484cf2758f66506c93262214152898099f08a))
+* add openfga module ([d7d3418](https://github.com/canonical/identity-platform-admin-ui/commit/d7d34183d7ec1c9513d08577e26fcb1606d4cae2))
+* implement version command ([fe5fc83](https://github.com/canonical/identity-platform-admin-ui/commit/fe5fc8359cbb06d3e4921d803240b4954def2fc0))
+* introduce authorization module ([28df12b](https://github.com/canonical/identity-platform-admin-ui/commit/28df12bd29de1f2bd085a52f9aa012e517cb7325))
+* introduce noop logging and monitoring ([09b529d](https://github.com/canonical/identity-platform-admin-ui/commit/09b529d3a519a30bdb46c5fe18ea5c782429cdd5))
+
 ## [1.4.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.3.0...v1.4.0) (2024-01-04)
 
 

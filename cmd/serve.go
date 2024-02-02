@@ -93,12 +93,13 @@ func serve() {
 		logger.Info("Authorization is disabled, using noop authorizer")
 		authzClient = openfga.NewNoopClient(tracer, monitor, logger)
 	}
+
 	authorizer := authorization.NewAuthorizer(authzClient, tracer, monitor, logger)
 	if authorizer.ValidateModel(context.Background()) != nil {
 		panic("Invalid authorization model provided")
 	}
 
-	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, tracer, monitor, logger)
+	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, authzClient, tracer, monitor, logger)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

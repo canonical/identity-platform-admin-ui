@@ -1,6 +1,6 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
+// Copyright 2024 Canonical Ltd
+// SPDX-License-Identifier: AGPL
+
 package cmd
 
 import (

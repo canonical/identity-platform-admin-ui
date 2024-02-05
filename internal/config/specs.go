@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd
+// SPDX-License-Identifier: AGPL
+
 package config
 
 // EnvSpec is the basic environment configuration setup needed for the app to start

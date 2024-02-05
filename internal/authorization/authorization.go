@@ -20,6 +20,8 @@ type Authorizer struct {
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
+
+	AdminAuthorizer
 }
 
 func (a *Authorizer) Check(ctx context.Context, user string, relation string, object string) (bool, error) {
@@ -74,6 +76,7 @@ func NewAuthorizer(client AuthzClientInterface, tracer tracing.TracingInterface,
 	authorizer.tracer = tracer
 	authorizer.monitor = monitor
 	authorizer.logger = logger
+	authorizer.AdminAuthorizer = *NewAdminAuthorizer(client, tracer, monitor, logger)
 
 	return authorizer
 }

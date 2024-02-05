@@ -1,15 +1,16 @@
 model
   schema 1.1
 
-type admin
-  relations
-    define accessible: [group:*, role:*, api:*]
-
 type user
+
+type privileged
+ relations
+   define admin: [user]
 
 type role
   relations
-    define assignee: [user, group#member]
+   define privileged: [privileged]
+   define assignee: [user, group#member] or admin from privileged
 
 type group
   relations

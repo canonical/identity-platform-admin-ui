@@ -49,7 +49,10 @@ npm-build:
 	$(MAKE) -C ui/ build
 .PHONY: npm-build
 
-
 dev:
-	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run --mute-logs=all --port-forward
+	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run \
+		--mute-logs=all \
+		--port-forward \
+		--no-prune=false \
+		--cache-artifacts=false
 .PHONY: dev

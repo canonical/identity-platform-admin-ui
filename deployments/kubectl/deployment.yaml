@@ -19,9 +19,20 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
     spec:
+      initContainers:
+        - name: init
+          image: busybox
+          command: [ "/bin/sh", "-c", "while [ ! -s /data/openfga/OPENFGA_STORE_ID ] || [ ! -s /data/openfga/OPENFGA_AUTHORIZATION_MODEL_ID ]; do sleep 5; done" ]
+          volumeMounts:
+            - mountPath: /data/openfga
+              name: openfga-pv-data
       containers:
       - image: identity-platform-admin-ui
         name: identity-platform-admin-ui
+        command: [ "/bin/sh", "-c", "export OPENFGA_STORE_ID=$(cat /data/OPENFGA_STORE_ID) OPENFGA_AUTHORIZATION_MODEL_ID=$(cat /data/OPENFGA_AUTHORIZATION_MODEL_ID); /usr/bin/identity-platform-admin-ui serve" ]
+        volumeMounts:
+          - mountPath: /data
+            name: openfga-pv-data
         envFrom:
           - configMapRef:
               name: identity-platform-admin-ui
@@ -46,3 +57,7 @@ spec:
           periodSeconds: 30
       imagePullSecrets:
       - name: regcred-github
+      volumes:
+        - name: openfga-pv-data
+          persistentVolumeClaim:
+            claimName: openfga-pv-claim

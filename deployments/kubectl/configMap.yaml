@@ -112,3 +112,33 @@ data:
                 "type": "object"
             }
         }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openfga-init
+data:
+  init.sh: |
+    #!/bin/sh
+
+    set -e
+
+    OPENFGA_URL='http://openfga.default.svc.cluster.local:8080'
+
+    until [ "$(curl -s -o /dev/null -w "%{http_code}" $OPENFGA_URL/stores)" -eq 200 ]; do
+      sleep 5
+    done
+
+    curl -sS -X POST ${OPENFGA_URL}/stores \
+      -H 'Content-Type: application/json' \
+      -d '{"name": "dev"}' | jq -r '.id' > /data/OPENFGA_STORE_ID
+
+    openfga_store_id=$(cat /data/OPENFGA_STORE_ID)
+    /usr/bin/identity-platform-admin-ui create-fga-model \
+      --fga-api-url "$OPENFGA_URL" \
+      --fga-api-token "42" \
+      --fga-store-id "$openfga_store_id"
+
+    curl -sS ${OPENFGA_URL}/stores/"$openfga_store_id"/authorization-models \
+      | jq -r '.authorization_models[0].id' > /data/OPENFGA_AUTHORIZATION_MODEL_ID

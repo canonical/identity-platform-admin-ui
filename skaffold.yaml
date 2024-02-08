@@ -28,7 +28,7 @@ manifests:
     - "deployments/kubectl/*"
 
 deploy:
-  kubectl:
+  kubectl: {}
   helm:
     releases:
       - name: postgresql

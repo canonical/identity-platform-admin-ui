@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1
+
+kind: Job
+metadata:
+  name: openfga-init
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: job
+          image: identity-platform-admin-ui
+          command: [ "/bin/sh",  "-c", "/scripts/init.sh" ]
+          volumeMounts:
+            - mountPath: /scripts
+              name: openfga-init
+            - mountPath: /data
+              name: openfga-pv
+      restartPolicy: Never
+      volumes:
+        - name: openfga-init
+          configMap:
+            name: openfga-init
+            defaultMode: 0755
+        - name: openfga-pv
+          persistentVolumeClaim:
+            claimName: openfga-pv-claim

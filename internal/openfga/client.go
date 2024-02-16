@@ -20,45 +20,15 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-type Config struct {
-	ApiScheme   string
-	ApiHost     string
-	StoreID     string
-	ApiToken    string
-	AuthModelID string
-	Debug       bool
-
-	Tracer  tracing.TracingInterface
-	Monitor monitoring.MonitorInterface
-	Logger  logging.LoggerInterface
-}
-
-func NewConfig(apiScheme, apiHost, storeID, apiToken, authModelID string, debug bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Config {
-	c := new(Config)
-
-	c.ApiScheme = apiScheme
-	c.ApiHost = apiHost
-	c.StoreID = storeID
-	c.ApiToken = apiToken
-	c.AuthModelID = authModelID
-	c.Debug = debug
-
-	c.Monitor = monitor
-	c.Tracer = tracer
-	c.Logger = logger
-
-	return c
-}
-
 type Client struct {
-	c *client.OpenFgaClient
+	c OpenFGAClientInterface
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
 
-func (c *Client) APIClient() *client.OpenFgaClient {
+func (c *Client) APIClient() OpenFGAClientInterface {
 	return c.c
 }
 
@@ -128,15 +98,15 @@ func (c *Client) WriteTuple(ctx context.Context, user, relation, object string) 
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.WriteTuple")
 	defer span.End()
 
-	r := c.APIClient().Write(ctx)
-	body := openfga.NewWriteRequest()
-	body.SetWrites(*openfga.NewWriteRequestWrites(
-		[]openfga.TupleKey{
+	r := c.c.Write(ctx)
+	body := client.ClientWriteRequest{
+		Writes: []openfga.TupleKey{
 			*openfga.NewTupleKey(user, relation, object),
 		},
-	))
-	r = r.Body(*body)
-	_, _, err := c.APIClient().WriteExecute(r)
+	}
+
+	r = r.Body(body)
+	_, err := c.c.WriteExecute(r)
 
 	return err
 }
@@ -145,15 +115,14 @@ func (c *Client) DeleteTuple(ctx context.Context, user, relation, object string)
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.DeleteTuple")
 	defer span.End()
 
-	r := c.APIClient().Write(ctx)
-	body := openfga.NewWriteRequest()
-	body.SetDeletes(*openfga.NewWriteRequestDeletes(
-		[]openfga.TupleKeyWithoutCondition{
+	r := c.c.Write(ctx)
+	body := client.ClientWriteRequest{
+		Deletes: []openfga.TupleKeyWithoutCondition{
 			*openfga.NewTupleKeyWithoutCondition(user, relation, object),
 		},
-	))
-	r = r.Body(*body)
-	_, _, err := c.APIClient().WriteExecute(r)
+	}
+	r = r.Body(body)
+	_, err := c.c.WriteExecute(r)
 
 	return err
 }
@@ -168,12 +137,13 @@ func (c *Client) WriteTuples(ctx context.Context, tuples ...Tuple) error {
 		ts = append(ts, *openfga.NewTupleKey(tuple.Values()))
 	}
 
-	r := c.APIClient().Write(ctx)
-	body := openfga.NewWriteRequest()
-	body.SetWrites(*openfga.NewWriteRequestWrites(ts))
+	r := c.c.Write(ctx)
+	body := client.ClientWriteRequest{
+		Writes: ts,
+	}
 
-	r = r.Body(*body)
-	_, _, err := c.APIClient().WriteExecute(r)
+	r = r.Body(body)
+	_, err := c.c.WriteExecute(r)
 
 	return err
 }
@@ -188,12 +158,13 @@ func (c *Client) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
 		ts = append(ts, *openfga.NewTupleKeyWithoutCondition(tuple.Values()))
 	}
 
-	r := c.APIClient().Write(ctx)
-	body := openfga.NewWriteRequest()
-	body.SetDeletes(*openfga.NewWriteRequestDeletes(ts))
+	r := c.c.Write(ctx)
+	body := client.ClientWriteRequest{
+		Deletes: ts,
+	}
 
-	r = r.Body(*body)
-	_, _, err := c.APIClient().WriteExecute(r)
+	r = r.Body(body)
+	_, err := c.c.WriteExecute(r)
 
 	return err
 }
@@ -205,19 +176,17 @@ func (c *Client) Check(ctx context.Context, user, relation, object string) (bool
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.Check")
 	defer span.End()
 
-	r := c.APIClient().Check(ctx)
-	body := openfga.NewCheckRequest(
-		openfga.CheckRequestTupleKey{
-			User:     user,
-			Relation: relation,
-			Object:   object,
-		},
-	)
-	r = r.Body(*body)
+	r := c.c.Check(ctx)
+	body := client.ClientCheckRequest{
+		User:     user,
+		Relation: relation,
+		Object:   object,
+	}
 
-	check, res, err := c.APIClient().CheckExecute(r)
+	r = r.Body(body)
+
+	check, err := c.c.CheckExecute(r)
 	if err != nil {
-		c.logger.Errorf("result from server: %v", res)
 		c.logger.Infof("body args: %s %s %s", user, relation, object)
 		c.logger.Errorf("issues performing check operation: %s", err)
 		return false, err
@@ -283,23 +252,22 @@ func (c *Client) BatchCheck(ctx context.Context, tuples ...Tuple) (bool, error) 
 // ########################## Check Operations #######################################
 
 // ########################## Read Operations #######################################
-func (c *Client) ReadTuples(ctx context.Context, user, relation, object, continuationToken string) (openfga.ReadResponse, error) {
-	ctx, span := c.tracer.Start(ctx, "openfga.Client.ReadTuple")
+func (c *Client) ReadTuples(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
+	ctx, span := c.tracer.Start(ctx, "openfga.Client.ReadTuples")
 	defer span.End()
 
-	r := c.APIClient().Read(ctx)
+	r := c.c.Read(ctx)
 
-	tuple := openfga.NewReadRequestTupleKey()
-	tuple.SetObject(object)
-	tuple.SetRelation(relation)
-	tuple.SetUser(user)
+	body := client.ClientReadRequest{
+		User:     &user,
+		Relation: &relation,
+		Object:   &object,
+	}
 
-	body := openfga.NewReadRequest()
-	body.SetTupleKey(*tuple)
-	body.SetContinuationToken(continuationToken)
+	r = r.Body(body).Options(client.ClientReadOptions{ContinuationToken: &continuationToken})
+	res, err := c.c.ReadExecute(r)
 
-	r = r.Body(*body)
-	res, _, err := c.APIClient().ReadExecute(r)
+	// TODO @shipperizer do we want to log in here or simply return the error?
 
 	return res, err
 }
@@ -308,21 +276,22 @@ func (c *Client) ListObjects(ctx context.Context, user, relation, objectType str
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.ListObjects")
 	defer span.End()
 
-	r := c.APIClient().ListObjects(ctx)
+	r := c.c.ListObjects(ctx)
 
-	body := &openfga.ListObjectsRequest{
+	body := client.ClientListObjectsRequest{
 		User:     user,
 		Relation: relation,
 		Type:     objectType,
 	}
-	r = r.Body(*body)
-	objectsResponse, _, err := c.APIClient().ListObjectsExecute(r)
+	r = r.Body(body)
+	objectsResponse, err := c.c.ListObjectsExecute(r)
 	if err != nil {
 		c.logger.Errorf("issues performing list operation: %s", err)
 		return nil, err
 	}
 
 	allowedObjs := make([]string, len(objectsResponse.GetObjects()))
+	// TODO @shipperizer evaluate if this needs removing
 	for i, p := range objectsResponse.GetObjects() {
 		// remove the "{objectType}:" prefix from the response
 		allowedObjs[i] = p[len(fmt.Sprintf("%s:", objectType)):]

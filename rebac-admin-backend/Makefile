@@ -11,5 +11,5 @@ help:
 
 # Pull the latest stable OpenAPI spec and generate Go types
 pull-spec:
-	./script/pull-spec.sh
+	./script/generate-resources-from-spec.sh
 .PHONY: pull-spec

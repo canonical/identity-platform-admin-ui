@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 	qt "github.com/frankban/quicktest"
+
+	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
 func TestGetErrorResponse(t *testing.T) {

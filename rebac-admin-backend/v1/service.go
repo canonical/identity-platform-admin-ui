@@ -11,4 +11,7 @@ type service struct {
 
 	GroupsService       GroupsServiceBackend
 	GroupsAuthorization GroupsAuthorizationBackend
+
+	IdentitiesService       IdentitiesServiceBackend
+	IdentitiesAuthorization IdentitiesAuthorizationBackend
 }

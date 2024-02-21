@@ -28,9 +28,17 @@ type ReBACAdminBackend struct {
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
 func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
+	return newReBACAdminBackendWithService(params, &service{})
+}
+
+// newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured
+// with given backends and service implementation.
+//
+// This is intended for internal/test use cases.
+func newReBACAdminBackendWithService(params ReBACAdminBackendParams, service resources.ServerInterface) *ReBACAdminBackend {
 	return &ReBACAdminBackend{
 		params:  params,
-		service: service{},
+		service: service,
 	}
 }
 
@@ -38,6 +46,7 @@ func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
 	return resources.HandlerWithOptions(b.service, resources.ChiServerOptions{
-		BaseURL: baseURL + "/v1",
+		BaseURL:          baseURL + "/v1",
+		ErrorHandlerFunc: writeErrorResponse,
 	})
 }

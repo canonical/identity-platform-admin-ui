@@ -12,7 +12,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-func TestGetErrorResponse(t *testing.T) {
+func TestMapErrorResponse(t *testing.T) {
 	c := qt.New(t)
 
 	tests := []struct {
@@ -81,7 +81,7 @@ func TestGetErrorResponse(t *testing.T) {
 	for _, t := range tests {
 		tt := t
 		c.Run(tt.name, func(c *qt.C) {
-			value := getErrorResponse(tt.arg)
+			value := mapErrorResponse(tt.arg)
 			c.Assert(value, qt.DeepEquals, tt.expected)
 		})
 	}

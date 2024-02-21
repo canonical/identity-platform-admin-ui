@@ -12,7 +12,7 @@ import (
 // writeErrorResponse writes the given err in the response with format defined
 // by the OpenAPI spec.
 func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	resp := getErrorResponse(err)
+	resp := mapErrorResponse(err)
 
 	body, err := json.Marshal(resp)
 	if err != nil {
@@ -24,8 +24,8 @@ func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	w.Write(body)
 }
 
-// getErrorResponse returns a Response instance filled with the given error.
-func getErrorResponse(err error) resources.Response {
+// mapErrorResponse returns a Response instance filled with the given error.
+func mapErrorResponse(err error) resources.Response {
 	if isBadRequestError(err) {
 		return resources.Response{
 			Status:  http.StatusBadRequest,

@@ -51,19 +51,20 @@ func mapErrorResponse(err error) *resources.Response {
 	}
 }
 
-// isBadRequestError determines whether the given error should be teated as a
-// "Bad Request" (400) error.
-func isBadRequestError(err error) bool {
-	switch err.(type) {
-	case *resources.UnmarshalingParamError:
-		return true
-	case *resources.RequiredParamError:
-		return true
-	case *resources.RequiredHeaderError:
-		return true
-	case *resources.InvalidParamFormatError:
-		return true
-	case *resources.TooManyValuesForParamError:
-		return true
+// writeResponse is a helper method to avoid verbose repetition of very common instructions
+// it writes to the ResponseWriter either:
+// - the provided marshalledResponse if marshalErr is nil
+// - or the mapped error response based on marshalErr if it is not nil
+func writeResponse(w http.ResponseWriter, status int, marshalledResp []byte, marshalErr error) {
+	if marshalErr != nil {
+		writeErrorResponse(w, marshalErr)
+		return
+	}
+
+	w.WriteHeader(status)
+	_, err := w.Write(marshalledResp)
+
+	if err != nil {
+		writeErrorResponse(w, err)
 	}
 }

@@ -8,27 +8,30 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// baseError struct for all error structs
-type baseError struct {
-	message string
-}
-
 // UnauthorizedError represents unauthorized access error.
 type UnauthorizedError struct {
-	baseError
+	message string
 }
 
 func (e *UnauthorizedError) Error() string {
 	return fmt.Sprintf("Unauthorized: %s", e.message)
 }
 
+func NewUnauthorizedError(message string) *UnauthorizedError {
+	return &UnauthorizedError{message}
+}
+
 // NotFoundError represents missing entity error.
 type NotFoundError struct {
-	baseError
+	message string
 }
 
 func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("Not found: %s", e.message)
+}
+
+func NewNotFoundError(message string) *NotFoundError {
+	return &NotFoundError{message}
 }
 
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
@@ -53,6 +56,8 @@ func (d delegateErrorResponseMapper) MapError(err error) *resources.Response {
 	return response
 }
 
+// NewDefaultErrorResponseMapper returns a pointer to an errorMapper that maps known errors
+// to specific error responses and all custom errors to 500 Internal server error responses
 func NewDefaultErrorResponseMapper() ErrorResponseMapper {
 	return &delegateErrorResponseMapper{}
 }

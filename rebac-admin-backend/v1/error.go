@@ -67,3 +67,21 @@ func NewDefaultErrorResponseMapper() ErrorResponseMapper {
 func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
 	return &delegateErrorResponseMapper{delegate: m}
 }
+
+// isBadRequestError determines whether the given error should be teated as a
+// "Bad Request" (400) error.
+func isBadRequestError(err error) bool {
+	switch err.(type) {
+	case *resources.UnmarshalingParamError:
+		return true
+	case *resources.RequiredParamError:
+		return true
+	case *resources.RequiredHeaderError:
+		return true
+	case *resources.InvalidParamFormatError:
+		return true
+	case *resources.TooManyValuesForParamError:
+		return true
+	}
+	return false
+}

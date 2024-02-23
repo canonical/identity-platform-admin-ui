@@ -4,6 +4,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -25,30 +26,28 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 }
 
 // mapErrorResponse returns a Response instance filled with the given error.
-func mapErrorResponse(err error) resources.Response {
+func mapErrorResponse(err error) *resources.Response {
 	if isBadRequestError(err) {
-		return resources.Response{
+		return &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request",
+			Message: fmt.Sprintf("Bad request: %s", err.Error()),
 		}
 	}
 
+	var status int
+
 	switch err.(type) {
 	case *UnauthorizedError:
-		return resources.Response{
-			Status:  http.StatusUnauthorized,
-			Message: "Unauthorized",
-		}
+		status = http.StatusUnauthorized
 	case *NotFoundError:
-		return resources.Response{
-			Status:  http.StatusNotFound,
-			Message: "Not found",
-		}
+		status = http.StatusNotFound
 	default:
-		return resources.Response{
-			Status:  http.StatusInternalServerError,
-			Message: "Unexpected error",
-		}
+		status = http.StatusInternalServerError
+	}
+
+	return &resources.Response{
+		Message: err.Error(),
+		Status:  status,
 	}
 }
 
@@ -67,5 +66,4 @@ func isBadRequestError(err error) bool {
 	case *resources.TooManyValuesForParamError:
 		return true
 	}
-	return false
 }

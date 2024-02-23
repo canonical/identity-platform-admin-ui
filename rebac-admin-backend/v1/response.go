@@ -11,7 +11,7 @@ import (
 
 // writeErrorResponse writes the given err in the response with format defined
 // by the OpenAPI spec.
-func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+func writeErrorResponse(w http.ResponseWriter, err error) {
 	resp := mapErrorResponse(err)
 
 	body, err := json.Marshal(resp)

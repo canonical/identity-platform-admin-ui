@@ -46,7 +46,9 @@ func newReBACAdminBackendWithService(params ReBACAdminBackendParams, service res
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
 	return resources.HandlerWithOptions(b.service, resources.ChiServerOptions{
-		BaseURL:          baseURL + "/v1",
-		ErrorHandlerFunc: writeErrorResponse,
+		BaseURL: baseURL + "/v1",
+		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
+			writeErrorResponse(w, err)
+		},
 	})
 }

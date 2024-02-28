@@ -17,6 +17,7 @@ func (e *UnauthorizedError) Error() string {
 	return fmt.Sprintf("Unauthorized: %s", e.message)
 }
 
+// NewUnauthorizedError returns a pointer to a new instance of UnauthorizedError with the provided message
 func NewUnauthorizedError(message string) *UnauthorizedError {
 	return &UnauthorizedError{message}
 }
@@ -30,8 +31,23 @@ func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("Not found: %s", e.message)
 }
 
+// NewNotFoundError returns a pointer to a new instance of NotFoundError with the provided message
 func NewNotFoundError(message string) *NotFoundError {
 	return &NotFoundError{message}
+}
+
+// ValidationError represents error in validation of the incoming request
+type ValidationError struct {
+	message string
+}
+
+func (v *ValidationError) Error() string {
+	return fmt.Sprintf("Validation error: %s", v.message)
+}
+
+// NewValidationError returns a pointer to a new instance of ValidationError with the provided message
+func NewValidationError(message string) *ValidationError {
+	return &ValidationError{message}
 }
 
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
@@ -81,6 +97,8 @@ func isBadRequestError(err error) bool {
 	case *resources.InvalidParamFormatError:
 		return true
 	case *resources.TooManyValuesForParamError:
+		return true
+	case *ValidationError:
 		return true
 	}
 	return false

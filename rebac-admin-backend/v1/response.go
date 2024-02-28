@@ -4,7 +4,6 @@ package v1
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -30,7 +29,7 @@ func mapErrorResponse(err error) *resources.Response {
 	if isBadRequestError(err) {
 		return &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: fmt.Sprintf("Bad request: %s", err.Error()),
+			Message: err.Error(),
 		}
 	}
 

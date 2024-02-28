@@ -27,21 +27,21 @@ func TestMapErrorResponse(t *testing.T) {
 		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request: Error unmarshaling parameter test-param as JSON: Can't find param",
+			Message: "Error unmarshaling parameter test-param as JSON: Can't find param",
 		},
 	}, {
 		name: "handler error: RequiredParamError",
 		arg:  &resources.RequiredParamError{},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request: Query argument  is required, but not found",
+			Message: "Query argument  is required, but not found",
 		},
 	}, {
 		name: "handler error: RequiredHeaderError",
 		arg:  &resources.RequiredHeaderError{},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request: Header parameter  is required, but not found",
+			Message: "Header parameter  is required, but not found",
 		},
 	}, {
 		name: "handler error: InvalidParamFormatError",
@@ -51,14 +51,14 @@ func TestMapErrorResponse(t *testing.T) {
 		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request: Invalid format for parameter test-param: Invalid param",
+			Message: "Invalid format for parameter test-param: Invalid param",
 		},
 	}, {
 		name: "handler error: TooManyValuesForParamError",
 		arg:  &resources.TooManyValuesForParamError{ParamName: "test-param"},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request: Expected one value for test-param, got 0",
+			Message: "Expected one value for test-param, got 0",
 		},
 	}, {
 		name: "service error: UnauthorizedError",
@@ -73,6 +73,13 @@ func TestMapErrorResponse(t *testing.T) {
 		expected: &resources.Response{
 			Status:  http.StatusNotFound,
 			Message: "Not found: test",
+		},
+	}, {
+		name: "validation error",
+		arg:  &ValidationError{message: "request is not valid"},
+		expected: &resources.Response{
+			Message: "Validation error: request is not valid",
+			Status:  400,
 		},
 	}, {
 		name: "unknown error",

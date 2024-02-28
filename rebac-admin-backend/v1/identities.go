@@ -35,7 +35,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 // PostIdentities Add an identity.
 // (POST /identities)
 func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
-	identity := &r.Identity{}
+	identity := new(r.Identity)
 	defer req.Body.Close()
 
 	err := json.NewDecoder(req.Body).Decode(identity)
@@ -91,12 +91,17 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 // PutIdentitiesItem Update an identity.
 // (PUT /identities/{id})
 func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
-	identity := &r.Identity{}
+	identity := new(r.Identity)
 	defer req.Body.Close()
 
 	err := json.NewDecoder(req.Body).Decode(identity)
 	if err != nil {
 		writeResponse(w, 500, nil, err)
+		return
+	}
+
+	if id != *identity.Id {
+		writeErrorResponse(w, NewValidationError("Identity ID from path does not match the Identity object"))
 		return
 	}
 
@@ -110,21 +115,13 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	}
 
 	marshalled, err := json.Marshal(identity)
-	writeResponse(w, 201, marshalled, err)
+	writeResponse(w, 200, marshalled, err)
 }
 
 // GetIdentitiesItemEntitlements List entitlements the identity has.
 // (GET /identities/{id}/entitlements)
 func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemEntitlementsParams) {
-	var identity *r.Identity
-
-	err := json.NewDecoder(req.Body).Decode(identity)
-	if err != nil {
-		writeResponse(w, 500, nil, err)
-		return
-	}
-
-	//entitlements, err := h.Identities.GetIdentityEntitlements(id, &params)
+	entitlements, err := h.Identities.GetIdentityEntitlements(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		marshal, err := json.Marshal(response)
@@ -133,14 +130,13 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 		return
 	}
 
-	//response := r.EntityEntitlements
-	/*response := r.GetIdentitiesItemEntitlements{
+	response := r.GetIdentityEntitlementsResponse{
 		Data:   entitlements.Data,
 		Status: 200,
 	}
 
 	marshalled, err := json.Marshal(response)
-	writeResponse(w, response.Status, marshalled, err)*/
+	writeResponse(w, 200, marshalled, err)
 }
 
 // PatchIdentitiesItemEntitlements Add or remove entitlement to/from an identity.
@@ -152,7 +148,22 @@ func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *htt
 // GetIdentitiesItemGroups List groups the identity is a member of.
 // (GET /identities/{id}/groups)
 func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemGroupsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
+	groups, err := h.Identities.GetIdentityGroups(id, &params)
+	if err != nil {
+		response := h.IdentitiesErrorMapper.MapError(err)
+		marshal, err := json.Marshal(response)
+
+		writeResponse(w, response.Status, marshal, err)
+		return
+	}
+
+	response := r.GetIdentityGroupsResponse{
+		Data:   groups.Data,
+		Status: 200,
+	}
+
+	marshalled, err := json.Marshal(response)
+	writeResponse(w, 200, marshalled, err)
 }
 
 // PatchIdentitiesItemGroups Add or remove the identity to/from a group.
@@ -164,7 +175,22 @@ func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Requ
 // GetIdentitiesItemRoles List roles assigned to the identity.
 // (GET /identities/{id}/roles)
 func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemRolesParams) {
-	w.WriteHeader(http.StatusNotImplemented)
+	roles, err := h.Identities.GetIdentityRoles(id, &params)
+	if err != nil {
+		response := h.IdentitiesErrorMapper.MapError(err)
+		marshal, err := json.Marshal(response)
+
+		writeResponse(w, response.Status, marshal, err)
+		return
+	}
+
+	response := r.GetIdentityRolesResponse{
+		Data:   roles.Data,
+		Status: 200,
+	}
+
+	marshalled, err := json.Marshal(response)
+	writeResponse(w, 200, marshalled, err)
 }
 
 // PatchIdentitiesItemRoles Add or remove the identity to/from a role.

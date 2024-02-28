@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"path"
@@ -16,12 +15,18 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// Defines values for CapabilitiesResponseDataMethods.
+// Defines values for CapabilityMethods.
 const (
-	DELETE CapabilitiesResponseDataMethods = "DELETE"
-	GET    CapabilitiesResponseDataMethods = "GET"
-	PATCH  CapabilitiesResponseDataMethods = "PATCH"
-	POST   CapabilitiesResponseDataMethods = "POST"
+	DELETE CapabilityMethods = "DELETE"
+	GET    CapabilityMethods = "GET"
+	PATCH  CapabilityMethods = "PATCH"
+	POST   CapabilityMethods = "POST"
+)
+
+// Defines values for EntityEntitlementPatchItemOp.
+const (
+	EntityEntitlementPatchItemOpAdd    EntityEntitlementPatchItemOp = "add"
+	EntityEntitlementPatchItemOpRemove EntityEntitlementPatchItemOp = "remove"
 )
 
 // Defines values for IdentityProviderSyncMode.
@@ -31,21 +36,23 @@ const (
 
 // Defines values for PatchRequestBodyOp.
 const (
-	Add    PatchRequestBodyOp = "add"
-	Remove PatchRequestBodyOp = "remove"
-	Update PatchRequestBodyOp = "update"
+	PatchRequestBodyOpAdd    PatchRequestBodyOp = "add"
+	PatchRequestBodyOpRemove PatchRequestBodyOp = "remove"
 )
 
-// CapabilitiesResponse defines model for CapabilitiesResponse.
-type CapabilitiesResponse struct {
-	Data []struct {
-		Endpoint string                            `json:"endpoint"`
-		Methods  []CapabilitiesResponseDataMethods `json:"methods"`
-	} `json:"data"`
+// Capabilities defines model for Capabilities.
+type Capabilities struct {
+	Data []Capability `json:"data"`
 }
 
-// CapabilitiesResponseDataMethods defines model for CapabilitiesResponse.Data.Methods.
-type CapabilitiesResponseDataMethods string
+// Capability defines model for Capability.
+type Capability struct {
+	Endpoint string              `json:"endpoint"`
+	Methods  []CapabilityMethods `json:"methods"`
+}
+
+// CapabilityMethods defines model for Capability.Methods.
+type CapabilityMethods string
 
 // Entitlement defines model for Entitlement.
 type Entitlement = string
@@ -60,12 +67,150 @@ type EntityEntitlement struct {
 	Id          *string      `json:"id,omitempty"`
 }
 
+// EntityEntitlementPatchItem defines model for EntityEntitlementPatchItem.
+type EntityEntitlementPatchItem struct {
+	Op    EntityEntitlementPatchItemOp `json:"op"`
+	Value []EntityEntitlement          `json:"value"`
+}
+
+// EntityEntitlementPatchItemOp defines model for EntityEntitlementPatchItem.Op.
+type EntityEntitlementPatchItemOp string
+
 // EntityEntitlementPatchRequestBody defines model for EntityEntitlementPatchRequestBody.
-type EntityEntitlementPatchRequestBody = []interface{}
+type EntityEntitlementPatchRequestBody = []EntityEntitlementPatchItem
 
 // EntityEntitlements defines model for EntityEntitlements.
 type EntityEntitlements struct {
 	Data []EntityEntitlement `json:"data"`
+}
+
+// GetCapabilitiesResponse defines model for GetCapabilitiesResponse.
+type GetCapabilitiesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Capability  `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetEntitlementsResponse defines model for GetEntitlementsResponse.
+type GetEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// GetGroupEntitlementsResponse defines model for GetGroupEntitlementsResponse.
+type GetGroupEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// GetGroupIdentitiesResponse defines model for GetGroupIdentitiesResponse.
+type GetGroupIdentitiesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Identity    `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetGroupRolesResponse defines model for GetGroupRolesResponse.
+type GetGroupRolesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Role        `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetGroupsResponse defines model for GetGroupsResponse.
+type GetGroupsResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Group       `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetIdentitiesResponse defines model for GetIdentitiesResponse.
+type GetIdentitiesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Identity    `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetIdentityEntitlementsResponse defines model for GetIdentityEntitlementsResponse.
+type GetIdentityEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// GetIdentityGroupsResponse defines model for GetIdentityGroupsResponse.
+type GetIdentityGroupsResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Group       `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetIdentityProvidersResponse defines model for GetIdentityProvidersResponse.
+type GetIdentityProvidersResponse struct {
+	Links ResponseLinks `json:"_links"`
+	Meta  ResponseMeta  `json:"_meta"`
+	Data  []struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	} `json:"data"`
+	Message string `json:"message"`
+	Status  int    `json:"status"`
+}
+
+// GetIdentityRolesResponse defines model for GetIdentityRolesResponse.
+type GetIdentityRolesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Role        `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetResourcesResponse defines model for GetResourcesResponse.
+type GetResourcesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Resource    `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// GetRoleEntitlementsResponse defines model for GetRoleEntitlementsResponse.
+type GetRoleEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// GetRolesResponse defines model for GetRolesResponse.
+type GetRolesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Role        `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
 }
 
 // Group defines model for Group.
@@ -86,18 +231,18 @@ type Identities struct {
 
 // Identity defines model for Identity.
 type Identity struct {
-	AddedBy     string   `json:"addedBy"`
-	Certificate *string  `json:"certificate,omitempty"`
-	Email       string   `json:"email"`
-	FirstName   *string  `json:"firstName,omitempty"`
-	Groups      *float32 `json:"groups,omitempty"`
-	Id          *string  `json:"id,omitempty"`
-	Joined      *string  `json:"joined,omitempty"`
-	LastLogin   *string  `json:"lastLogin,omitempty"`
-	LastName    *string  `json:"lastName,omitempty"`
-	Permissions *float32 `json:"permissions,omitempty"`
-	Roles       *float32 `json:"roles,omitempty"`
-	Source      string   `json:"source"`
+	AddedBy     string  `json:"addedBy"`
+	Certificate *string `json:"certificate,omitempty"`
+	Email       string  `json:"email"`
+	FirstName   *string `json:"firstName,omitempty"`
+	Groups      *int    `json:"groups,omitempty"`
+	Id          *string `json:"id,omitempty"`
+	Joined      *string `json:"joined,omitempty"`
+	LastLogin   *string `json:"lastLogin,omitempty"`
+	LastName    *string `json:"lastName,omitempty"`
+	Permissions *int    `json:"permissions,omitempty"`
+	Roles       *int    `json:"roles,omitempty"`
+	Source      string  `json:"source"`
 }
 
 // IdentityProvider defines model for IdentityProvider.
@@ -109,7 +254,7 @@ type IdentityProvider struct {
 	DisableIdentityInfo *bool                     `json:"disableIdentityInfo,omitempty"`
 	Enabled             *bool                     `json:"enabled,omitempty"`
 	Id                  *string                   `json:"id,omitempty"`
-	IdentityCount       *float32                  `json:"identityCount,omitempty"`
+	IdentityCount       *int                      `json:"identityCount,omitempty"`
 	Name                *string                   `json:"name,omitempty"`
 	RedirectUrl         *string                   `json:"redirectUrl,omitempty"`
 	StoreTokens         *bool                     `json:"storeTokens,omitempty"`
@@ -121,21 +266,85 @@ type IdentityProvider struct {
 // IdentityProviderSyncMode defines model for IdentityProvider.SyncMode.
 type IdentityProviderSyncMode string
 
-// IdentityProviders defines model for IdentityProviders.
-type IdentityProviders struct {
-	Data []IdentityProvider `json:"data"`
+// PatchGroupEntitlementsResponse defines model for PatchGroupEntitlementsResponse.
+type PatchGroupEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// PatchGroupIdentitiesResponse defines model for PatchGroupIdentitiesResponse.
+type PatchGroupIdentitiesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Identity    `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// PatchGroupRolesResponse defines model for PatchGroupRolesResponse.
+type PatchGroupRolesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Role        `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// PatchIdentityEntitlementsResponse defines model for PatchIdentityEntitlementsResponse.
+type PatchIdentityEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
+
+// PatchIdentityGroupsResponse defines model for PatchIdentityGroupsResponse.
+type PatchIdentityGroupsResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Group       `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// PatchIdentityRolesResponse defines model for PatchIdentityRolesResponse.
+type PatchIdentityRolesResponse struct {
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Data    []Role        `json:"data"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
 }
 
 // PatchRequestBody defines model for PatchRequestBody.
 type PatchRequestBody = []struct {
-	Op    PatchRequestBodyOp `json:"op"`
-	Value []struct {
-		Id string `json:"id"`
-	} `json:"value"`
+	Op    PatchRequestBodyOp           `json:"op"`
+	Value PatchRequestBodyElementValue `json:"value"`
 }
 
 // PatchRequestBodyOp defines model for PatchRequestBody.Op.
 type PatchRequestBodyOp string
+
+// PatchRequestBodyElementValue defines model for PatchRequestBodyElementValue.
+type PatchRequestBodyElementValue = []PatchRequestBodyElementValueItem
+
+// PatchRequestBodyElementValueItem defines model for PatchRequestBodyElementValueItem.
+type PatchRequestBodyElementValueItem struct {
+	Id string `json:"id"`
+}
+
+// PatchRoleEntitlementsResponse defines model for PatchRoleEntitlementsResponse.
+type PatchRoleEntitlementsResponse struct {
+	Links   ResponseLinks       `json:"_links"`
+	Meta    ResponseMeta        `json:"_meta"`
+	Data    []EntityEntitlement `json:"data"`
+	Message string              `json:"message"`
+	Status  int                 `json:"status"`
+}
 
 // Resource defines model for Resource.
 type Resource struct {
@@ -152,30 +361,42 @@ type Resources struct {
 
 // Response defines model for Response.
 type Response struct {
-	Links struct {
-		Next struct {
-			Href string `json:"href"`
-		} `json:"next"`
-	} `json:"_links"`
-	Meta struct {
-		Page  float32 `json:"page"`
-		Size  float32 `json:"size"`
-		Total float32 `json:"total"`
-	} `json:"_meta"`
-	Data    []map[string]interface{} `json:"data"`
-	Message string                   `json:"message"`
-	Status  float32                  `json:"status"`
+	Links   ResponseLinks `json:"_links"`
+	Meta    ResponseMeta  `json:"_meta"`
+	Message string        `json:"message"`
+	Status  int           `json:"status"`
+}
+
+// ResponseLinks defines model for ResponseLinks.
+type ResponseLinks struct {
+	Next ResponseLinksNext `json:"next"`
+}
+
+// ResponseLinksNext defines model for ResponseLinksNext.
+type ResponseLinksNext struct {
+	Href string `json:"href"`
+}
+
+// ResponseMeta defines model for ResponseMeta.
+type ResponseMeta struct {
+	Page      *int    `json:"page,omitempty"`
+	PageToken *string `json:"pageToken,omitempty"`
+	Size      int     `json:"size"`
+	Total     *int    `json:"total,omitempty"`
 }
 
 // Role defines model for Role.
 type Role struct {
-	Entitlements *[]struct {
-		Entitlement *string `json:"entitlement,omitempty"`
-		Entity      *Entity `json:"entity,omitempty"`
-		Resource    *string `json:"resource,omitempty"`
-	} `json:"entitlements,omitempty"`
-	Id   *string `json:"id,omitempty"`
-	Name string  `json:"name"`
+	Entitlements *[]RoleEntitlement `json:"entitlements,omitempty"`
+	Id           *string            `json:"id,omitempty"`
+	Name         string             `json:"name"`
+}
+
+// RoleEntitlement defines model for RoleEntitlement.
+type RoleEntitlement struct {
+	Entitlement *string `json:"entitlement,omitempty"`
+	Entity      *Entity `json:"entity,omitempty"`
+	Resource    *string `json:"resource,omitempty"`
 }
 
 // Roles defines model for Roles.
@@ -186,11 +407,14 @@ type Roles struct {
 // FilterParam defines model for FilterParam.
 type FilterParam = string
 
+// PaginationNextToken defines model for PaginationNextToken.
+type PaginationNextToken = string
+
 // PaginationPage defines model for PaginationPage.
-type PaginationPage = float32
+type PaginationPage = int
 
 // PaginationSize defines model for PaginationSize.
-type PaginationSize = float32
+type PaginationSize = int
 
 // BadRequest defines model for BadRequest.
 type BadRequest = Response
@@ -211,6 +435,9 @@ type GetAuthenticationParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetAuthenticationProvidersParams defines parameters for GetAuthenticationProviders.
@@ -220,6 +447,9 @@ type GetAuthenticationProvidersParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetEntitlementsParams defines parameters for GetEntitlements.
@@ -229,6 +459,9 @@ type GetEntitlementsParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
@@ -242,13 +475,11 @@ type GetGroupsParams struct {
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
 
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
-}
-
-// PutGroupsItemJSONBody defines parameters for PutGroupsItem.
-type PutGroupsItemJSONBody struct {
-	union json.RawMessage
 }
 
 // GetGroupsItemEntitlementsParams defines parameters for GetGroupsItemEntitlements.
@@ -258,6 +489,9 @@ type GetGroupsItemEntitlementsParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetGroupsItemIdentitiesParams defines parameters for GetGroupsItemIdentities.
@@ -267,6 +501,9 @@ type GetGroupsItemIdentitiesParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetGroupsItemRolesParams defines parameters for GetGroupsItemRoles.
@@ -276,6 +513,9 @@ type GetGroupsItemRolesParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetIdentitiesParams defines parameters for GetIdentities.
@@ -285,6 +525,9 @@ type GetIdentitiesParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
@@ -297,6 +540,9 @@ type GetIdentitiesItemEntitlementsParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetIdentitiesItemGroupsParams defines parameters for GetIdentitiesItemGroups.
@@ -306,6 +552,9 @@ type GetIdentitiesItemGroupsParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetIdentitiesItemRolesParams defines parameters for GetIdentitiesItemRoles.
@@ -315,6 +564,9 @@ type GetIdentitiesItemRolesParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // GetResourcesParams defines parameters for GetResources.
@@ -323,8 +575,11 @@ type GetResourcesParams struct {
 	Size *PaginationSize `form:"size,omitempty" json:"size,omitempty"`
 
 	// Page The record offset to return results from
-	Page       *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
-	EntityType *string         `form:"entityType,omitempty" json:"entityType,omitempty"`
+	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken  *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+	EntityType *string              `form:"entityType,omitempty" json:"entityType,omitempty"`
 }
 
 // GetRolesParams defines parameters for GetRoles.
@@ -335,13 +590,11 @@ type GetRolesParams struct {
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
 
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
-}
-
-// PatchRolesItemJSONBody defines parameters for PatchRolesItem.
-type PatchRolesItemJSONBody struct {
-	union json.RawMessage
 }
 
 // GetRolesItemEntitlementsParams defines parameters for GetRolesItemEntitlements.
@@ -351,6 +604,9 @@ type GetRolesItemEntitlementsParams struct {
 
 	// Page The record offset to return results from
 	Page *PaginationPage `form:"page,omitempty" json:"page,omitempty"`
+
+	// NextToken The continuation token to retrieve the next set of results
+	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 }
 
 // PostAuthenticationJSONRequestBody defines body for PostAuthentication for application/json ContentType.
@@ -363,7 +619,7 @@ type PutAuthenticationItemJSONRequestBody = IdentityProvider
 type PostGroupsJSONRequestBody = Group
 
 // PutGroupsItemJSONRequestBody defines body for PutGroupsItem for application/json ContentType.
-type PutGroupsItemJSONRequestBody PutGroupsItemJSONBody
+type PutGroupsItemJSONRequestBody = Group
 
 // PatchGroupsItemEntitlementsJSONRequestBody defines body for PatchGroupsItemEntitlements for application/json ContentType.
 type PatchGroupsItemEntitlementsJSONRequestBody = EntityEntitlementPatchRequestBody
@@ -393,7 +649,7 @@ type PatchIdentitiesItemRolesJSONRequestBody = PatchRequestBody
 type PostRolesJSONRequestBody = Role
 
 // PatchRolesItemJSONRequestBody defines body for PatchRolesItem for application/json ContentType.
-type PatchRolesItemJSONRequestBody PatchRolesItemJSONBody
+type PatchRolesItemJSONRequestBody = Role
 
 // PatchRolessItemEntitlementsJSONRequestBody defines body for PatchRolessItemEntitlements for application/json ContentType.
 type PatchRolessItemEntitlementsJSONRequestBody = EntityEntitlementPatchRequestBody
@@ -401,64 +657,68 @@ type PatchRolessItemEntitlementsJSONRequestBody = EntityEntitlementPatchRequestB
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"qmazC8s0PHYlH5+PX80U/y8AAP//eoDodSOEAAA=",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

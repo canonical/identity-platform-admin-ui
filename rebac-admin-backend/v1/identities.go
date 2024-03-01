@@ -7,12 +7,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	r "github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
+	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// GetIdentities Get list of identities.
+// GetIdentities returns the list of known identities.
 // (GET /identities)
-func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params r.GetIdentitiesParams) {
+func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params resources.GetIdentitiesParams) {
 	identities, err := h.Identities.ListIdentities(&params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
@@ -20,7 +20,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 		return
 	}
 
-	response := r.GetIdentitiesResponse{
+	response := resources.GetIdentitiesResponse{
 		Data:   identities.Data,
 		Status: 200,
 	}
@@ -28,10 +28,10 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 	writeResponse(w, 200, response)
 }
 
-// PostIdentities Add an identity.
+// PostIdentities adds a new identity.
 // (POST /identities)
 func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
-	identity := new(r.Identity)
+	identity := new(resources.Identity)
 	defer req.Body.Close()
 
 	err := json.NewDecoder(req.Body).Decode(identity)
@@ -50,7 +50,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 	writeResponse(w, 201, identity)
 }
 
-// DeleteIdentitiesItem Remove an identity.
+// DeleteIdentitiesItem deletes the specified identity.
 // (DELETE /identities/{id})
 func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
 	_, err := h.Identities.DeleteIdentity(id)
@@ -63,7 +63,7 @@ func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, 
 	w.WriteHeader(200)
 }
 
-// GetIdentitiesItem Get a single identity.
+// GetIdentitiesItem returns the identity identified by the provided ID.
 // (GET /identities/{id})
 func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
 	identity, err := h.Identities.GetIdentity(id)
@@ -76,10 +76,10 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	writeResponse(w, 200, identity)
 }
 
-// PutIdentitiesItem Update an identity.
+// PutIdentitiesItem updates the identity identified by the provided ID.
 // (PUT /identities/{id})
 func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
-	identity := new(r.Identity)
+	identity := new(resources.Identity)
 	defer req.Body.Close()
 
 	err := json.NewDecoder(req.Body).Decode(identity)
@@ -103,9 +103,9 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	writeResponse(w, 200, identity)
 }
 
-// GetIdentitiesItemEntitlements List entitlements the identity has.
+// GetIdentitiesItemEntitlements returns the list of entitlements for an identity identified by the provided ID.
 // (GET /identities/{id}/entitlements)
-func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemEntitlementsParams) {
+func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemEntitlementsParams) {
 	entitlements, err := h.Identities.GetIdentityEntitlements(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
@@ -113,7 +113,7 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 		return
 	}
 
-	response := r.GetIdentityEntitlementsResponse{
+	response := resources.GetIdentityEntitlementsResponse{
 		Data:   entitlements.Data,
 		Status: 200,
 	}
@@ -121,15 +121,15 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 	writeResponse(w, 200, response)
 }
 
-// PatchIdentitiesItemEntitlements Add or remove entitlement to/from an identity.
+// PatchIdentitiesItemEntitlements Adds or removes entitlements to/from an identity.
 // (PATCH /identities/{id}/entitlements)
 func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetIdentitiesItemGroups List groups the identity is a member of.
+// GetIdentitiesItemGroups returns the list of groups the identity is a member of.
 // (GET /identities/{id}/groups)
-func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemGroupsParams) {
+func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemGroupsParams) {
 	groups, err := h.Identities.GetIdentityGroups(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
@@ -137,7 +137,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	response := r.GetIdentityGroupsResponse{
+	response := resources.GetIdentityGroupsResponse{
 		Data:   groups.Data,
 		Status: 200,
 	}
@@ -145,15 +145,15 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 	writeResponse(w, 200, response)
 }
 
-// PatchIdentitiesItemGroups Add or remove the identity to/from a group.
+// PatchIdentitiesItemGroups adds or removes the identity to/from a group.
 // (PATCH /identities/{id}/groups)
 func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetIdentitiesItemRoles List roles assigned to the identity.
+// GetIdentitiesItemRoles returns the list of roles assigned to the identity.
 // (GET /identities/{id}/roles)
-func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string, params r.GetIdentitiesItemRolesParams) {
+func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemRolesParams) {
 	roles, err := h.Identities.GetIdentityRoles(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
@@ -161,7 +161,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	response := r.GetIdentityRolesResponse{
+	response := resources.GetIdentityRolesResponse{
 		Data:   roles.Data,
 		Status: 200,
 	}

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/interfaces"
-	r "github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
+	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
 var (
@@ -32,14 +32,14 @@ func TestHandler_GetIdentities(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockParams := r.GetIdentitiesParams{}
+	mockParams := resources.GetIdentitiesParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
-	mockIdentitiesReturn := r.Identities{Data: []r.Identity{
+	mockIdentitiesReturn := resources.Identities{Data: []resources.Identity{
 		{FirstName: &mockFirstName},
 	}}
 	mockIdentityService.EXPECT().ListIdentities(gomock.Any()).Return(&mockIdentitiesReturn, nil)
 
-	expectedResponse := r.GetIdentitiesResponse{
+	expectedResponse := resources.GetIdentitiesResponse{
 		Data:   mockIdentitiesReturn.Data,
 		Status: 200,
 	}
@@ -57,7 +57,7 @@ func TestHandler_GetIdentities(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.GetIdentitiesResponse)
+	response := new(resources.GetIdentitiesResponse)
 
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling GetIdentities response, got: %v", err)
@@ -72,7 +72,7 @@ func TestHandler_PostIdentitiesSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockIdentityReturn := r.Identity{FirstName: &mockFirstName}
+	mockIdentityReturn := resources.Identity{FirstName: &mockFirstName}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
 	mockIdentityService.EXPECT().CreateIdentity(gomock.Any()).Return(&mockIdentityReturn, nil)
 
@@ -95,7 +95,7 @@ func TestHandler_PostIdentitiesSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.Identity)
+	response := new(resources.Identity)
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling PostIdentities response, got: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestHandler_GetIdentitiesItemSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
-	mockIdentityReturn := r.Identity{FirstName: &mockFirstName}
+	mockIdentityReturn := resources.Identity{FirstName: &mockFirstName}
 	mockIdentityService.EXPECT().GetIdentity(gomock.Eq(mockIdentityId)).Return(&mockIdentityReturn, nil)
 
 	mockWriter := httptest.NewRecorder()
@@ -152,7 +152,7 @@ func TestHandler_GetIdentitiesItemSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.Identity)
+	response := new(resources.Identity)
 
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling GetIdentitiesItem response, got: %v", err)
@@ -167,7 +167,7 @@ func TestHandler_PutIdentitiesItemSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockIdentityReturn := r.Identity{
+	mockIdentityReturn := resources.Identity{
 		Id:        &mockIdentityId,
 		FirstName: &mockFirstName,
 	}
@@ -193,7 +193,7 @@ func TestHandler_PutIdentitiesItemSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.Identity)
+	response := new(resources.Identity)
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling PutIdentitiesItem response, got: %v", err)
 	}
@@ -209,12 +209,12 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 
 	var (
 		mockId          = "mock-id"
-		mockEntity      = r.Entity{"entity-name": "mock-entity-name"}
+		mockEntity      = resources.Entity{"entity-name": "mock-entity-name"}
 		mockEntitlement = "test-entitlement"
 	)
 
-	mockIdentityEntitlements := r.EntityEntitlements{
-		Data: []r.EntityEntitlement{
+	mockIdentityEntitlements := resources.EntityEntitlements{
+		Data: []resources.EntityEntitlement{
 			{
 				Id:          &mockId,
 				Entity:      &mockEntity,
@@ -222,12 +222,12 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 			},
 		},
 	}
-	expectedResponse := r.GetIdentityEntitlementsResponse{
+	expectedResponse := resources.GetIdentityEntitlementsResponse{
 		Data:   mockIdentityEntitlements.Data,
 		Status: http.StatusOK,
 	}
 
-	params := r.GetIdentitiesItemEntitlementsParams{}
+	params := resources.GetIdentitiesItemEntitlementsParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
 	mockIdentityService.EXPECT().GetIdentityEntitlements(gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(&mockIdentityEntitlements, nil)
 
@@ -245,7 +245,7 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.GetIdentityEntitlementsResponse)
+	response := new(resources.GetIdentityEntitlementsResponse)
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling GetIdentitiesItemEntitlements response, got: %v", err)
 	}
@@ -268,20 +268,20 @@ func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
 		mockName = "test-groupname"
 	)
 
-	mockIdentityGroups := r.Groups{
-		Data: []r.Group{
+	mockIdentityGroups := resources.Groups{
+		Data: []resources.Group{
 			{
 				Id:   &mockId,
 				Name: mockName,
 			},
 		},
 	}
-	expectedResponse := r.GetIdentityGroupsResponse{
+	expectedResponse := resources.GetIdentityGroupsResponse{
 		Data:   mockIdentityGroups.Data,
 		Status: http.StatusOK,
 	}
 
-	params := r.GetIdentitiesItemGroupsParams{}
+	params := resources.GetIdentitiesItemGroupsParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
 	mockIdentityService.EXPECT().GetIdentityGroups(gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(&mockIdentityGroups, nil)
 
@@ -299,7 +299,7 @@ func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.GetIdentityGroupsResponse)
+	response := new(resources.GetIdentityGroupsResponse)
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling GetIdentitiesItemGroups response, got: %v", err)
 	}
@@ -322,20 +322,20 @@ func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
 		mockName = "test-rolename"
 	)
 
-	mockIdentityRoles := r.Roles{
-		Data: []r.Role{
+	mockIdentityRoles := resources.Roles{
+		Data: []resources.Role{
 			{
 				Id:   &mockId,
 				Name: mockName,
 			},
 		},
 	}
-	expectedResponse := r.GetIdentityRolesResponse{
+	expectedResponse := resources.GetIdentityRolesResponse{
 		Data:   mockIdentityRoles.Data,
 		Status: http.StatusOK,
 	}
 
-	params := r.GetIdentitiesItemRolesParams{}
+	params := resources.GetIdentitiesItemRolesParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
 	mockIdentityService.EXPECT().GetIdentityRoles(gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(&mockIdentityRoles, nil)
 
@@ -353,7 +353,7 @@ func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.GetIdentityRolesResponse)
+	response := new(resources.GetIdentityRolesResponse)
 	if err := json.Unmarshal(data, response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling GetIdentitiesItemRoles response, got: %v", err)
 	}
@@ -371,8 +371,8 @@ func TestHandler_Failures(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockParams := r.GetIdentitiesParams{}
-	mockErrorResponse := r.Response{
+	mockParams := resources.GetIdentitiesParams{}
+	mockErrorResponse := resources.Response{
 		Message: "mock-error",
 		Status:  http.StatusInternalServerError,
 	}
@@ -401,7 +401,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().CreateIdentity(gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				identity, _ := json.Marshal(&r.Identity{})
+				identity, _ := json.Marshal(&resources.Identity{})
 				request := httptest.NewRequest(http.MethodPost, "/identities", bytes.NewReader(identity))
 				h.PostIdentities(w, request)
 			},
@@ -433,7 +433,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().UpdateIdentity(gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				identity, _ := json.Marshal(&r.Identity{Id: &mockIdentityId})
+				identity, _ := json.Marshal(&resources.Identity{Id: &mockIdentityId})
 				request := httptest.NewRequest(http.MethodPut, "/identities", bytes.NewReader(identity))
 				h.PutIdentitiesItem(w, request, "test-id")
 			},
@@ -445,7 +445,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().GetIdentityEntitlements(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				params := r.GetIdentitiesItemEntitlementsParams{}
+				params := resources.GetIdentitiesItemEntitlementsParams{}
 				h.GetIdentitiesItemEntitlements(w, nil, "test-id", params)
 			},
 			skip: false,
@@ -456,7 +456,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().PatchIdentityEntitlements(gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&r.EntityEntitlementPatchRequestBody{})
+				patches, _ := json.Marshal(&resources.EntityEntitlementPatchRequestBody{})
 				request := httptest.NewRequest(http.MethodPatch, "/identities/test-id/entitlements", bytes.NewReader(patches))
 				h.PatchIdentitiesItemEntitlements(w, request, "test-id")
 			},
@@ -468,7 +468,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().GetIdentityGroups(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				params := r.GetIdentitiesItemGroupsParams{}
+				params := resources.GetIdentitiesItemGroupsParams{}
 				h.GetIdentitiesItemGroups(w, nil, "test-id", params)
 			},
 			skip: false,
@@ -479,7 +479,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().PatchIdentityGroups(gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&r.EntityEntitlementPatchRequestBody{})
+				patches, _ := json.Marshal(&resources.EntityEntitlementPatchRequestBody{})
 				request := httptest.NewRequest(http.MethodPatch, "/identities/test-id/groups", bytes.NewReader(patches))
 				h.PatchIdentitiesItemGroups(w, request, "test-id")
 			},
@@ -491,7 +491,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().GetIdentityRoles(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				params := r.GetIdentitiesItemRolesParams{}
+				params := resources.GetIdentitiesItemRolesParams{}
 				h.GetIdentitiesItemRoles(w, nil, "test-id", params)
 			},
 			skip: false,
@@ -502,7 +502,7 @@ func TestHandler_Failures(t *testing.T) {
 				mockService.EXPECT().PatchIdentityRoles(gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&r.EntityEntitlementPatchRequestBody{})
+				patches, _ := json.Marshal(&resources.EntityEntitlementPatchRequestBody{})
 				request := httptest.NewRequest(http.MethodPatch, "/identities/test-id/roles", bytes.NewReader(patches))
 				h.PatchIdentitiesItemRoles(w, request, "test-id")
 			},
@@ -539,7 +539,7 @@ func TestHandler_Failures(t *testing.T) {
 				t.Errorf("Expected error to be nil, got %v", err)
 			}
 
-			response := new(r.Response)
+			response := new(resources.Response)
 
 			if err := json.Unmarshal(data, response); err != nil {
 				t.Errorf("Unexpected err while unmarshaling resonse, got: %v", err)
@@ -554,7 +554,7 @@ func TestHandler_Failures(t *testing.T) {
 func TestPutIdentitiesItemFailureValidation(t *testing.T) {
 	c := qt.New(t)
 
-	expectedErrorResponse := r.Response{
+	expectedErrorResponse := resources.Response{
 		Message: "Validation error: Identity ID from path does not match the Identity object",
 		Status:  http.StatusBadRequest,
 	}
@@ -562,7 +562,7 @@ func TestPutIdentitiesItemFailureValidation(t *testing.T) {
 	mockWriter := httptest.NewRecorder()
 	sut := handler{}
 
-	identity, _ := json.Marshal(&r.Identity{Id: &mockIdentityId})
+	identity, _ := json.Marshal(&resources.Identity{Id: &mockIdentityId})
 	request := httptest.NewRequest(http.MethodPut, "/identities/different-id", bytes.NewReader(identity))
 	sut.PutIdentitiesItem(mockWriter, request, "different-id")
 
@@ -574,7 +574,7 @@ func TestPutIdentitiesItemFailureValidation(t *testing.T) {
 		t.Errorf("Expected error to be nil, got %v", err)
 	}
 
-	response := new(r.Response)
+	response := new(resources.Response)
 
 	if err := json.Unmarshal(data, &response); err != nil {
 		t.Errorf("Unexpected err while unmarshaling resonse, got: %v", err)

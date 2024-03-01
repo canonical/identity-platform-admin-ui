@@ -36,7 +36,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(identity)
 	if err != nil {
-		writeErrorResponse(w, err)
+		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
 		return
 	}
 

@@ -129,7 +129,7 @@ type ServerInterface interface {
 	GetRolesItemEntitlements(w http.ResponseWriter, r *http.Request, id string, params GetRolesItemEntitlementsParams)
 	// Add or remove a direct entitlements to/from a role.
 	// (PATCH /roles/{id}/entitlements)
-	PatchRolessItemEntitlements(w http.ResponseWriter, r *http.Request, id string)
+	PatchRolesItemEntitlements(w http.ResponseWriter, r *http.Request, id string)
 	// Returns the OpenAPI spec as a JSON file.
 	// (GET /swagger.json)
 	SwaggerJson(w http.ResponseWriter, r *http.Request)
@@ -369,7 +369,7 @@ func (_ Unimplemented) GetRolesItemEntitlements(w http.ResponseWriter, r *http.R
 
 // Add or remove a direct entitlements to/from a role.
 // (PATCH /roles/{id}/entitlements)
-func (_ Unimplemented) PatchRolessItemEntitlements(w http.ResponseWriter, r *http.Request, id string) {
+func (_ Unimplemented) PatchRolesItemEntitlements(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1665,8 +1665,8 @@ func (siw *ServerInterfaceWrapper) GetRolesItemEntitlements(w http.ResponseWrite
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// PatchRolessItemEntitlements operation middleware
-func (siw *ServerInterfaceWrapper) PatchRolessItemEntitlements(w http.ResponseWriter, r *http.Request) {
+// PatchRolesItemEntitlements operation middleware
+func (siw *ServerInterfaceWrapper) PatchRolesItemEntitlements(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -1681,7 +1681,7 @@ func (siw *ServerInterfaceWrapper) PatchRolessItemEntitlements(w http.ResponseWr
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PatchRolessItemEntitlements(w, r, id)
+		siw.Handler.PatchRolesItemEntitlements(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1934,7 +1934,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/roles/{id}/entitlements", wrapper.GetRolesItemEntitlements)
 	})
 	r.Group(func(r chi.Router) {
-		r.Patch(options.BaseURL+"/roles/{id}/entitlements", wrapper.PatchRolessItemEntitlements)
+		r.Patch(options.BaseURL+"/roles/{id}/entitlements", wrapper.PatchRolesItemEntitlements)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/swagger.json", wrapper.SwaggerJson)

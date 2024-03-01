@@ -51,18 +51,16 @@ func mapErrorResponse(err error) *resources.Response {
 }
 
 // writeResponse is a helper method to avoid verbose repetition of very common instructions
-// it writes to the ResponseWriter either:
-// - the provided marshalledResponse if marshalErr is nil
-// - or the mapped error response based on marshalErr if it is not nil
-func writeResponse(w http.ResponseWriter, status int, marshalledResp []byte, marshalErr error) {
-	if marshalErr != nil {
-		writeErrorResponse(w, marshalErr)
+func writeResponse(w http.ResponseWriter, status int, responseObject interface{}) {
+	data, err := json.Marshal(responseObject)
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
 	w.WriteHeader(status)
-	_, err := w.Write(marshalledResp)
 
+	_, err = w.Write(data)
 	if err != nil {
 		writeErrorResponse(w, err)
 	}

@@ -16,9 +16,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 	identities, err := h.Identities.ListIdentities(&params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
@@ -27,9 +25,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 		Status: 200,
 	}
 
-	marshalled, err := json.Marshal(response)
-
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, response)
 }
 
 // PostIdentities Add an identity.
@@ -40,21 +36,18 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(identity)
 	if err != nil {
-		writeResponse(w, 500, nil, err)
+		writeErrorResponse(w, err)
 		return
 	}
 
 	identity, err = h.Identities.CreateIdentity(identity)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
-	marshalled, err := json.Marshal(identity)
-	writeResponse(w, 201, marshalled, err)
+	writeResponse(w, 201, identity)
 }
 
 // DeleteIdentitiesItem Remove an identity.
@@ -63,9 +56,7 @@ func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, 
 	_, err := h.Identities.DeleteIdentity(id)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
@@ -78,14 +69,11 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	identity, err := h.Identities.GetIdentity(id)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
-	marshalled, err := json.Marshal(identity)
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, identity)
 }
 
 // PutIdentitiesItem Update an identity.
@@ -96,7 +84,7 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 
 	err := json.NewDecoder(req.Body).Decode(identity)
 	if err != nil {
-		writeResponse(w, 500, nil, err)
+		writeErrorResponse(w, err)
 		return
 	}
 
@@ -108,14 +96,11 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	identity, err = h.Identities.UpdateIdentity(identity)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
-	marshalled, err := json.Marshal(identity)
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, identity)
 }
 
 // GetIdentitiesItemEntitlements List entitlements the identity has.
@@ -124,9 +109,7 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 	entitlements, err := h.Identities.GetIdentityEntitlements(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
@@ -135,8 +118,7 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 		Status: 200,
 	}
 
-	marshalled, err := json.Marshal(response)
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, response)
 }
 
 // PatchIdentitiesItemEntitlements Add or remove entitlement to/from an identity.
@@ -151,9 +133,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 	groups, err := h.Identities.GetIdentityGroups(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
@@ -162,8 +142,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 		Status: 200,
 	}
 
-	marshalled, err := json.Marshal(response)
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, response)
 }
 
 // PatchIdentitiesItemGroups Add or remove the identity to/from a group.
@@ -178,9 +157,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 	roles, err := h.Identities.GetIdentityRoles(id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
-		marshal, err := json.Marshal(response)
-
-		writeResponse(w, response.Status, marshal, err)
+		writeResponse(w, response.Status, response)
 		return
 	}
 
@@ -189,8 +166,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 		Status: 200,
 	}
 
-	marshalled, err := json.Marshal(response)
-	writeResponse(w, 200, marshalled, err)
+	writeResponse(w, 200, response)
 }
 
 // PatchIdentitiesItemRoles Add or remove the identity to/from a role.

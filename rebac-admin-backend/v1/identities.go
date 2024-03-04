@@ -26,7 +26,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 		Status: 200,
 	}
 
-	writeResponse(w, 200, response)
+	writeResponse(w, http.StatusOK, response)
 }
 
 // PostIdentities adds a new identity.
@@ -48,7 +48,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	writeResponse(w, 201, identity)
+	writeResponse(w, http.StatusCreated, identity)
 }
 
 // DeleteIdentitiesItem deletes the specified identity.
@@ -63,7 +63,7 @@ func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, 
 		return
 	}
 
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetIdentitiesItem returns the identity identified by the provided ID.
@@ -78,7 +78,7 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 		return
 	}
 
-	writeResponse(w, 200, identity)
+	writeResponse(w, http.StatusOK, identity)
 }
 
 // PutIdentitiesItem updates the identity identified by the provided ID.
@@ -105,7 +105,7 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 		return
 	}
 
-	writeResponse(w, 200, identity)
+	writeResponse(w, http.StatusOK, identity)
 }
 
 // GetIdentitiesItemEntitlements returns the list of entitlements for an identity identified by the provided ID.
@@ -121,11 +121,11 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 	}
 
 	response := resources.GetIdentityEntitlementsResponse{
-		Data:   entitlements.Data,
+		Data:   entitlements,
 		Status: 200,
 	}
 
-	writeResponse(w, 200, response)
+	writeResponse(w, http.StatusOK, response)
 }
 
 // PatchIdentitiesItemEntitlements Adds or removes entitlements to/from an identity.
@@ -152,7 +152,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 		Status: 200,
 	}
 
-	writeResponse(w, 200, response)
+	writeResponse(w, http.StatusOK, response)
 }
 
 // PatchIdentitiesItemGroups adds or removes the identity to/from a group.
@@ -179,7 +179,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 		Status: 200,
 	}
 
-	writeResponse(w, 200, response)
+	writeResponse(w, http.StatusOK, response)
 }
 
 // PatchIdentitiesItemRoles Add or remove the identity to/from a role.

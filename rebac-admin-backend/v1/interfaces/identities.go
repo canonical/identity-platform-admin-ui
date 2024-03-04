@@ -31,17 +31,17 @@ type IdentitiesService interface {
 	// GetIdentityGroups returns a page of Groups for identity `identityId`.
 	GetIdentityGroups(ctx context.Context, identityId string, params *r.GetIdentitiesItemGroupsParams) (*r.Groups, error)
 	// PatchIdentityGroups performs addition or removal of a Group to/from an Identity.
-	PatchIdentityGroups(ctx context.Context, identityId string, groupPatches *r.PatchRequestBody) (bool, error)
+	PatchIdentityGroups(ctx context.Context, identityId string, groupPatches []r.IdentityGroupsPatchItem) (bool, error)
 
 	// GetIdentityRoles returns a page of Groups for identity `identityId`.
 	GetIdentityRoles(ctx context.Context, identityId string, params *r.GetIdentitiesItemRolesParams) (*r.Roles, error)
 	// PatchIdentityRoles performs addition or removal of a Role to/from an Identity.
-	PatchIdentityRoles(ctx context.Context, identityId string, rolePatches *r.PatchRequestBody) (bool, error)
+	PatchIdentityRoles(ctx context.Context, identityId string, rolePatches []r.IdentityRolesPatchItem) (bool, error)
 
 	// GetIdentityEntitlements returns a page of Entitlements for identity `identityId`.
-	GetIdentityEntitlements(ctx context.Context, identityId string, params *r.GetIdentitiesItemEntitlementsParams) (*r.EntityEntitlements, error)
+	GetIdentityEntitlements(ctx context.Context, identityId string, params *r.GetIdentitiesItemEntitlementsParams) ([]r.EntityEntitlement, error)
 	// PatchIdentityEntitlements performs addition or removal of an Entitlement to/from an Identity.
-	PatchIdentityEntitlements(ctx context.Context, identityId string, entitlementPatches *r.EntityEntitlementPatchRequestBody) (bool, error)
+	PatchIdentityEntitlements(ctx context.Context, identityId string, entitlementPatches []r.IdentityEntitlementsPatchItem) (bool, error)
 }
 
 // IdentitiesAuthorization defines an abstract backend to handle authorization for Identities.

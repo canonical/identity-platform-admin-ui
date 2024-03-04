@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	mockFirstName  string = "MockFirstName"
-	mockIdentityId string = "test-id"
+	mockFirstName  = "MockFirstName"
+	mockIdentityId = "test-id"
 )
 
 //go:generate mockgen -package interfaces -destination ./interfaces/mock_identities.go -source=./interfaces/identities.go
@@ -212,7 +212,7 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 
 	params := resources.GetIdentitiesItemEntitlementsParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
-	mockIdentityService.EXPECT().GetIdentityEntitlements(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(&mockIdentityEntitlements, nil)
+	mockIdentityService.EXPECT().GetIdentityEntitlements(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(mockIdentityEntitlements, nil)
 
 	mockWriter := httptest.NewRecorder()
 	mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), nil)
@@ -235,7 +235,35 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 }
 
 func TestHandler_PatchIdentitiesItemEntitlementsSuccess(t *testing.T) {
-	//
+	c := qt.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	identityEntitlementPatches := []resources.IdentityEntitlementsPatchItem{
+		{
+			Entitlement: resources.EntityEntitlement{},
+			Op:          "add",
+		},
+	}
+	identityEntitlementPatchRequest := resources.IdentityEntitlementsPatchRequestBody{
+		Patches: identityEntitlementPatches,
+	}
+
+	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
+	mockIdentityService.EXPECT().PatchIdentityEntitlements(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(identityEntitlementPatches)).Return(true, nil)
+
+	marshalledPatchReq, err := json.Marshal(identityEntitlementPatchRequest)
+	c.Assert(err, qt.IsNil)
+
+	mockWriter := httptest.NewRecorder()
+	mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), bytes.NewReader(marshalledPatchReq))
+
+	sut := handler{Identities: mockIdentityService}
+	sut.PatchIdentitiesItemEntitlements(mockWriter, mockRequest, mockIdentityId)
+
+	result := mockWriter.Result()
+
+	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 }
 
 func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
@@ -286,7 +314,35 @@ func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
 }
 
 func TestHandler_PatchIdentitiesItemGroupsSuccess(t *testing.T) {
+	c := qt.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
+	identityGroupsPatches := []resources.IdentityGroupsPatchItem{
+		{
+			Group: "test-group-identifier",
+			Op:    "add",
+		},
+	}
+	identityGroupsPatchRequest := resources.IdentityGroupsPatchRequestBody{
+		Patches: identityGroupsPatches,
+	}
+
+	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
+	mockIdentityService.EXPECT().PatchIdentityGroups(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(identityGroupsPatches)).Return(true, nil)
+
+	marshalledPatchReq, err := json.Marshal(identityGroupsPatchRequest)
+	c.Assert(err, qt.IsNil)
+
+	mockWriter := httptest.NewRecorder()
+	mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/groups", mockIdentityId), bytes.NewReader(marshalledPatchReq))
+
+	sut := handler{Identities: mockIdentityService}
+	sut.PatchIdentitiesItemGroups(mockWriter, mockRequest, mockIdentityId)
+
+	result := mockWriter.Result()
+
+	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 }
 
 func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
@@ -337,7 +393,111 @@ func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
 }
 
 func TestHandler_PatchIdentitiesItemRolesSuccess(t *testing.T) {
+	c := qt.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
+	identityRolesPatches := []resources.IdentityRolesPatchItem{
+		{
+			Role: "test-role-identifier",
+			Op:   "add",
+		},
+	}
+	identityRolesPatchRequest := resources.IdentityRolesPatchRequestBody{
+		Patches: identityRolesPatches,
+	}
+
+	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
+	mockIdentityService.EXPECT().PatchIdentityRoles(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(identityRolesPatches)).Return(true, nil)
+
+	marshalledPatchReq, err := json.Marshal(identityRolesPatchRequest)
+	c.Assert(err, qt.IsNil)
+
+	mockWriter := httptest.NewRecorder()
+	mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/roles", mockIdentityId), bytes.NewReader(marshalledPatchReq))
+
+	sut := handler{Identities: mockIdentityService}
+	sut.PatchIdentitiesItemRoles(mockWriter, mockRequest, mockIdentityId)
+
+	result := mockWriter.Result()
+
+	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
+}
+
+func TestHandler_ValidationErrors(t *testing.T) {
+	c := qt.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// need a value that is not a struct to trigger Decode error
+	mockInvalidRequestBody := true
+
+	invalidRequestBody, _ := json.Marshal(mockInvalidRequestBody)
+
+	for _, test := range []struct {
+		name        string
+		triggerFunc func(h handler, w *httptest.ResponseRecorder)
+	}{
+		{
+			name: "TestPatchIdentitiesEntitlementsFailureInvalidRequest",
+			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
+				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), bytes.NewReader(invalidRequestBody))
+				h.PatchIdentitiesItemEntitlements(w, req, mockIdentityId)
+			},
+		},
+		{
+			name: "TestPatchIdentitiesGroupsFailureInvalidRequest",
+			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
+				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/groups", mockIdentityId), bytes.NewReader(invalidRequestBody))
+				h.PatchIdentitiesItemGroups(w, req, mockIdentityId)
+			},
+		},
+		{
+			name: "TestPatchIdentitiesRolesFailureInvalidRequest",
+			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
+				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/roles", mockIdentityId), bytes.NewReader(invalidRequestBody))
+				h.PatchIdentitiesItemRoles(w, req, mockIdentityId)
+			},
+		},
+		{
+			name: "TestPostIdentitiesFailureInvalidRequest",
+			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
+				req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/identities/%s", mockIdentityId), bytes.NewReader(invalidRequestBody))
+				h.PostIdentities(w, req)
+			},
+		},
+		{
+			name: "TestPutIdentitiesFailureInvalidRequest",
+			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
+				req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/identities/%s", mockIdentityId), bytes.NewReader(invalidRequestBody))
+				h.PutIdentitiesItem(w, req, mockIdentityId)
+			},
+		},
+	} {
+		tt := test
+		c.Run(tt.name, func(c *qt.C) {
+			mockWriter := httptest.NewRecorder()
+			sut := handler{}
+
+			tt.triggerFunc(sut, mockWriter)
+
+			result := mockWriter.Result()
+			defer result.Body.Close()
+
+			c.Assert(result.StatusCode, qt.Equals, http.StatusBadRequest)
+
+			data, err := io.ReadAll(result.Body)
+			c.Assert(err, qt.IsNil)
+
+			response := new(resources.Response)
+
+			err = json.Unmarshal(data, response)
+			c.Assert(err, qt.IsNil)
+
+			c.Assert(response.Status, qt.Equals, http.StatusBadRequest)
+			c.Assert(response.Message, qt.Equals, "Validation error: Request doesn't match the expected schema")
+		})
+	}
 }
 
 func TestHandler_Failures(t *testing.T) {
@@ -370,7 +530,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodGet, "/identities", nil)
 				h.GetIdentities(w, mockRequest, mockParams)
 			},
-			skip: false,
 		},
 		{
 			name: "TestPostIdentitiesFailure",
@@ -382,7 +541,6 @@ func TestHandler_Failures(t *testing.T) {
 				request := httptest.NewRequest(http.MethodPost, "/identities", bytes.NewReader(identity))
 				h.PostIdentities(w, request)
 			},
-			skip: false,
 		},
 		{
 			name: "TestDeleteIdentitiesItemFailure",
@@ -393,7 +551,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/identities/%s", mockIdentityId), nil)
 				h.DeleteIdentitiesItem(w, mockRequest, "test-id")
 			},
-			skip: false,
 		},
 		{
 			name: "TestGetIdentitiesItemFailure",
@@ -404,7 +561,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s", mockIdentityId), nil)
 				h.GetIdentitiesItem(w, mockRequest, "test-id")
 			},
-			skip: false,
 		},
 		{
 			name: "TestPutIdentitiesItemFailureUpdate",
@@ -416,7 +572,6 @@ func TestHandler_Failures(t *testing.T) {
 				request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/identities/%s", mockIdentityId), bytes.NewReader(identity))
 				h.PutIdentitiesItem(w, request, "test-id")
 			},
-			skip: false,
 		},
 		{
 			name: "TestGetIdentitiesItemEntitlementsFailure",
@@ -428,7 +583,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), nil)
 				h.GetIdentitiesItemEntitlements(w, mockRequest, "test-id", params)
 			},
-			skip: false,
 		},
 		{
 			name: "TestPatchIdentitiesItemEntitlementsFailure",
@@ -440,7 +594,6 @@ func TestHandler_Failures(t *testing.T) {
 				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), bytes.NewReader(patches))
 				h.PatchIdentitiesItemEntitlements(w, request, "test-id")
 			},
-			skip: true,
 		},
 		{
 			name: "TestGetIdentitiesItemGroupsFailure",
@@ -452,7 +605,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s/groups", mockIdentityId), nil)
 				h.GetIdentitiesItemGroups(w, mockRequest, "test-id", params)
 			},
-			skip: false,
 		},
 		{
 			name: "TestPatchIdentitiesItemGroupsFailure",
@@ -464,7 +616,6 @@ func TestHandler_Failures(t *testing.T) {
 				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/identities/%s/groups", mockIdentityId), bytes.NewReader(patches))
 				h.PatchIdentitiesItemGroups(w, request, "test-id")
 			},
-			skip: true,
 		},
 		{
 			name: "TestGetIdentitiesItemRolesFailure",
@@ -476,7 +627,6 @@ func TestHandler_Failures(t *testing.T) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s/roles", mockIdentityId), nil)
 				h.GetIdentitiesItemRoles(w, mockRequest, "test-id", params)
 			},
-			skip: false,
 		},
 		{
 			name: "TestPatchIdentitiesItemRolesFailure",
@@ -488,15 +638,10 @@ func TestHandler_Failures(t *testing.T) {
 				request := httptest.NewRequest(http.MethodPatch, "/identities/test-id/roles", bytes.NewReader(patches))
 				h.PatchIdentitiesItemRoles(w, request, "test-id")
 			},
-			skip: true,
 		},
 	}
 	for _, test := range tests {
 		tt := test
-		if tt.skip {
-			continue
-		}
-
 		c.Run(tt.name, func(c *qt.C) {
 			mockErrorResponseMapper := NewMockErrorResponseMapper(ctrl)
 			mockErrorResponseMapper.EXPECT().MapError(gomock.Any()).Return(&mockErrorResponse)
@@ -528,35 +673,4 @@ func TestHandler_Failures(t *testing.T) {
 			c.Assert(response.Message, qt.Equals, "mock-error")
 		})
 	}
-}
-
-func TestPutIdentitiesItemFailureValidation(t *testing.T) {
-	c := qt.New(t)
-
-	expectedErrorResponse := resources.Response{
-		Message: "Validation error: Identity ID from path does not match the Identity object",
-		Status:  http.StatusBadRequest,
-	}
-
-	mockWriter := httptest.NewRecorder()
-	sut := handler{}
-
-	identity, _ := json.Marshal(&resources.Identity{Id: &mockIdentityId})
-	request := httptest.NewRequest(http.MethodPut, "/identities/different-id", bytes.NewReader(identity))
-	sut.PutIdentitiesItem(mockWriter, request, "different-id")
-
-	result := mockWriter.Result()
-	defer result.Body.Close()
-
-	data, err := io.ReadAll(result.Body)
-	if err != nil {
-		t.Errorf("Expected error to be nil, got %v", err)
-	}
-
-	response := new(resources.Response)
-	err = json.Unmarshal(data, &response)
-
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-	c.Assert(result.StatusCode, qt.Equals, http.StatusBadRequest)
-	c.Assert(response, qt.DeepEquals, &expectedErrorResponse)
 }

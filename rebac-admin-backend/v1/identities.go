@@ -14,6 +14,7 @@ import (
 // (GET /identities)
 func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params resources.GetIdentitiesParams) {
 	ctx := req.Context()
+
 	identities, err := h.Identities.ListIdentities(ctx, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
@@ -33,6 +34,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 // (POST /identities)
 func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+
 	identity := new(resources.Identity)
 	defer req.Body.Close()
 
@@ -85,11 +87,12 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 // (PUT /identities/{id})
 func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
+
 	identity := new(resources.Identity)
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(identity); err != nil {
-		writeErrorResponse(w, err)
+		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
 		return
 	}
 
@@ -130,9 +133,25 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 
 // PatchIdentitiesItemEntitlements Adds or removes entitlements to/from an identity.
 // (PATCH /identities/{id}/entitlements)
-// TODO (IAM-707)
 func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	ctx := req.Context()
+
+	patchesRequest := new(resources.IdentityEntitlementsPatchRequestBody)
+	defer req.Body.Close()
+
+	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
+		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		return
+	}
+
+	_, err := h.Identities.PatchIdentityEntitlements(ctx, id, patchesRequest.Patches)
+	if err != nil {
+		response := h.IdentitiesErrorMapper.MapError(err)
+		writeResponse(w, response.Status, response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetIdentitiesItemGroups returns the list of groups the identity is a member of.
@@ -157,9 +176,25 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 
 // PatchIdentitiesItemGroups adds or removes the identity to/from a group.
 // (PATCH /identities/{id}/groups)
-// TODO (IAM-707)
 func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	ctx := req.Context()
+
+	patchesRequest := new(resources.IdentityGroupsPatchRequestBody)
+	defer req.Body.Close()
+
+	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
+		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		return
+	}
+
+	_, err := h.Identities.PatchIdentityGroups(ctx, id, patchesRequest.Patches)
+	if err != nil {
+		response := h.IdentitiesErrorMapper.MapError(err)
+		writeResponse(w, response.Status, response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // GetIdentitiesItemRoles returns the list of roles assigned to the identity.
@@ -184,7 +219,23 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 
 // PatchIdentitiesItemRoles Add or remove the identity to/from a role.
 // (PATCH /identities/{id}/roles)
-// TODO (IAM-707)
 func (h handler) PatchIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	ctx := req.Context()
+
+	patchesRequest := new(resources.IdentityRolesPatchRequestBody)
+	defer req.Body.Close()
+
+	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
+		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		return
+	}
+
+	_, err := h.Identities.PatchIdentityRoles(ctx, id, patchesRequest.Patches)
+	if err != nil {
+		response := h.IdentitiesErrorMapper.MapError(err)
+		writeResponse(w, response.Status, response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

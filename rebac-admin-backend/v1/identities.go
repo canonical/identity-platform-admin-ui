@@ -13,7 +13,8 @@ import (
 // GetIdentities returns the list of known identities.
 // (GET /identities)
 func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params resources.GetIdentitiesParams) {
-	identities, err := h.Identities.ListIdentities(&params)
+	ctx := req.Context()
+	identities, err := h.Identities.ListIdentities(ctx, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -31,6 +32,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 // PostIdentities adds a new identity.
 // (POST /identities)
 func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	identity := new(resources.Identity)
 	defer req.Body.Close()
 
@@ -39,7 +41,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	identity, err := h.Identities.CreateIdentity(identity)
+	identity, err := h.Identities.CreateIdentity(ctx, identity)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -52,7 +54,9 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 // DeleteIdentitiesItem deletes the specified identity.
 // (DELETE /identities/{id})
 func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
-	_, err := h.Identities.DeleteIdentity(id)
+	ctx := req.Context()
+
+	_, err := h.Identities.DeleteIdentity(ctx, id)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -65,7 +69,9 @@ func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, 
 // GetIdentitiesItem returns the identity identified by the provided ID.
 // (GET /identities/{id})
 func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
-	identity, err := h.Identities.GetIdentity(id)
+	ctx := req.Context()
+
+	identity, err := h.Identities.GetIdentity(ctx, id)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -78,6 +84,7 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 // PutIdentitiesItem updates the identity identified by the provided ID.
 // (PUT /identities/{id})
 func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
+	ctx := req.Context()
 	identity := new(resources.Identity)
 	defer req.Body.Close()
 
@@ -91,7 +98,7 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 		return
 	}
 
-	identity, err := h.Identities.UpdateIdentity(identity)
+	identity, err := h.Identities.UpdateIdentity(ctx, identity)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -104,7 +111,9 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 // GetIdentitiesItemEntitlements returns the list of entitlements for an identity identified by the provided ID.
 // (GET /identities/{id}/entitlements)
 func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemEntitlementsParams) {
-	entitlements, err := h.Identities.GetIdentityEntitlements(id, &params)
+	ctx := req.Context()
+
+	entitlements, err := h.Identities.GetIdentityEntitlements(ctx, id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -129,7 +138,9 @@ func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *htt
 // GetIdentitiesItemGroups returns the list of groups the identity is a member of.
 // (GET /identities/{id}/groups)
 func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemGroupsParams) {
-	groups, err := h.Identities.GetIdentityGroups(id, &params)
+	ctx := req.Context()
+
+	groups, err := h.Identities.GetIdentityGroups(ctx, id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
@@ -154,7 +165,9 @@ func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Requ
 // GetIdentitiesItemRoles returns the list of roles assigned to the identity.
 // (GET /identities/{id}/roles)
 func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string, params resources.GetIdentitiesItemRolesParams) {
-	roles, err := h.Identities.GetIdentityRoles(id, &params)
+	ctx := req.Context()
+
+	roles, err := h.Identities.GetIdentityRoles(ctx, id, &params)
 	if err != nil {
 		response := h.IdentitiesErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)

@@ -39,7 +39,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(identity); err != nil {
-		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
 		return
 	}
 
@@ -92,12 +92,12 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(identity); err != nil {
-		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
 		return
 	}
 
 	if id != *identity.Id {
-		writeErrorResponse(w, NewValidationError("Identity ID from path does not match the Identity object"))
+		writeErrorResponse(w, NewValidationError("identity ID from path does not match the Identity object"))
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *htt
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
 		return
 	}
 
@@ -183,7 +183,7 @@ func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Requ
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
 		return
 	}
 
@@ -226,7 +226,7 @@ func (h handler) PatchIdentitiesItemRoles(w http.ResponseWriter, req *http.Reque
 	defer req.Body.Close()
 
 	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("Request doesn't match the expected schema"))
+		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
 		return
 	}
 

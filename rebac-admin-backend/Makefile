@@ -13,3 +13,8 @@ help:
 pull-spec:
 	./script/generate-resources-from-spec.sh
 .PHONY: pull-spec
+
+# Generate test mocks
+mocks:
+	go generate ./...
+.PHONY: mocks

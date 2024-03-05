@@ -26,6 +26,15 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 
 // mapErrorResponse returns a Response instance filled with the given error.
 func mapErrorResponse(err error) *resources.Response {
+	// Theoretically, this should never happen, but we anyway have to check for
+	// a nil argument.
+	if err == nil {
+		return &resources.Response{
+			Status:  http.StatusOK,
+			Message: "",
+		}
+	}
+
 	if isBadRequestError(err) {
 		return &resources.Response{
 			Status:  http.StatusBadRequest,

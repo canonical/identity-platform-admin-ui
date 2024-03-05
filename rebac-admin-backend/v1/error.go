@@ -90,14 +90,12 @@ func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
 	return &delegateErrorResponseMapper{delegate: m}
 }
 
-// mapHandlerInternalError checks if the given error is an internal
-// handler-level error (i.e., an auto-generated error type) and return the
+// mapHandlerBadRequestError checks if the given error is an "Bad Request" error
+// thrown at the handler root (i.e., an auto-generated error type) and return the
 // equivalent errorWithStatus instance. If the given error is not an internal
 // handler error, this function will return nil.
-func mapHandlerInternalError(err error) *errorWithStatus {
-	// Note that these are all auto-generated error types, that should be
-	// regarded as bad request errors.
-	if !isHandlerInternalError(err) {
+func mapHandlerBadRequestError(err error) *errorWithStatus {
+	if !isHandlerBadRequestError(err) {
 		return nil
 	}
 	return &errorWithStatus{
@@ -106,7 +104,7 @@ func mapHandlerInternalError(err error) *errorWithStatus {
 	}
 }
 
-func isHandlerInternalError(err error) bool {
+func isHandlerBadRequestError(err error) bool {
 	switch err.(type) {
 	case *resources.UnmarshalingParamError:
 		return true

@@ -33,7 +33,7 @@ func mapErrorResponse(err error) *resources.Response {
 		asErrorWithStatus = &errorWithStatus{status: http.StatusOK}
 	} else if e, ok := err.(*errorWithStatus); ok {
 		asErrorWithStatus = e
-	} else if e := mapHandlerInternalError(err); e != nil {
+	} else if e := mapHandlerBadRequestError(err); e != nil {
 		asErrorWithStatus = e
 	} else {
 		asErrorWithStatus = &errorWithStatus{

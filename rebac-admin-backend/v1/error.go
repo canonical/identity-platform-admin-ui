@@ -53,6 +53,8 @@ func NewValidationError(message string) error {
 
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
 type ErrorResponseMapper interface {
+	// MapError maps an error into a Response. If the method is unable to map the
+	// error (e.g., the error is unknown), it can just return nil.
 	MapError(error) *resources.Response
 }
 

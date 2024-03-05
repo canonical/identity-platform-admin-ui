@@ -424,7 +424,7 @@ func TestHandler_PatchIdentitiesItemRolesSuccess(t *testing.T) {
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 }
 
-func TestHandler_ValidationErrors(t *testing.T) {
+func TestHandler_Identities_ValidationErrors(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -434,10 +434,12 @@ func TestHandler_ValidationErrors(t *testing.T) {
 
 	invalidRequestBody, _ := json.Marshal(mockInvalidRequestBody)
 
-	for _, test := range []struct {
+	type EndpointTest struct {
 		name        string
 		triggerFunc func(h handler, w *httptest.ResponseRecorder)
-	}{
+	}
+
+	tests := []EndpointTest{
 		{
 			name: "TestPatchIdentitiesEntitlementsFailureInvalidRequest",
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -473,7 +475,9 @@ func TestHandler_ValidationErrors(t *testing.T) {
 				h.PutIdentitiesItem(w, req, mockIdentityId)
 			},
 		},
-	} {
+	}
+
+	for _, test := range tests {
 		tt := test
 		c.Run(tt.name, func(c *qt.C) {
 			mockWriter := httptest.NewRecorder()
@@ -500,7 +504,7 @@ func TestHandler_ValidationErrors(t *testing.T) {
 	}
 }
 
-func TestHandler_Failures(t *testing.T) {
+func TestHandler_Identities_Failures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -516,7 +520,6 @@ func TestHandler_Failures(t *testing.T) {
 		name             string
 		setupServiceMock func(mockService *interfaces.MockIdentitiesService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
-		skip             bool
 	}
 
 	tests := []EndpointTest{

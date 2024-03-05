@@ -97,13 +97,13 @@ type ServerInterface interface {
 	// List groups the identity is a member of.
 	// (GET /identities/{id}/groups)
 	GetIdentitiesItemGroups(w http.ResponseWriter, r *http.Request, id string, params GetIdentitiesItemGroupsParams)
-	// Add or remove the identity to/from a group.
+	// Add or remove the identity to/from groups.
 	// (PATCH /identities/{id}/groups)
 	PatchIdentitiesItemGroups(w http.ResponseWriter, r *http.Request, id string)
 	// List roles assigned to the identity.
 	// (GET /identities/{id}/roles)
 	GetIdentitiesItemRoles(w http.ResponseWriter, r *http.Request, id string, params GetIdentitiesItemRolesParams)
-	// Add or remove the identity to/from a role.
+	// Add or remove the identity to/from roles.
 	// (PATCH /identities/{id}/roles)
 	PatchIdentitiesItemRoles(w http.ResponseWriter, r *http.Request, id string)
 	// Get the list of available resources.
@@ -123,7 +123,7 @@ type ServerInterface interface {
 	GetRolesItem(w http.ResponseWriter, r *http.Request, id string)
 	// Update a role.
 	// (PUT /roles/{id})
-	PatchRolesItem(w http.ResponseWriter, r *http.Request, id string)
+	PutRolesItem(w http.ResponseWriter, r *http.Request, id string)
 	// Get the entitlements of a role.
 	// (GET /roles/{id}/entitlements)
 	GetRolesItemEntitlements(w http.ResponseWriter, r *http.Request, id string, params GetRolesItemEntitlementsParams)
@@ -307,7 +307,7 @@ func (_ Unimplemented) GetIdentitiesItemGroups(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Add or remove the identity to/from a group.
+// Add or remove the identity to/from groups.
 // (PATCH /identities/{id}/groups)
 func (_ Unimplemented) PatchIdentitiesItemGroups(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -319,7 +319,7 @@ func (_ Unimplemented) GetIdentitiesItemRoles(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Add or remove the identity to/from a role.
+// Add or remove the identity to/from roles.
 // (PATCH /identities/{id}/roles)
 func (_ Unimplemented) PatchIdentitiesItemRoles(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -357,7 +357,7 @@ func (_ Unimplemented) GetRolesItem(w http.ResponseWriter, r *http.Request, id s
 
 // Update a role.
 // (PUT /roles/{id})
-func (_ Unimplemented) PatchRolesItem(w http.ResponseWriter, r *http.Request, id string) {
+func (_ Unimplemented) PutRolesItem(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1586,8 +1586,8 @@ func (siw *ServerInterfaceWrapper) GetRolesItem(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// PatchRolesItem operation middleware
-func (siw *ServerInterfaceWrapper) PatchRolesItem(w http.ResponseWriter, r *http.Request) {
+// PutRolesItem operation middleware
+func (siw *ServerInterfaceWrapper) PutRolesItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -1602,7 +1602,7 @@ func (siw *ServerInterfaceWrapper) PatchRolesItem(w http.ResponseWriter, r *http
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PatchRolesItem(w, r, id)
+		siw.Handler.PutRolesItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1928,7 +1928,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/roles/{id}", wrapper.GetRolesItem)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/roles/{id}", wrapper.PatchRolesItem)
+		r.Put(options.BaseURL+"/roles/{id}", wrapper.PutRolesItem)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/roles/{id}/entitlements", wrapper.GetRolesItemEntitlements)

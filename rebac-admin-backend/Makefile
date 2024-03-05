@@ -18,3 +18,8 @@ pull-spec:
 mocks:
 	go generate ./...
 .PHONY: mocks
+
+# Run tests
+test: mocks
+	go test ./...
+.PHONY: test

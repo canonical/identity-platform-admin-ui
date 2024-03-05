@@ -92,6 +92,13 @@ func TestMapErrorResponse(t *testing.T) {
 			Status:  http.StatusInternalServerError,
 			Message: "unexpected error",
 		},
+	}, {
+		name: "nil error",
+		arg:  nil,
+		expected: &resources.Response{
+			Status:  http.StatusOK,
+			Message: "",
+		},
 	},
 	}
 

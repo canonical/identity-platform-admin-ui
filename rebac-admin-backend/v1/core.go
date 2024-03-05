@@ -22,31 +22,33 @@ type ReBACAdminBackendParams struct {
 // ReBACAdminBackend represents the ReBAC admin backend as a whole package.
 type ReBACAdminBackend struct {
 	params  ReBACAdminBackendParams
-	service resources.ServerInterface
+	handler resources.ServerInterface
 }
 
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
 func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
-	return newReBACAdminBackendWithService(params, &service{})
+	return newReBACAdminBackendWithService(params, &handler{})
 }
 
 // newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured
 // with given backends and service implementation.
 //
 // This is intended for internal/test use cases.
-func newReBACAdminBackendWithService(params ReBACAdminBackendParams, service resources.ServerInterface) *ReBACAdminBackend {
+func newReBACAdminBackendWithService(params ReBACAdminBackendParams, handler resources.ServerInterface) *ReBACAdminBackend {
 	return &ReBACAdminBackend{
 		params:  params,
-		service: service,
+		handler: handler,
 	}
 }
 
 // Handler returns HTTP handlers implementing the ReBAC Admin OpenAPI spec.
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
-	return resources.HandlerWithOptions(b.service, resources.ChiServerOptions{
-		BaseURL:          baseURL + "/v1",
-		ErrorHandlerFunc: writeErrorResponse,
+	return resources.HandlerWithOptions(b.handler, resources.ChiServerOptions{
+		BaseURL: baseURL + "/v1",
+		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
+			writeErrorResponse(w, err)
+		},
 	})
 }

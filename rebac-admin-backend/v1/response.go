@@ -11,7 +11,7 @@ import (
 
 // writeErrorResponse writes the given err in the response with format defined
 // by the OpenAPI spec.
-func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+func writeErrorResponse(w http.ResponseWriter, err error) {
 	resp := mapErrorResponse(err)
 
 	body, err := json.Marshal(resp)
@@ -25,47 +25,43 @@ func writeErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 // mapErrorResponse returns a Response instance filled with the given error.
-func mapErrorResponse(err error) resources.Response {
+func mapErrorResponse(err error) *resources.Response {
 	if isBadRequestError(err) {
-		return resources.Response{
+		return &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Bad request",
+			Message: err.Error(),
 		}
 	}
+
+	var status int
 
 	switch err.(type) {
 	case *UnauthorizedError:
-		return resources.Response{
-			Status:  http.StatusUnauthorized,
-			Message: "Unauthorized",
-		}
+		status = http.StatusUnauthorized
 	case *NotFoundError:
-		return resources.Response{
-			Status:  http.StatusNotFound,
-			Message: "Not found",
-		}
+		status = http.StatusNotFound
 	default:
-		return resources.Response{
-			Status:  http.StatusInternalServerError,
-			Message: "Unexpected error",
-		}
+		status = http.StatusInternalServerError
+	}
+
+	return &resources.Response{
+		Message: err.Error(),
+		Status:  status,
 	}
 }
 
-// isBadRequestError determines whether the given error should be teated as a
-// "Bad Request" (400) error.
-func isBadRequestError(err error) bool {
-	switch err.(type) {
-	case *resources.UnmarshalingParamError:
-		return true
-	case *resources.RequiredParamError:
-		return true
-	case *resources.RequiredHeaderError:
-		return true
-	case *resources.InvalidParamFormatError:
-		return true
-	case *resources.TooManyValuesForParamError:
-		return true
+// writeResponse is a helper method to avoid verbose repetition of very common instructions
+func writeResponse(w http.ResponseWriter, status int, responseObject interface{}) {
+	data, err := json.Marshal(responseObject)
+	if err != nil {
+		writeErrorResponse(w, err)
+		return
 	}
-	return false
+
+	w.WriteHeader(status)
+
+	_, err = w.Write(data)
+	if err != nil {
+		writeErrorResponse(w, err)
+	}
 }

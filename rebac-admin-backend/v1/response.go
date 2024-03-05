@@ -26,37 +26,25 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 
 // mapErrorResponse returns a Response instance filled with the given error.
 func mapErrorResponse(err error) *resources.Response {
-	// Theoretically, this should never happen, but we anyway have to check for
-	// a nil argument.
+	var asErrorWithStatus *errorWithStatus
 	if err == nil {
-		return &resources.Response{
-			Status:  http.StatusOK,
-			Message: "",
-		}
-	}
-
-	if isBadRequestError(err) {
-		return &resources.Response{
-			Status:  http.StatusBadRequest,
-			Message: err.Error(),
-		}
-	}
-
-	status := http.StatusInternalServerError
-	if e, ok := err.(*errorWithCode); ok {
-		switch e.code {
-		case CodeUnauthorized:
-			status = http.StatusUnauthorized
-		case CodeNotFound:
-			status = http.StatusNotFound
-		case CodeValidationError:
-			status = http.StatusBadRequest
+		// Theoretically, this should never happen, but we anyway have to check for
+		// a nil argument.
+		asErrorWithStatus = &errorWithStatus{status: http.StatusOK}
+	} else if e, ok := err.(*errorWithStatus); ok {
+		asErrorWithStatus = e
+	} else if e := mapHandlerInternalError(err); e != nil {
+		asErrorWithStatus = e
+	} else {
+		asErrorWithStatus = &errorWithStatus{
+			status:  http.StatusInternalServerError,
+			message: err.Error(),
 		}
 	}
 
 	return &resources.Response{
-		Message: err.Error(),
-		Status:  status,
+		Message: asErrorWithStatus.Error(),
+		Status:  asErrorWithStatus.status,
 	}
 }
 

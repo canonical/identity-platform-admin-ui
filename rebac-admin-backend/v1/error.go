@@ -4,49 +4,52 @@ package v1
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// ErrorCode is a code which describes the class of error.
-type ErrorCode string
-
-const (
-	CodeUnauthorized    ErrorCode = "unauthorized"
-	CodeNotFound        ErrorCode = "not found"
-	CodeValidationError ErrorCode = "validation error"
-)
-
-type errorWithCode struct {
-	code    ErrorCode
+// errorWithStatus is an internal error representation that holds the corresponding
+// HTTP status code along with the error message.
+type errorWithStatus struct {
+	// status is the HTTP standard equivalent status status. Acceptable
+	// values are `http.Status*` constants.
+	status  int
 	message string
 }
 
 // Error implements the error interface.
-func (e *errorWithCode) Error() string {
-	return fmt.Sprintf("%s: %s", e.code, e.message)
+func (e *errorWithStatus) Error() string {
+	statusText := http.StatusText(e.status)
+	if statusText == "" {
+		statusText = "[Unknown error]"
+	}
+	if e.message == "" {
+		return statusText
+	}
+	return fmt.Sprintf("%s: %s", statusText, e.message)
 }
 
 // NewUnauthorizedError returns an error instance that represents an unauthorized access error.
 func NewUnauthorizedError(message string) error {
-	return &errorWithCode{
-		code:    CodeUnauthorized,
+	return &errorWithStatus{
+		status:  http.StatusUnauthorized,
 		message: message,
 	}
 }
 
 // NewNotFoundError returns an error instance that represents a not-found error.
 func NewNotFoundError(message string) error {
-	return &errorWithCode{
-		code:    CodeNotFound,
+	return &errorWithStatus{
+		status:  http.StatusNotFound,
 		message: message,
 	}
 }
 
 // NewValidationError returns an error instance that represents an input validation error.
 func NewValidationError(message string) error {
-	return &errorWithCode{
-		code:    CodeValidationError,
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
 		message: message,
 	}
 }
@@ -87,11 +90,23 @@ func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
 	return &delegateErrorResponseMapper{delegate: m}
 }
 
-// isBadRequestError determines whether the given error should be teated as a
-// "Bad Request" (400) error.
-func isBadRequestError(err error) bool {
+// mapHandlerInternalError checks if the given error is an internal
+// handler-level error (i.e., an auto-generated error type) and return the
+// equivalent errorWithStatus instance. If the given error is not an internal
+// handler error, this function will return nil.
+func mapHandlerInternalError(err error) *errorWithStatus {
 	// Note that these are all auto-generated error types, that should be
 	// regarded as bad request errors.
+	if !isHandlerInternalError(err) {
+		return nil
+	}
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
+		message: err.Error(),
+	}
+}
+
+func isHandlerInternalError(err error) bool {
 	switch err.(type) {
 	case *resources.UnmarshalingParamError:
 		return true

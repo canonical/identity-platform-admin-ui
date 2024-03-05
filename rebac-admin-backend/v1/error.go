@@ -12,7 +12,7 @@ import (
 // errorWithStatus is an internal error representation that holds the corresponding
 // HTTP status code along with the error message.
 type errorWithStatus struct {
-	// status is the HTTP standard equivalent status status. Acceptable
+	// status is the HTTP standard equivalent status. Acceptable
 	// values are `http.Status*` constants.
 	status  int
 	message string

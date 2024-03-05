@@ -4,54 +4,60 @@ package v1
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// UnauthorizedError represents unauthorized access error.
-type UnauthorizedError struct {
+// errorWithStatus is an internal error representation that holds the corresponding
+// HTTP status code along with the error message.
+type errorWithStatus struct {
+	// status is the HTTP standard equivalent status. Acceptable
+	// values are `http.Status*` constants.
+	status  int
 	message string
 }
 
-func (e *UnauthorizedError) Error() string {
-	return fmt.Sprintf("Unauthorized: %s", e.message)
+// Error implements the error interface.
+func (e *errorWithStatus) Error() string {
+	statusText := http.StatusText(e.status)
+	if statusText == "" {
+		statusText = "[Unknown error]"
+	}
+	if e.message == "" {
+		return statusText
+	}
+	return fmt.Sprintf("%s: %s", statusText, e.message)
 }
 
-// NewUnauthorizedError returns a pointer to a new instance of UnauthorizedError with the provided message
-func NewUnauthorizedError(message string) *UnauthorizedError {
-	return &UnauthorizedError{message}
+// NewUnauthorizedError returns an error instance that represents an unauthorized access error.
+func NewUnauthorizedError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusUnauthorized,
+		message: message,
+	}
 }
 
-// NotFoundError represents missing entity error.
-type NotFoundError struct {
-	message string
+// NewNotFoundError returns an error instance that represents a not-found error.
+func NewNotFoundError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusNotFound,
+		message: message,
+	}
 }
 
-func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("Not found: %s", e.message)
-}
-
-// NewNotFoundError returns a pointer to a new instance of NotFoundError with the provided message
-func NewNotFoundError(message string) *NotFoundError {
-	return &NotFoundError{message}
-}
-
-// ValidationError represents error in validation of the incoming request
-type ValidationError struct {
-	message string
-}
-
-func (v *ValidationError) Error() string {
-	return fmt.Sprintf("Validation error: %s", v.message)
-}
-
-// NewValidationError returns a pointer to a new instance of ValidationError with the provided message
-func NewValidationError(message string) *ValidationError {
-	return &ValidationError{message}
+// NewValidationError returns an error instance that represents an input validation error.
+func NewValidationError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
+		message: message,
+	}
 }
 
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
 type ErrorResponseMapper interface {
+	// MapError maps an error into a Response. If the method is unable to map the
+	// error (e.g., the error is unknown), it must return nil.
 	MapError(error) *resources.Response
 }
 
@@ -84,9 +90,21 @@ func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
 	return &delegateErrorResponseMapper{delegate: m}
 }
 
-// isBadRequestError determines whether the given error should be teated as a
-// "Bad Request" (400) error.
-func isBadRequestError(err error) bool {
+// mapHandlerBadRequestError checks if the given error is an "Bad Request" error
+// thrown at the handler root (i.e., an auto-generated error type) and return the
+// equivalent errorWithStatus instance. If the given error is not an internal
+// handler error, this function will return nil.
+func mapHandlerBadRequestError(err error) *errorWithStatus {
+	if !isHandlerBadRequestError(err) {
+		return nil
+	}
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
+		message: err.Error(),
+	}
+}
+
+func isHandlerBadRequestError(err error) bool {
 	switch err.(type) {
 	case *resources.UnmarshalingParamError:
 		return true
@@ -97,8 +115,6 @@ func isBadRequestError(err error) bool {
 	case *resources.InvalidParamFormatError:
 		return true
 	case *resources.TooManyValuesForParamError:
-		return true
-	case *ValidationError:
 		return true
 	}
 	return false

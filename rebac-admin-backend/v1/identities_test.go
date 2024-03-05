@@ -495,7 +495,7 @@ func TestHandler_ValidationErrors(t *testing.T) {
 			c.Assert(err, qt.IsNil)
 
 			c.Assert(response.Status, qt.Equals, http.StatusBadRequest)
-			c.Assert(response.Message, qt.Equals, "Validation error: request doesn't match the expected schema")
+			c.Assert(response.Message, qt.Equals, "Bad Request: request doesn't match the expected schema")
 		})
 	}
 }

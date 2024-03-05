@@ -23,70 +23,81 @@ func TestMapErrorResponse(t *testing.T) {
 		name: "handler error: UnmarshalingParamError",
 		arg: &resources.UnmarshalingParamError{
 			ParamName: "test-param",
-			Err:       errors.New("Can't find param"),
+			Err:       errors.New("can't find param"),
 		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Error unmarshaling parameter test-param as JSON: Can't find param",
+			Message: "Bad Request: Error unmarshaling parameter test-param as JSON: can't find param",
 		},
 	}, {
 		name: "handler error: RequiredParamError",
-		arg:  &resources.RequiredParamError{},
+		arg: &resources.RequiredParamError{
+			ParamName: "foo",
+		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Query argument  is required, but not found",
+			Message: "Bad Request: Query argument foo is required, but not found",
 		},
 	}, {
 		name: "handler error: RequiredHeaderError",
-		arg:  &resources.RequiredHeaderError{},
+		arg: &resources.RequiredHeaderError{
+			ParamName: "foo",
+		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Header parameter  is required, but not found",
+			Message: "Bad Request: Header parameter foo is required, but not found",
 		},
 	}, {
 		name: "handler error: InvalidParamFormatError",
 		arg: &resources.InvalidParamFormatError{
 			ParamName: "test-param",
-			Err:       errors.New("Invalid param"),
+			Err:       errors.New("invalid param"),
 		},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Invalid format for parameter test-param: Invalid param",
+			Message: "Bad Request: Invalid format for parameter test-param: invalid param",
 		},
 	}, {
 		name: "handler error: TooManyValuesForParamError",
 		arg:  &resources.TooManyValuesForParamError{ParamName: "test-param"},
 		expected: &resources.Response{
 			Status:  http.StatusBadRequest,
-			Message: "Expected one value for test-param, got 0",
+			Message: "Bad Request: Expected one value for test-param, got 0",
 		},
 	}, {
 		name: "service error: UnauthorizedError",
-		arg:  &UnauthorizedError{"forbidden"},
+		arg:  NewUnauthorizedError("forbidden"),
 		expected: &resources.Response{
 			Status:  http.StatusUnauthorized,
 			Message: "Unauthorized: forbidden",
 		},
 	}, {
 		name: "service error: NotFoundError",
-		arg:  &NotFoundError{"test"},
+		arg:  NewNotFoundError("something not found"),
 		expected: &resources.Response{
 			Status:  http.StatusNotFound,
-			Message: "Not found: test",
+			Message: "Not Found: something not found",
 		},
 	}, {
 		name: "validation error",
-		arg:  &ValidationError{message: "request is not valid"},
+		arg:  NewValidationError("request is not valid"),
 		expected: &resources.Response{
-			Message: "Validation error: request is not valid",
-			Status:  400,
+			Status:  http.StatusBadRequest,
+			Message: "Bad Request: request is not valid",
 		},
 	}, {
 		name: "unknown error",
-		arg:  errors.New("Unexpected error"),
+		arg:  errors.New("unexpected error"),
 		expected: &resources.Response{
 			Status:  http.StatusInternalServerError,
-			Message: "Unexpected error",
+			Message: "Internal Server Error: unexpected error",
+		},
+	}, {
+		name: "nil error",
+		arg:  nil,
+		expected: &resources.Response{
+			Status:  http.StatusOK,
+			Message: "OK",
 		},
 	},
 	}

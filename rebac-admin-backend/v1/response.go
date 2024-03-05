@@ -33,15 +33,16 @@ func mapErrorResponse(err error) *resources.Response {
 		}
 	}
 
-	var status int
-
-	switch err.(type) {
-	case *UnauthorizedError:
-		status = http.StatusUnauthorized
-	case *NotFoundError:
-		status = http.StatusNotFound
-	default:
-		status = http.StatusInternalServerError
+	status := http.StatusInternalServerError
+	if e, ok := err.(*errorWithCode); ok {
+		switch e.code {
+		case CodeUnauthorized:
+			status = http.StatusUnauthorized
+		case CodeNotFound:
+			status = http.StatusNotFound
+		case CodeValidationError:
+			status = http.StatusBadRequest
+		}
 	}
 
 	return &resources.Response{

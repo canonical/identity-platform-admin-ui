@@ -8,46 +8,47 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// UnauthorizedError represents unauthorized access error.
-type UnauthorizedError struct {
+// ErrorCode is a code which describes the class of error.
+type ErrorCode string
+
+const (
+	CodeUnauthorized    ErrorCode = "unauthorized"
+	CodeNotFound        ErrorCode = "not found"
+	CodeValidationError ErrorCode = "validation error"
+)
+
+type errorWithCode struct {
+	code    ErrorCode
 	message string
 }
 
-func (e *UnauthorizedError) Error() string {
-	return fmt.Sprintf("Unauthorized: %s", e.message)
+// Error implements the error interface.
+func (e *errorWithCode) Error() string {
+	return fmt.Sprintf("%s: %s", e.code, e.message)
 }
 
-// NewUnauthorizedError returns a pointer to a new instance of UnauthorizedError with the provided message
-func NewUnauthorizedError(message string) *UnauthorizedError {
-	return &UnauthorizedError{message}
+// NewUnauthorizedError returns an error instance that represents an unauthorized access error.
+func NewUnauthorizedError(message string) error {
+	return &errorWithCode{
+		code:    CodeUnauthorized,
+		message: message,
+	}
 }
 
-// NotFoundError represents missing entity error.
-type NotFoundError struct {
-	message string
+// NewNotFoundError returns an error instance that represents a not-found error.
+func NewNotFoundError(message string) error {
+	return &errorWithCode{
+		code:    CodeNotFound,
+		message: message,
+	}
 }
 
-func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("Not found: %s", e.message)
-}
-
-// NewNotFoundError returns a pointer to a new instance of NotFoundError with the provided message
-func NewNotFoundError(message string) *NotFoundError {
-	return &NotFoundError{message}
-}
-
-// ValidationError represents error in validation of the incoming request
-type ValidationError struct {
-	message string
-}
-
-func (v *ValidationError) Error() string {
-	return fmt.Sprintf("Validation error: %s", v.message)
-}
-
-// NewValidationError returns a pointer to a new instance of ValidationError with the provided message
-func NewValidationError(message string) *ValidationError {
-	return &ValidationError{message}
+// NewValidationError returns an error instance that represents an input validation error.
+func NewValidationError(message string) error {
+	return &errorWithCode{
+		code:    CodeValidationError,
+		message: message,
+	}
 }
 
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
@@ -87,6 +88,8 @@ func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
 // isBadRequestError determines whether the given error should be teated as a
 // "Bad Request" (400) error.
 func isBadRequestError(err error) bool {
+	// Note that these are all auto-generated error types, that should be
+	// regarded as bad request errors.
 	switch err.(type) {
 	case *resources.UnmarshalingParamError:
 		return true
@@ -97,8 +100,6 @@ func isBadRequestError(err error) bool {
 	case *resources.InvalidParamFormatError:
 		return true
 	case *resources.TooManyValuesForParamError:
-		return true
-	case *ValidationError:
 		return true
 	}
 	return false

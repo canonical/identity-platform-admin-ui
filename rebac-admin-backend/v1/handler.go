@@ -18,4 +18,8 @@ type handler struct {
 	Identities              interfaces.IdentitiesService
 	IdentitiesAuthorization interfaces.IdentitiesAuthorization
 	IdentitiesErrorMapper   ErrorResponseMapper
+
+	Roles              interfaces.RolesService
+	RolesAuthorization interfaces.RolesAuthorization
+	RolesErrorMapper   ErrorResponseMapper
 }

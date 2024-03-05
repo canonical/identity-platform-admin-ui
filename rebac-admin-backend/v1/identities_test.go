@@ -536,7 +536,7 @@ func TestPutIdentitiesItemFailureValidation(t *testing.T) {
 	c := qt.New(t)
 
 	expectedErrorResponse := resources.Response{
-		Message: "Validation error: Identity ID from path does not match the Identity object",
+		Message: "validation error: Identity ID from path does not match the Identity object",
 		Status:  http.StatusBadRequest,
 	}
 

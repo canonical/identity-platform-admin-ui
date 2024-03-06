@@ -352,7 +352,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			},
 		},
 		{
-			name: "TestPatchIdentitiesItemEntitlementsFailure",
+			name: "TestPatchRolesItemEntitlementsFailure",
 			setupServiceMock: func(mockService *interfaces.MockRolesService) {
 				mockService.EXPECT().PatchRoleEntitlements(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},

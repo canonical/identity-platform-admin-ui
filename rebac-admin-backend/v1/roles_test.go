@@ -190,7 +190,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 			body, err := io.ReadAll(result.Body)
 			c.Assert(err, qt.IsNil)
 
-			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 
 			if tt.expectedBody != nil {
 				c.Assert(string(body), qt.JSONEquals, tt.expectedBody)
@@ -391,7 +391,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			response := new(resources.Response)
 			err = json.Unmarshal(data, response)
 
-			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 			c.Assert(response.Status, qt.Equals, http.StatusInternalServerError)
 			c.Assert(response.Message, qt.Equals, "mock-error")
 		})

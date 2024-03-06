@@ -51,7 +51,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 		setupServiceMock func(mockService *interfaces.MockRolesService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
 		expectedStatus   int
-		doAssert         func(c *qt.C, result *http.Response)
+		expectedBody     any
 	}
 
 	tests := []EndpointTest{
@@ -69,20 +69,9 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.GetRoles(w, mockRequest, resources.GetRolesParams{})
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				response := new(resources.GetRolesResponse)
-				err = json.Unmarshal(data, response)
-
-				c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-
-				expected := resources.GetRolesResponse{
-					Data:   []resources.Role{mockRoleObject},
-					Status: http.StatusOK,
-				}
-				c.Assert(*response, qt.DeepEquals, expected)
+			expectedBody: resources.GetRolesResponse{
+				Data:   []resources.Role{mockRoleObject},
+				Status: http.StatusOK,
 			},
 		},
 		{
@@ -98,18 +87,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.PostRoles(w, mockRequest)
 			},
 			expectedStatus: http.StatusCreated,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				response := new(resources.Role)
-				err = json.Unmarshal(data, response)
-
-				c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-
-				expected := mockRoleObject
-				c.Assert(*response, qt.DeepEquals, expected)
-			},
+			expectedBody:   mockRoleObject,
 		},
 		{
 			name: "TestHandler_Roles_GetRoleSuccess",
@@ -123,18 +101,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.GetRolesItem(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				response := new(resources.Role)
-				err = json.Unmarshal(data, response)
-
-				c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-
-				expected := mockRoleObject
-				c.Assert(*response, qt.DeepEquals, expected)
-			},
+			expectedBody:   mockRoleObject,
 		},
 		{
 			name: "TestHandler_Roles_UpdateRoleSuccess",
@@ -149,18 +116,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.PutRolesItem(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				response := new(resources.Role)
-				err = json.Unmarshal(data, response)
-
-				c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-
-				expected := mockRoleObject
-				c.Assert(*response, qt.DeepEquals, expected)
-			},
+			expectedBody:   mockRoleObject,
 		},
 		{
 			name: "TestHandler_Roles_DeleteRoleSuccess",
@@ -174,13 +130,6 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.DeleteRolesItem(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
-				c.Assert(len(data), qt.Equals, 0)
-			},
 		},
 		{
 			name: "TestHandler_Roles_GetRoleEntitlementsSuccess",
@@ -194,20 +143,9 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.GetRolesItemEntitlements(w, mockRequest, mockRoleId, resources.GetRolesItemEntitlementsParams{})
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				response := new(resources.GetRoleEntitlementsResponse)
-				err = json.Unmarshal(data, response)
-
-				c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
-
-				expected := resources.GetRoleEntitlementsResponse{
-					Data:   mockEntitlements,
-					Status: http.StatusOK,
-				}
-				c.Assert(*response, qt.DeepEquals, expected)
+			expectedBody: resources.GetRoleEntitlementsResponse{
+				Data:   mockEntitlements,
+				Status: http.StatusOK,
 			},
 		},
 		{
@@ -230,13 +168,6 @@ func TestHandler_Roles_Success(t *testing.T) {
 				h.PatchRolesItemEntitlements(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
-			doAssert: func(c *qt.C, result *http.Response) {
-				data, err := io.ReadAll(result.Body)
-				c.Assert(err, qt.IsNil)
-
-				c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
-				c.Assert(len(data), qt.Equals, 0)
-			},
 		},
 	}
 
@@ -255,7 +186,17 @@ func TestHandler_Roles_Success(t *testing.T) {
 			defer result.Body.Close()
 
 			c.Assert(result.StatusCode, qt.Equals, tt.expectedStatus)
-			tt.doAssert(c, result)
+
+			body, err := io.ReadAll(result.Body)
+			c.Assert(err, qt.IsNil)
+
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+
+			if tt.expectedBody != nil {
+				c.Assert(string(body), qt.JSONEquals, tt.expectedBody)
+			} else {
+				c.Assert(len(body), qt.Equals, 0)
+			}
 		})
 	}
 
@@ -326,7 +267,6 @@ func TestHandler_Roles_ValidationErrors(t *testing.T) {
 	}
 }
 
-// OK
 func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)

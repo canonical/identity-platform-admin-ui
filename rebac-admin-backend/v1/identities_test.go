@@ -504,7 +504,7 @@ func TestHandler_Identities_ValidationErrors(t *testing.T) {
 	}
 }
 
-func TestHandler_Identities_Failures(t *testing.T) {
+func TestHandler_Identities_ServiceBackendFailures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

@@ -47,12 +47,11 @@ func TestHandler_Roles_Success(t *testing.T) {
 	}
 
 	type EndpointTest struct {
-		name               string
-		setupServiceMock   func(mockService *interfaces.MockRolesService)
-		triggerFunc        func(h handler, w *httptest.ResponseRecorder)
-		initializeResponse func() any
-		expectedStatus     int
-		doAssert           func(c *qt.C, result *http.Response)
+		name             string
+		setupServiceMock func(mockService *interfaces.MockRolesService)
+		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
+		expectedStatus   int
+		doAssert         func(c *qt.C, result *http.Response)
 	}
 
 	tests := []EndpointTest{
@@ -277,7 +276,7 @@ func TestHandler_Roles_ValidationErrors(t *testing.T) {
 		triggerFunc func(h handler, w *httptest.ResponseRecorder)
 	}
 
-	for _, test := range []EndpointTest{
+	tests := []EndpointTest{
 		{
 			name: "TestPostRolesFailureInvalidRequest",
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -299,7 +298,8 @@ func TestHandler_Roles_ValidationErrors(t *testing.T) {
 				h.PatchRolesItemEntitlements(w, req, mockRoleId)
 			},
 		},
-	} {
+	}
+	for _, test := range tests {
 		tt := test
 		c.Run(tt.name, func(c *qt.C) {
 			mockWriter := httptest.NewRecorder()
@@ -327,7 +327,7 @@ func TestHandler_Roles_ValidationErrors(t *testing.T) {
 }
 
 // OK
-func TestHandler_Roles_Failures(t *testing.T) {
+func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

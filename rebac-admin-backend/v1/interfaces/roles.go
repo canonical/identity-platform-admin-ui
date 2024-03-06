@@ -11,25 +11,25 @@ import (
 
 // RolesService defines an abstract backend to handle Roles related operations.
 type RolesService interface {
-	// ListRoles returns a page of Role objects of at least `size` elements if available
+	// ListRoles returns a page of Role objects of at least `size` elements if available.
 	ListRoles(ctx context.Context, params *resources.GetRolesParams) (*resources.Roles, error)
 	// CreateRole creates a single Role.
-	CreateRole(ctx context.Context, Role *resources.Role) (*resources.Role, error)
+	CreateRole(ctx context.Context, role *resources.Role) (*resources.Role, error)
 
 	// GetRole returns a single Role.
-	GetRole(ctx context.Context, RoleId string) (*resources.Role, error)
-	// UpdateRole updates an Role.
-	UpdateRole(ctx context.Context, Role *resources.Role) (*resources.Role, error)
+	GetRole(ctx context.Context, roleId string) (*resources.Role, error)
+	// UpdateRole updates a Role.
+	UpdateRole(ctx context.Context, role *resources.Role) (*resources.Role, error)
 	// DeleteRole deletes a Role
 	// returns (true, nil) in case a Role was successfully deleted
-	// return (false, error) in case something went wrong
-	// implementors may want to return (false, nil) for idempotency cases
-	DeleteRole(ctx context.Context, RoleId string) (bool, error)
+	// returns (false, error) in case something went wrong
+	// implementors may want to return (false, nil) for idempotency cases.
+	DeleteRole(ctx context.Context, roleId string) (bool, error)
 
-	// GetRoleEntitlements returns a page of Entitlements for Role `RoleId`.
-	GetRoleEntitlements(ctx context.Context, RoleId string, params *resources.GetRolesItemEntitlementsParams) ([]resources.EntityEntitlement, error)
+	// GetRoleEntitlements returns a page of Entitlements for Role `roleId`.
+	GetRoleEntitlements(ctx context.Context, roleId string, params *resources.GetRolesItemEntitlementsParams) ([]resources.EntityEntitlement, error)
 	// PatchRoleEntitlements performs addition or removal of an Entitlement to/from a Role.
-	PatchRoleEntitlements(ctx context.Context, RoleId string, entitlementPatches []resources.RoleEntitlementsPatchItem) (bool, error)
+	PatchRoleEntitlements(ctx context.Context, roleId string, entitlementPatches []resources.RoleEntitlementsPatchItem) (bool, error)
 }
 
 // RolesAuthorization defines an abstract backend to handle authorization for Roles.

@@ -12,9 +12,6 @@ type handler struct {
 	// endpoints are implemented.
 	resources.Unimplemented
 
-	Groups              GroupsServiceBackend
-	GroupsAuthorization GroupsAuthorizationBackend
-
 	Identities              interfaces.IdentitiesService
 	IdentitiesAuthorization interfaces.IdentitiesAuthorization
 	IdentitiesErrorMapper   ErrorResponseMapper
@@ -23,10 +20,6 @@ type handler struct {
 	RolesAuthorization interfaces.RolesAuthorization
 	RolesErrorMapper   ErrorResponseMapper
 
-	IdentityProviders              interfaces.IdentityProvidersService
-	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
-	IdentityProvidersErrorMapper   ErrorResponseMapper
-
 	Capabilities              interfaces.CapabilitiesService
 	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
 	CapabilitiesErrorMapper   ErrorResponseMapper
@@ -34,4 +27,8 @@ type handler struct {
 	Entitlements              interfaces.EntitlementsService
 	EntitlementsAuthorization interfaces.EntitlementsAuthorization
 	EntitlementsErrorMapper   ErrorResponseMapper
+
+	Groups              interfaces.GroupsService
+	GroupsAuthorization interfaces.GroupsAuthorization
+	GroupsErrorMapper   ErrorResponseMapper
 }

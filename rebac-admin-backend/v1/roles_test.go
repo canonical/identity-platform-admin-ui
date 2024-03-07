@@ -283,7 +283,6 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 		name             string
 		setupServiceMock func(mockService *interfaces.MockRolesService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
-		skip             bool
 	}
 
 	tests := []EndpointTest{

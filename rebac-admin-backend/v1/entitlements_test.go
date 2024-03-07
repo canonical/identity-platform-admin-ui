@@ -124,7 +124,6 @@ func TestHandler_Entitlements_ServiceBackendFailures(t *testing.T) {
 		name             string
 		setupServiceMock func(mockService *interfaces.MockEntitlementsService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
-		skip             bool
 	}
 
 	tests := []EndpointTest{

@@ -67,7 +67,7 @@ func writeResponse(w http.ResponseWriter, status int, responseObject interface{}
 // response type. If the given mapper is nil, the method uses the default
 // mapping strategy.
 //
-// This method should never returns nil response.
+// This method should never return nil response.
 func mapServiceErrorResponse(mapper ErrorResponseMapper, err error) *resources.Response {
 	var response *resources.Response
 	if mapper != nil {

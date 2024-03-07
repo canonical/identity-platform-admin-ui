@@ -73,14 +73,14 @@ func (h handler) DeleteGroupsItem(w http.ResponseWriter, req *http.Request, id s
 func (h handler) GetGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	identity, err := h.Groups.GetGroup(ctx, id)
+	group, err := h.Groups.GetGroup(ctx, id)
 	if err != nil {
 		response := h.GroupsErrorMapper.MapError(err)
 		writeResponse(w, response.Status, response)
 		return
 	}
 
-	writeResponse(w, http.StatusOK, identity)
+	writeResponse(w, http.StatusOK, group)
 }
 
 // PutGroupsItem updates the group identified by the provided ID.

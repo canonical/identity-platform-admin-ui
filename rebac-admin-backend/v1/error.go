@@ -54,6 +54,14 @@ func NewValidationError(message string) error {
 	}
 }
 
+// NewUnknownError returns an error instance that represents an unknown internal error.
+func NewUnknownError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusInternalServerError,
+		message: message,
+	}
+}
+
 // ErrorResponseMapper is the basic interface to allow for error -> http response mapping
 type ErrorResponseMapper interface {
 	// MapError maps an error into a Response. If the method is unable to map the

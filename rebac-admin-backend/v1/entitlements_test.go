@@ -67,7 +67,7 @@ func TestHandler_Entitlements_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockEntitlementsService) {
 				mockService.EXPECT().
 					RawEntitlements(gomock.Any()).
-					Return(&mockEntitlementsRaw, nil)
+					Return(mockEntitlementsRaw, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				mockRequest := httptest.NewRequest(http.MethodGet, "/entitlements/raw", nil)
@@ -141,7 +141,7 @@ func TestHandler_Entitlements_ServiceBackendFailures(t *testing.T) {
 		{
 			name: "TestGetEntitlementsRawFailure",
 			setupServiceMock: func(mockService *interfaces.MockEntitlementsService) {
-				mockService.EXPECT().RawEntitlements(gomock.Any()).Return(nil, mockError)
+				mockService.EXPECT().RawEntitlements(gomock.Any()).Return("", mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				request := httptest.NewRequest(http.MethodGet, "/entitlements/raw", nil)

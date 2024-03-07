@@ -14,7 +14,7 @@ type EntitlementsService interface {
 	ListEntitlements(ctx context.Context, params *resources.GetEntitlementsParams) ([]resources.EntityEntitlement, error)
 
 	// RawEntitlements returns the list of entitlements as raw text.
-	RawEntitlements(ctx context.Context) (*string, error)
+	RawEntitlements(ctx context.Context) (string, error)
 }
 
 type EntitlementsAuthorization interface {

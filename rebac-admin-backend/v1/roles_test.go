@@ -190,7 +190,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 			body, err := io.ReadAll(result.Body)
 			c.Assert(err, qt.IsNil)
 
-			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 
 			if tt.expectedBody != nil {
 				c.Assert(string(body), qt.JSONEquals, tt.expectedBody)
@@ -316,7 +316,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				mockRequest := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/roles/%s", mockRoleId), nil)
-				h.DeleteRolesItem(w, mockRequest, "test-id")
+				h.DeleteRolesItem(w, mockRequest, mockRoleId)
 			},
 		},
 		{
@@ -326,7 +326,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/roles/%s", mockRoleId), nil)
-				h.GetRolesItem(w, mockRequest, "test-id")
+				h.GetRolesItem(w, mockRequest, mockRoleId)
 			},
 		},
 		{
@@ -337,7 +337,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				role, _ := json.Marshal(&resources.Role{Id: &mockRoleId})
 				request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), bytes.NewReader(role))
-				h.PutRolesItem(w, request, "test-id")
+				h.PutRolesItem(w, request, mockRoleId)
 			},
 		},
 		{
@@ -348,18 +348,18 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				params := resources.GetRolesItemEntitlementsParams{}
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), nil)
-				h.GetRolesItemEntitlements(w, mockRequest, "test-id", params)
+				h.GetRolesItemEntitlements(w, mockRequest, mockRoleId, params)
 			},
 		},
 		{
-			name: "TestPatchIdentitiesItemEntitlementsFailure",
+			name: "TestPatchRolesItemEntitlementsFailure",
 			setupServiceMock: func(mockService *interfaces.MockRolesService) {
 				mockService.EXPECT().PatchRoleEntitlements(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				patches, _ := json.Marshal(&resources.RoleEntitlementsPatchRequestBody{})
 				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), bytes.NewReader(patches))
-				h.PatchRolesItemEntitlements(w, request, "test-id")
+				h.PatchRolesItemEntitlements(w, request, mockRoleId)
 			},
 		},
 	}
@@ -391,7 +391,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 			response := new(resources.Response)
 			err = json.Unmarshal(data, response)
 
-			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 			c.Assert(response.Status, qt.Equals, http.StatusInternalServerError)
 			c.Assert(response.Message, qt.Equals, "mock-error")
 		})

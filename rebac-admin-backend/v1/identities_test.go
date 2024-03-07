@@ -61,7 +61,7 @@ func TestHandler_GetIdentities(t *testing.T) {
 
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &expectedResponse)
 }
@@ -93,7 +93,7 @@ func TestHandler_PostIdentitiesSuccess(t *testing.T) {
 	response := new(resources.Identity)
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusCreated)
 	c.Assert(response, qt.DeepEquals, &mockIdentityReturn)
 }
@@ -147,7 +147,7 @@ func TestHandler_GetIdentitiesItemSuccess(t *testing.T) {
 
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &mockIdentityReturn)
 }
@@ -182,7 +182,7 @@ func TestHandler_PutIdentitiesItemSuccess(t *testing.T) {
 	response := new(resources.Identity)
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &mockIdentityReturn)
 }
@@ -229,7 +229,7 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 	response := new(resources.GetIdentityEntitlementsResponse)
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &expectedResponse)
 }
@@ -308,7 +308,7 @@ func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
 	response := new(resources.GetIdentityGroupsResponse)
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &expectedResponse)
 }
@@ -387,7 +387,7 @@ func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
 	response := new(resources.GetIdentityRolesResponse)
 	err = json.Unmarshal(data, response)
 
-	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+	c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 	c.Assert(result.StatusCode, qt.Equals, http.StatusOK)
 	c.Assert(response, qt.DeepEquals, &expectedResponse)
 }
@@ -671,7 +671,7 @@ func TestHandler_Identities_ServiceBackendFailures(t *testing.T) {
 			response := new(resources.Response)
 			err = json.Unmarshal(data, response)
 
-			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling resonse, got: %v", err))
+			c.Assert(err, qt.IsNil, qt.Commentf("Unexpected err while unmarshaling response, got: %v", err))
 			c.Assert(response.Status, qt.Equals, 500)
 			c.Assert(response.Message, qt.Equals, "mock-error")
 		})

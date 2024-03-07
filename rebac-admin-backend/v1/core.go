@@ -9,14 +9,24 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/interfaces"
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
 // ReBACAdminBackendParams contains references to user-defined implementation
 // of required abstractions, called "backend"s.
 type ReBACAdminBackendParams struct {
-	GroupsService       GroupsServiceBackend
-	GroupsAuthorization GroupsAuthorizationBackend
+	IdentitiesService       interfaces.IdentitiesService
+	IdentitiesAuthorization interfaces.IdentitiesAuthorization
+	IdentitiesErrorMapper   ErrorResponseMapper
+
+	RolesService       interfaces.RolesService
+	RolesAuthorization interfaces.RolesAuthorization
+	RolesErrorMapper   ErrorResponseMapper
+
+	GroupsService       interfaces.GroupsService
+	GroupsAuthorization interfaces.GroupsAuthorization
+	GroupsErrorMapper   ErrorResponseMapper
 }
 
 // ReBACAdminBackend represents the ReBAC admin backend as a whole package.

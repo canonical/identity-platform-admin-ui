@@ -174,7 +174,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 	writeResponse(w, http.StatusOK, response)
 }
 
-// PatchIdentitiesItemGroups adds or removes the identity to/from a group.
+// PatchIdentitiesItemGroups adds or removes the identity to/from groups.
 // (PATCH /identities/{id}/groups)
 func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
@@ -217,7 +217,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 	writeResponse(w, http.StatusOK, response)
 }
 
-// PatchIdentitiesItemRoles Add or remove the identity to/from a role.
+// PatchIdentitiesItemRoles Add or remove the identity to/from roles.
 // (PATCH /identities/{id}/roles)
 func (h handler) PatchIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()

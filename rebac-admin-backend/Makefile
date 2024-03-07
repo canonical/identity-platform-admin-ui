@@ -16,6 +16,7 @@ pull-spec:
 
 # Generate test mocks
 mocks:
+	go install go.uber.org/mock/mockgen@v0.3.0
 	go generate ./...
 .PHONY: mocks
 

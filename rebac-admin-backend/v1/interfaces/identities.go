@@ -33,7 +33,7 @@ type IdentitiesService interface {
 	// PatchIdentityGroups performs addition or removal of a Group to/from an Identity.
 	PatchIdentityGroups(ctx context.Context, identityId string, groupPatches []resources.IdentityGroupsPatchItem) (bool, error)
 
-	// GetIdentityRoles returns a page of Groups for identity `identityId`.
+	// GetIdentityRoles returns a page of Roles for identity `identityId`.
 	GetIdentityRoles(ctx context.Context, identityId string, params *resources.GetIdentitiesItemRolesParams) (*resources.Roles, error)
 	// PatchIdentityRoles performs addition or removal of a Role to/from an Identity.
 	PatchIdentityRoles(ctx context.Context, identityId string, rolePatches []resources.IdentityRolesPatchItem) (bool, error)

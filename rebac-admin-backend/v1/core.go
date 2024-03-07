@@ -27,6 +27,10 @@ type ReBACAdminBackendParams struct {
 	GroupsService       interfaces.GroupsService
 	GroupsAuthorization interfaces.GroupsAuthorization
 	GroupsErrorMapper   ErrorResponseMapper
+
+	Resources              interfaces.ResourcesService
+	ResourcesAuthorization interfaces.ResourcesAuthorization
+	ResourcesErrorMapper   ErrorResponseMapper
 }
 
 // ReBACAdminBackend represents the ReBAC admin backend as a whole package.

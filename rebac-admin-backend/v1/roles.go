@@ -17,8 +17,7 @@ func (h handler) GetRoles(w http.ResponseWriter, req *http.Request, params resou
 
 	roles, err := h.Roles.ListRoles(ctx, &params)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -45,8 +44,7 @@ func (h handler) PostRoles(w http.ResponseWriter, req *http.Request) {
 
 	role, err := h.Roles.CreateRole(ctx, role)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -60,8 +58,7 @@ func (h handler) DeleteRolesItem(w http.ResponseWriter, req *http.Request, id st
 
 	_, err := h.Roles.DeleteRole(ctx, id)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -75,8 +72,7 @@ func (h handler) GetRolesItem(w http.ResponseWriter, req *http.Request, id strin
 
 	role, err := h.Roles.GetRole(ctx, id)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -103,8 +99,7 @@ func (h handler) PutRolesItem(w http.ResponseWriter, req *http.Request, id strin
 
 	role, err := h.Roles.UpdateRole(ctx, role)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -118,8 +113,7 @@ func (h handler) GetRolesItemEntitlements(w http.ResponseWriter, req *http.Reque
 
 	entitlements, err := h.Roles.GetRoleEntitlements(ctx, id, &params)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
@@ -146,8 +140,7 @@ func (h handler) PatchRolesItemEntitlements(w http.ResponseWriter, req *http.Req
 
 	_, err := h.Roles.PatchRoleEntitlements(ctx, id, patchesRequest.Patches)
 	if err != nil {
-		response := h.RolesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 

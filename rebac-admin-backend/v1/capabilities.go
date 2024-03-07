@@ -16,8 +16,7 @@ func (h handler) GetCapabilities(w http.ResponseWriter, req *http.Request) {
 
 	capabilities, err := h.Capabilities.ListCapabilities(ctx)
 	if err != nil {
-		response := h.CapabilitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.CapabilitiesErrorMapper, err)
 		return
 	}
 

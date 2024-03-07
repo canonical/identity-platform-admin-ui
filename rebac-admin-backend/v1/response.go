@@ -18,9 +18,11 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("unexpected marshalling error"))
+		return
 	}
 
 	w.WriteHeader(int(resp.Status))
+	setJSONContentTypeHeader(w)
 	w.Write(body)
 }
 
@@ -57,11 +59,8 @@ func writeResponse(w http.ResponseWriter, status int, responseObject interface{}
 	}
 
 	w.WriteHeader(status)
-
-	_, err = w.Write(data)
-	if err != nil {
-		writeErrorResponse(w, err)
-	}
+	setJSONContentTypeHeader(w)
+	w.Write(data)
 }
 
 // mapServiceErrorResponse maps errors thrown by services to the designated
@@ -86,4 +85,8 @@ func mapServiceErrorResponse(mapper ErrorResponseMapper, err error) *resources.R
 func writeServiceErrorResponse(w http.ResponseWriter, mapper ErrorResponseMapper, err error) {
 	response := mapServiceErrorResponse(mapper, err)
 	writeResponse(w, response.Status, response)
+}
+
+func setJSONContentTypeHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 }

@@ -30,4 +30,8 @@ type handler struct {
 	Capabilities              interfaces.CapabilitiesService
 	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
 	CapabilitiesErrorMapper   ErrorResponseMapper
+
+	Entitlements              interfaces.EntitlementsService
+	EntitlementsAuthorization interfaces.EntitlementsAuthorization
+	EntitlementsErrorMapper   ErrorResponseMapper
 }

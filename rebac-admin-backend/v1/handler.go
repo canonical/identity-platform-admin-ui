@@ -26,4 +26,8 @@ type handler struct {
 	IdentityProviders              interfaces.IdentityProvidersService
 	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
 	IdentityProvidersErrorMapper   ErrorResponseMapper
+
+	Capabilities              interfaces.CapabilitiesService
+	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
+	CapabilitiesErrorMapper   ErrorResponseMapper
 }

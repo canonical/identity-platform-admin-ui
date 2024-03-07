@@ -23,7 +23,7 @@ type handler struct {
 	RolesAuthorization interfaces.RolesAuthorization
 	RolesErrorMapper   ErrorResponseMapper
 
-	IdentityProviders              interfaces.IdentityProviderService
-	IdentityProvidersAuthorization interfaces.IdentityProviderService
+	IdentityProviders              interfaces.IdentityProvidersService
+	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
 	IdentityProvidersErrorMapper   ErrorResponseMapper
 }

@@ -48,7 +48,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 
 	type EndpointTest struct {
 		name             string
-		setupServiceMock func(mockService *interfaces.MockIdentityProviderService)
+		setupServiceMock func(mockService *interfaces.MockIdentityProvidersService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
 		expectedStatus   int
 		expectedBody     any
@@ -57,7 +57,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 	tests := []EndpointTest{
 		{
 			name: "TestHandler_IdP_GetAvailableIdentityProvidersSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				params := resources.GetAvailableIdentityProvidersParams{}
 				mockService.EXPECT().
 					ListAvailableIdentityProviders(gomock.Any(), gomock.Eq(&params)).
@@ -66,7 +66,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 					}, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				mockRequest := httptest.NewRequest(http.MethodGet, "/authentication", nil)
+				mockRequest := httptest.NewRequest(http.MethodGet, "/authentication/providers", nil)
 				h.GetAvailableIdentityProviders(w, mockRequest, resources.GetAvailableIdentityProvidersParams{})
 			},
 			expectedStatus: http.StatusOK,
@@ -77,14 +77,14 @@ func TestHandler_IdP_Success(t *testing.T) {
 		},
 		{
 			name: "TestHandler_IdP_GetIdentityProvidersSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					ListIdentityProviders(gomock.Any(), gomock.Any()).
 					Return(&resources.IdentityProviders{Data: mockIDPs}, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				params := resources.GetIdentityProvidersParams{}
-				mockRequest := httptest.NewRequest(http.MethodPost, "/authentication", nil)
+				mockRequest := httptest.NewRequest(http.MethodGet, "/authentication", nil)
 				h.GetIdentityProviders(w, mockRequest, params)
 			},
 			expectedStatus: http.StatusOK,
@@ -95,14 +95,14 @@ func TestHandler_IdP_Success(t *testing.T) {
 		},
 		{
 			name: "TestHandler_IdP_PostIdentityProvidersSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					RegisterConfiguration(gomock.Any(), gomock.Eq(&mockIDPObject)).
 					Return(&mockIDPObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				idpBody, _ := json.Marshal(mockIDPObject)
-				mockRequest := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(idpBody))
+				mockRequest := httptest.NewRequest(http.MethodPost, "/authentication", bytes.NewReader(idpBody))
 				h.PostIdentityProviders(w, mockRequest)
 			},
 			expectedStatus: http.StatusCreated,
@@ -110,7 +110,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 		},
 		{
 			name: "TestHandler_IdP_DeleteIdentityProvidersItemSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					DeleteConfiguration(gomock.Any(), gomock.Eq(mockIdentityProviderId)).
 					Return(true, nil)
@@ -123,7 +123,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 		},
 		{
 			name: "TestHandler_IdP_GetIdentityProvidersItemSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					GetConfiguration(gomock.Any(), gomock.Eq(mockIdentityProviderId)).
 					Return(&mockIDPObject, nil)
@@ -137,7 +137,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 		},
 		{
 			name: "TestHandler_IdP_PutIdentityProvidersItemSuccess",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					UpdateConfiguration(gomock.Any(), gomock.Eq(&mockIDPObject)).
 					Return(&mockIDPObject, nil)
@@ -155,10 +155,10 @@ func TestHandler_IdP_Success(t *testing.T) {
 	for _, test := range tests {
 		tt := test
 		c.Run(tt.name, func(c *qt.C) {
-			mockRoleService := interfaces.NewMockIdentityProviderService(ctrl)
-			tt.setupServiceMock(mockRoleService)
+			mockIDPService := interfaces.NewMockIdentityProvidersService(ctrl)
+			tt.setupServiceMock(mockIDPService)
 
-			sut := handler{IdentityProviders: mockRoleService}
+			sut := handler{IdentityProviders: mockIDPService}
 
 			mockWriter := httptest.NewRecorder()
 			tt.triggerFunc(sut, mockWriter)
@@ -202,15 +202,15 @@ func TestHandler_IdP_ValidationErrors(t *testing.T) {
 		{
 			name: "TestPostIdentityProvidersFailureInvalidRequest",
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(invalidRequestBody))
-				h.PostRoles(w, req)
+				req := httptest.NewRequest(http.MethodPost, "/authentication", bytes.NewReader(invalidRequestBody))
+				h.PostIdentityProviders(w, req)
 			},
 		},
 		{
 			name: "TestPutIdentityProvidersItemFailureInvalidRequest",
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(invalidRequestBody))
-				h.PutRolesItem(w, req, mockIdentityProviderId)
+				h.PutIdentityProvidersItem(w, req, mockIdentityProviderId)
 			},
 		},
 	}
@@ -255,7 +255,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 
 	type EndpointTest struct {
 		name             string
-		setupServiceMock func(mockService *interfaces.MockIdentityProviderService)
+		setupServiceMock func(mockService *interfaces.MockIdentityProvidersService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
 		skip             bool
 	}
@@ -263,7 +263,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 	tests := []EndpointTest{
 		{
 			name: "GetAvailableIdentityProvidersFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().ListAvailableIdentityProviders(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -274,7 +274,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		},
 		{
 			name: "TestGetIdentityProvidersFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().ListIdentityProviders(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -284,7 +284,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		},
 		{
 			name: "TestPostIdentityProvidersFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().RegisterConfiguration(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -295,7 +295,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		},
 		{
 			name: "TestDeleteIdentityProvidersItemFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().DeleteConfiguration(gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -305,7 +305,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		},
 		{
 			name: "TestGetIdentityProvidersItemFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().GetConfiguration(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -315,7 +315,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		},
 		{
 			name: "TestPutIdentityProvidersItemFailure",
-			setupServiceMock: func(mockService *interfaces.MockIdentityProviderService) {
+			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().UpdateConfiguration(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
@@ -331,7 +331,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 			mockErrorResponseMapper := NewMockErrorResponseMapper(ctrl)
 			mockErrorResponseMapper.EXPECT().MapError(gomock.Any()).Return(&mockErrorResponse)
 
-			mockIDPService := interfaces.NewMockIdentityProviderService(ctrl)
+			mockIDPService := interfaces.NewMockIdentityProvidersService(ctrl)
 			tt.setupServiceMock(mockIDPService)
 
 			mockWriter := httptest.NewRecorder()

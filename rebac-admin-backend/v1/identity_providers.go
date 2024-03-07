@@ -31,7 +31,7 @@ func (h handler) GetAvailableIdentityProviders(w http.ResponseWriter, req *http.
 
 }
 
-// GetIdentityProviders returns a list of known authentication providers.
+// GetIdentityProviders returns a list of registered authentication providers configurations.
 // (GET /authentication)
 func (h handler) GetIdentityProviders(w http.ResponseWriter, req *http.Request, params resources.GetIdentityProvidersParams) {
 	ctx := req.Context()

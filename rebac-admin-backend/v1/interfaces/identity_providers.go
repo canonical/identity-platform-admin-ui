@@ -9,8 +9,8 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// IdentityProviderService defines an abstract backend to handle Roles related operations.
-type IdentityProviderService interface {
+// IdentityProvidersService defines an abstract backend to handle Roles related operations.
+type IdentityProvidersService interface {
 
 	// ListAvailableIdentityProviders returns the static list of supported identity providers.
 	ListAvailableIdentityProviders(ctx context.Context, params *resources.GetAvailableIdentityProvidersParams) (*resources.AvailableIdentityProviders, error)
@@ -31,6 +31,6 @@ type IdentityProviderService interface {
 	UpdateConfiguration(ctx context.Context, provider *resources.IdentityProvider) (*resources.IdentityProvider, error)
 }
 
-// IdentityProviderAuthorization defines an abstract backend to handle authorization for Roles.
-type IdentityProviderAuthorization interface {
+// IdentityProvidersAuthorization defines an abstract backend to handle authorization for Roles.
+type IdentityProvidersAuthorization interface {
 }

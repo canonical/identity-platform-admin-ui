@@ -53,7 +53,7 @@ func (h handler) PostGroups(w http.ResponseWriter, req *http.Request) {
 	writeResponse(w, http.StatusCreated, group)
 }
 
-// DeleteGroupsItem deletes the specified group.
+// DeleteGroupsItem deletes the specified group identified by the provided ID.
 // (DELETE /groups/{id})
 func (h handler) DeleteGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
@@ -131,7 +131,7 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 	writeResponse(w, http.StatusOK, response)
 }
 
-// PatchGroupsItemEntitlements Adds or removes entitlements to/from a group.
+// PatchGroupsItemEntitlements Adds or removes entitlements to/from a group identified by the provided ID.
 // (PATCH /groups/{id}/entitlements)
 func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()

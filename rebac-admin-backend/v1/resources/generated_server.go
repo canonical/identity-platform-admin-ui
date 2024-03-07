@@ -15,22 +15,22 @@ import (
 type ServerInterface interface {
 	// List configured authentication providers.
 	// (GET /authentication)
-	GetAuthentication(w http.ResponseWriter, r *http.Request, params GetAuthenticationParams)
+	GetIdentityProviders(w http.ResponseWriter, r *http.Request, params GetIdentityProvidersParams)
 	// Configure a new authentication provider.
 	// (POST /authentication)
-	PostAuthentication(w http.ResponseWriter, r *http.Request)
+	PostIdentityProviders(w http.ResponseWriter, r *http.Request)
 	// Returns the list of supported identity providers.
 	// (GET /authentication/providers)
-	GetAuthenticationProviders(w http.ResponseWriter, r *http.Request, params GetAuthenticationProvidersParams)
+	GetAvailableIdentityProviders(w http.ResponseWriter, r *http.Request, params GetAvailableIdentityProvidersParams)
 	// Remove an authentication provider configuration.
 	// (DELETE /authentication/{id})
-	DeleteAuthenticationItem(w http.ResponseWriter, r *http.Request, id string)
+	DeleteIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string)
 	// Get a single authentication provider.
 	// (GET /authentication/{id})
-	GetAuthenticationItem(w http.ResponseWriter, r *http.Request, id string)
+	GetIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string)
 	// Update an authentication provider configuration.
 	// (PUT /authentication/{id})
-	PutAuthenticationItem(w http.ResponseWriter, r *http.Request, id string)
+	PutIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string)
 	// Returns the list of endpoints implemented by this API.
 	// (GET /capabilities)
 	GetCapabilities(w http.ResponseWriter, r *http.Request)
@@ -141,37 +141,37 @@ type Unimplemented struct{}
 
 // List configured authentication providers.
 // (GET /authentication)
-func (_ Unimplemented) GetAuthentication(w http.ResponseWriter, r *http.Request, params GetAuthenticationParams) {
+func (_ Unimplemented) GetIdentityProviders(w http.ResponseWriter, r *http.Request, params GetIdentityProvidersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Configure a new authentication provider.
 // (POST /authentication)
-func (_ Unimplemented) PostAuthentication(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) PostIdentityProviders(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Returns the list of supported identity providers.
 // (GET /authentication/providers)
-func (_ Unimplemented) GetAuthenticationProviders(w http.ResponseWriter, r *http.Request, params GetAuthenticationProvidersParams) {
+func (_ Unimplemented) GetAvailableIdentityProviders(w http.ResponseWriter, r *http.Request, params GetAvailableIdentityProvidersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Remove an authentication provider configuration.
 // (DELETE /authentication/{id})
-func (_ Unimplemented) DeleteAuthenticationItem(w http.ResponseWriter, r *http.Request, id string) {
+func (_ Unimplemented) DeleteIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Get a single authentication provider.
 // (GET /authentication/{id})
-func (_ Unimplemented) GetAuthenticationItem(w http.ResponseWriter, r *http.Request, id string) {
+func (_ Unimplemented) GetIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Update an authentication provider configuration.
 // (PUT /authentication/{id})
-func (_ Unimplemented) PutAuthenticationItem(w http.ResponseWriter, r *http.Request, id string) {
+func (_ Unimplemented) PutIdentityProvidersItem(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -388,14 +388,14 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetAuthentication operation middleware
-func (siw *ServerInterfaceWrapper) GetAuthentication(w http.ResponseWriter, r *http.Request) {
+// GetIdentityProviders operation middleware
+func (siw *ServerInterfaceWrapper) GetIdentityProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetAuthenticationParams
+	var params GetIdentityProvidersParams
 
 	// ------------- Optional query parameter "size" -------------
 
@@ -422,7 +422,7 @@ func (siw *ServerInterfaceWrapper) GetAuthentication(w http.ResponseWriter, r *h
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetAuthentication(w, r, params)
+		siw.Handler.GetIdentityProviders(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -432,12 +432,12 @@ func (siw *ServerInterfaceWrapper) GetAuthentication(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// PostAuthentication operation middleware
-func (siw *ServerInterfaceWrapper) PostAuthentication(w http.ResponseWriter, r *http.Request) {
+// PostIdentityProviders operation middleware
+func (siw *ServerInterfaceWrapper) PostIdentityProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostAuthentication(w, r)
+		siw.Handler.PostIdentityProviders(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -447,14 +447,14 @@ func (siw *ServerInterfaceWrapper) PostAuthentication(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetAuthenticationProviders operation middleware
-func (siw *ServerInterfaceWrapper) GetAuthenticationProviders(w http.ResponseWriter, r *http.Request) {
+// GetAvailableIdentityProviders operation middleware
+func (siw *ServerInterfaceWrapper) GetAvailableIdentityProviders(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params GetAuthenticationProvidersParams
+	var params GetAvailableIdentityProvidersParams
 
 	// ------------- Optional query parameter "size" -------------
 
@@ -481,7 +481,7 @@ func (siw *ServerInterfaceWrapper) GetAuthenticationProviders(w http.ResponseWri
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetAuthenticationProviders(w, r, params)
+		siw.Handler.GetAvailableIdentityProviders(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -491,8 +491,8 @@ func (siw *ServerInterfaceWrapper) GetAuthenticationProviders(w http.ResponseWri
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// DeleteAuthenticationItem operation middleware
-func (siw *ServerInterfaceWrapper) DeleteAuthenticationItem(w http.ResponseWriter, r *http.Request) {
+// DeleteIdentityProvidersItem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIdentityProvidersItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -507,7 +507,7 @@ func (siw *ServerInterfaceWrapper) DeleteAuthenticationItem(w http.ResponseWrite
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteAuthenticationItem(w, r, id)
+		siw.Handler.DeleteIdentityProvidersItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -517,8 +517,8 @@ func (siw *ServerInterfaceWrapper) DeleteAuthenticationItem(w http.ResponseWrite
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// GetAuthenticationItem operation middleware
-func (siw *ServerInterfaceWrapper) GetAuthenticationItem(w http.ResponseWriter, r *http.Request) {
+// GetIdentityProvidersItem operation middleware
+func (siw *ServerInterfaceWrapper) GetIdentityProvidersItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -533,7 +533,7 @@ func (siw *ServerInterfaceWrapper) GetAuthenticationItem(w http.ResponseWriter, 
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetAuthenticationItem(w, r, id)
+		siw.Handler.GetIdentityProvidersItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -543,8 +543,8 @@ func (siw *ServerInterfaceWrapper) GetAuthenticationItem(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// PutAuthenticationItem operation middleware
-func (siw *ServerInterfaceWrapper) PutAuthenticationItem(w http.ResponseWriter, r *http.Request) {
+// PutIdentityProvidersItem operation middleware
+func (siw *ServerInterfaceWrapper) PutIdentityProvidersItem(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -559,7 +559,7 @@ func (siw *ServerInterfaceWrapper) PutAuthenticationItem(w http.ResponseWriter, 
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PutAuthenticationItem(w, r, id)
+		siw.Handler.PutIdentityProvidersItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1820,22 +1820,22 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/authentication", wrapper.GetAuthentication)
+		r.Get(options.BaseURL+"/authentication", wrapper.GetIdentityProviders)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/authentication", wrapper.PostAuthentication)
+		r.Post(options.BaseURL+"/authentication", wrapper.PostIdentityProviders)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/authentication/providers", wrapper.GetAuthenticationProviders)
+		r.Get(options.BaseURL+"/authentication/providers", wrapper.GetAvailableIdentityProviders)
 	})
 	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/authentication/{id}", wrapper.DeleteAuthenticationItem)
+		r.Delete(options.BaseURL+"/authentication/{id}", wrapper.DeleteIdentityProvidersItem)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/authentication/{id}", wrapper.GetAuthenticationItem)
+		r.Get(options.BaseURL+"/authentication/{id}", wrapper.GetIdentityProvidersItem)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/authentication/{id}", wrapper.PutAuthenticationItem)
+		r.Put(options.BaseURL+"/authentication/{id}", wrapper.PutIdentityProvidersItem)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/capabilities", wrapper.GetCapabilities)

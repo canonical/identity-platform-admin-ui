@@ -35,4 +35,8 @@ type handler struct {
 	Groups              interfaces.GroupsService
 	GroupsAuthorization interfaces.GroupsAuthorization
 	GroupsErrorMapper   ErrorResponseMapper
+
+	Resources              interfaces.ResourcesService
+	ResourcesAuthorization interfaces.ResourcesAuthorization
+	ResourcesErrorMapper   ErrorResponseMapper
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	qt "github.com/frankban/quicktest"
+	"go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
@@ -107,6 +108,57 @@ func TestMapErrorResponse(t *testing.T) {
 		c.Run(tt.name, func(c *qt.C) {
 			value := mapErrorResponse(tt.arg)
 			c.Assert(value, qt.DeepEquals, tt.expected)
+		})
+	}
+}
+
+func TestMapServiceErrorResponse(t *testing.T) {
+	c := qt.New(t)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tests := []struct {
+		name       string
+		initMapper func() ErrorResponseMapper
+		err        error
+		expected   resources.Response
+	}{{
+		name: "nil mapper",
+		err:  errors.New("foo"),
+		expected: resources.Response{
+			Status:  http.StatusInternalServerError,
+			Message: "Internal Server Error: foo",
+		},
+	}, {
+		name: "non-nil mapper",
+		initMapper: func() ErrorResponseMapper {
+			mapper := NewMockErrorResponseMapper(ctrl)
+			mapper.EXPECT().
+				MapError(gomock.Any()).
+				Return(&resources.Response{
+					Status:  999, // Some bizarre status code
+					Message: "foo",
+				})
+			return mapper
+		},
+		err: errors.New("bar"),
+		expected: resources.Response{
+			Status:  999,
+			Message: "foo",
+		},
+	},
+	}
+
+	for _, t := range tests {
+		tt := t
+		c.Run(tt.name, func(c *qt.C) {
+			var mapper ErrorResponseMapper
+			if tt.initMapper != nil {
+				mapper = tt.initMapper()
+			}
+
+			response := mapServiceErrorResponse(mapper, tt.err)
+			c.Assert(*response, qt.DeepEquals, tt.expected)
 		})
 	}
 }

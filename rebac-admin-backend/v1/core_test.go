@@ -31,12 +31,12 @@ func TestHandlerWorksWithStandardMux(t *testing.T) {
 
 	res, err := http.Get(server.URL + "/some/base/path/v1/swagger.json")
 	c.Assert(err, qt.IsNil)
-	c.Assert(res.StatusCode, qt.Equals, http.StatusNotImplemented)
+	c.Assert(res.StatusCode, qt.Equals, http.StatusOK)
 	defer res.Body.Close()
 
 	out, err := io.ReadAll(res.Body)
 	c.Assert(err, qt.IsNil)
-	c.Assert(out, qt.IsNotNil)
+	c.Assert(len(out) > 0, qt.IsTrue)
 }
 
 // TestHandlerWorksWithChiMux this test ensures that the returned Handler
@@ -57,10 +57,10 @@ func TestHandlerWorksWithChiMux(t *testing.T) {
 
 	res, err := http.Get(server.URL + "/some/base/path/v1/swagger.json")
 	c.Assert(err, qt.IsNil)
-	c.Assert(res.StatusCode, qt.Equals, http.StatusNotImplemented)
+	c.Assert(res.StatusCode, qt.Equals, http.StatusOK)
 	defer res.Body.Close()
 
 	out, err := io.ReadAll(res.Body)
 	c.Assert(err, qt.IsNil)
-	c.Assert(out, qt.IsNotNil)
+	c.Assert(len(out) > 0, qt.IsTrue)
 }

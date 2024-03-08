@@ -21,8 +21,8 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 		return
 	}
 
-	w.WriteHeader(int(resp.Status))
 	setJSONContentTypeHeader(w)
+	w.WriteHeader(int(resp.Status))
 	w.Write(body)
 }
 
@@ -58,8 +58,8 @@ func writeResponse(w http.ResponseWriter, status int, responseObject interface{}
 		return
 	}
 
-	w.WriteHeader(status)
 	setJSONContentTypeHeader(w)
+	w.WriteHeader(status)
 	w.Write(data)
 }
 

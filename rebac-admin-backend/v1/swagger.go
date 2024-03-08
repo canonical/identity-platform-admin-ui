@@ -14,7 +14,7 @@ import (
 func (h handler) SwaggerJson(w http.ResponseWriter, req *http.Request) {
 	swagger, err := resources.GetSwagger()
 	if err != nil {
-		writeErrorResponse(w, NewUnknownError("cannot retrieve swagger instance"))
+		writeErrorResponse(w, NewUnknownError("cannot retrieve swagger data"))
 		return
 	}
 

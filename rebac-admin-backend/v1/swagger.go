@@ -4,6 +4,7 @@
 package v1
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -24,5 +25,7 @@ func (h handler) SwaggerJson(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.Write(body)
+	if _, err := w.Write(body); err != nil {
+		log.Printf("failed to write response body: %v", err)
+	}
 }

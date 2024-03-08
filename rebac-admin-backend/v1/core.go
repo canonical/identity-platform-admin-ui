@@ -16,15 +16,27 @@ import (
 // ReBACAdminBackendParams contains references to user-defined implementation
 // of required abstractions, called "backend"s.
 type ReBACAdminBackendParams struct {
-	IdentitiesService       interfaces.IdentitiesService
+	Identities              interfaces.IdentitiesService
 	IdentitiesAuthorization interfaces.IdentitiesAuthorization
 	IdentitiesErrorMapper   ErrorResponseMapper
 
-	RolesService       interfaces.RolesService
+	Roles              interfaces.RolesService
 	RolesAuthorization interfaces.RolesAuthorization
 	RolesErrorMapper   ErrorResponseMapper
 
-	GroupsService       interfaces.GroupsService
+	IdentityProviders              interfaces.IdentityProvidersService
+	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
+	IdentityProvidersErrorMapper   ErrorResponseMapper
+
+	Capabilities              interfaces.CapabilitiesService
+	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
+	CapabilitiesErrorMapper   ErrorResponseMapper
+
+	Entitlements              interfaces.EntitlementsService
+	EntitlementsAuthorization interfaces.EntitlementsAuthorization
+	EntitlementsErrorMapper   ErrorResponseMapper
+
+	Groups              interfaces.GroupsService
 	GroupsAuthorization interfaces.GroupsAuthorization
 	GroupsErrorMapper   ErrorResponseMapper
 
@@ -42,7 +54,35 @@ type ReBACAdminBackend struct {
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
 func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
-	return newReBACAdminBackendWithService(params, &handler{})
+	return newReBACAdminBackendWithService(params, &handler{
+		Identities:              params.Identities,
+		IdentitiesAuthorization: params.IdentitiesAuthorization,
+		IdentitiesErrorMapper:   params.IdentitiesErrorMapper,
+
+		Roles:              params.Roles,
+		RolesAuthorization: params.RolesAuthorization,
+		RolesErrorMapper:   params.RolesErrorMapper,
+
+		IdentityProviders:              params.IdentityProviders,
+		IdentityProvidersAuthorization: params.IdentityProvidersAuthorization,
+		IdentityProvidersErrorMapper:   params.IdentityProvidersErrorMapper,
+
+		Capabilities:              params.Capabilities,
+		CapabilitiesAuthorization: params.CapabilitiesAuthorization,
+		CapabilitiesErrorMapper:   params.CapabilitiesErrorMapper,
+
+		Entitlements:              params.Entitlements,
+		EntitlementsAuthorization: params.EntitlementsAuthorization,
+		EntitlementsErrorMapper:   params.EntitlementsErrorMapper,
+
+		Groups:              params.Groups,
+		GroupsAuthorization: params.GroupsAuthorization,
+		GroupsErrorMapper:   params.GroupsErrorMapper,
+
+		Resources:              params.Resources,
+		ResourcesAuthorization: params.ResourcesAuthorization,
+		ResourcesErrorMapper:   params.ResourcesErrorMapper,
+	})
 }
 
 // newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured

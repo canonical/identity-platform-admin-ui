@@ -18,8 +18,10 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("unexpected marshalling error"))
+		return
 	}
 
+	setJSONContentTypeHeader(w)
 	w.WriteHeader(int(resp.Status))
 	w.Write(body)
 }
@@ -56,10 +58,35 @@ func writeResponse(w http.ResponseWriter, status int, responseObject interface{}
 		return
 	}
 
+	setJSONContentTypeHeader(w)
 	w.WriteHeader(status)
+	w.Write(data)
+}
 
-	_, err = w.Write(data)
-	if err != nil {
-		writeErrorResponse(w, err)
+// mapServiceErrorResponse maps errors thrown by services to the designated
+// response type. If the given mapper is nil, the method uses the default
+// mapping strategy.
+//
+// This method should never return nil response.
+func mapServiceErrorResponse(mapper ErrorResponseMapper, err error) *resources.Response {
+	var response *resources.Response
+	if mapper != nil {
+		response = mapper.MapError(err)
 	}
+
+	if response == nil {
+		response = mapErrorResponse(err)
+	}
+	return response
+}
+
+// writeServiceErrorResponse is a helper method that maps errors thrown by
+// services and writes them to the HTTP response stream.
+func writeServiceErrorResponse(w http.ResponseWriter, mapper ErrorResponseMapper, err error) {
+	response := mapServiceErrorResponse(mapper, err)
+	writeResponse(w, response.Status, response)
+}
+
+func setJSONContentTypeHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
 }

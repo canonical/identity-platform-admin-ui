@@ -17,8 +17,7 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 
 	identities, err := h.Identities.ListIdentities(ctx, &params)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -45,8 +44,7 @@ func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 
 	identity, err := h.Identities.CreateIdentity(ctx, identity)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -60,8 +58,7 @@ func (h handler) DeleteIdentitiesItem(w http.ResponseWriter, req *http.Request, 
 
 	_, err := h.Identities.DeleteIdentity(ctx, id)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -75,8 +72,7 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 
 	identity, err := h.Identities.GetIdentity(ctx, id)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -103,8 +99,7 @@ func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 
 	identity, err := h.Identities.UpdateIdentity(ctx, identity)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -118,8 +113,7 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 
 	entitlements, err := h.Identities.GetIdentityEntitlements(ctx, id, &params)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -146,8 +140,7 @@ func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *htt
 
 	_, err := h.Identities.PatchIdentityEntitlements(ctx, id, patchesRequest.Patches)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -161,8 +154,7 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 
 	groups, err := h.Identities.GetIdentityGroups(ctx, id, &params)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -189,8 +181,7 @@ func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Requ
 
 	_, err := h.Identities.PatchIdentityGroups(ctx, id, patchesRequest.Patches)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -204,8 +195,7 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 
 	roles, err := h.Identities.GetIdentityRoles(ctx, id, &params)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
@@ -232,8 +222,7 @@ func (h handler) PatchIdentitiesItemRoles(w http.ResponseWriter, req *http.Reque
 
 	_, err := h.Identities.PatchIdentityRoles(ctx, id, patchesRequest.Patches)
 	if err != nil {
-		response := h.IdentitiesErrorMapper.MapError(err)
-		writeResponse(w, response.Status, response)
+		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 

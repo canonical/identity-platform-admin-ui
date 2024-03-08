@@ -61,35 +61,6 @@ type ErrorResponseMapper interface {
 	MapError(error) *resources.Response
 }
 
-type delegateErrorResponseMapper struct {
-	delegate ErrorResponseMapper
-}
-
-func (d delegateErrorResponseMapper) MapError(err error) *resources.Response {
-	var response *resources.Response
-	if d.delegate != nil {
-		response = d.delegate.MapError(err)
-	}
-
-	if nil == response {
-		response = mapErrorResponse(err)
-	}
-
-	return response
-}
-
-// NewDefaultErrorResponseMapper returns a pointer to an errorMapper that maps known errors
-// to specific error responses and all custom errors to 500 Internal server error responses
-func NewDefaultErrorResponseMapper() ErrorResponseMapper {
-	return &delegateErrorResponseMapper{}
-}
-
-// NewDelegateErrorResponseMapper creates an error mapper that relies on the default error mapping
-// only if the provided error mapper returns nil for the error used as input
-func NewDelegateErrorResponseMapper(m ErrorResponseMapper) ErrorResponseMapper {
-	return &delegateErrorResponseMapper{delegate: m}
-}
-
 // mapHandlerBadRequestError checks if the given error is an "Bad Request" error
 // thrown at the handler root (i.e., an auto-generated error type) and return the
 // equivalent errorWithStatus instance. If the given error is not an internal

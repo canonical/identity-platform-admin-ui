@@ -257,7 +257,6 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 		name             string
 		setupServiceMock func(mockService *interfaces.MockIdentityProvidersService)
 		triggerFunc      func(h handler, w *httptest.ResponseRecorder)
-		skip             bool
 	}
 
 	tests := []EndpointTest{

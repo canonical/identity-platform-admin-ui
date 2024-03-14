@@ -44,9 +44,15 @@ As a requirement, please make sure to:
       microk8s enable registry
       # ensure kubectl is configured to use microk8s
       microk8s.kubectl config view --raw > $HOME/.kube/config
+      # Alias kubectl so that it can be used by Skaffold
+      snap alias microk8s.kubectl kubectl
 
 
-* ensure [`skaffold`](https://github.com/GoogleContainerTools/skaffold), [`container-structure-test`](https://github.com/GoogleContainerTools/container-structure-test) and [`docker`](https://docs.docker.com/engine/install/ubuntu/) are installed according to their documentation
+* ensure [`skaffold`](https://github.com/GoogleContainerTools/skaffold), [`container-structure-test`](https://github.com/GoogleContainerTools/container-structure-test), [`docker`](https://docs.docker.com/engine/install/ubuntu/) and [helm](https://helm.sh/docs/intro/install) are installed according to their documentation
+
+* initialise LXD so that it has a default profile when used by `rockcraft` during `skaffold build`
+
+      sudo lxd init --auto
 
 Run `make dev` to get a working environment in k8s
 

@@ -35,7 +35,7 @@ func TestHandler_GetIdentities(t *testing.T) {
 
 	mockParams := resources.GetIdentitiesParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
-	mockIdentitiesReturn := resources.Identities{Data: []resources.Identity{
+	mockIdentitiesReturn := resources.PaginatedResponse[resources.Identity]{Data: []resources.Identity{
 		{FirstName: &mockFirstName},
 	}}
 	mockIdentityService.EXPECT().ListIdentities(gomock.Any(), gomock.Any()).Return(&mockIdentitiesReturn, nil)
@@ -198,21 +198,24 @@ func TestHandler_GetIdentitiesItemEntitlementsSuccess(t *testing.T) {
 		entityType      = "mock-entity-type"
 	)
 
-	mockIdentityEntitlements := []resources.EntityEntitlement{
-		{
-			EntitlementType: entitlementType,
-			EntityName:      entityName,
-			EntityType:      entityType,
+	mockIdentityEntitlements := resources.PaginatedResponse[resources.EntityEntitlement]{
+		Data: []resources.EntityEntitlement{
+			{
+				EntitlementType: entitlementType,
+				EntityName:      entityName,
+				EntityType:      entityType,
+			},
 		},
 	}
+
 	expectedResponse := resources.GetIdentityEntitlementsResponse{
-		Data:   mockIdentityEntitlements,
+		Data:   mockIdentityEntitlements.Data,
 		Status: http.StatusOK,
 	}
 
 	params := resources.GetIdentitiesItemEntitlementsParams{}
 	mockIdentityService := interfaces.NewMockIdentitiesService(ctrl)
-	mockIdentityService.EXPECT().GetIdentityEntitlements(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(mockIdentityEntitlements, nil)
+	mockIdentityService.EXPECT().GetIdentityEntitlements(gomock.Any(), gomock.Eq(mockIdentityId), gomock.Eq(&params)).Return(&mockIdentityEntitlements, nil)
 
 	mockWriter := httptest.NewRecorder()
 	mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/identities/%s/entitlements", mockIdentityId), nil)
@@ -276,7 +279,7 @@ func TestHandler_GetIdentitiesItemGroupsSuccess(t *testing.T) {
 		mockName = "test-groupname"
 	)
 
-	mockIdentityGroups := resources.Groups{
+	mockIdentityGroups := resources.PaginatedResponse[resources.Group]{
 		Data: []resources.Group{
 			{
 				Id:   &mockId,
@@ -355,7 +358,7 @@ func TestHandler_GetIdentitiesItemRolesSuccess(t *testing.T) {
 		mockName = "test-rolename"
 	)
 
-	mockIdentityRoles := resources.Roles{
+	mockIdentityRoles := resources.PaginatedResponse[resources.Role]{
 		Data: []resources.Role{
 			{
 				Id:   &mockId,

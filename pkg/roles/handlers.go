@@ -36,6 +36,8 @@ type RoleRequest struct {
 	ID string `json:"id" validate:"required"`
 }
 
+// API is the core HTTP object that implements all the HTTP and business logic for the roles
+// HTTP API functionality
 type API struct {
 	service ServiceInterface
 
@@ -44,16 +46,7 @@ type API struct {
 	monitor monitoring.MonitorInterface
 }
 
-// GET /roles: list all available roles, not filtered by access permissions
-// POST /roles: create a role (name will be ID), allows to attach permissions, groups and users (to evaluate feasibility)
-// GET /roles/{id}: details of a specific role, in particular permissions, might expand to associated users and groups
-// PATCH /roles/{id}: associate permissions
-// DELETE /roles/{id}: remove role
-// GET /roles/{id}/entitlements: list of associated permissions to the role, tuple read on each type fga --api-url http://127.0.0.1:8080 --store-id $STORE_ID tuple read --user role:administrator#assignee --object client:
-// POST /roles/{id}/entitlements: associate a new permissions to the role
-// GET /roles/{id}/entitlements/{e_id}: details about the entitlement
-// GET roles/{id}/groups: see groups associated with the role, using read tuple as no direct relationship between role and group, just other way round
-
+// RegisterEndpoints hooks up all the endpoints to the server mux passed via the arg
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/roles", a.handleList)
 	mux.Get("/api/v0/roles/{id}", a.handleDetail)
@@ -465,6 +458,7 @@ func (a *API) handleRemovePermission(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+// NewAPI returns an API object responsible for all the roles HTTP handlers
 func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 

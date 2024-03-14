@@ -21,6 +21,7 @@ const (
 	ASSIGNEE_RELATION = "assignee"
 )
 
+// Service contains the business logic to deal with roles on the Admin UI OpenFGA model
 type Service struct {
 	ofga OpenFGAClientInterface
 
@@ -29,6 +30,7 @@ type Service struct {
 	logger  logging.LoggerInterface
 }
 
+// ListRoles returns all the roles a specific user can see (using "can_view" OpenFGA relation)
 func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoles")
 	defer span.End()
@@ -43,7 +45,8 @@ func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error
 	return roles, nil
 }
 
-// ListRoleGroups does rely on the /read endpoint which allows for pagination via the token
+// ListRoleGroups returns all the groups associated to a specific role
+// method relies on the /read endpoint which allows for pagination via the token
 // unfortunately we are not able to distinguish between types assigned on the OpenFGA side,
 // so we'll have to filter here based on the user, this leads to unrealiable object counts
 // TODO @shipperizer a more complex pagination system can be implemented by keeping track of the
@@ -71,6 +74,7 @@ func (s *Service) ListRoleGroups(ctx context.Context, ID, continuationToken stri
 	return groups, r.GetContinuationToken(), nil
 }
 
+// ListPermissions returns all the permissions associated to a specific role
 func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTokens map[string]string) ([]string, map[string]string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListPermissions")
 	defer span.End()
@@ -125,6 +129,8 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 	return permissions, tokens, nil
 }
 
+// GetRole returns the specified role using the ID argument, userID is used to validate the visibility by the user
+// making the call
 func (s *Service) GetRole(ctx context.Context, userID, ID string) (string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.GetRole")
 	defer span.End()
@@ -145,6 +151,8 @@ func (s *Service) GetRole(ctx context.Context, userID, ID string) (string, error
 	return "", nil
 }
 
+// CreateRole creates a role and associates it with the userID passed as argument
+// an extra tuple is created to estabilish the "privileged" relatin for admin users
 func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
@@ -171,6 +179,7 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	return nil
 }
 
+// AssignPermissions assigns permissions to a role
 // TODO @shipperizer see if it's worth using only one between Permission and ofga.Tuple
 func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions ...Permission) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.AssignPermissions")
@@ -195,6 +204,7 @@ func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions 
 	return nil
 }
 
+// RemovePermissions removes permissions from a role
 // TODO @shipperizer see if it's worth using only one between Permission and ofga.Tuple
 func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions ...Permission) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.RemovePermissions")
@@ -219,6 +229,7 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 	return nil
 }
 
+// DeleteRole deletes a role and all the related tuples
 func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.DeleteRole")
 	defer span.End()
@@ -300,6 +311,7 @@ func (s *Service) permissionTypes() []string {
 	return []string{"role", "group", "identity", "scheme", "provider", "client"}
 }
 
+// NewService returns the implementtation of the business logic for the roles API
 func NewService(ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 

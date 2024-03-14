@@ -12,10 +12,11 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 type PaginationLinksMeta struct {

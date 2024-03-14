@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/responses"
-	"github.com/go-chi/chi/v5"
 )
 
 type API struct {

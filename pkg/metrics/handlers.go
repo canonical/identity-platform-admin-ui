@@ -6,9 +6,10 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 )
 
 type API struct {

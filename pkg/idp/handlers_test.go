@@ -15,9 +15,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
 	gomock "go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

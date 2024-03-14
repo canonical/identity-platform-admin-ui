@@ -6,9 +6,10 @@ package prometheus
 import (
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Monitor struct {

@@ -12,6 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/kelseyhightower/envconfig"
+	"github.com/spf13/cobra"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
@@ -26,8 +29,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
-	"github.com/kelseyhightower/envconfig"
-	"github.com/spf13/cobra"
 )
 
 // serveCmd represents the serve command

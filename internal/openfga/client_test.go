@@ -9,12 +9,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/kelseyhightower/envconfig"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package openfga -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

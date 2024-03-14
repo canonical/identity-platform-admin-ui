@@ -6,11 +6,13 @@ package openfga
 import (
 	"context"
 
+	openfga "github.com/openfga/go-sdk"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	openfga "github.com/openfga/go-sdk"
+
 	"github.com/openfga/go-sdk/client"
 )
 

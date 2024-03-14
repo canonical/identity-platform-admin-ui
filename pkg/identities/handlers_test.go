@@ -14,9 +14,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
 	gomock "go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 
 	kClient "github.com/ory/kratos-client-go"
 )

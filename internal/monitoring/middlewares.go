@@ -9,8 +9,9 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 )
 
 const (

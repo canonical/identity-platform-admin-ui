@@ -12,13 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	trace "go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -356,12 +357,27 @@ func TestServiceCreateRole(t *testing.T) {
 			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.CreateRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockOpenFGA.EXPECT().WriteTuple(gomock.Any(), fmt.Sprintf("user:%s", test.input.user), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)).Return(test.expected)
+
+			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, tuples ...ofga.Tuple) error {
+					ps := make([]ofga.Tuple, 0)
+
+					ps = append(
+						ps,
+						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
+						*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", test.input.role)),
+					)
+
+					if !reflect.DeepEqual(ps, tuples) {
+						t.Errorf("expected tuples to be %v got %v", ps, tuples)
+					}
+
+					return test.expected
+				},
+			)
 
 			if test.expected != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-			} else {
-				mockOpenFGA.EXPECT().WriteTuple(gomock.Any(), authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", test.input.role)).Return(test.expected)
 			}
 
 			err := svc.CreateRole(context.Background(), test.input.user, test.input.role)

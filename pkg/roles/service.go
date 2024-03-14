@@ -9,11 +9,12 @@ import (
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -77,13 +78,12 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 	permissionsMap := sync.Map{}
 	tokensMap := sync.Map{}
 
-	permTypes := []string{"role", "group", "identity", "scheme", "provider", "client"}
 	var wg sync.WaitGroup
 
-	wg.Add(len(permTypes))
+	wg.Add(len(s.permissionTypes()))
 
 	// TODO @shipperizer use a background operator
-	for _, t := range permTypes {
+	for _, t := range s.permissionTypes() {
 		go func(pType string) {
 			defer wg.Done()
 			p, t, err := s.listPermissionsByType(ctx, fmt.Sprintf("role:%s#%s", ID, ASSIGNEE_RELATION), pType, continuationTokens[pType])
@@ -145,7 +145,6 @@ func (s *Service) GetRole(ctx context.Context, userID, ID string) (string, error
 	return "", nil
 }
 
-// TODO @shipperizer switch to use WriteTuples
 func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
@@ -156,15 +155,13 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	// potentially changing the model to say
 	// `define can_view: [user, user:*, role#assignee, group#member] or assignee or admin from privileged`
 	// might sort the problem
-	err := s.ofga.WriteTuple(ctx, fmt.Sprintf("user:%s", userID), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID))
-
-	if err != nil {
-		s.logger.Error(err.Error())
-		return err
-	}
 
 	// TODO @shipperizer offload to privileged creator object
-	err = s.ofga.WriteTuple(ctx, authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", ID))
+	err := s.ofga.WriteTuples(
+		ctx,
+		*ofga.NewTuple(fmt.Sprintf("user:%s", userID), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID)),
+		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", ID)),
+	)
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -226,13 +223,12 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.DeleteRole")
 	defer span.End()
 
-	permTypes := []string{"role", "group", "identity", "scheme", "provider", "client"}
 	var wg sync.WaitGroup
 
-	wg.Add(len(permTypes))
+	wg.Add(len(s.permissionTypes()))
 
 	// TODO @shipperizer use a background operator
-	for _, t := range permTypes {
+	for _, t := range s.permissionTypes() {
 		go func(pType string) {
 			defer wg.Done()
 			s.removePermissionsByType(ctx, ID, pType)
@@ -298,6 +294,10 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	if err := s.ofga.DeleteTuples(ctx, permissions...); err != nil {
 		s.logger.Error(err.Error())
 	}
+}
+
+func (s *Service) permissionTypes() []string {
+	return []string{"role", "group", "identity", "scheme", "provider", "client"}
 }
 
 func NewService(ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {

@@ -6,8 +6,9 @@ package roles
 import (
 	"context"
 
-	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/openfga/go-sdk/client"
+
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 type ServiceInterface interface {
@@ -24,8 +25,6 @@ type ServiceInterface interface {
 type OpenFGAClientInterface interface {
 	ListObjects(context.Context, string, string, string) ([]string, error)
 	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
-	WriteTuple(context.Context, string, string, string) error
-	DeleteTuple(context.Context, string, string, string) error
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	Check(context.Context, string, string, string) (bool, error)

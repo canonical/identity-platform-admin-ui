@@ -74,8 +74,8 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListPermissions")
 	defer span.End()
 
-	permissionsMap := make(map[string][]string)
-	tokens := make(map[string]string)
+	permissionsMap := sync.Map{}
+	tokensMap := sync.Map{}
 
 	permTypes := []string{"role", "group", "identity", "scheme", "provider", "client"}
 	var wg sync.WaitGroup
@@ -88,8 +88,8 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 			defer wg.Done()
 			p, t, err := s.listPermissionsByType(ctx, fmt.Sprintf("role:%s#%s", ID, ASSIGNEE_RELATION), pType, continuationTokens[pType])
 
-			permissionsMap[pType] = p
-			tokens[pType] = t
+			permissionsMap.Store(pType, p)
+			tokensMap.Store(pType, t)
 
 			// TODO @shipperizer handle errors better
 			// chain them and return at the end of the function
@@ -102,9 +102,23 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 	wg.Wait()
 
 	permissions := make([]string, 0)
-	for _, pSlice := range permissionsMap {
-		permissions = append(permissions, pSlice...)
-	}
+	tokens := make(map[string]string)
+
+	permissionsMap.Range(
+		func(key any, value any) bool {
+			permissions = append(permissions, value.([]string)...)
+
+			return true
+		},
+	)
+
+	tokensMap.Range(
+		func(key any, value any) bool {
+			tokens[key.(string)] = value.(string)
+
+			return true
+		},
+	)
 
 	// TODO @shipperizer right now the function fails silently, chain errors from the goroutines
 	// and return

@@ -6,8 +6,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/version"
 	"github.com/spf13/cobra"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/version"
 )
 
 // versionCmd represents the version command

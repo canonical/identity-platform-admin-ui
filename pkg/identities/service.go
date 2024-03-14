@@ -10,10 +10,11 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 type Service struct {

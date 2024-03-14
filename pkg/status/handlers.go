@@ -7,10 +7,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 const okValue = "ok"

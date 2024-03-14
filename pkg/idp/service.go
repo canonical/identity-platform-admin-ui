@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/yaml.v3"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 type Config struct {

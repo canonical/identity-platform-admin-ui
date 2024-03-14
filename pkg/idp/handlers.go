@@ -8,9 +8,10 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/go-chi/chi/v5"
 )
 
 const okValue = "ok"

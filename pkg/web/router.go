@@ -6,14 +6,15 @@ package web
 import (
 	"net/http"
 
+	chi "github.com/go-chi/chi/v5"
+	middleware "github.com/go-chi/chi/v5/middleware"
+	trace "go.opentelemetry.io/otel/trace"
+
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	chi "github.com/go-chi/chi/v5"
-	middleware "github.com/go-chi/chi/v5/middleware"
-	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"

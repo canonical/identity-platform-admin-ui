@@ -10,12 +10,13 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 const DEFAULT_SCHEMA = "default.schema"

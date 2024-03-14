@@ -7,7 +7,6 @@ import (
 	"context"
 	"runtime/debug"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,6 +19,8 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 )
 
 type Tracer struct {

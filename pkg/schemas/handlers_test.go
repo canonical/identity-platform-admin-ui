@@ -15,10 +15,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
 	kClient "github.com/ory/kratos-client-go"
 	gomock "go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

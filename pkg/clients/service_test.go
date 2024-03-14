@@ -12,10 +12,11 @@ import (
 	reflect "reflect"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

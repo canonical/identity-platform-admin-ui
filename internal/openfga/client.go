@@ -33,6 +33,52 @@ func (c *Client) APIClient() OpenFGAClientInterface {
 	return c.c
 }
 
+func (c *Client) SetStoreID(ctx context.Context, storeID string) error {
+	client, ok := c.c.(*client.OpenFgaClient)
+
+	if !ok {
+		return fmt.Errorf("error casting to *openfga.Client")
+	}
+
+	client.SetStoreId(storeID)
+
+	c.c = client
+
+	return nil
+}
+
+func (c *Client) SetAuthorizationModelID(ctx context.Context, modelID string) error {
+	client, ok := c.c.(*client.OpenFgaClient)
+
+	if !ok {
+		return fmt.Errorf("error casting to *openfga.Client")
+	}
+
+	client.SetAuthorizationModelId(modelID)
+
+	c.c = client
+
+	return nil
+}
+
+// ########################## Store Operations #######################################
+func (c *Client) CreateStore(ctx context.Context, name string) (string, error) {
+	ctx, span := c.tracer.Start(ctx, "openfga.Client.CreateStore")
+	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	r, err := c.c.CreateStoreExecute(c.c.CreateStore(ctx).Body(client.ClientCreateStoreRequest{Name: name}))
+
+	if err != nil {
+		return "", err
+	}
+
+	return r.GetId(), nil
+}
+
+// ########################## Store Operations #######################################
 // ########################## Model Operations #######################################
 func (c *Client) ReadModel(ctx context.Context) (*openfga.AuthorizationModel, error) {
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.ReadModel")

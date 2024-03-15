@@ -39,10 +39,11 @@ func init() {
 	createFgaModelCmd.Flags().String("fga-store-id", "", "The openfga store to create the model in")
 	createFgaModelCmd.MarkFlagRequired("fga-api-url")
 	createFgaModelCmd.MarkFlagRequired("fga-api-token")
-	createFgaModelCmd.MarkFlagRequired("fga-store-id")
 }
 
 func createModel(apiUrl, apiToken, storeId string) {
+	ctx := context.Background()
+
 	logger := logging.NewNoopLogger()
 	tracer := tracing.NewNoopTracer()
 	monitor := monitoring.NewNoopMonitor("", logger)
@@ -51,16 +52,32 @@ func createModel(apiUrl, apiToken, storeId string) {
 		panic(err)
 	}
 	cfg := openfga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
+
 	fgaClient := openfga.NewClient(cfg)
-	authModelReq := client.ClientWriteAuthorizationModelRequest{
-		TypeDefinitions: authorization.AuthModel.TypeDefinitions,
-		SchemaVersion:   authorization.AuthModel.SchemaVersion,
-		Conditions:      authorization.AuthModel.Conditions,
+
+	if storeId == "" {
+		storeId, err = fgaClient.CreateStore(ctx, "identity-admin-ui")
+
+		if err != nil {
+			panic(err)
+		}
+
+		fgaClient.SetStoreID(ctx, storeId)
 	}
-	modelId, err := fgaClient.WriteModel(context.Background(), &authModelReq)
+
+	modelId, err := fgaClient.WriteModel(
+		context.Background(),
+		&client.ClientWriteAuthorizationModelRequest{
+			TypeDefinitions: authorization.AuthModel.TypeDefinitions,
+			SchemaVersion:   authorization.AuthModel.SchemaVersion,
+			Conditions:      authorization.AuthModel.Conditions,
+		},
+	)
+
 	if err != nil {
 		panic(err)
 	}
+
 	fmt.Printf("Created model: %s\n", modelId)
 }
 

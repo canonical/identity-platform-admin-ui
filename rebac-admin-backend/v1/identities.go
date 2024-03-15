@@ -22,6 +22,8 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 	}
 
 	response := resources.GetIdentitiesResponse{
+		Links:  resources.NewResponseLinks[resources.Identity](req.URL, identities),
+		Meta:   identities.Meta,
 		Data:   identities.Data,
 		Status: 200,
 	}
@@ -118,7 +120,9 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 	}
 
 	response := resources.GetIdentityEntitlementsResponse{
-		Data:   entitlements,
+		Links:  resources.NewResponseLinks[resources.EntityEntitlement](req.URL, entitlements),
+		Meta:   entitlements.Meta,
+		Data:   entitlements.Data,
 		Status: 200,
 	}
 
@@ -159,6 +163,8 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 	}
 
 	response := resources.GetIdentityGroupsResponse{
+		Links:  resources.NewResponseLinks[resources.Group](req.URL, groups),
+		Meta:   groups.Meta,
 		Data:   groups.Data,
 		Status: 200,
 	}
@@ -200,6 +206,8 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 	}
 
 	response := resources.GetIdentityRolesResponse{
+		Links:  resources.NewResponseLinks[resources.Role](req.URL, roles),
+		Meta:   roles.Meta,
 		Data:   roles.Data,
 		Status: 200,
 	}

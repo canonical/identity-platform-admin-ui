@@ -13,7 +13,7 @@ import (
 type IdentitiesService interface {
 
 	// ListIdentities returns a page of Identity objects of at least `size` elements if available
-	ListIdentities(ctx context.Context, params *resources.GetIdentitiesParams) (*resources.Identities, error)
+	ListIdentities(ctx context.Context, params *resources.GetIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error)
 	// CreateIdentity creates a single Identity.
 	CreateIdentity(ctx context.Context, identity *resources.Identity) (*resources.Identity, error)
 
@@ -29,17 +29,17 @@ type IdentitiesService interface {
 	DeleteIdentity(ctx context.Context, identityId string) (bool, error)
 
 	// GetIdentityGroups returns a page of Groups for identity `identityId`.
-	GetIdentityGroups(ctx context.Context, identityId string, params *resources.GetIdentitiesItemGroupsParams) (*resources.Groups, error)
+	GetIdentityGroups(ctx context.Context, identityId string, params *resources.GetIdentitiesItemGroupsParams) (*resources.PaginatedResponse[resources.Group], error)
 	// PatchIdentityGroups performs addition or removal of a Group to/from an Identity.
 	PatchIdentityGroups(ctx context.Context, identityId string, groupPatches []resources.IdentityGroupsPatchItem) (bool, error)
 
 	// GetIdentityRoles returns a page of Roles for identity `identityId`.
-	GetIdentityRoles(ctx context.Context, identityId string, params *resources.GetIdentitiesItemRolesParams) (*resources.Roles, error)
+	GetIdentityRoles(ctx context.Context, identityId string, params *resources.GetIdentitiesItemRolesParams) (*resources.PaginatedResponse[resources.Role], error)
 	// PatchIdentityRoles performs addition or removal of a Role to/from an Identity.
 	PatchIdentityRoles(ctx context.Context, identityId string, rolePatches []resources.IdentityRolesPatchItem) (bool, error)
 
 	// GetIdentityEntitlements returns a page of Entitlements for identity `identityId`.
-	GetIdentityEntitlements(ctx context.Context, identityId string, params *resources.GetIdentitiesItemEntitlementsParams) ([]resources.EntityEntitlement, error)
+	GetIdentityEntitlements(ctx context.Context, identityId string, params *resources.GetIdentitiesItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error)
 	// PatchIdentityEntitlements performs addition or removal of an Entitlement to/from an Identity.
 	PatchIdentityEntitlements(ctx context.Context, identityId string, entitlementPatches []resources.IdentityEntitlementsPatchItem) (bool, error)
 }

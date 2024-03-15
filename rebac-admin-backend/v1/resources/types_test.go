@@ -20,25 +20,25 @@ func TestPaginatedResponse_PopulateQuery(t *testing.T) {
 	c.Assert(err, qt.IsNil)
 
 	type queryTest struct {
-		title string
-		key   string
-		value string
-		p     PaginatedResponse[string]
+		title         string
+		expectedKey   string
+		expectedValue string
+		p             PaginatedResponse[string]
 	}
 
 	for _, test := range []queryTest{
 		{
-			title: "PageNumber",
-			key:   "page",
-			value: "42",
+			title:         "PageNumber",
+			expectedKey:   "page",
+			expectedValue: "42",
 			p: PaginatedResponse[string]{
 				Next: Next{Page: &mockNextPageNumber},
 			},
 		},
 		{
-			title: "PageToken",
-			key:   "nextToken",
-			value: "mock-next-page-token",
+			title:         "PageToken",
+			expectedKey:   "nextToken",
+			expectedValue: "mock-next-page-token",
 			p: PaginatedResponse[string]{
 				Next: Next{PageToken: &mockNextPageToken},
 			},
@@ -52,12 +52,12 @@ func TestPaginatedResponse_PopulateQuery(t *testing.T) {
 		c.Run(fmt.Sprintf("TestPaginatedResponse_PopulateQuery%s", tt.title), func(c *qt.C) {
 			expectedQuery := url.Values{}
 			expectedQuery.Set("filter", "mock-filter")
-			if tt.key != "" {
-				expectedQuery.Set(tt.key, tt.value)
+			if tt.expectedKey != "" {
+				expectedQuery.Set(tt.expectedKey, tt.expectedValue)
 			}
 
 			query := mockURL.Query()
-			tt.p.populateQuery(&query)
+			tt.p.populateQuery(query)
 
 			c.Assert(query, qt.DeepEquals, expectedQuery)
 		})

@@ -6,7 +6,9 @@ package web
 import (
 	"context"
 
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	fga "github.com/openfga/go-sdk"
+	openfga "github.com/openfga/go-sdk"
 )
 
 type OpenFGAClientInterface interface {
@@ -16,8 +18,8 @@ type OpenFGAClientInterface interface {
 	DeleteTuple(context.Context, string, string, string) error
 	Check(context.Context, string, string, string) (bool, error)
 	ListObjects(context.Context, string, string, string) ([]string, error)
-	// WriteTuples(context.Context, ...ofga.Tuple) error
-	// DeleteTuples(context.Context, ...ofga.Tuple) error
-	// BatchCheck(context.Context, ...ofga.Tuple) (bool, error)
-	// ReadTuples(context.Context, string, string, string, string) (openfga.ReadResponse, error)
+	WriteTuples(context.Context, ...ofga.Tuple) error
+	DeleteTuples(context.Context, ...ofga.Tuple) error
+	BatchCheck(context.Context, ...ofga.Tuple) (bool, error)
+	ReadTuples(context.Context, string, string, string, string) (*openfga.ReadResponse, error)
 }

@@ -53,7 +53,6 @@ dev:
 	@echo "after job admin-ui-openfga-setup has run, restart the identity-platform-admin-ui deployment"
 	@echo "to make sure the changes in the configmap are picked up"
 	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run \
-		--mute-logs=all \
 		--port-forward \
 		--no-prune=false \
 		--cache-artifacts=false

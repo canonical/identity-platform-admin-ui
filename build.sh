@@ -10,7 +10,7 @@ set -e
 
 rockcraft pack -v
 
-skopeo --insecure-policy \
+/snap/rockcraft/current/bin/skopeo --insecure-policy \
   copy "oci-archive:identity-platform-admin-ui_$(yq -r '.version' rockcraft.yaml)_amd64.rock" \
   docker-daemon:"$IMAGE"
 

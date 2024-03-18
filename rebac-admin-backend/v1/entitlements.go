@@ -21,7 +21,9 @@ func (h handler) GetEntitlements(w http.ResponseWriter, req *http.Request, param
 	}
 
 	response := resources.GetEntitlementsResponse{
-		Data:   entitlements,
+		Links:  resources.NewResponseLinks[resources.EntityEntitlement](req.URL, entitlements),
+		Meta:   entitlements.Meta,
+		Data:   entitlements.Data,
 		Status: http.StatusOK,
 	}
 

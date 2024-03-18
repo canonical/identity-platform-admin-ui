@@ -22,6 +22,8 @@ func (h handler) GetAvailableIdentityProviders(w http.ResponseWriter, req *http.
 	}
 
 	response := resources.GetAvailableIdentityProvidersResponse{
+		Links:  resources.NewResponseLinks[resources.AvailableIdentityProvider](req.URL, identityProviders),
+		Meta:   identityProviders.Meta,
 		Data:   identityProviders.Data,
 		Status: http.StatusOK,
 	}
@@ -42,6 +44,8 @@ func (h handler) GetIdentityProviders(w http.ResponseWriter, req *http.Request, 
 	}
 
 	response := resources.GetIdentityProvidersResponse{
+		Links:  resources.NewResponseLinks[resources.IdentityProvider](req.URL, identityProviders),
+		Meta:   identityProviders.Meta,
 		Data:   identityProviders.Data,
 		Status: http.StatusOK,
 	}

@@ -13,10 +13,10 @@ import (
 type IdentityProvidersService interface {
 
 	// ListAvailableIdentityProviders returns the static list of supported identity providers.
-	ListAvailableIdentityProviders(ctx context.Context, params *resources.GetAvailableIdentityProvidersParams) (*resources.AvailableIdentityProviders, error)
+	ListAvailableIdentityProviders(ctx context.Context, params *resources.GetAvailableIdentityProvidersParams) (*resources.PaginatedResponse[resources.AvailableIdentityProvider], error)
 
 	// ListIdentityProviders returns a list of registered identity providers configurations.
-	ListIdentityProviders(ctx context.Context, params *resources.GetIdentityProvidersParams) (*resources.IdentityProviders, error)
+	ListIdentityProviders(ctx context.Context, params *resources.GetIdentityProvidersParams) (*resources.PaginatedResponse[resources.IdentityProvider], error)
 
 	// RegisterConfiguration register a new authentication provider configuration.
 	RegisterConfiguration(ctx context.Context, provider *resources.IdentityProvider) (*resources.IdentityProvider, error)

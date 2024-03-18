@@ -26,7 +26,7 @@ func TestHandler_Resources_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockResources := resources.Resources{
+	mockResources := resources.PaginatedResponse[resources.Resource]{
 		Data: []resources.Resource{{
 			Id:   "resource-id",
 			Name: "resource-name",

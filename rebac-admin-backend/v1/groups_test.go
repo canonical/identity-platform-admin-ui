@@ -42,20 +42,24 @@ func TestHandler_Groups_Success(t *testing.T) {
 		Name: mockGroupName,
 	}
 
-	mockEntitlements := []resources.EntityEntitlement{{
-		EntitlementType: "mock-entl-type",
-		EntityName:      "mock-entity-name",
-		EntityType:      "mock-entity-type",
-	}}
+	mockEntitlements := resources.PaginatedResponse[resources.EntityEntitlement]{
+		Data: []resources.EntityEntitlement{
+			{
+				EntitlementType: "mock-entl-type",
+				EntityName:      "mock-entity-name",
+				EntityType:      "mock-entity-type",
+			},
+		},
+	}
 
-	mockIdentities := resources.Identities{
+	mockIdentities := resources.PaginatedResponse[resources.Identity]{
 		Data: []resources.Identity{{
 			Id:        &mockGroupIdentityId,
 			FirstName: &mockGroupIdentityFirstName,
 		}},
 	}
 
-	mockRoles := resources.Roles{
+	mockRoles := resources.PaginatedResponse[resources.Role]{
 		Data: []resources.Role{{
 			Id:   &mockGroupRoleId,
 			Name: mockGroupRoleName,
@@ -76,7 +80,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockGroupsService) {
 				mockService.EXPECT().
 					ListGroups(gomock.Any(), gomock.Eq(&resources.GetGroupsParams{})).
-					Return(&resources.Groups{
+					Return(&resources.PaginatedResponse[resources.Group]{
 						Data: []resources.Group{mockGroupObject},
 					}, nil)
 			},
@@ -228,7 +232,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockGroupsService) {
 				mockService.EXPECT().
 					GetGroupEntitlements(gomock.Any(), gomock.Eq(mockGroupId), gomock.Eq(&resources.GetGroupsItemEntitlementsParams{})).
-					Return(mockEntitlements, nil)
+					Return(&mockEntitlements, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), nil)
@@ -236,7 +240,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody: resources.GetGroupEntitlementsResponse{
-				Data:   mockEntitlements,
+				Data:   mockEntitlements.Data,
 				Status: http.StatusOK,
 			},
 		},
@@ -251,7 +255,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 				patchesBody, _ := json.Marshal(resources.GroupEntitlementsPatchRequestBody{
 					Patches: []resources.GroupEntitlementsPatchItem{
 						{
-							Entitlement: mockEntitlements[0],
+							Entitlement: mockEntitlements.Data[0],
 							Op:          "add",
 						},
 					},

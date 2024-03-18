@@ -12,7 +12,7 @@ import (
 // RolesService defines an abstract backend to handle Roles related operations.
 type RolesService interface {
 	// ListRoles returns a page of Role objects of at least `size` elements if available.
-	ListRoles(ctx context.Context, params *resources.GetRolesParams) (*resources.Roles, error)
+	ListRoles(ctx context.Context, params *resources.GetRolesParams) (*resources.PaginatedResponse[resources.Role], error)
 	// CreateRole creates a single Role.
 	CreateRole(ctx context.Context, role *resources.Role) (*resources.Role, error)
 
@@ -27,7 +27,7 @@ type RolesService interface {
 	DeleteRole(ctx context.Context, roleId string) (bool, error)
 
 	// GetRoleEntitlements returns a page of Entitlements for Role `roleId`.
-	GetRoleEntitlements(ctx context.Context, roleId string, params *resources.GetRolesItemEntitlementsParams) ([]resources.EntityEntitlement, error)
+	GetRoleEntitlements(ctx context.Context, roleId string, params *resources.GetRolesItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error)
 	// PatchRoleEntitlements performs addition or removal of an Entitlement to/from a Role.
 	PatchRoleEntitlements(ctx context.Context, roleId string, entitlementPatches []resources.RoleEntitlementsPatchItem) (bool, error)
 }

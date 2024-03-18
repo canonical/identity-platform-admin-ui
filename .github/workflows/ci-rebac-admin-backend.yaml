@@ -1,0 +1,19 @@
+name: ci-rebac-admin-backend
+run-name: CI (rebac-admin) for ${{ github.sha }} on ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "feature-rebac-admin-ui-backend"
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  lint:
+    name: Perform linting
+    uses: ./.github/workflows/rebac-admin-backend-lint.yaml
+  unit-test:
+    name: Run unit tests
+    uses: ./.github/workflows/rebac-admin-backend-unittest.yaml

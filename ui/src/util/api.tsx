@@ -2,9 +2,8 @@ import { ErrorResponse } from "types/api";
 
 export const handleResponse = async (response: Response) => {
   if (!response.ok) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: ErrorResponse = await response.json();
-    throw Error(result.error);
+    const result = (await response.json()) as ErrorResponse;
+    throw Error(result.error ?? result.message);
   }
   return response.json();
 };

@@ -35,11 +35,10 @@ This is the Admin UI for the Canonical Identity Platform.
 ## Development setup
 
 As a requirement, please make sure to:
-* have `rockcraft`, `yq`, `skopeo` and `make` installed
+* have `rockcraft`, `yq`, and `make` installed
 
       snap install rockcraft
       snap install yq
-      apt install skopeo
       apt install make
 
 * microk8s is installed with the `registry` addon operating at `localhost:32000` and kubectl configured to use it
@@ -59,7 +58,9 @@ As a requirement, please make sure to:
 
       sudo lxd init --auto
 
-Run `make dev` to get a working environment in k8s
+Run `make dev` to get a working environment in k8s.
+
+To stop any running containers and wipe the container state, run `skaffold delete` from the top of the repository. 
 
 ### OpenFGA initialization
 

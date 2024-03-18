@@ -1,23 +1,23 @@
 import React, { FC } from "react";
 import { Row } from "@canonical/react-components";
 import { Link, useParams } from "react-router-dom";
-import DeleteClientBtn from "pages/clients/DeleteClientBtn";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import EditClientBtn from "pages/clients/EditClientBtn";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
-import { fetchClient } from "api/client";
+import { fetchProvider } from "api/provider";
+import DeleteProviderBtn from "pages/providers/DeleteProviderBtn";
+import EditProviderBtn from "pages/providers/EditProviderBtn";
 
-const ClientDetail: FC = () => {
-  const { client: clientId } = useParams<{ client: string }>();
+const ProviderDetail: FC = () => {
+  const { providerId } = useParams<{ providerId: string }>();
 
-  if (!clientId) {
+  if (!providerId) {
     return <></>;
   }
 
-  const { data: client } = useQuery({
-    queryKey: [queryKeys.clients, clientId],
-    queryFn: () => fetchClient(clientId),
+  const { data: provider } = useQuery({
+    queryKey: [queryKeys.providers, providerId],
+    queryFn: () => fetchProvider(providerId),
   });
 
   return (
@@ -31,29 +31,29 @@ const ClientDetail: FC = () => {
           >
             <ol className="p-breadcrumbs__items">
               <li className="p-breadcrumbs__item">
-                <Link to="/client/list">Clients</Link>
+                <Link to="/provider/list">Providers</Link>
               </li>
               <li className="p-breadcrumbs__item">Details</li>
             </ol>
           </nav>
         </div>
-        {clientId && (
+        {providerId && (
           <div className="p-panel__controls">
-            {client && <DeleteClientBtn client={client} />}
-            <EditClientBtn clientId={clientId} />
+            {provider && <DeleteProviderBtn provider={provider} />}
+            <EditProviderBtn providerId={providerId} />
           </div>
         )}
       </div>
       <div className="p-panel__content">
         <Row>
-          <h1 className="p-heading--4">Client {clientId}</h1>
+          <h1 className="p-heading--4">Provider {providerId}</h1>
           <NotificationConsumer />
           <h2 className="p-heading--5">raw data:</h2>
-          <code>{JSON.stringify(client)}</code>
+          <code>{JSON.stringify(provider)}</code>
         </Row>
       </div>
     </div>
   );
 };
 
-export default ClientDetail;
+export default ProviderDetail;

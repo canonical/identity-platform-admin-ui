@@ -1,0 +1,29 @@
+.p-panel__logo {
+  margin-bottom: 3rem;
+  margin-top: 0;
+
+  .p-navigation__logo-tag {
+    background-color: #e95420;
+    height: 2.5rem;
+    left: 1rem;
+    position: absolute;
+    top: 0;
+    width: 1.313rem;
+  }
+
+  .p-navigation__logo-icon {
+    bottom: 0.125rem;
+    height: 1rem;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, 0);
+    width: 1rem;
+  }
+
+  .logo-text {
+    color: #fff;
+    left: 47px;
+    position: absolute;
+    top: $spv--x-small;
+  }
+}

@@ -10,7 +10,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// Returns the OpenAPI spec as a JSON file.
+// SwaggerJson Returns the OpenAPI spec as a JSON file.
 // (GET /swagger.json)
 func (h handler) SwaggerJson(w http.ResponseWriter, req *http.Request) {
 	swagger, err := resources.GetSwagger()

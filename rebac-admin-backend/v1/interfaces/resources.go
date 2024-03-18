@@ -12,7 +12,7 @@ import (
 // ResourcesService defines an abstract backend to handle Resources related operations.
 type ResourcesService interface {
 	// ListResources returns a page of Resource objects of at least `size` elements if available.
-	ListResources(ctx context.Context, params *resources.GetResourcesParams) (*resources.Resources, error)
+	ListResources(ctx context.Context, params *resources.GetResourcesParams) (*resources.PaginatedResponse[resources.Resource], error)
 }
 
 // ResourcesAuthorization defines an abstract backend to handle authorization for Resources.

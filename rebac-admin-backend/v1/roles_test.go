@@ -38,11 +38,13 @@ func TestHandler_Roles_Success(t *testing.T) {
 		Name: mockRoleName,
 	}
 
-	mockEntitlements := []resources.EntityEntitlement{
-		{
-			EntitlementType: "mock-entl-type",
-			EntityName:      "mock-entity-name",
-			EntityType:      "mock-entity-type",
+	mockEntitlements := resources.PaginatedResponse[resources.EntityEntitlement]{
+		Data: []resources.EntityEntitlement{
+			{
+				EntitlementType: "mock-entl-type",
+				EntityName:      "mock-entity-name",
+				EntityType:      "mock-entity-type",
+			},
 		},
 	}
 
@@ -60,7 +62,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockRolesService) {
 				mockService.EXPECT().
 					ListRoles(gomock.Any(), gomock.Eq(&resources.GetRolesParams{})).
-					Return(&resources.Roles{
+					Return(&resources.PaginatedResponse[resources.Role]{
 						Data: []resources.Role{mockRoleObject},
 					}, nil)
 			},
@@ -136,7 +138,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockRolesService) {
 				mockService.EXPECT().
 					GetRoleEntitlements(gomock.Any(), gomock.Eq(mockRoleId), gomock.Eq(&resources.GetRolesItemEntitlementsParams{})).
-					Return(mockEntitlements, nil)
+					Return(&mockEntitlements, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				mockRequest := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), nil)
@@ -144,7 +146,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody: resources.GetRoleEntitlementsResponse{
-				Data:   mockEntitlements,
+				Data:   mockEntitlements.Data,
 				Status: http.StatusOK,
 			},
 		},
@@ -159,7 +161,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 				patchesBody, _ := json.Marshal(resources.RoleEntitlementsPatchRequestBody{
 					Patches: []resources.RoleEntitlementsPatchItem{
 						{
-							Entitlement: mockEntitlements[0],
+							Entitlement: mockEntitlements.Data[0],
 							Op:          "add",
 						},
 					},

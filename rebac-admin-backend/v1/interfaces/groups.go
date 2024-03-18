@@ -13,7 +13,7 @@ import (
 type GroupsService interface {
 
 	// ListGroups returns a page of Group objects of at least `size` elements if available.
-	ListGroups(ctx context.Context, params *resources.GetGroupsParams) (*resources.Groups, error)
+	ListGroups(ctx context.Context, params *resources.GetGroupsParams) (*resources.PaginatedResponse[resources.Group], error)
 	// CreateGroup creates a single Group.
 	CreateGroup(ctx context.Context, group *resources.Group) (*resources.Group, error)
 
@@ -29,17 +29,17 @@ type GroupsService interface {
 	DeleteGroup(ctx context.Context, groupId string) (bool, error)
 
 	// GetGroupIdentities returns a page of identities in a Group identified by `groupId`.
-	GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.Identities, error)
+	GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error)
 	// PatchGroupIdentities performs addition or removal of identities to/from a Group identified by `groupId`.
 	PatchGroupIdentities(ctx context.Context, groupId string, groupPatches []resources.GroupIdentitiesPatchItem) (bool, error)
 
 	// GetGroupRoles returns a page of Roles for Group `groupId`.
-	GetGroupRoles(ctx context.Context, groupId string, params *resources.GetGroupsItemRolesParams) (*resources.Roles, error)
+	GetGroupRoles(ctx context.Context, groupId string, params *resources.GetGroupsItemRolesParams) (*resources.PaginatedResponse[resources.Role], error)
 	// PatchGroupRoles performs addition or removal of a Role to/from a Group identified by `groupId`.
 	PatchGroupRoles(ctx context.Context, groupId string, rolePatches []resources.GroupRolesPatchItem) (bool, error)
 
 	// GetGroupEntitlements returns a page of Entitlements for Group `groupId`.
-	GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) ([]resources.EntityEntitlement, error)
+	GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error)
 	// PatchGroupEntitlements performs addition or removal of an Entitlement to/from a Group identified by `groupId`.
 	PatchGroupEntitlements(ctx context.Context, identityId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error)
 }

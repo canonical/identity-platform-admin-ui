@@ -61,7 +61,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 				params := resources.GetAvailableIdentityProvidersParams{}
 				mockService.EXPECT().
 					ListAvailableIdentityProviders(gomock.Any(), gomock.Eq(&params)).
-					Return(&resources.AvailableIdentityProviders{
+					Return(&resources.PaginatedResponse[resources.AvailableIdentityProvider]{
 						Data: []resources.AvailableIdentityProvider{mockAvailableIDPObject},
 					}, nil)
 			},
@@ -80,7 +80,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 			setupServiceMock: func(mockService *interfaces.MockIdentityProvidersService) {
 				mockService.EXPECT().
 					ListIdentityProviders(gomock.Any(), gomock.Any()).
-					Return(&resources.IdentityProviders{Data: mockIDPs}, nil)
+					Return(&resources.PaginatedResponse[resources.IdentityProvider]{Data: mockIDPs}, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
 				params := resources.GetIdentityProvidersParams{}

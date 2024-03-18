@@ -22,6 +22,8 @@ func (h handler) GetRoles(w http.ResponseWriter, req *http.Request, params resou
 	}
 
 	response := resources.GetRolesResponse{
+		Links:  resources.NewResponseLinks[resources.Role](req.URL, roles),
+		Meta:   roles.Meta,
 		Data:   roles.Data,
 		Status: http.StatusOK,
 	}
@@ -118,7 +120,9 @@ func (h handler) GetRolesItemEntitlements(w http.ResponseWriter, req *http.Reque
 	}
 
 	response := resources.GetIdentityEntitlementsResponse{
-		Data:   entitlements,
+		Links:  resources.NewResponseLinks[resources.EntityEntitlement](req.URL, entitlements),
+		Meta:   entitlements.Meta,
+		Data:   entitlements.Data,
 		Status: http.StatusOK,
 	}
 

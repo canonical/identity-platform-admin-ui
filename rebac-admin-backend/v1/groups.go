@@ -22,6 +22,8 @@ func (h handler) GetGroups(w http.ResponseWriter, req *http.Request, params reso
 	}
 
 	response := resources.GetGroupsResponse{
+		Links:  resources.NewResponseLinks[resources.Group](req.URL, groups),
+		Meta:   groups.Meta,
 		Data:   groups.Data,
 		Status: http.StatusOK,
 	}
@@ -118,7 +120,9 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 	}
 
 	response := resources.GetGroupEntitlementsResponse{
-		Data:   entitlements,
+		Links:  resources.NewResponseLinks[resources.EntityEntitlement](req.URL, entitlements),
+		Meta:   entitlements.Meta,
+		Data:   entitlements.Data,
 		Status: http.StatusOK,
 	}
 
@@ -152,14 +156,16 @@ func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Re
 func (h handler) GetGroupsItemIdentities(w http.ResponseWriter, req *http.Request, id string, params resources.GetGroupsItemIdentitiesParams) {
 	ctx := req.Context()
 
-	groups, err := h.Groups.GetGroupIdentities(ctx, id, &params)
+	identities, err := h.Groups.GetGroupIdentities(ctx, id, &params)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
 	}
 
 	response := resources.GetGroupIdentitiesResponse{
-		Data:   groups.Data,
+		Links:  resources.NewResponseLinks[resources.Identity](req.URL, identities),
+		Meta:   identities.Meta,
+		Data:   identities.Data,
 		Status: http.StatusOK,
 	}
 
@@ -200,6 +206,8 @@ func (h handler) GetGroupsItemRoles(w http.ResponseWriter, req *http.Request, id
 	}
 
 	response := resources.GetIdentityRolesResponse{
+		Links:  resources.NewResponseLinks[resources.Role](req.URL, roles),
+		Meta:   roles.Meta,
 		Data:   roles.Data,
 		Status: http.StatusOK,
 	}

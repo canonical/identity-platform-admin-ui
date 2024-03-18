@@ -21,6 +21,8 @@ func (h handler) GetCapabilities(w http.ResponseWriter, req *http.Request) {
 	}
 
 	response := resources.GetCapabilitiesResponse{
+		Links:  resources.NewResponseLinks[resources.Capability](req.URL, capabilities),
+		Meta:   capabilities.Meta,
 		Data:   capabilities.Data,
 		Status: http.StatusOK,
 	}

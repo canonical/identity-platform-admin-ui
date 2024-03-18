@@ -21,6 +21,8 @@ func (h handler) GetResources(w http.ResponseWriter, req *http.Request, params r
 	}
 
 	response := resources.GetResourcesResponse{
+		Links:  resources.NewResponseLinks[resources.Resource](req.URL, res),
+		Meta:   res.Meta,
 		Data:   res.Data,
 		Status: http.StatusOK,
 	}

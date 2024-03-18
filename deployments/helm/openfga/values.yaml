@@ -5,3 +5,4 @@ authn:
   preshared:
     keys:
       - "42"
+replicaCount: 1      

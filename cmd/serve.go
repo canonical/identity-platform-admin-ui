@@ -84,22 +84,48 @@ func serve() {
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
 
-	var authzClient authorization.AuthzClientInterface
+	var auth *openfga.Client
+	noopAuth := openfga.NewNoopClient(tracer, monitor, logger)
+
 	if specs.AuthorizationEnabled {
 		logger.Info("Authorization is enabled")
-		cfg := openfga.NewConfig(specs.ApiScheme, specs.ApiHost, specs.StoreId, specs.ApiToken, specs.AuthorizationModelId, specs.Debug, tracer, monitor, logger)
-		authzClient = openfga.NewClient(cfg)
+		auth = openfga.NewClient(
+			openfga.NewConfig(
+				specs.ApiScheme,
+				specs.ApiHost,
+				specs.StoreId,
+				specs.ApiToken,
+				specs.AuthorizationModelId,
+				specs.Debug,
+				tracer,
+				monitor,
+				logger,
+			),
+		)
 	} else {
 		logger.Info("Authorization is disabled, using noop authorizer")
-		authzClient = openfga.NewNoopClient(tracer, monitor, logger)
 	}
 
-	authorizer := authorization.NewAuthorizer(authzClient, tracer, monitor, logger)
-	if authorizer.ValidateModel(context.Background()) != nil {
-		panic("Invalid authorization model provided")
+	if specs.AuthorizationEnabled {
+		authorizer := authorization.NewAuthorizer(
+			auth,
+			tracer,
+			monitor,
+			logger,
+		)
+
+		if authorizer.ValidateModel(context.Background()) != nil {
+			panic("Invalid authorization model provided")
+		}
 	}
 
-	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, authzClient, tracer, monitor, logger)
+	var router http.Handler
+
+	if specs.AuthorizationEnabled {
+		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, auth, tracer, monitor, logger)
+	} else {
+		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, noopAuth, tracer, monitor, logger)
+	}
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

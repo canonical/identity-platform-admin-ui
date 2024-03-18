@@ -5,6 +5,8 @@ build:
   - image: "identity-platform-admin-ui"
     sync:
       infer:
+      - "internal/"
+      - "pkg/"
       - "cmd/main.go"
       - "go.mod"
       - "go.sum"

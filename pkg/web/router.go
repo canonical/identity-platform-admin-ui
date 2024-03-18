@@ -15,7 +15,6 @@ import (
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	iofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
@@ -78,7 +77,7 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	).RegisterEndpoints(router)
 	roles.NewAPI(
-		roles.NewService(ofga.(*iofga.Client), tracer, monitor, logger),
+		roles.NewService(ofga, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,

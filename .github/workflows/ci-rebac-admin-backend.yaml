@@ -3,9 +3,6 @@ run-name: CI (rebac-admin) for ${{ github.sha }} on ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "feature-rebac-admin-ui-backend"
   pull_request:
     branches:
       - "*"
@@ -38,6 +35,7 @@ jobs:
           version: latest
           working-directory: ./rebac-admin-backend
           only-new-issues: true
+          skip-pkg-cache: true
 
   unit-test:
     name: Run unit tests

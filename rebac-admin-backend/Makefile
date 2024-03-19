@@ -20,11 +20,16 @@ mocks:
 	go generate ./...
 .PHONY: mocks
 
-# Run tests
-test: mocks
-	go test ./... -cover -coverprofile coverage_source.out
-	# this will be cached, just needed to the test.json
-	go test ./... -cover -coverprofile coverage_source.out -json > test_source.json
+# Run tests with coverage
+test-coverage: mocks
+	go test ./... -cover -coverprofile coverage_source.out $(ARGS)
+	# this will be cached, just needed to get the test.json
+	go test ./... -cover -coverprofile coverage_source.out  $(ARGS) -json > test_source.json
 	cat coverage_source.out | grep -v "mock_*" | tee coverage.out
 	cat test_source.json | grep -v "mock_*" | tee test.json
+.PHONY: test-coverage
+
+# Run tests
+test: mocks
+	go test ./... $(ARGS)
 .PHONY: test

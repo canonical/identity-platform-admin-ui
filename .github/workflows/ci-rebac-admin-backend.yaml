@@ -47,7 +47,7 @@ jobs:
 
       - name: Build and test Go code
         working-directory: ./rebac-admin-backend
-        run: make ARGS="-count=1" test
+        run: make ARGS="-count=1" test-coverage
 
 
       - uses: codecov/codecov-action@c4cf8a4f03f0ac8585acb7c1b7ce3460ec15782f # v4

@@ -45,6 +45,8 @@ yarn-error.log*
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+test.json
+test_source.json
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

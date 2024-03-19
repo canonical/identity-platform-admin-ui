@@ -28,6 +28,10 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
+      - name: Generate mocks
+        working-directory: ./rebac-admin-backend
+        run: make mocks
+
       - uses: golangci/golangci-lint-action@v3
         name: Perform linting and annotate code
         with:

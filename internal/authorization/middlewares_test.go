@@ -29,6 +29,7 @@ func (a *API) RegisterEndpoints(router *chi.Mux) {
 	router.Delete("/api/v0/rules/1", a.handleAll)
 	router.Patch("/api/v0/schemas/x", a.handleAll)
 	router.Post("/api/v0/roles/viewer/identities/1", a.handleAll)
+	router.Get("/api/v0/groups/viewer/roles", a.handleAll)
 	router.Get("/api/v0/allow", a.handleAll)
 	router.Get("/api/v0/forbidden", a.handleAll)
 }
@@ -79,6 +80,14 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			input: input{method: http.MethodGet, endpoint: "/api/v0/idps/github", ID: "github"},
 			expect: []Permission{
 				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "github")},
+			},
+			output: true,
+		},
+		{
+			name:  "GET /api/v0/groups/viewer/roles",
+			input: input{method: http.MethodGet, endpoint: "/api/v0/groups/viewer/roles", ID: "viewer"},
+			expect: []Permission{
+				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "viewer")},
 			},
 			output: true,
 		},

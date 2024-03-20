@@ -99,7 +99,8 @@ func newReBACAdminBackendWithService(params ReBACAdminBackendParams, handler res
 // Handler returns HTTP handlers implementing the ReBAC Admin OpenAPI spec.
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
-	return resources.HandlerWithOptions(b.handler, resources.ChiServerOptions{
+	h := newHandlerWithValidation(b.handler)
+	return resources.HandlerWithOptions(h, resources.ChiServerOptions{
 		BaseURL: baseURL + "/v1",
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeErrorResponse(w, err)

@@ -18,6 +18,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
+	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
@@ -78,6 +79,12 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	).RegisterEndpoints(router)
 	roles.NewAPI(
 		roles.NewService(ofga, tracer, monitor, logger),
+		tracer,
+		monitor,
+		logger,
+	).RegisterEndpoints(router)
+	groups.NewAPI(
+		groups.NewService(ofga, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,

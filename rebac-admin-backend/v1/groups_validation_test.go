@@ -11,9 +11,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 	qt "github.com/frankban/quicktest"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
 //go:generate mockgen -package resources -destination ./resources/mock_generated_server.go -source=./resources/generated_server.go

@@ -46,11 +46,27 @@ func NewNotFoundError(message string) error {
 	}
 }
 
+// NewMissingRequestBodyError returns an error instance that represents a missing request body error.
+func NewMissingRequestBodyError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
+		message: fmt.Sprintf("missing request body: %s", message),
+	}
+}
+
 // NewValidationError returns an error instance that represents an input validation error.
 func NewValidationError(message string) error {
 	return &errorWithStatus{
 		status:  http.StatusBadRequest,
 		message: message,
+	}
+}
+
+// NewRequestBodyValidationError returns an error instance that represents a request body validation error.
+func NewRequestBodyValidationError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusBadRequest,
+		message: fmt.Sprintf("invalid request body: %s", message),
 	}
 }
 

@@ -26,7 +26,7 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 	writeResponse := func(w http.ResponseWriter, status int, body any) {
 		raw, _ := json.Marshal(body)
 		w.WriteHeader(status)
-		w.Write(raw)
+		_, _ = w.Write(raw)
 	}
 
 	validEntitlement := resources.EntityEntitlement{

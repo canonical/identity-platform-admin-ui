@@ -17,13 +17,19 @@ func writeErrorResponse(w http.ResponseWriter, err error) {
 	body, err := json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("unexpected marshalling error"))
+		if _, err := w.Write([]byte("unexpected marshalling error")); err != nil {
+			// TODO(CSS-7642): we should log the error.
+			return
+		}
 		return
 	}
 
 	setJSONContentTypeHeader(w)
 	w.WriteHeader(int(resp.Status))
-	w.Write(body)
+	if _, err := w.Write(body); err != nil {
+		// TODO(CSS-7642): we should log the error.
+		return
+	}
 }
 
 // mapErrorResponse returns a Response instance filled with the given error.
@@ -60,7 +66,10 @@ func writeResponse(w http.ResponseWriter, status int, responseObject interface{}
 
 	setJSONContentTypeHeader(w)
 	w.WriteHeader(status)
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		// TODO(CSS-7642): we should log the error.
+		return
+	}
 }
 
 // mapServiceErrorResponse maps errors thrown by services to the designated

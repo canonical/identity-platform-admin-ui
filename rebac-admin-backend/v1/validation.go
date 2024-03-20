@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
-	"github.com/go-playground/validator/v10"
 )
 
 // handlerWithValidation decorates a given handler with validation logic. The
@@ -34,7 +33,6 @@ type requestBodyContextKey struct{}
 
 // getRequestBodyFromContext fetches request body from given context.
 func getRequestBodyFromContext[T any](ctx context.Context) (*T, error) {
-	validator.New()
 	if body, ok := ctx.Value(requestBodyContextKey{}).(*T); ok {
 		return body, nil
 	}

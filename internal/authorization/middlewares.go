@@ -43,6 +43,7 @@ type Middleware struct {
 	RuleConverter
 	SchemeConverter
 	RoleConverter
+	GroupConverter
 
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
@@ -101,6 +102,9 @@ func (mdw *Middleware) mapper(r *http.Request) []Permission {
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/roles") {
 		return mdw.RoleConverter.Map(r)
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v0/groups") {
+		return mdw.GroupConverter.Map(r)
 	}
 
 	return []Permission{}

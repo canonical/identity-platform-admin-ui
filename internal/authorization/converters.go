@@ -204,3 +204,95 @@ func (c RoleConverter) Map(r *http.Request) []Permission {
 		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), role_id)},
 	}
 }
+
+// GET /api/v0/groups
+// GET /api/v0/groups/{id}
+// POST /api/v0/groups
+// PATCH /api/v0/groups/{id}
+// DELETE /api/v0/groups/{id}
+// GET /api/v0/groups/{id}/roles
+// POST /api/v0/groups/{id}/roles
+// DELETE /api/v0/groups/{id}/roles/{r_id}
+// GET /api/v0/groups/{id}/entitlements
+// POST /api/v0/groups/{id}/entitlements
+// DELETE /api/v0/groups/{id}/entitlements/{e_id}
+// GET /api/v0/groups/{id}/identities
+// PATCH /api/v0/groups/{id}/identities
+// DELETE /api/v0/groups/{id}/identities/{i_id}
+type GroupConverter struct{}
+
+func (c GroupConverter) TypeName() string {
+	return GROUP_TYPE
+}
+
+func (c GroupConverter) Map(r *http.Request) []Permission {
+	group_id := chi.URLParam(r, "id")
+	role_id := chi.URLParam(r, "r_id")
+	identity_id := chi.URLParam(r, "i_id")
+	entitlement_id := chi.URLParam(r, "e_id")
+
+	// DELETE /api/v0/groups/{id}/entitlements/{e_id}
+	if entitlement_id != "" && r.Method == http.MethodDelete {
+		return []Permission{
+			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+		}
+	}
+
+	if identity_id != "" && r.Method == http.MethodDelete {
+		// DELETE /groups/{id}/identities/{i_id} will check for an
+		// edit permission on group {id} and view permissions on identity {i_id}
+		return []Permission{
+			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, identity_id)},
+		}
+	}
+
+	// PATCH /api/v0/groups/{id}/identities
+	// TODO @shipperizer payload inspection needs to be dealt with in the handler to make sure
+	// identities are viewable
+	if strings.HasSuffix(r.URL.Path, "identities") && r.Method == http.MethodPatch {
+		return []Permission{
+			{
+				Relation:   CAN_EDIT,
+				ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id),
+			},
+		}
+	}
+
+	// DELETE /api/v0/groups/{id}/entitlements
+	// POST /api/v0/groups/{id}/entitlements
+	if strings.HasSuffix(r.URL.Path, "entitlements") && (r.Method == http.MethodDelete || r.Method == http.MethodPost) {
+		return []Permission{
+			{
+				Relation:   CAN_EDIT,
+				ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id),
+			},
+		}
+	}
+
+	// POST /api/v0/groups/{id}/roles
+	// TODO @shipperizer payload inspection needs to be dealt with in the handler to make sure
+	// roles are viewable
+	if strings.HasSuffix(r.URL.Path, "roles") && r.Method == http.MethodPost {
+		return []Permission{
+			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+		}
+	}
+
+	if role_id != "" && r.Method == http.MethodDelete {
+		// DELETE /groups/{id}/roles/{r_id} will check for an
+		// edit permission on group {id} and view permissions on role {r_id}
+		return []Permission{
+			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, role_id)},
+		}
+	}
+
+	if group_id == "" {
+		group_id = "global"
+	}
+
+	return []Permission{
+		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+	}
+}

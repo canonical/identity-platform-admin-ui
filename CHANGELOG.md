@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.6.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.5.0...v1.6.0) (2024-03-20)
+
+
+### Features
+
+* add Urn type ([f7d33e2](https://github.com/canonical/identity-platform-admin-ui/commit/f7d33e2ab27411aeb4ce82ace2ab345cc45c6888))
+* authorization middleware based on openFGA ([8f2cb3e](https://github.com/canonical/identity-platform-admin-ui/commit/8f2cb3e4b0723d531704d2c68f4bbe6d07851efd))
+* create roles service ([c796135](https://github.com/canonical/identity-platform-admin-ui/commit/c796135b8557998d05c72f4295948b4f8c15403e))
+* create token pagination extractor ([215b6cb](https://github.com/canonical/identity-platform-admin-ui/commit/215b6cbd8c1e34a80c072a9210e4e48d2df875aa))
+* handlers for roles API ([114b284](https://github.com/canonical/identity-platform-admin-ui/commit/114b284fd3a205ebb4879b61c440e5cedc51c9db))
+* implement converters for each type of API ([09852b0](https://github.com/canonical/identity-platform-admin-ui/commit/09852b03626a05e9034bfe3641b0ca667801d992))
+* introduce BatchCheck, WriteTuples, DeleteTuples and ReadTuples in openfga client ([39eb195](https://github.com/canonical/identity-platform-admin-ui/commit/39eb195e4adcf9a05339d3126f44a1f3bf805e6e))
+* passing openfga store and model id to admin service ([51f4fab](https://github.com/canonical/identity-platform-admin-ui/commit/51f4fab77a70c9a77a1661f88d64b5e0865a9c5e))
+* upgrade openfga model ([c49abd5](https://github.com/canonical/identity-platform-admin-ui/commit/c49abd55aa5e85a59f9c030b2e9bc032fa38b21c))
+* use interface instead of client pointer ([3e1ac0f](https://github.com/canonical/identity-platform-admin-ui/commit/3e1ac0f9ebcb8b460a661e1e4506fea687973aff))
+* wire up roles API in web application ([16ba352](https://github.com/canonical/identity-platform-admin-ui/commit/16ba3521f18a18b233a6cea84eccf687952d1890))
+
+
+### Bug Fixes
+
+* add command for creating an admin user ([50449a9](https://github.com/canonical/identity-platform-admin-ui/commit/50449a9e43f9a886f181014c3cbb8c8b9c576a5c))
+* add command for removing an admin user ([2db3a08](https://github.com/canonical/identity-platform-admin-ui/commit/2db3a0885f35043d2963a194c5585f42ca94c172))
+* adjust openfga NoopClient setup ([f253400](https://github.com/canonical/identity-platform-admin-ui/commit/f253400882b9b4a3809b1ca4aa468751705f6c2a))
+* pass interface to roles API to allow for openfga noop client ([6d04a3d](https://github.com/canonical/identity-platform-admin-ui/commit/6d04a3d689c79d2b87831c770a4dbbdb9feb7a75))
+* switch to use WriteTuples instead of WriteTuple ([ba8a624](https://github.com/canonical/identity-platform-admin-ui/commit/ba8a624f57af16ebea3889b77baf9260d2589ad6))
+* update noop openfga client with newer methods ([251a8a1](https://github.com/canonical/identity-platform-admin-ui/commit/251a8a1b0be4935063f9e49927b06d8291c7d985))
+* use sync.Map for race conditions ([603a7e1](https://github.com/canonical/identity-platform-admin-ui/commit/603a7e1fa80aec118375a30a3d73e5b124847103))
+* use the microk8s-hostpath storageclass to dynamically provision the persistent volume ([29d8f39](https://github.com/canonical/identity-platform-admin-ui/commit/29d8f39f50f8951b56b17a5f5fc69765e092f81f))
+
 ## [1.5.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.4.0...v1.5.0) (2024-01-26)
 
 

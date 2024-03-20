@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -36,15 +35,13 @@ func (h handler) GetGroups(w http.ResponseWriter, req *http.Request, params reso
 func (h handler) PostGroups(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	group := new(resources.Group)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(group); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext[resources.Group](req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	group, err := h.Groups.CreateGroup(ctx, group)
+	group, err := h.Groups.CreateGroup(ctx, body)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -86,20 +83,13 @@ func (h handler) GetGroupsItem(w http.ResponseWriter, req *http.Request, id stri
 func (h handler) PutGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	group := new(resources.Group)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(group); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext[resources.Group](req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	if id != *group.Id {
-		writeErrorResponse(w, NewValidationError("group ID from path does not match the Group object"))
-		return
-	}
-
-	group, err := h.Groups.UpdateGroup(ctx, group)
+	group, err := h.Groups.UpdateGroup(ctx, body)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -134,15 +124,13 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupEntitlementsPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext[resources.GroupEntitlementsPatchRequestBody](req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupEntitlements(ctx, id, patchesRequest.Patches)
+	_, err = h.Groups.PatchGroupEntitlements(ctx, id, body.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -177,15 +165,13 @@ func (h handler) GetGroupsItemIdentities(w http.ResponseWriter, req *http.Reques
 func (h handler) PatchGroupsItemIdentities(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupIdentitiesPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext[resources.GroupIdentitiesPatchRequestBody](req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupIdentities(ctx, id, patchesRequest.Patches)
+	_, err = h.Groups.PatchGroupIdentities(ctx, id, body.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -220,15 +206,13 @@ func (h handler) GetGroupsItemRoles(w http.ResponseWriter, req *http.Request, id
 func (h handler) PatchGroupsItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupRolesPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext[resources.GroupRolesPatchRequestBody](req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupRoles(ctx, id, patchesRequest.Patches)
+	_, err = h.Groups.PatchGroupRoles(ctx, id, body.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return

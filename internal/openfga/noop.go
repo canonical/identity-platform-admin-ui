@@ -59,7 +59,7 @@ func (c *NoopClient) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
 }
 
 func (c *NoopClient) ReadModel(ctx context.Context) (*openfga.AuthorizationModel, error) {
-	return nil, nil
+	return new(openfga.AuthorizationModel), nil
 }
 
 func (c *NoopClient) WriteModel(ctx context.Context, model []byte) (string, error) {
@@ -71,5 +71,5 @@ func (c *NoopClient) CompareModel(ctx context.Context, model openfga.Authorizati
 }
 
 func (c *NoopClient) ReadTuples(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
-	return nil, nil
+	return new(client.ClientReadResponse), nil
 }

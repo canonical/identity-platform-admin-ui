@@ -9,11 +9,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
-// GetGroups validates request body for the GetGroups method and delegates to the underlying handler.
-func (v handlerWithValidation) GetGroups(w http.ResponseWriter, r *http.Request, params resources.GetGroupsParams) {
-	v.handler.GetGroups(w, r, params)
-}
-
 // PostGroups validates request body for the PostGroups method and delegates to the underlying handler.
 func (v handlerWithValidation) PostGroups(w http.ResponseWriter, r *http.Request) {
 	setRequestBodyInContext[resources.Group](w, r, func(w http.ResponseWriter, r *http.Request, body *resources.Group) {
@@ -21,18 +16,18 @@ func (v handlerWithValidation) PostGroups(w http.ResponseWriter, r *http.Request
 			writeErrorResponse(w, err)
 			return
 		}
-		v.handler.PostGroups(w, r)
+		v.ServerInterface.PostGroups(w, r)
 	})
 }
 
 // DeleteGroupsItem validates request body for the DeleteGroupsItem method and delegates to the underlying handler.
 func (v handlerWithValidation) DeleteGroupsItem(w http.ResponseWriter, r *http.Request, id string) {
-	v.handler.DeleteGroupsItem(w, r, id)
+	v.ServerInterface.DeleteGroupsItem(w, r, id)
 }
 
 // GetGroupsItem validates request body for the GetGroupsItem method and delegates to the underlying handler.
 func (v handlerWithValidation) GetGroupsItem(w http.ResponseWriter, r *http.Request, id string) {
-	v.handler.GetGroupsItem(w, r, id)
+	v.ServerInterface.GetGroupsItem(w, r, id)
 }
 
 // PutGroupsItem validates request body for the PutGroupsItem method and delegates to the underlying handler.
@@ -46,13 +41,8 @@ func (v handlerWithValidation) PutGroupsItem(w http.ResponseWriter, r *http.Requ
 			writeErrorResponse(w, NewRequestBodyValidationError("group ID from path does not match the Group object"))
 			return
 		}
-		v.handler.PutGroupsItem(w, r, id)
+		v.ServerInterface.PutGroupsItem(w, r, id)
 	})
-}
-
-// GetGroupsItemEntitlements validates request body for the GetGroupsItemEntitlements method and delegates to the underlying handler.
-func (v handlerWithValidation) GetGroupsItemEntitlements(w http.ResponseWriter, r *http.Request, id string, params resources.GetGroupsItemEntitlementsParams) {
-	v.handler.GetGroupsItemEntitlements(w, r, id, params)
 }
 
 // PatchGroupsItemEntitlements validates request body for the PatchGroupsItemEntitlements method and delegates to the underlying handler.
@@ -62,13 +52,8 @@ func (v handlerWithValidation) PatchGroupsItemEntitlements(w http.ResponseWriter
 			writeErrorResponse(w, err)
 			return
 		}
-		v.handler.PatchGroupsItemEntitlements(w, r, id)
+		v.ServerInterface.PatchGroupsItemEntitlements(w, r, id)
 	})
-}
-
-// GetGroupsItemIdentities validates request body for the GetGroupsItemIdentities method and delegates to the underlying handler.
-func (v handlerWithValidation) GetGroupsItemIdentities(w http.ResponseWriter, r *http.Request, id string, params resources.GetGroupsItemIdentitiesParams) {
-	v.handler.GetGroupsItemIdentities(w, r, id, params)
 }
 
 // PatchGroupsItemIdentities validates request body for the PatchGroupsItemIdentities method and delegates to the underlying handler.
@@ -78,13 +63,8 @@ func (v handlerWithValidation) PatchGroupsItemIdentities(w http.ResponseWriter, 
 			writeErrorResponse(w, err)
 			return
 		}
-		v.handler.PatchGroupsItemIdentities(w, r, id)
+		v.ServerInterface.PatchGroupsItemIdentities(w, r, id)
 	})
-}
-
-// GetGroupsItemRoles validates request body for the GetGroupsItemRoles method and delegates to the underlying handler.
-func (v handlerWithValidation) GetGroupsItemRoles(w http.ResponseWriter, r *http.Request, id string, params resources.GetGroupsItemRolesParams) {
-	v.handler.GetGroupsItemRoles(w, r, id, params)
 }
 
 // PatchGroupsItemRoles validates request body for the PatchGroupsItemRoles method and delegates to the underlying handler.
@@ -94,6 +74,6 @@ func (v handlerWithValidation) PatchGroupsItemRoles(w http.ResponseWriter, r *ht
 			writeErrorResponse(w, err)
 			return
 		}
-		v.handler.PatchGroupsItemRoles(w, r, id)
+		v.ServerInterface.PatchGroupsItemRoles(w, r, id)
 	})
 }

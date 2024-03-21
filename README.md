@@ -25,7 +25,12 @@ This is the Admin UI for the Canonical Identity Platform.
 - `IDP_CONFIGMAP_NAMESPACE`: namespace of the k8s config map containing Identity Providers
 - `SCHEMAS_CONFIGMAP_NAME`: name of the k8s config map containing Identity Schemas
 - `SCHEMAS_CONFIGMAP_NAMESPACE`: namespace of the k8s config map containing Identity Schemas
-
+- `OPENFGA_API_SCHEME`: scheme for the OpenFGA host variable, either `http` or `https`
+- `OPENFGA_API_HOST`: host of the OpenFGA server
+- `OPENFGA_API_TOKEN`: token used to interact with OpenFGA server, dictated by OpenFGA server
+- `OPENFGA_STORE_ID`: ID of the OpenFGA store the application will talk to 
+- `OPENFGA_AUTHORIZATION_MODEL_ID`: ID of the OpenFGA authorization model the application will talk to
+- `AUTHORIZATION_ENABLED`: flag defining if the OpenFGA authorization middleware is enabled and, for the time being, if any of the RBAC API are using OpenFGA (to be fixed by https://github.com/canonical/identity-platform-admin-ui/issues/221), default to `false`
 
 ## Development setup
 
@@ -55,6 +60,31 @@ As a requirement, please make sure to:
       sudo lxd init --auto
 
 Run `make dev` to get a working environment in k8s
+
+### OpenFGA initialization
+
+The Admin Service comes up with authorization disabled (see `AUTHORIZATION_ENABLED` env var), The env vars `OPENFGA_AUTHORIZATION_MODEL_ID` and `OPENFGA_STORE_ID` which are needed for the correct functioning of the RBAC APIs get set by the job `admin-ui-openfga-setup`, after this has completed a developer is supposed to bounce the deployment to get the application to source the new env vars, setting `AUTHORIZATION_ENABLED` will make sure those endpoints use OpenFGA as a backend instead of a `NoOp implementation` (behaviour will change,  see https://github.com/canonical/identity-platform-admin-ui/issues/221)
+
+```
+# Wait for the openfga setup job to complete
+kubectl wait --for=condition=complete job/admin-ui-openfga-setup
+
+# Edit the configmap to enable authorization by setting AUTHORIZATION_ENABLED=true
+kubectl edit configmap identity-platform-admin-ui
+
+# Restart the admin UI apply the changes
+kubectl rollout restart deployment identity-platform-admin-ui
+```
+
+
+K8s jobs don't get deleted on their own so if you wish to make changes to the openfga model, you need to make sure that the job for setting up openfga is deleted before redeploying the the admin UI:
+
+```
+kubectl delete job admin-ui-openfga-setup
+make dev
+```
+
+ensure environment variables in the `identity-platform-admin-ui` configmap reflect the status you want
 
 
 ## Endpoint examples

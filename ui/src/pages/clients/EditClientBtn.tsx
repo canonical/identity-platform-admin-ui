@@ -1,19 +1,19 @@
 import React, { FC } from "react";
 import { Button, Icon } from "@canonical/react-components";
-import { useNavigate } from "react-router-dom";
+import usePanelParams from "util/usePanelParams";
 
 interface Props {
   clientId: string;
 }
 
 const EditClientBtn: FC<Props> = ({ clientId }) => {
-  const navigate = useNavigate();
+  const panelParams = usePanelParams();
 
   return (
     <Button
-      appearance=""
+      className="u-no-margin--bottom"
       hasIcon
-      onClick={() => navigate(`/client/edit/${clientId}`)}
+      onClick={() => panelParams.openClientEdit(clientId)}
     >
       <Icon name="edit" />
       <span>Edit</span>

@@ -36,7 +36,7 @@ const Navigation: FC = () => {
                     >
                       <Icon
                         className="is-light p-side-navigation__icon"
-                        name="profile"
+                        name="plans"
                       />{" "}
                       Identity providers
                     </NavLink>
@@ -49,7 +49,7 @@ const Navigation: FC = () => {
                     >
                       <Icon
                         className="is-light p-side-navigation__icon"
-                        name="containers"
+                        name="applications"
                       />{" "}
                       Clients
                     </NavLink>

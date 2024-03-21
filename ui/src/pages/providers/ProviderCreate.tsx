@@ -1,14 +1,19 @@
 import React, { FC } from "react";
-import { Button, Col, Row, useNotify } from "@canonical/react-components";
+import {
+  ActionButton,
+  Button,
+  Col,
+  Row,
+  useNotify,
+} from "@canonical/react-components";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { queryKeys } from "util/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
-import SubmitButton from "components/SubmitButton";
 import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { createProvider } from "api/provider";
+import SidePanel from "components/SidePanel";
 
 const ProviderCreate: FC = () => {
   const navigate = useNavigate();
@@ -26,17 +31,19 @@ const ProviderCreate: FC = () => {
       client_id: "347646e4-9b48-4037-b836-90b020f9f629",
       provider: "okta",
       mapper: "file:///etc/config/kratos/okta_schema.jsonnet",
-      scope: ["email"],
+      scope: "email",
     },
     validationSchema: ProviderCreateSchema,
     onSubmit: (values) => {
-      createProvider(JSON.stringify(values))
+      createProvider(
+        JSON.stringify({ ...values, scope: values.scope?.split(",") }),
+      )
         .then(() => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.providers],
           });
           const msg = `Provider created.`;
-          navigate("/provider/list", notify.queue(notify.success(msg)));
+          navigate("/provider", notify.queue(notify.success(msg)));
         })
         .catch((e) => {
           formik.setSubmitting(false);
@@ -50,40 +57,33 @@ const ProviderCreate: FC = () => {
   };
 
   return (
-    <div className="p-panel">
-      <div className="p-panel__header ">
-        <div className="p-panel__title">
-          <h1 className="p-heading--4 u-no-margin--bottom">
-            Create new provider
-          </h1>
-        </div>
-      </div>
-      <div className="p-panel__content">
+    <SidePanel hasError={false} loading={false} className="p-panel">
+      <SidePanel.Header>
+        <SidePanel.HeaderTitle>Add ID provider</SidePanel.HeaderTitle>
+      </SidePanel.Header>
+      <SidePanel.Content>
         <Row>
-          <Col size={12}>
-            <NotificationConsumer />
-            <ProviderForm formik={formik} />
-          </Col>
+          <ProviderForm formik={formik} />
         </Row>
-        <hr />
-        <Row className="u-align--right">
+      </SidePanel.Content>
+      <SidePanel.Footer>
+        <Row className="u-align-text--right">
           <Col size={12}>
-            <Button
-              appearance="base"
-              onClick={() => navigate("/provider/list")}
-            >
+            <Button appearance="base" onClick={() => navigate("/provider")}>
               Cancel
             </Button>
-            <SubmitButton
-              isSubmitting={formik.isSubmitting}
-              isDisabled={!formik.isValid}
+            <ActionButton
+              appearance="positive"
+              loading={formik.isSubmitting}
+              disabled={!formik.isValid}
               onClick={submitForm}
-              buttonLabel="Create"
-            />
+            >
+              Save
+            </ActionButton>
           </Col>
         </Row>
-      </div>
-    </div>
+      </SidePanel.Footer>
+    </SidePanel>
   );
 };
 

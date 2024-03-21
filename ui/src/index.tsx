@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./sass/styles.scss";
 import { NotificationProvider } from "@canonical/react-components";
+import Panels from "components/Panels";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ root.render(
           <main className="l-main">
             <App />
           </main>
+          <Panels />
         </div>
       </NotificationProvider>
     </QueryClientProvider>

@@ -2,9 +2,17 @@ import React, { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { queryKeys } from "util/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationButton, useNotify } from "@canonical/react-components";
+import {
+  ActionButton,
+  Button,
+  Icon,
+  Input,
+  Modal,
+  useNotify,
+} from "@canonical/react-components";
 import { deleteProvider } from "api/provider";
 import { IdentityProvider } from "types/provider";
+import usePortal from "react-useportal";
 
 interface Props {
   provider: IdentityProvider;
@@ -15,13 +23,15 @@ const DeleteProviderBtn: FC<Props> = ({ provider }) => {
   const queryClient = useQueryClient();
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { openPortal, closePortal, isOpen, Portal } = usePortal();
+  const [confirmText, setConfirmText] = useState("");
 
   const handleDelete = () => {
     setLoading(true);
     deleteProvider(provider.id)
       .then(() => {
         navigate(
-          "/provider/list",
+          "/provider",
           notify.queue(notify.success(`Provider ${provider.id} deleted.`)),
         );
       })
@@ -36,24 +46,65 @@ const DeleteProviderBtn: FC<Props> = ({ provider }) => {
       });
   };
 
+  const expectedConfirmText = `remove ${provider.id}`;
+
   return (
-    <ConfirmationButton
-      loading={isLoading}
-      confirmationModalProps={{
-        title: "Confirm delete",
-        children: (
-          <p>
-            This will permanently delete provider <b>{provider.id}</b>.
-          </p>
-        ),
-        confirmButtonLabel: "Delete provider",
-        onConfirm: handleDelete,
-      }}
-      title="Confirm delete"
-      appearance="base"
-    >
-      Delete
-    </ConfirmationButton>
+    <>
+      {isOpen && (
+        <Portal>
+          <Modal
+            close={closePortal}
+            title="Remove ID provider"
+            buttonRow={
+              <>
+                <Button
+                  className="u-no-margin--bottom"
+                  type="button"
+                  onClick={closePortal}
+                >
+                  Cancel
+                </Button>
+                <ActionButton
+                  appearance="negative"
+                  className="u-no-margin--bottom has-icon"
+                  disabled={confirmText !== expectedConfirmText}
+                  loading={isLoading}
+                  onClick={handleDelete}
+                >
+                  <Icon name="delete" light />
+                  <span>Remove</span>
+                </ActionButton>
+              </>
+            }
+          >
+            <p>
+              Are you sure you want to remove {'"'}
+              {provider.id}
+              {'"'} as an ID provider? The removal of {provider.id} as an ID
+              provider is irreversible and might adversely affect your system.
+            </p>
+            <Input
+              onChange={(e) => setConfirmText(e.target.value)}
+              value={confirmText}
+              type="text"
+              placeholder={expectedConfirmText}
+              label={
+                <>
+                  Type <b>{expectedConfirmText}</b> to confirm
+                </>
+              }
+            />
+          </Modal>
+        </Portal>
+      )}
+      <Button
+        className="u-no-margin--bottom"
+        onClick={openPortal}
+        title="Confirm delete"
+      >
+        Delete
+      </Button>
+    </>
   );
 };
 

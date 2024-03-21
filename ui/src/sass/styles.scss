@@ -2,8 +2,13 @@
 
 @import "vanilla-framework/scss/build";
 
+@include vf-p-icon-applications;
 @include vf-p-icon-containers;
 @include vf-p-icon-edit;
+@include vf-p-icon-plans;
 @include vf-p-icon-profile;
+@include vf-p-icon-security;
+@include vf-p-icon-user;
+@include vf-p-icon-user-group;
 
 @import "logo";

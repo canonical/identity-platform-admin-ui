@@ -2,13 +2,16 @@ import React, { FC } from "react";
 import { Button, Col, MainTable, Row } from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchClients } from "api/client";
 import { isoTimeToString } from "util/date";
+import usePanelParams from "util/usePanelParams";
+import EditClientBtn from "pages/clients/EditClientBtn";
+import DeleteClientBtn from "pages/clients/DeleteClientBtn";
 
 const ClientList: FC = () => {
-  const navigate = useNavigate();
+  const panelParams = usePanelParams();
 
   const { data: clients = [] } = useQuery({
     queryKey: [queryKeys.clients],
@@ -22,11 +25,8 @@ const ClientList: FC = () => {
           <h1 className="p-heading--4 u-no-margin--bottom">Clients</h1>
         </div>
         <div className="p-panel__controls">
-          <Button
-            appearance="positive"
-            onClick={() => navigate("/client/create")}
-          >
-            Create client
+          <Button appearance="positive" onClick={panelParams.openClientCreate}>
+            Add client
           </Button>
         </div>
       </div>
@@ -42,19 +42,14 @@ const ClientList: FC = () => {
               headers={[
                 { content: "Id", sortKey: "id" },
                 { content: "Name", sortKey: "name" },
-                { content: "Response types" },
-                { content: "Grant types" },
                 { content: "Date" },
+                { content: "Actions" },
               ]}
               rows={clients.map((client) => {
                 return {
                   columns: [
                     {
-                      content: (
-                        <Link to={`/client/detail/${client.client_id}`}>
-                          {client.client_id}
-                        </Link>
-                      ),
+                      content: client.client_id,
                       role: "rowheader",
                       "aria-label": "Id",
                     },
@@ -62,16 +57,6 @@ const ClientList: FC = () => {
                       content: client.client_name,
                       role: "rowheader",
                       "aria-label": "Name",
-                    },
-                    {
-                      content: client.response_types.join(", "),
-                      role: "rowheader",
-                      "aria-label": "Response types",
-                    },
-                    {
-                      content: client.grant_types.join(", "),
-                      role: "rowheader",
-                      "aria-label": "Grant types",
                     },
                     {
                       content: (
@@ -86,6 +71,16 @@ const ClientList: FC = () => {
                       ),
                       role: "rowheader",
                       "aria-label": "Created",
+                    },
+                    {
+                      content: (
+                        <>
+                          <EditClientBtn clientId={client.client_id} />
+                          <DeleteClientBtn client={client} />
+                        </>
+                      ),
+                      role: "rowheader",
+                      "aria-label": "Actions",
                     },
                   ],
                   sortData: {

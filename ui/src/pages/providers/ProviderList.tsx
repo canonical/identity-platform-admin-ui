@@ -2,12 +2,14 @@ import React, { FC } from "react";
 import { Button, Col, MainTable, Row } from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { Link, useNavigate } from "react-router-dom";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchProviders } from "api/provider";
+import usePanelParams from "util/usePanelParams";
+import EditProviderBtn from "pages/providers/EditProviderBtn";
+import DeleteProviderBtn from "pages/providers/DeleteProviderBtn";
 
 const ProviderList: FC = () => {
-  const navigate = useNavigate();
+  const panelParams = usePanelParams();
 
   const { data: providers = [] } = useQuery({
     queryKey: [queryKeys.providers],
@@ -25,9 +27,9 @@ const ProviderList: FC = () => {
         <div className="p-panel__controls">
           <Button
             appearance="positive"
-            onClick={() => navigate("/provider/create")}
+            onClick={panelParams.openProviderCreate}
           >
-            Create provider
+            Add ID provider
           </Button>
         </div>
       </div>
@@ -41,31 +43,32 @@ const ProviderList: FC = () => {
               responsive
               paginate={30}
               headers={[
-                { content: "Id", sortKey: "id" },
+                { content: "Name", sortKey: "id" },
                 { content: "Provider", sortKey: "provider" },
-                { content: "Scope", sortKey: "scope" },
+                { content: "Actions" },
               ]}
               rows={providers.map((provider) => {
                 return {
                   columns: [
                     {
-                      content: (
-                        <Link to={`/provider/detail/${provider.id}`}>
-                          {provider.id}
-                        </Link>
-                      ),
-                      role: "rowheader",
-                      "aria-label": "Id",
-                    },
-                    {
-                      content: provider.provider,
+                      content: provider.id,
                       role: "rowheader",
                       "aria-label": "Name",
                     },
                     {
-                      content: provider.scope.length,
+                      content: provider.provider,
                       role: "rowheader",
-                      "aria-label": "Response types",
+                      "aria-label": "Provider",
+                    },
+                    {
+                      content: (
+                        <>
+                          <EditProviderBtn providerId={provider.id} />
+                          <DeleteProviderBtn provider={provider} />
+                        </>
+                      ),
+                      role: "rowheader",
+                      "aria-label": "Actions",
                     },
                   ],
                   sortData: {

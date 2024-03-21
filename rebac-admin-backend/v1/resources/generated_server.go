@@ -421,6 +421,27 @@ func (siw *ServerInterfaceWrapper) GetIdentityProviders(w http.ResponseWriter, r
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetIdentityProviders(w, r, params)
 	}))
@@ -478,6 +499,27 @@ func (siw *ServerInterfaceWrapper) GetAvailableIdentityProviders(w http.Response
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "nextToken", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -625,6 +667,27 @@ func (siw *ServerInterfaceWrapper) GetEntitlements(w http.ResponseWriter, r *htt
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetEntitlements(w, r, params)
 	}))
@@ -690,6 +753,27 @@ func (siw *ServerInterfaceWrapper) GetGroups(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -838,6 +922,27 @@ func (siw *ServerInterfaceWrapper) GetGroupsItemEntitlements(w http.ResponseWrit
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGroupsItemEntitlements(w, r, id, params)
 	}))
@@ -915,6 +1020,27 @@ func (siw *ServerInterfaceWrapper) GetGroupsItemIdentities(w http.ResponseWriter
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "nextToken", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -996,6 +1122,27 @@ func (siw *ServerInterfaceWrapper) GetGroupsItemRoles(w http.ResponseWriter, r *
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGroupsItemRoles(w, r, id, params)
 	}))
@@ -1072,6 +1219,27 @@ func (siw *ServerInterfaceWrapper) GetIdentities(w http.ResponseWriter, r *http.
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1220,6 +1388,27 @@ func (siw *ServerInterfaceWrapper) GetIdentitiesItemEntitlements(w http.Response
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetIdentitiesItemEntitlements(w, r, id, params)
 	}))
@@ -1297,6 +1486,27 @@ func (siw *ServerInterfaceWrapper) GetIdentitiesItemGroups(w http.ResponseWriter
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "nextToken", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1378,6 +1588,27 @@ func (siw *ServerInterfaceWrapper) GetIdentitiesItemRoles(w http.ResponseWriter,
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetIdentitiesItemRoles(w, r, id, params)
 	}))
@@ -1456,6 +1687,27 @@ func (siw *ServerInterfaceWrapper) GetResources(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetResources(w, r, params)
 	}))
@@ -1506,6 +1758,27 @@ func (siw *ServerInterfaceWrapper) GetRoles(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1652,6 +1925,27 @@ func (siw *ServerInterfaceWrapper) GetRolesItemEntitlements(w http.ResponseWrite
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "nextToken", Err: err})
 		return
+	}
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Next-Page-Token" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Next-Page-Token")]; found {
+		var NextPageToken PaginationNextTokenHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Next-Page-Token", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Next-Page-Token", valueList[0], &NextPageToken, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Next-Page-Token", Err: err})
+			return
+		}
+
+		params.NextPageToken = &NextPageToken
+
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

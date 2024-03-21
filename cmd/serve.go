@@ -63,7 +63,7 @@ func serve() {
 	kPublicClient := ik.NewClient(specs.KratosPublicURL, specs.Debug)
 	oPublicClient := io.NewClient(specs.OathkeeperPublicURL, specs.Debug)
 
-	k8sCoreV1, err := k8s.NewCoreV1Client()
+	k8sCoreV1, err := k8s.NewCoreV1Client("")
 
 	if err != nil {
 		panic(err)

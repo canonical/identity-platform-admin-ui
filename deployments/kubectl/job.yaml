@@ -1,9 +1,8 @@
 ---
 apiVersion: batch/v1
-
 kind: Job
 metadata:
-  name: openfga-init
+  name: admin-ui-openfga-setup
 spec:
   template:
     spec:
@@ -12,18 +11,6 @@ spec:
       containers:
         - name: job
           image: identity-platform-admin-ui
-          command: [ "/bin/sh",  "-c", "/scripts/init.sh" ]
-          volumeMounts:
-            - mountPath: /scripts
-              name: openfga-init
-            - mountPath: /data
-              name: openfga-pv
+          command: ["/usr/bin/identity-platform-admin-ui", "create-fga-model", "--fga-api-url", "http://openfga.default.svc.cluster.local:8080", "--fga-api-token", "42", "--store-k8s-configmap-resource", "default/identity-platform-admin-ui"]
+
       restartPolicy: Never
-      volumes:
-        - name: openfga-init
-          configMap:
-            name: openfga-init
-            defaultMode: 0755
-        - name: openfga-pv
-          persistentVolumeClaim:
-            claimName: openfga-pv-claim

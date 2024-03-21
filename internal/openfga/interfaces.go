@@ -11,6 +11,8 @@ import (
 
 type OpenFGAClientInterface interface {
 	GetAuthorizationModelId() (string, error)
+	CreateStore(context.Context) client.SdkClientCreateStoreRequestInterface
+	CreateStoreExecute(client.SdkClientCreateStoreRequestInterface) (*client.ClientCreateStoreResponse, error)
 	ReadAuthorizationModel(context.Context) client.SdkClientReadAuthorizationModelRequestInterface
 	ReadAuthorizationModelExecute(client.SdkClientReadAuthorizationModelRequestInterface) (*client.ClientReadAuthorizationModelResponse, error)
 	ReadAuthorizationModels(context.Context) client.SdkClientReadAuthorizationModelsRequestInterface

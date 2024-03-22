@@ -40,6 +40,8 @@ As a requirement, please make sure to:
       snap install rockcraft
       snap install yq
       apt install make
+      # Ensure skopeo is in the path
+      sudo ln -s /snap/rockcraft/current/bin/skopeo /usr/local/bin/skopeo
 
 * microk8s is installed with the `registry` addon operating at `localhost:32000` and kubectl configured to use it
 

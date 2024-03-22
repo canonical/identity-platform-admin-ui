@@ -30,11 +30,7 @@
     "./src",
     ".eslintrc.js",
     "babel.config.js",
+    ".eslintrc.cjs",
     "vite.config.ts"
   ],
-  "paths": [
-    {
-      "*": ["types/*.d.ts"]
-    }
-  ]
 }

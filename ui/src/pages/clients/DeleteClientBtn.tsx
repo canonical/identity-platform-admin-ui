@@ -21,7 +21,7 @@ const DeleteClientBtn: FC<Props> = ({ client }) => {
     deleteClient(client.client_id)
       .then(() => {
         navigate(
-          "/client/list",
+          "/client",
           notify.queue(notify.success(`Client ${client.client_name} deleted.`)),
         );
       })
@@ -38,6 +38,7 @@ const DeleteClientBtn: FC<Props> = ({ client }) => {
 
   return (
     <ConfirmationButton
+      className="u-no-margin--bottom"
       loading={isLoading}
       confirmationModalProps={{
         title: "Confirm delete",
@@ -50,7 +51,6 @@ const DeleteClientBtn: FC<Props> = ({ client }) => {
         onConfirm: handleDelete,
       }}
       title="Confirm delete"
-      appearance="base"
     >
       Delete
     </ConfirmationButton>

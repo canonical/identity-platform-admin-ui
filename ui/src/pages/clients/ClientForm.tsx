@@ -4,13 +4,13 @@ import { FormikProps } from "formik";
 import CheckboxList from "components/CheckboxList";
 
 export interface ClientFormTypes {
-  client_uri: string;
-  client_name: string;
-  grant_types: string[];
-  response_types: string[];
-  scope: string;
-  redirect_uris: string[];
-  request_object_signing_alg: string;
+  client_uri?: string;
+  client_name?: string;
+  grant_types?: string[];
+  response_types?: string[];
+  scope?: string;
+  redirect_uris?: string[];
+  request_object_signing_alg?: string;
 }
 
 interface Props {
@@ -27,7 +27,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
   };
 
   return (
-    <Form onSubmit={formik.handleSubmit} stacked>
+    <Form onSubmit={formik.handleSubmit}>
       <Input
         id="client_name"
         name="client_name"
@@ -38,7 +38,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
         value={formik.values.client_name}
         error={formik.touched.client_name ? formik.errors.client_name : null}
         required
-        stacked
       />
       <Input
         id="client_uri"
@@ -50,7 +49,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
         value={formik.values.client_uri}
         error={formik.touched.client_uri ? formik.errors.client_uri : null}
         required
-        stacked
       />
       <Input
         id="scope"
@@ -62,7 +60,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
         value={formik.values.scope}
         error={formik.touched.scope ? formik.errors.scope : null}
         required
-        stacked
       />
       <Input
         id="request_object_signing_alg"
@@ -78,7 +75,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
             : null
         }
         required
-        stacked
       />
       <Input
         id="redirect_uris"
@@ -94,22 +90,21 @@ const ClientForm: FC<Props> = ({ formik }) => {
           formik.touched.redirect_uris ? formik.errors.redirect_uris : null
         }
         required
-        stacked
       />
       <CheckboxList
         label="Grant types"
         values={["authorization_code", "refresh_token"]}
-        checkedValues={formik.values.grant_types}
+        checkedValues={formik.values.grant_types ?? []}
         toggleValue={(value: string) =>
-          toggle(formik.values.grant_types, "grant_types", value)
+          toggle(formik.values.grant_types ?? [], "grant_types", value)
         }
       />
       <CheckboxList
         label="Response types"
         values={["code", "id_token"]}
-        checkedValues={formik.values.response_types}
+        checkedValues={formik.values.response_types ?? []}
         toggleValue={(value: string) =>
-          toggle(formik.values.response_types, "response_types", value)
+          toggle(formik.values.response_types ?? [], "response_types", value)
         }
       />
     </Form>

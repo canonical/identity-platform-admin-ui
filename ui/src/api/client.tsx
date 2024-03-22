@@ -27,7 +27,7 @@ export const createClient = (values: string): Promise<Client> => {
       body: values,
     })
       .then(handleResponse)
-      .then((data: Client) => resolve(data))
+      .then((result: ApiResponse<Client>) => resolve(result.data))
       .catch(reject);
   });
 };

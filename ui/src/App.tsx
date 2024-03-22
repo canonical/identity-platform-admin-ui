@@ -3,26 +3,15 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Loader from "components/Loader";
 import ClientList from "pages/clients/ClientList";
 import NoMatch from "components/NoMatch";
-import ClientCreate from "pages/clients/ClientCreate";
-import ClientDetail from "pages/clients/ClientDetail";
-import ClientEdit from "pages/clients/ClientEdit";
+import ProviderList from "pages/providers/ProviderList";
 
 const App: FC = () => {
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to="/client/list" replace={true} />}
-        />
-        <Route
-          path="/client"
-          element={<Navigate to="/client/list" replace={true} />}
-        />
-        <Route path="/client/create" element={<ClientCreate />} />
-        <Route path="/client/detail/:client" element={<ClientDetail />} />
-        <Route path="/client/edit/:client" element={<ClientEdit />} />
-        <Route path="/client/list" element={<ClientList />} />
+        <Route path="/" element={<Navigate to="/provider" replace={true} />} />
+        <Route path="/provider" element={<ProviderList />} />
+        <Route path="/client" element={<ClientList />} />
         <Route path="*" element={<NoMatch />} />
       </Routes>
     </Suspense>

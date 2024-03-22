@@ -3,17 +3,17 @@ import { Button, Icon } from "@canonical/react-components";
 import usePanelParams from "util/usePanelParams";
 
 interface Props {
-  clientId: string;
+  providerId: string;
 }
 
-const EditClientBtn: FC<Props> = ({ clientId }) => {
+const EditProviderBtn: FC<Props> = ({ providerId }) => {
   const panelParams = usePanelParams();
 
   return (
     <Button
       className="u-no-margin--bottom"
       hasIcon
-      onClick={() => panelParams.openClientEdit(clientId)}
+      onClick={() => panelParams.openProviderEdit(providerId)}
     >
       <Icon name="edit" />
       <span>Edit</span>
@@ -21,4 +21,4 @@ const EditClientBtn: FC<Props> = ({ clientId }) => {
   );
 };
 
-export default EditClientBtn;
+export default EditProviderBtn;

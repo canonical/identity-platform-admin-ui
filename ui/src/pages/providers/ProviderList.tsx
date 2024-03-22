@@ -2,31 +2,34 @@ import React, { FC } from "react";
 import { Button, Col, MainTable, Row } from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { Link } from "react-router-dom";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
-import { fetchClients } from "api/client";
-import { isoTimeToString } from "util/date";
+import { fetchProviders } from "api/provider";
 import usePanelParams from "util/usePanelParams";
-import EditClientBtn from "pages/clients/EditClientBtn";
-import DeleteClientBtn from "pages/clients/DeleteClientBtn";
+import EditProviderBtn from "pages/providers/EditProviderBtn";
+import DeleteProviderBtn from "pages/providers/DeleteProviderBtn";
 
-const ClientList: FC = () => {
+const ProviderList: FC = () => {
   const panelParams = usePanelParams();
 
-  const { data: clients = [] } = useQuery({
-    queryKey: [queryKeys.clients],
-    queryFn: fetchClients,
+  const { data: providers = [] } = useQuery({
+    queryKey: [queryKeys.providers],
+    queryFn: fetchProviders,
   });
 
   return (
     <div className="p-panel">
       <div className="p-panel__header ">
         <div className="p-panel__title">
-          <h1 className="p-heading--4 u-no-margin--bottom">Clients</h1>
+          <h1 className="p-heading--4 u-no-margin--bottom">
+            Identity Providers
+          </h1>
         </div>
         <div className="p-panel__controls">
-          <Button appearance="positive" onClick={panelParams.openClientCreate}>
-            Add client
+          <Button
+            appearance="positive"
+            onClick={panelParams.openProviderCreate}
+          >
+            Add ID provider
           </Button>
         </div>
       </div>
@@ -40,43 +43,28 @@ const ClientList: FC = () => {
               responsive
               paginate={30}
               headers={[
-                { content: "Id", sortKey: "id" },
-                { content: "Name", sortKey: "name" },
-                { content: "Date" },
+                { content: "Name", sortKey: "id" },
+                { content: "Provider", sortKey: "provider" },
                 { content: "Actions" },
               ]}
-              rows={clients.map((client) => {
+              rows={providers.map((provider) => {
                 return {
                   columns: [
                     {
-                      content: client.client_id,
-                      role: "rowheader",
-                      "aria-label": "Id",
-                    },
-                    {
-                      content: client.client_name,
+                      content: provider.id,
                       role: "rowheader",
                       "aria-label": "Name",
                     },
                     {
-                      content: (
-                        <>
-                          <div>
-                            Created: {isoTimeToString(client.created_at)}
-                          </div>
-                          <div className="u-text--muted">
-                            Updated: {isoTimeToString(client.updated_at)}
-                          </div>
-                        </>
-                      ),
+                      content: provider.provider,
                       role: "rowheader",
-                      "aria-label": "Created",
+                      "aria-label": "Provider",
                     },
                     {
                       content: (
                         <>
-                          <EditClientBtn clientId={client.client_id} />
-                          <DeleteClientBtn client={client} />
+                          <EditProviderBtn providerId={provider.id ?? ""} />
+                          <DeleteProviderBtn provider={provider} />
                         </>
                       ),
                       role: "rowheader",
@@ -84,8 +72,8 @@ const ClientList: FC = () => {
                     },
                   ],
                   sortData: {
-                    id: client.client_id,
-                    name: client.client_name.toLowerCase(),
+                    id: provider.id,
+                    provider: provider.provider,
                   },
                 };
               })}
@@ -97,4 +85,4 @@ const ClientList: FC = () => {
   );
 };
 
-export default ClientList;
+export default ProviderList;

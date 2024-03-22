@@ -26,11 +26,11 @@ const ProviderCreate: FC = () => {
 
   const formik = useFormik<ProviderFormTypes>({
     initialValues: {
-      client_secret: "secret-9",
-      id: "okta_347646e49b484037b83690b020f9f629",
-      client_id: "347646e4-9b48-4037-b836-90b020f9f629",
-      provider: "okta",
-      mapper: "file:///etc/config/kratos/okta_schema.jsonnet",
+      provider: "generic",
+      id: "",
+      client_id: "",
+      client_secret: "",
+      mapper_url: "file:///etc/config/kratos/okta_schema.jsonnet",
       scope: "email",
     },
     validationSchema: ProviderCreateSchema,

@@ -63,7 +63,7 @@ const ProviderList: FC = () => {
                     {
                       content: (
                         <>
-                          <EditProviderBtn providerId={provider.id} />
+                          <EditProviderBtn providerId={provider.id ?? ""} />
                           <DeleteProviderBtn provider={provider} />
                         </>
                       ),
@@ -74,7 +74,6 @@ const ProviderList: FC = () => {
                   sortData: {
                     id: provider.id,
                     provider: provider.provider,
-                    scope: provider.scope.length,
                   },
                 };
               })}

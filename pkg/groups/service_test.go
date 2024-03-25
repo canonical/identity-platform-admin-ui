@@ -957,6 +957,16 @@ func TestServiceListPermissions(t *testing.T) {
 								),
 							}
 
+							if object == "role:role" {
+								tuples = append(tuples,
+									*openfga.NewTuple(
+										*openfga.NewTupleKey(
+											fmt.Sprintf("group:%s#%s", user, MEMBER_RELATION), "assignee", fmt.Sprintf("%stest", object),
+										),
+										time.Now(),
+									),
+								)
+							}
 							r := new(client.ClientReadResponse)
 							r.SetContinuationToken("")
 							r.SetTuples(tuples)

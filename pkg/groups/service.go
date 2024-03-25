@@ -382,6 +382,11 @@ func (s *Service) listPermissionsByType(ctx context.Context, ID, pType, continua
 	permissions := make([]string, 0)
 
 	for _, t := range r.GetTuples() {
+		// if relation doesn't start with can_ it means it's not a permission (see #assignee)
+		if !strings.HasPrefix(t.Key.Relation, "can_") {
+			continue
+		}
+
 		permissions = append(permissions, authorization.NewUrn(t.Key.Relation, t.Key.Object).ID())
 	}
 

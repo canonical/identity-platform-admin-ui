@@ -25,10 +25,10 @@ type API struct {
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/schemas", a.handleList)
-	mux.Get("/api/v0/schemas/{id}", a.handleDetail)
+	mux.Get("/api/v0/schemas/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/schemas", a.handleCreate)
-	mux.Patch("/api/v0/schemas/{id}", a.handlePartialUpdate)
-	mux.Delete("/api/v0/schemas/{id}", a.handleRemove)
+	mux.Patch("/api/v0/schemas/{id:.+}", a.handlePartialUpdate)
+	mux.Delete("/api/v0/schemas/{id:.+}", a.handleRemove)
 	mux.Get("/api/v0/schemas/default", a.handleDetailDefault)
 	mux.Put("/api/v0/schemas/default", a.handleUpdateDefault)
 }

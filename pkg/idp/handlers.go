@@ -24,10 +24,10 @@ type API struct {
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/idps", a.handleList)
-	mux.Get("/api/v0/idps/{id}", a.handleDetail)
+	mux.Get("/api/v0/idps/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/idps", a.handleCreate)
-	mux.Patch("/api/v0/idps/{id}", a.handlePartialUpdate)
-	mux.Delete("/api/v0/idps/{id}", a.handleRemove)
+	mux.Patch("/api/v0/idps/{id:.+}", a.handlePartialUpdate)
+	mux.Delete("/api/v0/idps/{id:.+}", a.handleRemove)
 }
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {

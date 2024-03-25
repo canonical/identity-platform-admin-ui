@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	kClient "github.com/ory/kratos-client-go"
 	gomock "go.uber.org/mock/gomock"
 
@@ -395,10 +396,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 		"additionalProperties": true,
 	}
 
-	v0ID := "test_v0"
-
 	c := new(kClient.IdentitySchemaContainer)
-	c.Id = &v0ID
 	c.Schema = v0Schema
 
 	payload, _ := json.Marshal(c)
@@ -407,13 +405,15 @@ func TestHandleCreateSuccess(t *testing.T) {
 	mockService.EXPECT().CreateSchema(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, schema *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error) {
 
-			if *schema.Id != *c.Id {
-				t.Fatalf("invalid ID, expected %s got %s", *c.Id, *schema.Id)
+			if schema.Id != nil {
+				t.Fatalf("invalid ID, expected nil got %s", *schema.Id)
 			}
 
 			if !reflect.DeepEqual(schema.Schema, c.Schema) {
 				t.Fatalf("invalid schema, expected %s got %s", c.Schema, schema.Schema)
 			}
+
+			c.SetId(uuid.NewString())
 
 			return &IdentitySchemaData{IdentitySchemas: []kClient.IdentitySchemaContainer{*c}}, nil
 		},
@@ -451,9 +451,85 @@ func TestHandleCreateSuccess(t *testing.T) {
 		t.Fatalf("invalid result, expected only 1 schema, got %v", rr.Data)
 	}
 
-	if *rr.Data[0].Id != *c.Id {
-		t.Fatalf("invalid result, expected: %v, got: %v", c, rr.Data[0])
+	if *rr.Data[0].Id == "" {
+		t.Fatalf("invalid result, expected a uuid, got: %v", rr.Data[0])
 	}
+}
+
+func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	v0Schema := map[string]interface{}{
+		"$id":     "https://schemas.canonical.com/presets/kratos/test_v0.json",
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"title":   "Admin Account",
+		"type":    "object",
+		"properties": map[string]interface{}{
+			"traits": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"username": map[string]interface{}{
+						"type":  "string",
+						"title": "Username",
+						"ory.sh/kratos": map[string]interface{}{
+							"credentials": map[string]interface{}{
+								"password": map[string]interface{}{
+									"identifier": true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"additionalProperties": true,
+	}
+
+	v0ID := "test_v0"
+
+	c := new(kClient.IdentitySchemaContainer)
+	c.Id = &v0ID
+	c.Schema = v0Schema
+
+	payload, _ := json.Marshal(c)
+	req := httptest.NewRequest(http.MethodPost, "/api/v0/schemas", bytes.NewReader(payload))
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
+	}
+
+	// duplicate types.Response attribute we care and assign the proper type instead of interface{}
+	type Response struct {
+		Data []kClient.IdentitySchemaContainer `json:"data"`
+	}
+
+	rr := new(Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if len(rr.Data) != 0 {
+		t.Fatalf("invalid result, expected no schema, got %v", rr.Data)
+	}
+
 }
 
 func TestHandleCreateFails(t *testing.T) {
@@ -489,10 +565,7 @@ func TestHandleCreateFails(t *testing.T) {
 		"additionalProperties": true,
 	}
 
-	v0ID := "test_v0"
-
 	c := new(kClient.IdentitySchemaContainer)
-	c.Id = &v0ID
 	c.Schema = v0Schema
 
 	payload, _ := json.Marshal(c)
@@ -501,8 +574,8 @@ func TestHandleCreateFails(t *testing.T) {
 	mockService.EXPECT().CreateSchema(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, schema *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error) {
 
-			if *schema.Id != *c.Id {
-				t.Fatalf("invalid ID, expected %s got %s", *c.Id, *schema.Id)
+			if schema.Id != nil {
+				t.Fatalf("invalid ID, expected nil got %s", *schema.Id)
 			}
 
 			if !reflect.DeepEqual(schema.Schema, c.Schema) {
@@ -538,91 +611,6 @@ func TestHandleCreateFails(t *testing.T) {
 
 	if rr.Status != http.StatusInternalServerError {
 		t.Errorf("expected code to be %v got %v", http.StatusInternalServerError, rr.Status)
-	}
-}
-
-func TestHandleCreateFailsConflict(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockLogger := NewMockLoggerInterface(ctrl)
-	mockService := NewMockServiceInterface(ctrl)
-
-	v0Schema := map[string]interface{}{
-		"$id":     "https://schemas.canonical.com/presets/kratos/test_v0.json",
-		"$schema": "http://json-schema.org/draft-07/schema#",
-		"title":   "Admin Account",
-		"type":    "object",
-		"properties": map[string]interface{}{
-			"traits": map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"username": map[string]interface{}{
-						"type":  "string",
-						"title": "Username",
-						"ory.sh/kratos": map[string]interface{}{
-							"credentials": map[string]interface{}{
-								"password": map[string]interface{}{
-									"identifier": true,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		"additionalProperties": true,
-	}
-
-	v0ID := "test_v0"
-
-	c := new(kClient.IdentitySchemaContainer)
-	c.Id = &v0ID
-	c.Schema = v0Schema
-
-	payload, _ := json.Marshal(c)
-	req := httptest.NewRequest(http.MethodPost, "/api/v0/schemas", bytes.NewReader(payload))
-
-	mockService.EXPECT().CreateSchema(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, schema *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error) {
-
-			if *schema.Id != *c.Id {
-				t.Fatalf("invalid ID, expected %s got %s", *c.Id, *schema.Id)
-			}
-
-			if !reflect.DeepEqual(schema.Schema, c.Schema) {
-				t.Fatalf("invalid schema, expected %s got %s", c.Schema, schema.Schema)
-			}
-
-			return &IdentitySchemaData{}, fmt.Errorf("error")
-		},
-	)
-
-	w := httptest.NewRecorder()
-	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
-
-	mux.ServeHTTP(w, req)
-
-	res := w.Result()
-	defer res.Body.Close()
-	data, err := io.ReadAll(res.Body)
-
-	if err != nil {
-		t.Errorf("expected error to be nil got %v", err)
-	}
-
-	if res.StatusCode != http.StatusConflict {
-		t.Fatalf("expected HTTP status code 409 got %v", res.StatusCode)
-	}
-
-	rr := new(types.Response)
-	if err := json.Unmarshal(data, rr); err != nil {
-		t.Errorf("expected error to be nil got %v", err)
-	}
-
-	if rr.Status != http.StatusConflict {
-		t.Errorf("expected code to be %v got %v", http.StatusConflict, rr.Status)
 	}
 }
 

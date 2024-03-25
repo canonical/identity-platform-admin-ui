@@ -174,14 +174,22 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	if schema.Id != nil && *schema.Id != "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Schema ID field is not allowed to be passed in",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
 	schemas, err := a.service.CreateSchema(r.Context(), schema)
 
 	if err != nil {
 		status := http.StatusInternalServerError
-
-		if schemas != nil {
-			status = http.StatusConflict
-		}
 
 		rr := types.Response{
 			Status:  status,

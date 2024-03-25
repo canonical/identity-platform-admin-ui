@@ -176,15 +176,22 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	if idp.ID != "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "IDP ID field is not allowed to be passed in",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
 	idps, err := a.service.CreateResource(r.Context(), idp)
 
 	if err != nil {
 		status := http.StatusInternalServerError
-
-		if idps != nil {
-			status = http.StatusConflict
-		}
-
 		rr := types.Response{
 			Status:  status,
 			Message: err.Error(),

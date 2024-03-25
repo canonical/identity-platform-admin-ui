@@ -143,6 +143,10 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 	}
 
 	var idp *Configuration
+
+	// assign random ID
+	data.ID = uuid.NewString()
+
 	// TODO @shipperizer find a better way to index the idps
 	for _, i := range idps {
 		if i.ID == data.ID {

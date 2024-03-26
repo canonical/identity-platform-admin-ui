@@ -4,17 +4,19 @@
 package openfga
 
 import (
+	validator "github.com/go-playground/validator/v10"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type Config struct {
-	ApiScheme   string
-	ApiHost     string
-	StoreID     string
-	ApiToken    string
-	AuthModelID string
+	ApiScheme   string `validate:"required"`
+	ApiHost     string `validate:"required"`
+	StoreID     string `validate:"required"`
+	ApiToken    string `validate:"required"`
+	AuthModelID string `validate:"required"`
 	Debug       bool
 
 	Tracer  tracing.TracingInterface
@@ -35,6 +37,12 @@ func NewConfig(apiScheme, apiHost, storeID, apiToken, authModelID string, debug 
 	c.Monitor = monitor
 	c.Tracer = tracer
 	c.Logger = logger
+
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(c); err != nil {
+		logger.Errorf("invalid config object: %s", err)
+
+		return nil
+	}
 
 	return c
 }

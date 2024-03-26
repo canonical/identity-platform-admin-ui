@@ -291,9 +291,7 @@ func (a *API) handleListPermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for apiType, token := range pageTokens {
-		paginator.SetToken(r.Context(), apiType, token)
-	}
+	paginator.SetTokens(r.Context(), pageTokens)
 
 	pageHeader, err := paginator.PaginationHeader(r.Context())
 
@@ -569,9 +567,7 @@ func (a *API) handleListIdentities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if pageToken != "" {
-		paginator.SetToken(r.Context(), GROUP_TOKEN_KEY, pageToken)
-	}
+	paginator.SetToken(r.Context(), GROUP_TOKEN_KEY, pageToken)
 
 	pageHeader, err := paginator.PaginationHeader(r.Context())
 

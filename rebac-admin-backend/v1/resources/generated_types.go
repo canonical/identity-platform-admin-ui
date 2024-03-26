@@ -432,7 +432,7 @@ type ResponseMeta struct {
 
 // Role defines model for Role.
 type Role struct {
-	Entitlements *[]RoleEntitlement `json:"entitlements,omitempty" validate:"dive"`
+	Entitlements *[]RoleEntitlement `json:"entitlements,omitempty" validate:"omitempty,dive"`
 	Id           *string            `json:"id,omitempty"`
 	Name         string             `json:"name" validate:"required"`
 }

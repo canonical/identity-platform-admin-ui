@@ -14,6 +14,7 @@ import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { fetchProvider, updateProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import usePanelParams from "util/usePanelParams";
+import ScrollableContainer from "components/ScrollableContainer";
 
 const ProviderEdit: FC = () => {
   const notify = useNotify();
@@ -75,36 +76,40 @@ const ProviderEdit: FC = () => {
 
   return (
     <SidePanel hasError={false} loading={false} className="p-panel">
-      <SidePanel.Header>
-        <SidePanel.HeaderTitle>Edit provider</SidePanel.HeaderTitle>
-      </SidePanel.Header>
-      <SidePanel.Content className="u-no-padding">
-        <Row>
-          <ProviderForm formik={formik} isEdit={true} />
-        </Row>
-      </SidePanel.Content>
-      <SidePanel.Footer className="u-align--right">
-        <Row>
-          <Col size={12}>
-            <Button
-              appearance="base"
-              className="u-no-margin--bottom u-sv2"
-              onClick={panelParams.clear}
-            >
-              Cancel
-            </Button>
-            <ActionButton
-              appearance="positive"
-              className="u-no-margin--bottom"
-              loading={formik.isSubmitting}
-              disabled={!formik.isValid}
-              onClick={() => void formik.submitForm()}
-            >
-              Update
-            </ActionButton>
-          </Col>
-        </Row>
-      </SidePanel.Footer>
+      <ScrollableContainer dependencies={[]} belowId="panel-footer">
+        <SidePanel.Header>
+          <SidePanel.HeaderTitle>Edit provider</SidePanel.HeaderTitle>
+        </SidePanel.Header>
+        <SidePanel.Content className="u-no-padding">
+          <Row>
+            <ProviderForm formik={formik} isEdit={true} />
+          </Row>
+        </SidePanel.Content>
+      </ScrollableContainer>
+      <div id="panel-footer">
+        <SidePanel.Footer className="u-align--right">
+          <Row>
+            <Col size={12}>
+              <Button
+                appearance="base"
+                className="u-no-margin--bottom u-sv2"
+                onClick={panelParams.clear}
+              >
+                Cancel
+              </Button>
+              <ActionButton
+                appearance="positive"
+                className="u-no-margin--bottom"
+                loading={formik.isSubmitting}
+                disabled={!formik.isValid}
+                onClick={() => void formik.submitForm()}
+              >
+                Update
+              </ActionButton>
+            </Col>
+          </Row>
+        </SidePanel.Footer>
+      </div>
     </SidePanel>
   );
 };

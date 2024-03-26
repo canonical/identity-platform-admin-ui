@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { createClient } from "api/client";
 import SidePanel from "components/SidePanel";
+import ScrollableContainer from "components/ScrollableContainer";
 
 const ClientCreate: FC = () => {
   const navigate = useNavigate();
@@ -57,31 +58,35 @@ const ClientCreate: FC = () => {
 
   return (
     <SidePanel hasError={false} loading={false} className="p-panel">
-      <SidePanel.Header>
-        <SidePanel.HeaderTitle>Add client</SidePanel.HeaderTitle>
-      </SidePanel.Header>
-      <SidePanel.Content>
-        <Row>
-          <ClientForm formik={formik} />
-        </Row>
-      </SidePanel.Content>
-      <SidePanel.Footer>
-        <Row className="u-align-text--right">
-          <Col size={12}>
-            <Button appearance="base" onClick={() => navigate("/client")}>
-              Cancel
-            </Button>
-            <ActionButton
-              appearance="positive"
-              loading={formik.isSubmitting}
-              disabled={!formik.isValid}
-              onClick={submitForm}
-            >
-              Save
-            </ActionButton>
-          </Col>
-        </Row>
-      </SidePanel.Footer>
+      <ScrollableContainer dependencies={[]} belowId="panel-footer">
+        <SidePanel.Header>
+          <SidePanel.HeaderTitle>Add client</SidePanel.HeaderTitle>
+        </SidePanel.Header>
+        <SidePanel.Content>
+          <Row>
+            <ClientForm formik={formik} />
+          </Row>
+        </SidePanel.Content>
+      </ScrollableContainer>
+      <div id="panel-footer">
+        <SidePanel.Footer>
+          <Row className="u-align-text--right">
+            <Col size={12}>
+              <Button appearance="base" onClick={() => navigate("/client")}>
+                Cancel
+              </Button>
+              <ActionButton
+                appearance="positive"
+                loading={formik.isSubmitting}
+                disabled={!formik.isValid}
+                onClick={submitForm}
+              >
+                Save
+              </ActionButton>
+            </Col>
+          </Row>
+        </SidePanel.Footer>
+      </div>
     </SidePanel>
   );
 };

@@ -1,6 +1,5 @@
 import React, { FC } from "react";
 import {
-  Button,
   Form,
   Input,
   Select,
@@ -98,7 +97,7 @@ export interface ProviderFormTypes {
   auth_url?: string;
   issuer_url?: string;
   token_url?: string;
-  subject_source?: string;
+  subject_source?: "userinfo" | "me";
   microsoft_tenant?: string;
   provider?: string;
   mapper_url?: string;
@@ -115,10 +114,13 @@ interface Props {
 }
 
 const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
-  const [advanced, setAdvanced] = React.useState(false);
+  const [hasAutoDiscovery, setAutoDiscovery] = React.useState(
+    !(formik.values.auth_url || formik.values.token_url),
+  );
 
   return (
     <Form onSubmit={formik.handleSubmit}>
+      <h2 className="p-heading--5 u-no-margin--bottom">General</h2>
       <Select
         {...formik.getFieldProps("provider")}
         id="provider"
@@ -155,36 +157,63 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
       )}
       {formik.values.provider === "microsoft" && (
         <>
+          <h2 className="p-heading--5 u-no-margin--bottom">
+            Microsoft configuration
+          </h2>
           <Input
             {...formik.getFieldProps("microsoft_tenant")}
             id="microsoft_tenant"
             type="text"
             label="Tenant"
+            help={
+              <>
+                The Azure AD Tenant to use for authentication. Can either be{" "}
+                <code>common</code>, <code>organizations</code>,
+                <code>consumers</code> for a multitenant application or a
+                specific tenant like <code>contoso.onmicrosoft.com</code>.
+              </>
+            }
             error={
               formik.touched.microsoft_tenant
                 ? formik.errors.microsoft_tenant
                 : null
             }
           />
+          <p className="u-no-margin--bottom">Subject source</p>
           <Input
-            {...formik.getFieldProps("subject_source")}
-            id="subject_source"
-            type="text"
-            label="Subject source"
-            error={
-              formik.touched.subject_source
-                ? formik.errors.subject_source
-                : null
+            name="subject_source"
+            type="radio"
+            label="Userinfo"
+            help="The subject identifier is taken from sub field of userifo standard endpoint response"
+            checked={formik.values.subject_source === "userinfo"}
+            onChange={() =>
+              void formik.setFieldValue("subject_source", "userinfo")
             }
+          />
+          <Input
+            name="subject_source"
+            type="radio"
+            label="Me"
+            help={
+              <>
+                The <code>id</code> field of https://graph.microsoft.com/v1.0/me
+                response is taken as subject
+              </>
+            }
+            checked={formik.values.subject_source === "me"}
+            onChange={() => void formik.setFieldValue("subject_source", "me")}
           />
         </>
       )}
       {formik.values.provider === "apple" && (
         <>
+          <h2 className="p-heading--5 u-no-margin--bottom">
+            Apple configuration
+          </h2>
           <Textarea
             {...formik.getFieldProps("apple_private_key")}
             id="apple_private_key"
-            label="Apple Private Key"
+            label="Private Key"
             error={
               formik.touched.apple_private_key
                 ? formik.errors.apple_private_key
@@ -195,7 +224,19 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
             {...formik.getFieldProps("apple_team_id")}
             id="apple_team_id"
             type="text"
-            label="Apple Team ID"
+            label="Developer Team ID"
+            help={
+              <>
+                The Apple Developer Team ID can be found at{" "}
+                <a
+                  href="https://developer.apple.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  developer.apple.com
+                </a>
+              </>
+            }
             error={
               formik.touched.apple_team_id ? formik.errors.apple_team_id : null
             }
@@ -204,7 +245,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
             {...formik.getFieldProps("apple_private_key_id")}
             id="apple_private_key_id"
             type="text"
-            label="Apple Private Key ID"
+            label="Private Key ID"
             error={
               formik.touched.apple_private_key_id
                 ? formik.errors.apple_private_key_id
@@ -213,28 +254,60 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           />
         </>
       )}
-      <Button
-        appearance="base"
-        type="button"
-        hasIcon
-        onClick={() => {
-          setAdvanced(!advanced);
-        }}
-        aria-label="Toggle advanced view"
-        className="p-accordion__tab"
-        aria-expanded={advanced ? "true" : "false"}
-      >
-        <strong className="p-heading--5 p-inline-list__item">Advanced</strong>
-      </Button>
-      {advanced && (
+      {formik.values.provider === "generic" && (
         <>
-          {!["apple"].includes(formik.values.provider ?? "") && (
-            <>
+          <h2 className="p-heading--5 u-no-margin--bottom">Urls</h2>
+          <p className="u-no-margin--bottom">
+            Does the OIDC server support OIDC Discovery?
+          </p>
+          <p className="u-text--muted u-no-margin--bottom">
+            You can read more about OIDC Discovery in the{" "}
+            <a
+              href="https://openid.net/specs/openid-connect-discovery-1_0.html#IssuerDiscovery"
+              target="_blank"
+              rel="noreferrer"
+            >
+              OIDC specs
+            </a>
+            .
+          </p>
+          <Input
+            type="radio"
+            id="discovery_on"
+            label="Yes"
+            name="oidc_discovery"
+            checked={hasAutoDiscovery}
+            onChange={() => setAutoDiscovery(true)}
+          />
+          {hasAutoDiscovery && (
+            <div className="radio-section">
+              <Input
+                {...formik.getFieldProps("issuer_url")}
+                id="issuer_url"
+                type="text"
+                label="OIDC server URL"
+                error={
+                  formik.touched.issuer_url ? formik.errors.issuer_url : null
+                }
+              />
+            </div>
+          )}
+          <Input
+            type="radio"
+            id="discovery_off"
+            label="No"
+            name="oidc_discovery"
+            checked={!hasAutoDiscovery}
+            onChange={() => setAutoDiscovery(false)}
+          />
+          {!hasAutoDiscovery && (
+            <div className="radio-section">
               <Input
                 {...formik.getFieldProps("auth_url")}
                 id="auth_url"
                 type="text"
                 label="Auth URL"
+                help="I.e. https://example.org/oauth2/auth"
                 error={formik.touched.auth_url ? formik.errors.auth_url : null}
               />
               <Input
@@ -242,50 +315,53 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
                 id="token_url"
                 type="text"
                 label="Token URL"
+                help="I.e. https://example.org/oauth2/token"
                 error={
                   formik.touched.token_url ? formik.errors.token_url : null
                 }
               />
-              <Input
-                {...formik.getFieldProps("issuer_url")}
-                id="issuer_url"
-                type="text"
-                label="Issuer URL"
-                error={
-                  formik.touched.issuer_url ? formik.errors.issuer_url : null
-                }
-              />
-            </>
+            </div>
           )}
-          <Input
-            {...formik.getFieldProps("requested_claims")}
-            id="requested_claims"
-            type="text"
-            label="Requested claims"
-            error={
-              formik.touched.requested_claims
-                ? formik.errors.requested_claims
-                : null
-            }
-          />
-          <Input
-            {...formik.getFieldProps("mapper_url")}
-            id="mapper_url"
-            type="text"
-            label="Mapper"
-            error={formik.touched.mapper_url ? formik.errors.mapper_url : null}
-            disabled={isEdit}
-          />
-          <Input
-            {...formik.getFieldProps("scope")}
-            id="scope"
-            type="text"
-            label="Scope"
-            help="Scope specifies optional requested permissions"
-            error={formik.touched.scope ? formik.errors.scope : null}
-          />
         </>
       )}
+      <h2 className="p-heading--5 u-no-margin--bottom">
+        Optional configurations
+      </h2>
+      <Input
+        {...formik.getFieldProps("scope")}
+        id="scope"
+        type="text"
+        label="Scopes"
+        help={
+          <>
+            Comma seperated list of optional requested permissions. Common
+            values are <code>email</code>, <code>openid</code>,{" "}
+            <code>profile</code>, <code>address</code>, <code>phone</code> or
+            custom values.
+          </>
+        }
+        error={formik.touched.scope ? formik.errors.scope : null}
+      />
+      <Input
+        {...formik.getFieldProps("requested_claims")}
+        id="requested_claims"
+        type="text"
+        label="Requested claims"
+        error={
+          formik.touched.requested_claims
+            ? formik.errors.requested_claims
+            : null
+        }
+      />
+      <Input
+        {...formik.getFieldProps("mapper_url")}
+        id="mapper_url"
+        type="text"
+        label="Mapper"
+        help="Mapper specifies the JSONNet code snippet which uses the OpenID Connect Provider's data to hydrate the identity's data. Supported file types are .jsonnet"
+        error={formik.touched.mapper_url ? formik.errors.mapper_url : null}
+        disabled={isEdit}
+      />
     </Form>
   );
 };

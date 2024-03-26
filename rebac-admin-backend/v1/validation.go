@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
 
@@ -17,12 +19,15 @@ import (
 type handlerWithValidation struct {
 	// Wrapped/decorated handler
 	resources.ServerInterface
+
+	validate *validator.Validate
 }
 
 // newHandlerWithValidation returns a new instance of the validationHandlerDecorator struct.
 func newHandlerWithValidation(handler resources.ServerInterface) *handlerWithValidation {
 	return &handlerWithValidation{
 		ServerInterface: handler,
+		validate:        validator.New(),
 	}
 }
 
@@ -56,13 +61,21 @@ func parseRequestBody[T any](r *http.Request) (*T, error) {
 	return body, nil
 }
 
-// setRequestBodyInContext is a helper method to avoid repetition. It parses
-// request body and if it's okay, will delegate to the provided callback with a
-// new HTTP request instance with the parse body in the context.
-func setRequestBodyInContext[T any](w http.ResponseWriter, r *http.Request, f func(w http.ResponseWriter, r *http.Request, body *T)) {
+// validateRequestBody is a helper method to avoid repetition. It parses
+// request body, validates it against the given validator instance and if it's
+// okay, will delegate to the provided callback with a new HTTP request instance
+// with the parse body in the context.
+//
+// Note that, technically, this method could be an ordinary (non-generic) method,
+// but it's defined as one to avoid confusion over value vs pointer arguments.
+func validateRequestBody[T any](v *validator.Validate, w http.ResponseWriter, r *http.Request, f func(w http.ResponseWriter, r *http.Request, body *T)) {
 	body, err := parseRequestBody[T](r)
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+	if err := v.Struct(body); err != nil {
+		writeErrorResponse(w, NewRequestBodyValidationError(err.Error()))
 		return
 	}
 	f(w, newRequestWithBodyInContext(r, body), body)

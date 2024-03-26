@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -36,21 +35,25 @@ func (h handler) GetRoles(w http.ResponseWriter, req *http.Request, params resou
 func (h handler) PostRoles(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	role := new(resources.Role)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(role); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	role, err := h.Roles.CreateRole(ctx, role)
+	role, ok := body.(*resources.Role)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	result, err := h.Roles.CreateRole(ctx, role)
 	if err != nil {
 		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, role)
+	writeResponse(w, http.StatusCreated, result)
 }
 
 // DeleteRolesItem deletes the specified role.
@@ -86,26 +89,25 @@ func (h handler) GetRolesItem(w http.ResponseWriter, req *http.Request, id strin
 func (h handler) PutRolesItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	role := new(resources.Role)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(role); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	if id != *role.Id {
-		writeErrorResponse(w, NewValidationError("role ID from path does not match the Role object"))
+	role, ok := body.(*resources.Role)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
-	role, err := h.Roles.UpdateRole(ctx, role)
+	result, err := h.Roles.UpdateRole(ctx, role)
 	if err != nil {
 		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusOK, role)
+	writeResponse(w, http.StatusOK, result)
 }
 
 // GetRolesItemEntitlements returns the list of entitlements for a role identified by the provided ID.
@@ -134,15 +136,19 @@ func (h handler) GetRolesItemEntitlements(w http.ResponseWriter, req *http.Reque
 func (h handler) PatchRolesItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.RoleEntitlementsPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Roles.PatchRoleEntitlements(ctx, id, patchesRequest.Patches)
+	roleEntitlements, ok := body.(*resources.RoleEntitlementsPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Roles.PatchRoleEntitlements(ctx, id, roleEntitlements.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.RolesErrorMapper, err)
 		return

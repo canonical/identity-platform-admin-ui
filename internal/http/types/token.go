@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -25,6 +26,7 @@ type TokenPaginator struct {
 	logger logging.LoggerInterface
 }
 
+// LoadFromRequest populates the TokenPaginator struct with pagination tokens from the r request
 func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) error {
 	_, span := p.tracer.Start(ctx, "types.TokenPaginator.LoadFromRequest")
 	defer span.End()
@@ -56,6 +58,8 @@ func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) e
 	return nil
 }
 
+// SetToken sets a pagination token value for the specified type represented by key
+// if the pagination token is an empty string, SetToken will be a noop
 func (p *TokenPaginator) SetToken(ctx context.Context, key, value string) {
 	p.tokens[key] = value
 }
@@ -72,6 +76,7 @@ func (p *TokenPaginator) GetAllTokens(ctx context.Context) map[string]string {
 	return p.tokens
 }
 
+// PaginationHeader returns a composite pagination token string to use as a header
 func (p *TokenPaginator) PaginationHeader(ctx context.Context) (string, error) {
 	_, span := p.tracer.Start(ctx, "types.TokenPaginator.PaginationHeader")
 	defer span.End()

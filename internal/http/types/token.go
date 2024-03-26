@@ -53,7 +53,7 @@ func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) e
 		return err
 	}
 
-	p.tokens = tokens
+	p.SetTokens(context.TODO(), tokens)
 
 	return nil
 }
@@ -61,9 +61,30 @@ func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) e
 // SetToken sets a pagination token value for the specified type represented by key
 // if the pagination token is an empty string, SetToken will be a noop
 func (p *TokenPaginator) SetToken(ctx context.Context, key, value string) {
-	p.tokens[key] = value
+	if value != "" {
+		p.tokens[key] = value
+	}
 }
 
+// SetTokens sets its internal pagination tokens map to a copy of the provided map
+// if any of the pagination tokens is an empty string, it will not be set
+func (p *TokenPaginator) SetTokens(ctx context.Context, tokens map[string]string) {
+	if tokens == nil {
+		return
+	}
+
+	for key := range p.tokens {
+		delete(p.tokens, key)
+	}
+
+	for key, value := range tokens {
+		if value != "" {
+			p.tokens[key] = value
+		}
+	}
+}
+
+// GetToken returns the token value mapped to type "key", or empty string if key is not present
 func (p *TokenPaginator) GetToken(ctx context.Context, key string) string {
 	if token, ok := p.tokens[key]; ok {
 		return token

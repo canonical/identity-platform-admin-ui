@@ -84,31 +84,23 @@ func serve() {
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
 
-	var auth *openfga.Client
-	noopAuth := openfga.NewNoopClient(tracer, monitor, logger)
-
-	if specs.AuthorizationEnabled {
-		logger.Info("Authorization is enabled")
-		auth = openfga.NewClient(
-			openfga.NewConfig(
-				specs.ApiScheme,
-				specs.ApiHost,
-				specs.StoreId,
-				specs.ApiToken,
-				specs.AuthorizationModelId,
-				specs.Debug,
-				tracer,
-				monitor,
-				logger,
-			),
-		)
-	} else {
-		logger.Info("Authorization is disabled, using noop authorizer")
-	}
+	ofgaClient := openfga.NewClient(
+		openfga.NewConfig(
+			specs.ApiScheme,
+			specs.ApiHost,
+			specs.StoreId,
+			specs.ApiToken,
+			specs.ModelId,
+			specs.Debug,
+			tracer,
+			monitor,
+			logger,
+		),
+	)
 
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
-			auth,
+			ofgaClient,
 			tracer,
 			monitor,
 			logger,

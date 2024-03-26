@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -176,6 +177,13 @@ func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchema
 	i := new(IdentitySchemaData)
 
 	schemas := s.schemas(cm.Data)
+
+	// assign random ID if empty
+	if data.Id == nil || data.Id != nil && *data.Id == "" {
+		randomID := uuid.NewString()
+
+		data.Id = &randomID
+	}
 
 	if _, ok := schemas[*data.Id]; ok {
 		i.IdentitySchemas = []kClient.IdentitySchemaContainer{}

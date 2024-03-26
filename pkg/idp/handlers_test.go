@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
@@ -306,7 +307,6 @@ func TestHandleCreateSuccess(t *testing.T) {
 
 	c := new(Configuration)
 	c.ClientSecret = "secret-9"
-	c.ID = "okta_347646e49b484037b83690b020f9f629"
 	c.ClientID = "347646e4-9b48-4037-b836-90b020f9f629"
 	c.Provider = "okta"
 	c.Mapper = "file:///etc/config/kratos/okta_schema.jsonnet"
@@ -318,8 +318,8 @@ func TestHandleCreateSuccess(t *testing.T) {
 	mockService.EXPECT().CreateResource(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, idp *Configuration) ([]*Configuration, error) {
 
-			if idp.ID != c.ID {
-				t.Fatalf("invalid ID, expected %s got %s", c.ID, idp.ID)
+			if idp.ID != "" {
+				t.Fatalf("invalid ID, expected empty got %s", idp.ID)
 			}
 
 			if idp.ClientID != c.ClientID {
@@ -329,6 +329,8 @@ func TestHandleCreateSuccess(t *testing.T) {
 			if idp.Provider != c.Provider {
 				t.Fatalf("invalid provider, expected %s got %s", c.Provider, idp.Provider)
 			}
+
+			idp.ID = uuid.NewString()
 
 			return []*Configuration{c}, nil
 		},
@@ -380,22 +382,16 @@ func TestHandleCreateFails(t *testing.T) {
 
 	c := new(Configuration)
 	c.ClientSecret = "secret-9"
-	c.ID = "okta_347646e49b484037b83690b020f9f629"
 	c.ClientID = "347646e4-9b48-4037-b836-90b020f9f629"
 	c.Provider = "okta"
 	c.Mapper = "file:///etc/config/kratos/okta_schema.jsonnet"
 	c.Scope = []string{"email"}
 
-	payload, err := json.Marshal(c)
+	payload, _ := json.Marshal(c)
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/idps", bytes.NewReader(payload))
 
 	mockService.EXPECT().CreateResource(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, idp *Configuration) ([]*Configuration, error) {
-
-			if idp.ID != c.ID {
-				t.Fatalf("invalid ID, expected %s got %s", c.ID, idp.ID)
-			}
-
 			if idp.ClientID != c.ClientID {
 				t.Fatalf("invalid ClientID, expected %s got %s", c.ClientID, idp.ClientID)
 			}
@@ -436,7 +432,7 @@ func TestHandleCreateFails(t *testing.T) {
 	}
 }
 
-func TestHandleCreateFailsConflict(t *testing.T) {
+func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -451,27 +447,8 @@ func TestHandleCreateFailsConflict(t *testing.T) {
 	c.Mapper = "file:///etc/config/kratos/okta_schema.jsonnet"
 	c.Scope = []string{"email"}
 
-	payload, err := json.Marshal(c)
+	payload, _ := json.Marshal(c)
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/idps", bytes.NewReader(payload))
-
-	mockService.EXPECT().CreateResource(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, idp *Configuration) ([]*Configuration, error) {
-
-			if idp.ID != c.ID {
-				t.Fatalf("invalid ID, expected %s got %s", c.ID, idp.ID)
-			}
-
-			if idp.ClientID != c.ClientID {
-				t.Fatalf("invalid ClientID, expected %s got %s", c.ClientID, idp.ClientID)
-			}
-
-			if idp.Provider != c.Provider {
-				t.Fatalf("invalid provider, expected %s got %s", c.Provider, idp.Provider)
-			}
-
-			return []*Configuration{}, fmt.Errorf("error")
-		},
-	)
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
@@ -487,8 +464,8 @@ func TestHandleCreateFailsConflict(t *testing.T) {
 		t.Errorf("expected error to be nil got %v", err)
 	}
 
-	if res.StatusCode != http.StatusConflict {
-		t.Fatalf("expected HTTP status code 409 got %v", res.StatusCode)
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
 	rr := new(types.Response)
@@ -496,10 +473,11 @@ func TestHandleCreateFailsConflict(t *testing.T) {
 		t.Errorf("expected error to be nil got %v", err)
 	}
 
-	if rr.Status != http.StatusConflict {
-		t.Errorf("expected code to be %v got %v", http.StatusConflict, rr.Status)
+	if rr.Status != http.StatusBadRequest {
+		t.Errorf("expected code to be %v got %v", http.StatusBadRequest, rr.Status)
 	}
 }
+
 func TestHandleCreateFailBadRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

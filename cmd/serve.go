@@ -114,9 +114,11 @@ func serve() {
 	var router http.Handler
 
 	if specs.AuthorizationEnabled {
-		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, auth, tracer, monitor, logger)
+		logger.Info("Authorization is enabled")
+		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, ofgaClient, ofgaClient, tracer, monitor, logger)
 	} else {
-		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, noopAuth, tracer, monitor, logger)
+		logger.Info("Authorization is disabled, using noop authorizer")
+		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, ofgaClient, openfga.NewNoopClient(tracer, monitor, logger), tracer, monitor, logger)
 	}
 
 	logger.Infof("Starting server on port %v", specs.Port)

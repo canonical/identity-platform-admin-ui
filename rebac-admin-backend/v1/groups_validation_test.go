@@ -6,9 +6,11 @@ package v1
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	qt "github.com/frankban/quicktest"
@@ -21,8 +23,6 @@ import (
 
 func TestHandlerWithValidation_Groups(t *testing.T) {
 	c := qt.New(t)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	writeResponse := func(w http.ResponseWriter, status int, body any) {
 		raw, _ := json.Marshal(body)
@@ -36,16 +36,23 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		EntityType:      "some-entity-type",
 	}
 
+	const (
+		kindValidationFailure int = 0
+		kindSuccessful        int = 1
+		kindBadJSON           int = 2
+	)
+
 	tests := []struct {
-		name               string
-		requestBodyRaw     string
-		requestBody        any
-		setupHandlerMock   func(mockHandler *resources.MockServerInterface)
-		triggerFunc        func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request)
-		expectedStatusCode int
-		expectedResponse   any
+		name             string
+		requestBodyRaw   string
+		requestBody      any
+		setupHandlerMock func(mockHandler *resources.MockServerInterface)
+		triggerFunc      func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request)
+		kind             int
+		expectedPatterns []string
 	}{{
 		name:        "PostGroups: success",
+		kind:        kindSuccessful,
 		requestBody: resources.Group{Name: "foo"},
 		setupHandlerMock: func(mockHandler *resources.MockServerInterface) {
 			mockHandler.EXPECT().
@@ -59,33 +66,22 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PostGroups(w, r)
 		},
-		expectedStatusCode: http.StatusOK,
-		expectedResponse: resources.Response{
-			Status: http.StatusOK,
-		},
 	}, {
 		name: "PostGroups: failure; invalid JSON",
+		kind: kindBadJSON,
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PostGroups(w, r)
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: missing request body: request body is not a valid JSON",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
-		name:        "PostGroups: failure; empty",
-		requestBody: resources.Group{},
+		name:             "PostGroups: failure; empty",
+		expectedPatterns: []string{"'Name' failed on the 'required' tag"},
+		requestBody:      resources.Group{},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PostGroups(w, r)
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty group name",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
 		name:        "PutGroupsItem: success",
+		kind:        kindSuccessful,
 		requestBody: resources.Group{Name: "foo", Id: stringPtr("some-id")},
 		setupHandlerMock: func(mockHandler *resources.MockServerInterface) {
 			mockHandler.EXPECT().
@@ -99,55 +95,36 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PutGroupsItem(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusOK,
-		expectedResponse: resources.Response{
-			Status: http.StatusOK,
-		},
 	}, {
 		name: "PutGroupsItem: failure; invalid JSON",
+		kind: kindBadJSON,
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PutGroupsItem(w, r, "some-id")
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: missing request body: request body is not a valid JSON",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
-		name:        "PutGroupsItem: failure; empty",
-		requestBody: resources.Group{},
+		name:             "PutGroupsItem: failure; empty",
+		expectedPatterns: []string{"'Name' failed on the 'required' tag"},
+		requestBody:      resources.Group{},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PutGroupsItem(w, r, "some-id")
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty group name",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
-		name:        "PutGroupsItem: failure; nil id",
-		requestBody: resources.Group{Name: "foo"},
+		name:             "PutGroupsItem: failure; nil id",
+		expectedPatterns: []string{"group ID from path does not match the Group object"},
+		requestBody:      resources.Group{Name: "foo"},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PutGroupsItem(w, r, "some-id")
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: group ID from path does not match the Group object",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
-		name:        "PutGroupsItem: failure; id mismatch",
-		requestBody: resources.Group{Name: "foo", Id: stringPtr("some-other-id")},
+		name:             "PutGroupsItem: failure; id mismatch",
+		expectedPatterns: []string{"group ID from path does not match the Group object"},
+		requestBody:      resources.Group{Name: "foo", Id: stringPtr("some-other-id")},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PutGroupsItem(w, r, "some-id")
-		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: group ID from path does not match the Group object",
-			Status:  http.StatusBadRequest,
 		},
 	}, {
 		name: "PatchGroupsItemEntitlements: success",
+		kind: kindSuccessful,
 		requestBody: resources.GroupEntitlementsPatchRequestBody{
 			Patches: []resources.GroupEntitlementsPatchItem{{
 				Op:          "add",
@@ -166,46 +143,31 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusOK,
-		expectedResponse: resources.Response{
-			Status: http.StatusOK,
-		},
 	}, {
 		name: "PatchGroupsItemEntitlements: failure; invalid JSON",
+		kind: kindBadJSON,
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: missing request body: request body is not a valid JSON",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name:        "PatchGroupsItemEntitlements: failure; nil patch array",
-		requestBody: resources.GroupEntitlementsPatchRequestBody{},
+		name:             "PatchGroupsItemEntitlements: failure; nil patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'required' tag"},
+		requestBody:      resources.GroupEntitlementsPatchRequestBody{},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemEntitlements: failure; empty patch array",
+		name:             "PatchGroupsItemEntitlements: failure; empty patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'gt' tag"},
 		requestBody: resources.GroupEntitlementsPatchRequestBody{
 			Patches: []resources.GroupEntitlementsPatchItem{},
 		},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemEntitlements: failure; invalid op",
+		name:             "PatchGroupsItemEntitlements: failure; invalid op",
+		expectedPatterns: []string{"'Op' failed on the 'oneof' tag"},
 		requestBody: resources.GroupEntitlementsPatchRequestBody{
 			Patches: []resources.GroupEntitlementsPatchItem{{
 				Op:          "some-invalid-op",
@@ -215,29 +177,25 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: op value not allowed: \"some-invalid-op\"",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
 		name: "PatchGroupsItemEntitlements: failure; invalid entitlement",
+		expectedPatterns: []string{
+			"'EntitlementType' failed on the 'required' tag",
+			"'EntityName' failed on the 'required' tag",
+			"'EntityType' failed on the 'required' tag",
+		},
 		requestBody: resources.GroupEntitlementsPatchRequestBody{
 			Patches: []resources.GroupEntitlementsPatchItem{{
-				Op:          "some-invalid-op",
+				Op:          "add",
 				Entitlement: resources.EntityEntitlement{},
 			}},
 		},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemEntitlements(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty entitlement type",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
 		name: "PatchGroupsItemIdentities: success",
+		kind: kindSuccessful,
 		requestBody: resources.GroupIdentitiesPatchRequestBody{
 			Patches: []resources.GroupIdentitiesPatchItem{{
 				Op:       "add",
@@ -256,46 +214,31 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusOK,
-		expectedResponse: resources.Response{
-			Status: http.StatusOK,
-		},
 	}, {
 		name: "PatchGroupsItemIdentities: failure; invalid JSON",
+		kind: kindBadJSON,
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: missing request body: request body is not a valid JSON",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name:        "PatchGroupsItemIdentities: failure; nil patch array",
-		requestBody: resources.GroupIdentitiesPatchRequestBody{},
+		name:             "PatchGroupsItemIdentities: failure; nil patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'required' tag"},
+		requestBody:      resources.GroupIdentitiesPatchRequestBody{},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemIdentities: failure; empty patch array",
+		name:             "PatchGroupsItemIdentities: failure; empty patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'gt' tag"},
 		requestBody: resources.GroupIdentitiesPatchRequestBody{
 			Patches: []resources.GroupIdentitiesPatchItem{},
 		},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemIdentities: failure; empty identity",
+		name:             "PatchGroupsItemIdentities: failure; empty identity",
+		expectedPatterns: []string{"'Identity' failed on the 'required' tag"},
 		requestBody: resources.GroupIdentitiesPatchRequestBody{
 			Patches: []resources.GroupIdentitiesPatchItem{{
 				Op:       "add",
@@ -305,13 +248,9 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty identity name",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemIdentities: failure; invalid op",
+		name:             "PatchGroupsItemIdentities: failure; invalid op",
+		expectedPatterns: []string{"'Op' failed on the 'oneof' tag"},
 		requestBody: resources.GroupIdentitiesPatchRequestBody{
 			Patches: []resources.GroupIdentitiesPatchItem{{
 				Op:       "some-invalid-op",
@@ -321,13 +260,9 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemIdentities(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: op value not allowed: \"some-invalid-op\"",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
 		name: "PatchGroupsItemRoles: success",
+		kind: kindSuccessful,
 		requestBody: resources.GroupRolesPatchRequestBody{
 			Patches: []resources.GroupRolesPatchItem{{
 				Op:   "add",
@@ -346,46 +281,31 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusOK,
-		expectedResponse: resources.Response{
-			Status: http.StatusOK,
-		},
 	}, {
 		name: "PatchGroupsItemRoles: failure; invalid JSON",
+		kind: kindBadJSON,
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: missing request body: request body is not a valid JSON",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name:        "PatchGroupsItemRoles: failure; nil patch array",
-		requestBody: resources.GroupRolesPatchRequestBody{},
+		name:             "PatchGroupsItemRoles: failure; nil patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'required' tag"},
+		requestBody:      resources.GroupRolesPatchRequestBody{},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemRoles: failure; empty patch array",
+		name:             "PatchGroupsItemRoles: failure; empty patch array",
+		expectedPatterns: []string{"'Patches' failed on the 'gt' tag"},
 		requestBody: resources.GroupRolesPatchRequestBody{
 			Patches: []resources.GroupRolesPatchItem{},
 		},
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty patch array",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemRoles: failure; empty role",
+		name:             "PatchGroupsItemRoles: failure; empty role",
+		expectedPatterns: []string{"'Role' failed on the 'required' tag"},
 		requestBody: resources.GroupRolesPatchRequestBody{
 			Patches: []resources.GroupRolesPatchItem{{
 				Op:   "add",
@@ -395,13 +315,9 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: empty role name",
-			Status:  http.StatusBadRequest,
-		},
 	}, {
-		name: "PatchGroupsItemRoles: failure; invalid op",
+		name:             "PatchGroupsItemRoles: failure; invalid op",
+		expectedPatterns: []string{"'Op' failed on the 'oneof' tag"},
 		requestBody: resources.GroupRolesPatchRequestBody{
 			Patches: []resources.GroupRolesPatchItem{{
 				Op:   "some-invalid-op",
@@ -411,17 +327,15 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 		triggerFunc: func(sut *handlerWithValidation, w http.ResponseWriter, r *http.Request) {
 			sut.PatchGroupsItemRoles(w, r, "some-id")
 		},
-		expectedStatusCode: http.StatusBadRequest,
-		expectedResponse: resources.Response{
-			Message: "Bad Request: invalid request body: op value not allowed: \"some-invalid-op\"",
-			Status:  http.StatusBadRequest,
-		},
 	},
 	}
 
 	for _, t := range tests {
 		tt := t
 		c.Run(tt.name, func(c *qt.C) {
+			ctrl := gomock.NewController(c)
+			defer ctrl.Finish()
+
 			mockHandler := resources.NewMockServerInterface(ctrl)
 			if tt.setupHandlerMock != nil {
 				tt.setupHandlerMock(mockHandler)
@@ -444,12 +358,30 @@ func TestHandlerWithValidation_Groups(t *testing.T) {
 			tt.triggerFunc(sut, mockWriter, req)
 
 			response := mockWriter.Result()
-			c.Assert(response.StatusCode, qt.Equals, tt.expectedStatusCode)
+			if tt.kind == kindSuccessful {
+				c.Assert(response.StatusCode, qt.Equals, http.StatusOK)
+			} else {
+				c.Assert(response.StatusCode, qt.Equals, http.StatusBadRequest)
 
-			defer response.Body.Close()
-			responseBody, err := io.ReadAll(response.Body)
-			c.Assert(err, qt.IsNil)
-			c.Assert(string(responseBody), qt.JSONEquals, tt.expectedResponse)
+				defer response.Body.Close()
+				responseBody, err := io.ReadAll(response.Body)
+				c.Assert(err, qt.IsNil)
+
+				parsedResponse := &resources.Response{}
+				err = json.Unmarshal(responseBody, parsedResponse)
+				c.Assert(err, qt.IsNil)
+				c.Assert(parsedResponse.Status, qt.Equals, http.StatusBadRequest)
+
+				if tt.kind == kindBadJSON {
+					c.Assert(parsedResponse.Message, qt.Matches, "Bad Request: missing request body: request body is not a valid JSON")
+				} else if tt.kind == kindValidationFailure {
+					c.Assert(parsedResponse.Message, qt.Matches, regexp.MustCompile("Bad Request: invalid request body: .+"))
+				}
+
+				for _, pattern := range tt.expectedPatterns {
+					c.Assert(parsedResponse.Message, qt.Matches, regexp.MustCompile(fmt.Sprintf(".*%s.*", pattern)))
+				}
+			}
 		})
 	}
 }

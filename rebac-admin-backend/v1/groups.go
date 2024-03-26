@@ -35,9 +35,15 @@ func (h handler) GetGroups(w http.ResponseWriter, req *http.Request, params reso
 func (h handler) PostGroups(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	group, err := getRequestBodyFromContext[resources.Group](req.Context())
+	body, err := getRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+
+	group, ok := body.(*resources.Group)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
@@ -83,9 +89,15 @@ func (h handler) GetGroupsItem(w http.ResponseWriter, req *http.Request, id stri
 func (h handler) PutGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	group, err := getRequestBodyFromContext[resources.Group](req.Context())
+	body, err := getRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+
+	group, ok := body.(*resources.Group)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
@@ -124,9 +136,15 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	groupEntitlements, err := getRequestBodyFromContext[resources.GroupEntitlementsPatchRequestBody](req.Context())
+	body, err := getRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+
+	groupEntitlements, ok := body.(*resources.GroupEntitlementsPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
@@ -165,9 +183,15 @@ func (h handler) GetGroupsItemIdentities(w http.ResponseWriter, req *http.Reques
 func (h handler) PatchGroupsItemIdentities(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	groupIdentities, err := getRequestBodyFromContext[resources.GroupIdentitiesPatchRequestBody](req.Context())
+	body, err := getRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+
+	groupIdentities, ok := body.(*resources.GroupIdentitiesPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
@@ -206,9 +230,15 @@ func (h handler) GetGroupsItemRoles(w http.ResponseWriter, req *http.Request, id
 func (h handler) PatchGroupsItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	groupRoles, err := getRequestBodyFromContext[resources.GroupRolesPatchRequestBody](req.Context())
+	body, err := getRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
+		return
+	}
+
+	groupRoles, ok := body.(*resources.GroupRolesPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 

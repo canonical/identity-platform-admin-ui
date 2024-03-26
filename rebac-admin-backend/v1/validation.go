@@ -34,49 +34,44 @@ func newHandlerWithValidation(handler resources.ServerInterface) *handlerWithVal
 // requestBodyContextKey is the context key to retrieve the parsed request body struct instance.
 type requestBodyContextKey struct{}
 
-// getRequestBodyFromContext fetches request body from given context.
-func getRequestBodyFromContext[T any](ctx context.Context) (*T, error) {
-	if body, ok := ctx.Value(requestBodyContextKey{}).(*T); ok {
-		return body, nil
+// getRequestBodyFromContext fetches request body from given context. If the value
+// was not found in the given context, this will return an error.
+func getRequestBodyFromContext(ctx context.Context) (any, error) {
+	body := ctx.Value(requestBodyContextKey{})
+	if body == nil {
+		return nil, NewMissingRequestBodyError("request body is not available")
 	}
-	return nil, NewMissingRequestBodyError("request body is not available")
+	return body, nil
 }
 
 // newRequestWithBodyInContext sets the given body in a new request instance context
 // and returns the new request.
-//
-// Note that, technically, this method could be an ordinary (non-generic) method,
-// but it's defined as one to avoid confusion over value vs pointer arguments.
-func newRequestWithBodyInContext[T any](r *http.Request, body *T) *http.Request {
+func newRequestWithBodyInContext(r *http.Request, body any) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), requestBodyContextKey{}, body))
 }
 
 // parseRequestBody parses request body as JSON and populates the given body instance.
-func parseRequestBody[T any](r *http.Request) (*T, error) {
-	body := new(T)
+func parseRequestBody(body any, r *http.Request) error {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(body); err != nil {
-		return nil, NewMissingRequestBodyError("request body is not a valid JSON")
+		return NewMissingRequestBodyError("request body is not a valid JSON")
 	}
-	return body, nil
+	return nil
 }
 
 // validateRequestBody is a helper method to avoid repetition. It parses
 // request body, validates it against the given validator instance and if it's
 // okay, will delegate to the provided callback with a new HTTP request instance
 // with the parse body in the context.
-//
-// Note that, technically, this method could be an ordinary (non-generic) method,
-// but it's defined as one to avoid confusion over value vs pointer arguments.
-func validateRequestBody[T any](v *validator.Validate, w http.ResponseWriter, r *http.Request, f func(w http.ResponseWriter, r *http.Request, body *T)) {
-	body, err := parseRequestBody[T](r)
+func (v handlerWithValidation) validateRequestBody(body any, w http.ResponseWriter, r *http.Request, f func(w http.ResponseWriter, r *http.Request)) {
+	err := parseRequestBody(body, r)
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
 	}
-	if err := v.Struct(body); err != nil {
+	if err := v.validate.Struct(body); err != nil {
 		writeErrorResponse(w, NewRequestBodyValidationError(err.Error()))
 		return
 	}
-	f(w, newRequestWithBodyInContext(r, body), body)
+	f(w, newRequestWithBodyInContext(r, body))
 }

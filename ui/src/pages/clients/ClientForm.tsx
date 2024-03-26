@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { Form, Input } from "@canonical/react-components";
 import { FormikProps } from "formik";
 import CheckboxList from "components/CheckboxList";

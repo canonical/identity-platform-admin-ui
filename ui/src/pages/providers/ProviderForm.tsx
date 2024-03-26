@@ -1,10 +1,5 @@
-import React, { FC } from "react";
-import {
-  Form,
-  Input,
-  Select,
-  Textarea,
-} from "@canonical/react-components";
+import { FC, useState } from "react";
+import { Form, Input, Select, Textarea } from "@canonical/react-components";
 import { FormikProps } from "formik";
 
 const providerOptions = [
@@ -114,7 +109,7 @@ interface Props {
 }
 
 const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
-  const [hasAutoDiscovery, setAutoDiscovery] = React.useState(
+  const [hasAutoDiscovery, setAutoDiscovery] = useState(
     !(formik.values.auth_url || formik.values.token_url),
   );
 

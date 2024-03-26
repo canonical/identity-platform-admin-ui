@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { CheckboxInput, Col, Row } from "@canonical/react-components";
 
 interface Props {

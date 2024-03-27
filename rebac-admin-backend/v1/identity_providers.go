@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -59,21 +58,25 @@ func (h handler) GetIdentityProviders(w http.ResponseWriter, req *http.Request, 
 func (h handler) PostIdentityProviders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	identityProvider := new(resources.IdentityProvider)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(identityProvider); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	identityProvider, err := h.IdentityProviders.RegisterConfiguration(ctx, identityProvider)
+	identityProvider, ok := body.(*resources.IdentityProvider)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	result, err := h.IdentityProviders.RegisterConfiguration(ctx, identityProvider)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentityProvidersErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, identityProvider)
+	writeResponse(w, http.StatusCreated, result)
 }
 
 // DeleteIdentityProvidersItem removes an authentication provider configuration identified by `id`.
@@ -109,24 +112,23 @@ func (h handler) GetIdentityProvidersItem(w http.ResponseWriter, req *http.Reque
 func (h handler) PutIdentityProvidersItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	identityProvider := new(resources.IdentityProvider)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(identityProvider); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	if identityProvider.Id != nil && id != *identityProvider.Id {
-		writeErrorResponse(w, NewValidationError("identity provider ID from path does not match the IdentityProvider object"))
+	identityProvider, ok := body.(*resources.IdentityProvider)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
-	identityProvider, err := h.IdentityProviders.UpdateConfiguration(ctx, identityProvider)
+	result, err := h.IdentityProviders.UpdateConfiguration(ctx, identityProvider)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentityProvidersErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusOK, identityProvider)
+	writeResponse(w, http.StatusOK, result)
 }

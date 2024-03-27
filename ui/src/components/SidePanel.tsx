@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, ReactNode } from "react";
+import { FC, PropsWithChildren, ReactNode } from "react";
 import Loader from "components/Loader";
 import classnames from "classnames";
 import { Spinner } from "@canonical/react-components";

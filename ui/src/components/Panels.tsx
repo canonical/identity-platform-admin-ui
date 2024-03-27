@@ -1,4 +1,3 @@
-import React from "react";
 import ProviderCreate from "pages/providers/ProviderCreate";
 import usePanelParams, { panels } from "util/usePanelParams";
 import ProviderEdit from "pages/providers/ProviderEdit";

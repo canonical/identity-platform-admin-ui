@@ -1,8 +1,7 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { Button, Col, MainTable, Row } from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { Link } from "react-router-dom";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchClients } from "api/client";
 import { isoTimeToString } from "util/date";

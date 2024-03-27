@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import {
   ActionButton,
   Button,
@@ -15,6 +15,7 @@ import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { fetchClient, updateClient } from "api/client";
 import usePanelParams from "util/usePanelParams";
 import SidePanel from "components/SidePanel";
+import ScrollableContainer from "components/ScrollableContainer";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();
@@ -69,36 +70,40 @@ const ClientEdit: FC = () => {
 
   return (
     <SidePanel hasError={false} loading={false} className="p-panel">
-      <SidePanel.Header>
-        <SidePanel.HeaderTitle>Edit client</SidePanel.HeaderTitle>
-      </SidePanel.Header>
-      <SidePanel.Content className="u-no-padding">
-        <Row>
-          <ClientForm formik={formik} />
-        </Row>
-      </SidePanel.Content>
-      <SidePanel.Footer className="u-align--right">
-        <Row>
-          <Col size={12}>
-            <Button
-              appearance="base"
-              className="u-no-margin--bottom u-sv2"
-              onClick={() => navigate(`/client`)}
-            >
-              Cancel
-            </Button>
-            <ActionButton
-              appearance="positive"
-              className="u-no-margin--bottom"
-              loading={formik.isSubmitting}
-              disabled={!formik.isValid}
-              onClick={submitForm}
-            >
-              Update
-            </ActionButton>
-          </Col>
-        </Row>
-      </SidePanel.Footer>
+      <ScrollableContainer dependencies={[]} belowId="panel-footer">
+        <SidePanel.Header>
+          <SidePanel.HeaderTitle>Edit client</SidePanel.HeaderTitle>
+        </SidePanel.Header>
+        <SidePanel.Content className="u-no-padding">
+          <Row>
+            <ClientForm formik={formik} />
+          </Row>
+        </SidePanel.Content>
+      </ScrollableContainer>
+      <div id="panel-footer">
+        <SidePanel.Footer className="u-align--right">
+          <Row>
+            <Col size={12}>
+              <Button
+                appearance="base"
+                className="u-no-margin--bottom u-sv2"
+                onClick={() => navigate(`/client`)}
+              >
+                Cancel
+              </Button>
+              <ActionButton
+                appearance="positive"
+                className="u-no-margin--bottom"
+                loading={formik.isSubmitting}
+                disabled={!formik.isValid}
+                onClick={submitForm}
+              >
+                Update
+              </ActionButton>
+            </Col>
+          </Row>
+        </SidePanel.Footer>
+      </div>
     </SidePanel>
   );
 };

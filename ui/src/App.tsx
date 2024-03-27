@@ -1,4 +1,4 @@
-import React, { FC, Suspense } from "react";
+import { FC, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Loader from "components/Loader";
 import ClientList from "pages/clients/ClientList";

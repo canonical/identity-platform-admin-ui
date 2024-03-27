@@ -13,6 +13,6 @@ export interface IdentityProvider {
   provider?: string;
   requested_claims?: string;
   scope?: string[];
-  subject_source?: string;
+  subject_source?: "userinfo" | "me";
   token_url?: string;
 }

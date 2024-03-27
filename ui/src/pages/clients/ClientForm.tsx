@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { Form, Input } from "@canonical/react-components";
 import { FormikProps } from "formik";
 import CheckboxList from "components/CheckboxList";
@@ -40,17 +40,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
         required
       />
       <Input
-        id="client_uri"
-        name="client_uri"
-        type="text"
-        label="Client uri"
-        onBlur={formik.handleBlur}
-        onChange={formik.handleChange}
-        value={formik.values.client_uri}
-        error={formik.touched.client_uri ? formik.errors.client_uri : null}
-        required
-      />
-      <Input
         id="scope"
         name="scope"
         type="text"
@@ -59,21 +48,6 @@ const ClientForm: FC<Props> = ({ formik }) => {
         onChange={formik.handleChange}
         value={formik.values.scope}
         error={formik.touched.scope ? formik.errors.scope : null}
-        required
-      />
-      <Input
-        id="request_object_signing_alg"
-        name="request_object_signing_alg"
-        type="text"
-        label="Signing algorithm"
-        onBlur={formik.handleBlur}
-        onChange={formik.handleChange}
-        value={formik.values.request_object_signing_alg}
-        error={
-          formik.touched.request_object_signing_alg
-            ? formik.errors.request_object_signing_alg
-            : null
-        }
         required
       />
       <Input
@@ -88,6 +62,32 @@ const ClientForm: FC<Props> = ({ formik }) => {
         value={formik.values.redirect_uris}
         error={
           formik.touched.redirect_uris ? formik.errors.redirect_uris : null
+        }
+        required
+      />
+      <Input
+        id="client_uri"
+        name="client_uri"
+        type="text"
+        label="Client uri"
+        onBlur={formik.handleBlur}
+        onChange={formik.handleChange}
+        value={formik.values.client_uri}
+        error={formik.touched.client_uri ? formik.errors.client_uri : null}
+        required
+      />
+      <Input
+        id="request_object_signing_alg"
+        name="request_object_signing_alg"
+        type="text"
+        label="Signing algorithm"
+        onBlur={formik.handleBlur}
+        onChange={formik.handleChange}
+        value={formik.values.request_object_signing_alg}
+        error={
+          formik.touched.request_object_signing_alg
+            ? formik.errors.request_object_signing_alg
+            : null
         }
         required
       />

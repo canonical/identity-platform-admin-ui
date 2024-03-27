@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -102,8 +101,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 					Return(&mockGroupObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				groupBody, _ := json.Marshal(mockGroupObject)
-				mockRequest := httptest.NewRequest(http.MethodPost, "/groups", bytes.NewReader(groupBody))
+				mockRequest := newTestRequest(http.MethodPost, "/groups", &mockGroupObject)
 				h.PostGroups(w, mockRequest)
 			},
 			expectedStatus: http.StatusCreated,
@@ -131,8 +129,7 @@ func TestHandler_Groups_Success(t *testing.T) {
 					Return(&mockGroupObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				groupBody, _ := json.Marshal(mockGroupObject)
-				mockRequest := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/groups/%s", mockGroupId), bytes.NewReader(groupBody))
+				mockRequest := newTestRequest(http.MethodPut, fmt.Sprintf("/groups/%s", mockGroupId), &mockGroupObject)
 				h.PutGroupsItem(w, mockRequest, mockGroupId)
 			},
 			expectedStatus: http.StatusOK,
@@ -176,15 +173,15 @@ func TestHandler_Groups_Success(t *testing.T) {
 					Return(true, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patchesBody, _ := json.Marshal(resources.GroupIdentitiesPatchRequestBody{
+				patches := resources.GroupIdentitiesPatchRequestBody{
 					Patches: []resources.GroupIdentitiesPatchItem{
 						{
 							Identity: *mockIdentities.Data[0].Id,
 							Op:       "add",
 						},
 					},
-				})
-				mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/identities", mockGroupId), bytes.NewReader(patchesBody))
+				}
+				mockRequest := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/identities", mockGroupId), &patches)
 				h.PatchGroupsItemIdentities(w, mockRequest, mockGroupId)
 			},
 			expectedStatus: http.StatusOK,
@@ -214,15 +211,15 @@ func TestHandler_Groups_Success(t *testing.T) {
 					Return(true, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patchesBody, _ := json.Marshal(resources.GroupRolesPatchRequestBody{
+				patches := resources.GroupRolesPatchRequestBody{
 					Patches: []resources.GroupRolesPatchItem{
 						{
 							Role: *mockRoles.Data[0].Id,
 							Op:   "add",
 						},
 					},
-				})
-				mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/roles", mockGroupId), bytes.NewReader(patchesBody))
+				}
+				mockRequest := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/roles", mockGroupId), &patches)
 				h.PatchGroupsItemRoles(w, mockRequest, mockGroupId)
 			},
 			expectedStatus: http.StatusOK,
@@ -252,15 +249,15 @@ func TestHandler_Groups_Success(t *testing.T) {
 					Return(true, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patchesBody, _ := json.Marshal(resources.GroupEntitlementsPatchRequestBody{
+				patches := resources.GroupEntitlementsPatchRequestBody{
 					Patches: []resources.GroupEntitlementsPatchItem{
 						{
 							Entitlement: mockEntitlements.Data[0],
 							Op:          "add",
 						},
 					},
-				})
-				mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), bytes.NewReader(patchesBody))
+				}
+				mockRequest := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), &patches)
 				h.PatchGroupsItemEntitlements(w, mockRequest, mockGroupId)
 			},
 			expectedStatus: http.StatusOK,
@@ -296,85 +293,6 @@ func TestHandler_Groups_Success(t *testing.T) {
 		})
 	}
 
-}
-
-func TestHandler_Groups_ValidationErrors(t *testing.T) {
-	c := qt.New(t)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// need a value that is not a struct to trigger Decode error
-	mockInvalidRequestBody := true
-
-	invalidRequestBody, _ := json.Marshal(mockInvalidRequestBody)
-
-	type EndpointTest struct {
-		name        string
-		triggerFunc func(h handler, w *httptest.ResponseRecorder)
-	}
-
-	tests := []EndpointTest{
-		{
-			name: "TestPostGroupsFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPost, "/groups", bytes.NewReader(invalidRequestBody))
-				h.PostGroups(w, req)
-			},
-		},
-		{
-			name: "TestPutGroupsFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/groups/%s", mockGroupId), bytes.NewReader(invalidRequestBody))
-				h.PutGroupsItem(w, req, mockGroupId)
-			},
-		},
-		{
-			name: "TestPatchGroupsIdentitiesFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/identities", mockGroupId), bytes.NewReader(invalidRequestBody))
-				h.PatchGroupsItemIdentities(w, req, mockGroupId)
-			},
-		},
-		{
-			name: "TestPatchGroupsRolesFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/roles", mockGroupId), bytes.NewReader(invalidRequestBody))
-				h.PatchGroupsItemRoles(w, req, mockGroupId)
-			},
-		},
-		{
-			name: "TestPatchGroupsEntitlementsFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), bytes.NewReader(invalidRequestBody))
-				h.PatchGroupsItemEntitlements(w, req, mockGroupId)
-			},
-		},
-	}
-	for _, test := range tests {
-		tt := test
-		c.Run(tt.name, func(c *qt.C) {
-			mockWriter := httptest.NewRecorder()
-			sut := handler{}
-
-			tt.triggerFunc(sut, mockWriter)
-
-			result := mockWriter.Result()
-			defer result.Body.Close()
-
-			c.Assert(result.StatusCode, qt.Equals, http.StatusBadRequest)
-
-			data, err := io.ReadAll(result.Body)
-			c.Assert(err, qt.IsNil)
-
-			response := new(resources.Response)
-
-			err = json.Unmarshal(data, response)
-			c.Assert(err, qt.IsNil)
-
-			c.Assert(response.Status, qt.Equals, http.StatusBadRequest)
-			c.Assert(response.Message, qt.Equals, "Bad Request: request doesn't match the expected schema")
-		})
-	}
 }
 
 func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
@@ -413,8 +331,8 @@ func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().CreateGroup(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				group, _ := json.Marshal(&resources.Group{})
-				request := httptest.NewRequest(http.MethodPost, "/groups", bytes.NewReader(group))
+				mockGroup := &resources.Group{}
+				request := newTestRequest(http.MethodPost, "/groups", mockGroup)
 				h.PostGroups(w, request)
 			},
 		},
@@ -444,8 +362,8 @@ func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().UpdateGroup(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				group, _ := json.Marshal(&resources.Group{Id: &mockGroupId})
-				request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/groups/%s", mockGroupId), bytes.NewReader(group))
+				mockGroup := &resources.Group{Id: &mockGroupId}
+				request := newTestRequest(http.MethodPut, fmt.Sprintf("/groups/%s", mockGroupId), mockGroup)
 				h.PutGroupsItem(w, request, mockGroupId)
 			},
 		},
@@ -466,8 +384,8 @@ func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().PatchGroupIdentities(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&resources.GroupIdentitiesPatchRequestBody{})
-				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/identities", mockGroupId), bytes.NewReader(patches))
+				patches := &resources.GroupIdentitiesPatchRequestBody{}
+				request := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/identities", mockGroupId), patches)
 				h.PatchGroupsItemIdentities(w, request, mockGroupId)
 			},
 		},
@@ -488,8 +406,8 @@ func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().PatchGroupRoles(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&resources.GroupRolesPatchRequestBody{})
-				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/roles", mockGroupId), bytes.NewReader(patches))
+				patches := &resources.GroupRolesPatchRequestBody{}
+				request := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/roles", mockGroupId), patches)
 				h.PatchGroupsItemRoles(w, request, mockGroupId)
 			},
 		},
@@ -510,8 +428,8 @@ func TestHandler_Groups_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().PatchGroupEntitlements(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&resources.GroupEntitlementsPatchRequestBody{})
-				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), bytes.NewReader(patches))
+				patches := &resources.GroupEntitlementsPatchRequestBody{}
+				request := newTestRequest(http.MethodPatch, fmt.Sprintf("/groups/%s/entitlements", mockGroupId), patches)
 				h.PatchGroupsItemEntitlements(w, request, mockGroupId)
 			},
 		},

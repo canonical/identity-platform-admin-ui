@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -36,21 +35,25 @@ func (h handler) GetGroups(w http.ResponseWriter, req *http.Request, params reso
 func (h handler) PostGroups(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	group := new(resources.Group)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(group); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	group, err := h.Groups.CreateGroup(ctx, group)
+	group, ok := body.(*resources.Group)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	result, err := h.Groups.CreateGroup(ctx, group)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, group)
+	writeResponse(w, http.StatusCreated, result)
 }
 
 // DeleteGroupsItem deletes the specified group identified by the provided ID.
@@ -86,26 +89,25 @@ func (h handler) GetGroupsItem(w http.ResponseWriter, req *http.Request, id stri
 func (h handler) PutGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	group := new(resources.Group)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(group); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	if id != *group.Id {
-		writeErrorResponse(w, NewValidationError("group ID from path does not match the Group object"))
+	group, ok := body.(*resources.Group)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
-	group, err := h.Groups.UpdateGroup(ctx, group)
+	result, err := h.Groups.UpdateGroup(ctx, group)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusOK, group)
+	writeResponse(w, http.StatusOK, result)
 }
 
 // GetGroupsItemEntitlements returns the list of entitlements for a group identified by the provided ID.
@@ -134,15 +136,19 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupEntitlementsPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupEntitlements(ctx, id, patchesRequest.Patches)
+	groupEntitlements, ok := body.(*resources.GroupEntitlementsPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Groups.PatchGroupEntitlements(ctx, id, groupEntitlements.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -177,15 +183,19 @@ func (h handler) GetGroupsItemIdentities(w http.ResponseWriter, req *http.Reques
 func (h handler) PatchGroupsItemIdentities(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupIdentitiesPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupIdentities(ctx, id, patchesRequest.Patches)
+	groupIdentities, ok := body.(*resources.GroupIdentitiesPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Groups.PatchGroupIdentities(ctx, id, groupIdentities.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return
@@ -220,15 +230,19 @@ func (h handler) GetGroupsItemRoles(w http.ResponseWriter, req *http.Request, id
 func (h handler) PatchGroupsItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.GroupRolesPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Groups.PatchGroupRoles(ctx, id, patchesRequest.Patches)
+	groupRoles, ok := body.(*resources.GroupRolesPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Groups.PatchGroupRoles(ctx, id, groupRoles.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.GroupsErrorMapper, err)
 		return

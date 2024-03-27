@@ -21,6 +21,7 @@ const (
 	GET    CapabilityMethods = "GET"
 	PATCH  CapabilityMethods = "PATCH"
 	POST   CapabilityMethods = "POST"
+	PUT    CapabilityMethods = "PUT"
 )
 
 // Defines values for GroupEntitlementsPatchItemOp.
@@ -97,15 +98,15 @@ type CapabilityMethods string
 
 // Entity defines model for Entity.
 type Entity struct {
-	Id   string `json:"id"`
-	Type string `json:"type"`
+	Id   string `json:"id" validate:"required"`
+	Type string `json:"type" validate:"required"`
 }
 
 // EntityEntitlement defines model for EntityEntitlement.
 type EntityEntitlement struct {
-	EntitlementType string `json:"entitlement_type"`
-	EntityName      string `json:"entity_name"`
-	EntityType      string `json:"entity_type"`
+	EntitlementType string `json:"entitlement_type" validate:"required"`
+	EntityName      string `json:"entity_name" validate:"required"`
+	EntityType      string `json:"entity_type" validate:"required"`
 }
 
 // EntityEntitlementItem defines model for EntityEntitlementItem.
@@ -251,13 +252,13 @@ type GetRolesResponse struct {
 // Group defines model for Group.
 type Group struct {
 	Id   *string `json:"id,omitempty"`
-	Name string  `json:"name"`
+	Name string  `json:"name" validate:"required"`
 }
 
 // GroupEntitlementsPatchItem defines model for GroupEntitlementsPatchItem.
 type GroupEntitlementsPatchItem struct {
 	Entitlement EntityEntitlement            `json:"entitlement"`
-	Op          GroupEntitlementsPatchItemOp `json:"op"`
+	Op          GroupEntitlementsPatchItemOp `json:"op" validate:"required,oneof=add remove"`
 }
 
 // GroupEntitlementsPatchItemOp defines model for GroupEntitlementsPatchItem.Op.
@@ -265,13 +266,13 @@ type GroupEntitlementsPatchItemOp string
 
 // GroupEntitlementsPatchRequestBody defines model for GroupEntitlementsPatchRequestBody.
 type GroupEntitlementsPatchRequestBody struct {
-	Patches []GroupEntitlementsPatchItem `json:"patches"`
+	Patches []GroupEntitlementsPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // GroupIdentitiesPatchItem defines model for GroupIdentitiesPatchItem.
 type GroupIdentitiesPatchItem struct {
-	Identity string                     `json:"identity"`
-	Op       GroupIdentitiesPatchItemOp `json:"op"`
+	Identity string                     `json:"identity" validate:"required"`
+	Op       GroupIdentitiesPatchItemOp `json:"op" validate:"required,oneof=add remove"`
 }
 
 // GroupIdentitiesPatchItemOp defines model for GroupIdentitiesPatchItem.Op.
@@ -279,13 +280,13 @@ type GroupIdentitiesPatchItemOp string
 
 // GroupIdentitiesPatchRequestBody defines model for GroupIdentitiesPatchRequestBody.
 type GroupIdentitiesPatchRequestBody struct {
-	Patches []GroupIdentitiesPatchItem `json:"patches"`
+	Patches []GroupIdentitiesPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // GroupRolesPatchItem defines model for GroupRolesPatchItem.
 type GroupRolesPatchItem struct {
-	Op   GroupRolesPatchItemOp `json:"op"`
-	Role string                `json:"role"`
+	Op   GroupRolesPatchItemOp `json:"op" validate:"required,oneof=add remove"`
+	Role string                `json:"role" validate:"required"`
 }
 
 // GroupRolesPatchItemOp defines model for GroupRolesPatchItem.Op.
@@ -293,7 +294,7 @@ type GroupRolesPatchItemOp string
 
 // GroupRolesPatchRequestBody defines model for GroupRolesPatchRequestBody.
 type GroupRolesPatchRequestBody struct {
-	Patches []GroupRolesPatchItem `json:"patches"`
+	Patches []GroupRolesPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // Groups defines model for Groups.
@@ -308,9 +309,9 @@ type Identities struct {
 
 // Identity defines model for Identity.
 type Identity struct {
-	AddedBy     string  `json:"addedBy"`
+	AddedBy     string  `json:"addedBy" validate:"required"`
 	Certificate *string `json:"certificate,omitempty"`
-	Email       string  `json:"email"`
+	Email       string  `json:"email" validate:"required"`
 	FirstName   *string `json:"firstName,omitempty"`
 	Groups      *int    `json:"groups,omitempty"`
 	Id          *string `json:"id,omitempty"`
@@ -319,13 +320,13 @@ type Identity struct {
 	LastName    *string `json:"lastName,omitempty"`
 	Permissions *int    `json:"permissions,omitempty"`
 	Roles       *int    `json:"roles,omitempty"`
-	Source      string  `json:"source"`
+	Source      string  `json:"source" validate:"required"`
 }
 
 // IdentityEntitlementsPatchItem defines model for IdentityEntitlementsPatchItem.
 type IdentityEntitlementsPatchItem struct {
 	Entitlement EntityEntitlement               `json:"entitlement"`
-	Op          IdentityEntitlementsPatchItemOp `json:"op"`
+	Op          IdentityEntitlementsPatchItemOp `json:"op" validate:"required,oneof=add remove"`
 }
 
 // IdentityEntitlementsPatchItemOp defines model for IdentityEntitlementsPatchItem.Op.
@@ -333,13 +334,13 @@ type IdentityEntitlementsPatchItemOp string
 
 // IdentityEntitlementsPatchRequestBody defines model for IdentityEntitlementsPatchRequestBody.
 type IdentityEntitlementsPatchRequestBody struct {
-	Patches []IdentityEntitlementsPatchItem `json:"patches"`
+	Patches []IdentityEntitlementsPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // IdentityGroupsPatchItem defines model for IdentityGroupsPatchItem.
 type IdentityGroupsPatchItem struct {
-	Group string                    `json:"group"`
-	Op    IdentityGroupsPatchItemOp `json:"op"`
+	Group string                    `json:"group" validate:"required"`
+	Op    IdentityGroupsPatchItemOp `json:"op" validate:"required,oneof=add remove"`
 }
 
 // IdentityGroupsPatchItemOp defines model for IdentityGroupsPatchItem.Op.
@@ -347,7 +348,7 @@ type IdentityGroupsPatchItemOp string
 
 // IdentityGroupsPatchRequestBody defines model for IdentityGroupsPatchRequestBody.
 type IdentityGroupsPatchRequestBody struct {
-	Patches []IdentityGroupsPatchItem `json:"patches"`
+	Patches []IdentityGroupsPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // IdentityProvider defines model for IdentityProvider.
@@ -364,7 +365,7 @@ type IdentityProvider struct {
 	RedirectUrl         *string                   `json:"redirectUrl,omitempty"`
 	StoreTokens         *bool                     `json:"storeTokens,omitempty"`
 	StoreTokensReadable *bool                     `json:"storeTokensReadable,omitempty"`
-	SyncMode            *IdentityProviderSyncMode `json:"syncMode,omitempty"`
+	SyncMode            *IdentityProviderSyncMode `json:"syncMode,omitempty" validate:"oneof=import"`
 	TrustEmail          *bool                     `json:"trustEmail,omitempty"`
 }
 
@@ -378,8 +379,8 @@ type IdentityProviders struct {
 
 // IdentityRolesPatchItem defines model for IdentityRolesPatchItem.
 type IdentityRolesPatchItem struct {
-	Op   IdentityRolesPatchItemOp `json:"op"`
-	Role string                   `json:"role"`
+	Op   IdentityRolesPatchItemOp `json:"op" validate:"required,oneof=add remove"`
+	Role string                   `json:"role" validate:"required"`
 }
 
 // IdentityRolesPatchItemOp defines model for IdentityRolesPatchItem.Op.
@@ -387,7 +388,7 @@ type IdentityRolesPatchItemOp string
 
 // IdentityRolesPatchRequestBody defines model for IdentityRolesPatchRequestBody.
 type IdentityRolesPatchRequestBody struct {
-	Patches []IdentityRolesPatchItem `json:"patches"`
+	Patches []IdentityRolesPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // Resource defines model for Resource.
@@ -431,9 +432,9 @@ type ResponseMeta struct {
 
 // Role defines model for Role.
 type Role struct {
-	Entitlements *[]RoleEntitlement `json:"entitlements,omitempty"`
+	Entitlements *[]RoleEntitlement `json:"entitlements,omitempty" validate:"dive"`
 	Id           *string            `json:"id,omitempty"`
-	Name         string             `json:"name"`
+	Name         string             `json:"name" validate:"required"`
 }
 
 // RoleEntitlement defines model for RoleEntitlement.
@@ -446,7 +447,7 @@ type RoleEntitlement struct {
 // RoleEntitlementsPatchItem defines model for RoleEntitlementsPatchItem.
 type RoleEntitlementsPatchItem struct {
 	Entitlement EntityEntitlement           `json:"entitlement"`
-	Op          RoleEntitlementsPatchItemOp `json:"op"`
+	Op          RoleEntitlementsPatchItemOp `json:"op" validate:"required,oneof=add remove"`
 }
 
 // RoleEntitlementsPatchItemOp defines model for RoleEntitlementsPatchItem.Op.
@@ -454,7 +455,7 @@ type RoleEntitlementsPatchItemOp string
 
 // RoleEntitlementsPatchRequestBody defines model for RoleEntitlementsPatchRequestBody.
 type RoleEntitlementsPatchRequestBody struct {
-	Patches []RoleEntitlementsPatchItem `json:"patches"`
+	Patches []RoleEntitlementsPatchItem `json:"patches" validate:"required,gt=0,dive"`
 }
 
 // Roles defines model for Roles.
@@ -467,6 +468,9 @@ type FilterParam = string
 
 // PaginationNextToken defines model for PaginationNextToken.
 type PaginationNextToken = string
+
+// PaginationNextTokenHeader defines model for PaginationNextTokenHeader.
+type PaginationNextTokenHeader = string
 
 // PaginationPage defines model for PaginationPage.
 type PaginationPage = int
@@ -496,6 +500,9 @@ type GetIdentityProvidersParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetAvailableIdentityProvidersParams defines parameters for GetAvailableIdentityProviders.
@@ -508,6 +515,9 @@ type GetAvailableIdentityProvidersParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetEntitlementsParams defines parameters for GetEntitlements.
@@ -523,6 +533,9 @@ type GetEntitlementsParams struct {
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetGroupsParams defines parameters for GetGroups.
@@ -538,6 +551,9 @@ type GetGroupsParams struct {
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetGroupsItemEntitlementsParams defines parameters for GetGroupsItemEntitlements.
@@ -550,6 +566,9 @@ type GetGroupsItemEntitlementsParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetGroupsItemIdentitiesParams defines parameters for GetGroupsItemIdentities.
@@ -562,6 +581,9 @@ type GetGroupsItemIdentitiesParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetGroupsItemRolesParams defines parameters for GetGroupsItemRoles.
@@ -574,6 +596,9 @@ type GetGroupsItemRolesParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetIdentitiesParams defines parameters for GetIdentities.
@@ -589,6 +614,9 @@ type GetIdentitiesParams struct {
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetIdentitiesItemEntitlementsParams defines parameters for GetIdentitiesItemEntitlements.
@@ -601,6 +629,9 @@ type GetIdentitiesItemEntitlementsParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetIdentitiesItemGroupsParams defines parameters for GetIdentitiesItemGroups.
@@ -613,6 +644,9 @@ type GetIdentitiesItemGroupsParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetIdentitiesItemRolesParams defines parameters for GetIdentitiesItemRoles.
@@ -625,6 +659,9 @@ type GetIdentitiesItemRolesParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetResourcesParams defines parameters for GetResources.
@@ -638,6 +675,9 @@ type GetResourcesParams struct {
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken  *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
 	EntityType *string              `form:"entityType,omitempty" json:"entityType,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetRolesParams defines parameters for GetRoles.
@@ -653,6 +693,9 @@ type GetRolesParams struct {
 
 	// Filter A string to filter results by
 	Filter *FilterParam `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // GetRolesItemEntitlementsParams defines parameters for GetRolesItemEntitlements.
@@ -665,6 +708,9 @@ type GetRolesItemEntitlementsParams struct {
 
 	// NextToken The continuation token to retrieve the next set of results
 	NextToken *PaginationNextToken `form:"nextToken,omitempty" json:"nextToken,omitempty"`
+
+	// NextPageToken The continuation token to retrieve the next set of results
+	NextPageToken *PaginationNextTokenHeader `json:"Next-Page-Token,omitempty"`
 }
 
 // PostIdentityProvidersJSONRequestBody defines body for PostIdentityProviders for application/json ContentType.
@@ -715,70 +761,73 @@ type PatchRolesItemEntitlementsJSONRequestBody = RoleEntitlementsPatchRequestBod
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xdT3PbuJL/KijunqYYy9mXvfi0nkwm47cZ2+U4tYeMKwWRLQljEuADQDt6KX33LQAE",
-	"/wIkLcmObfGSWCIINBq//nUDaEA/goilGaNApQhOfgQZ5jgFCVx/+p0kEvil+k59jEFEnGSSMBqcBKdI",
-	"SE7oEkmGFrog4iDyRAo0XwdhQFShf+XA1QeKUwhOAlMuCAMRrSDFqlK5ztQTU1ew2YTBJV4SilUr5/Bd",
-	"XrNboN3Wr1eAIkYlobkuiqQqp2ThIDmBO0ByBYjCd4kESMQWVjqPaLRsa6x0l3gJbsE4RIzHiC0Wqmkj",
-	"U85pqZ8FZ6lHjExVWpcgJZSkeRqcvA2tNIRKWAJvifOZ/NsjDs3TOXCjAiWYqImUmWHLGBXgEUmoihsi",
-	"4e+FSMfHYb+AmzCwtWtE/YrjK/hXDkKqT2oAgeo/cZYlJNIdmf0tmB5x+I7TLNGd+pYQeqtrUOOk/l9x",
-	"WAQngVbCtxQkNvBVQ3IcGpnVH5JJnAQnx5swiLEq9PUmDFIQQpdU8iBeCBQGQmKZi+Dk3bEqX3X4P01b",
-	"/zGrjGVmnorZlVWe7mxT+ap2291NGJwz+TvLafw8un7OJFpoceodf7eXjld1b8LgC8W5XDFO/g3PpOsN",
-	"ieq9f7uX3jeq108XOE/kc+k7fM8gkhAj4JzxWv//e0+w7zSxKavVHTq9wyTB8wTOYqCSyPUlZ3ckBq47",
-	"xFkGXBLDFyR2sLBlJhc9K2MmXAHtq3r5puQkNv8bIm2G3uZFt32jwR8BkZCKIZ34+7UpxcCc43VHUt2M",
-	"S9b3OMNzkhArTwEQEZx8tcJ9/REAjTNGFKyCGTFtq/Jq2OWKxap08PHDdXCzudnchLt0sZRnvYc+rbv6",
-	"rnriGPWyNzVhgSrXY7oXBpcXn9V/v3349OH6g/p8ev3+j5oQVV29opdSVG26OvJBD3JnWBRmgzwnilqK",
-	"d5TZc5YkCgqdAfBg3HwxhHH9NPRB3Uio/00gLYinrfHy4TdPk6EptP7mMbvy+TiR64WbVYddaUb16kxC",
-	"2tuzIVh39eQUunjmkukjSD+vlGSpaD9JLhYaJ+PoNdySc0SwuTFy1TnkESVpUJVtu6bSXdvegbUcw7sd",
-	"eRW9+shZnr3irp2VPuQR8VI10mz8iiWP2q6uv9nkYzZnGijb+1mqtfTwOlFre/eTRvNJmN5P8PbJ01rO",
-	"FQiW8+hxW7RtVK2yBF4nhp9y9BSK9zzZ0qWckVHbWV5iGa1syDauk+6IrzuALKvPCXCsQnAOKbsDxySg",
-	"1QGW+cbG2YFiXedXFjumMZkqAWI0lnp0NAQq25RX9ZUzaCi+PfRQTmY6ANhFq2XFoVvBbiH3r1yXFnZW",
-	"rTapHq0+SHFhwFkywtB0qX5tVnLtX5GtPu+sw10XXQyXbb0YUQuVdpPDOuGdRXEMFI5jiH9trzQE7LZR",
-	"UwWkSL26IBGWnul6iknifLIgXMhz3zR/WQ5Ye6E/9DmPvxmh4H6UYCE/sSWh3qdeQTLgKRGCMOqRhmtn",
-	"53xkIoq2LuG7BE5xovdAij8Hyc3osawyLAeqb3hfsiv09mGvPNOvqV0YpzlP6GHupY2Q9uoMTa1e7nZI",
-	"9yh6bfd+Hxr1L+HjKIJMikvO0kyeM1q36DljCWCqKsJRxHIqPxF6S+jygiZrd7koIQr0vzkHxzz8DBEH",
-	"9xJyTER9seyMLpi7GaCqXOx+6OE6G+u8Vx1xk493BZVDTDhE8gt3E7OQjIPenxZumWoFrgDHSnpPwTWN",
-	"/mQx1GFM0oxx6V4o57mQH1oOo6xuMwIS+/Ksu++mNCbKzytu64r2KKa/x+jNzs09C+/rcfPnHnOytlJ3",
-	"0/hezCB/cw/CjdYM8xHL/aXojh3Dol27MdHb9V2RXcmxLaLr6wVNQar94zGrB5904frG8pi3/lRlN7Xd",
-	"ZSdxmc3lH67slXofi4JWhND2oKq+TwGfbG+bWrB756N1cK5e6KxtqC8HWz8v2mpKYHbth8hBl+pr4U+7",
-	"39+igYbWa45GPSlTp7qDUuQKdd8rsgeGR0vV4BS4IEPvXtx40mqt9XWtJHykJat2w0Nbi5790PEMyGtc",
-	"2pV5SL4XN41wyr9Xf+fX0E4uz84qd+F8ZR9b8r0qRoqQNWJU4kjDr5jOB0l+C0f3IBJYv1mxJIH1/0SY",
-	"MkoinBxFOuWwSOn7lN8C+j9T8g9dMuhk8VyvAC1YkrB7QpdIZBCZJQXCKGK5TAgFoXMsTy/PkBUeLRjX",
-	"X/7+8RThOCWUCMnNSwuuk59iJBnSc2wcSXRP5Aphii4yoOodQoXENAIkV5zlyxXCKOMsziMpVENH6HpF",
-	"BCJCvQN3LLnrCocF4rBITAISoVqcO+BCPTOpkEd/0SAMNDqCk+C91VEpxGlT8EsjAHrP0gxLYnJXlDRB",
-	"GBQVByfB8dHx0dtjM0UEijMSnAT/OHp7dBwoNpYrjYwZzuVKsYORVU81zVSlrXwikE1DQQkRUiCcJKiY",
-	"liidmNjadEWhUVd4Fgcnzo0pLUSV2+thh6rIrJVY6ttdcL6hM2Mf9EaV6bu5aaWM/tfx8YjMuXFZa71b",
-	"do5Mtov/VeP5zkjgqriUdFbLbNWvvB1+pZ0n+O743fBLZRJpM7Gw/yVbUCfi5WmK+VqxABESRYwuyDJX",
-	"ttvEZg1jyljw0gTgTfwqNs+YcCD4va0XYUTh3lf5UQe9l0w44cub/mEveOhOLZtMLHkOm0fEo7v9Q8Lg",
-	"A2DiheAmbPPqLKuvPYxgWLFieRLbpHisGRexhW1foFvK7vXxAuVNxFpISEPt7IrZKbq4lThEHxlbJhCi",
-	"j0T+kc8RyOjor/z4+B/RnKOZ/gv+or/8cn3x28Uvv5ygN+izdl1rXW3RunL6blbvSfaa6N3Q+4gkvIOz",
-	"sSuNKxOsWWCLPMsY1xFSoaiRfO8wth8k3hgDS0A6zqBc6fmCitg81l06If111yX8pivujKiO591wOqzh",
-	"fbB6e7y5kyw/gkQYCUKXCYz35K5oq2fMJo+6FziMHau+iK7pSvShMDWFqSaQJA7acVLfsbmbMMhyB66+",
-	"ZDGWuzDDZd4DsSlefH3o3gIxva4sah2wGREr3pMkQXNAuYAYzU3oVl/biJXlpIQCul+RaIW+nCEolqFs",
-	"nDmHciZfrXOkOMsIXR6h0yRB2MYxZbv1l5UXhxitQMXNCaNLs46iJKleLI6uOHm5kaz/uBGZ8/iBB7eD",
-	"YUulDKKibqVUOwjELBDVBrwxtma42+vQnuEG1O5yeUhWh+cGAzZeXwH65+eLc1RYhjCATFkMiVP59YXJ",
-	"lxO4D79WPy7+2HG+Mwf4IH190zwqrSBCDSwXjKdY1g2jYQVdw5hxfN9rHBK+y1mWYDJkFhzfj7aKK3zf",
-	"MowB/FRSNJHTDj4mTFSYwEKPiVLdACCqXD//jCBJkCnmHNAivXMiuK0IrnWU5TCnMQ2AWbAWyOxZeuag",
-	"Y0S9oKhLu1eZS4A+xlShyEt+2vlBrdGDWkR2DngHLxWtjV6y8sHHrEgZAE3LUI1lqJ4BGLO65FF4yYiP",
-	"vYA0Ua9nPFz0+9TrRF42z9vomAj9NazyjCfzcTN7veNtEq2bcbEKmHVtaIXFAPu8zOn7U4Sr06R8/SCQ",
-	"PRWlYhmtHBf4xTFiHHHrt50is9mCs7SHeVXdXtt4GA9Xid76yNspjU1MoYFYqveUlnvubIHmzOSP4ThG",
-	"mMa2N6WQQRjc4SSHRhLh104GZ/cWnPpXb9RXb3DrtpqiyPqN+lR/Wq9gbd8tjg7pFEplw1sIMO8VYN4r",
-	"wLwUoMje3NxsNqNv+xo+Ar3p3vV3gDHwliY16NxI45SqN4hWBFMVVeaBR8XTZ/U7wyZ/Nuu5B+dglxO9",
-	"uHpOTqwm5EM9V8MGnq/fqi5qKP/UrqfhW1yF5sGu/N9zR8P4WdHheoN+bA66gPJEey/761Ljid8caJg4",
-	"v8b5zWt4DpbuXUB6XtMVJWFpSeXUapDnLeSfL8WXVG5PFuv/9BTiR4PCm8/nW1C6+7TxxOZjYns//pxc",
-	"PjKEt7u2VfG+vMoXFbE/r/3VKbbvA5yFcA21/v3WU01wZSJ575GebeLrh+VG/qyczMODj2Pcnbhp0t8D",
-	"jgv4EdU4EUBg2oNtHwUYHJQxe7F+/TcI9Kly+g98J3bEkP6ExP0e1s9dGJmI/zUl4W/D/Q/Yqu1sn5WH",
-	"1XzbtE3ETVu1PSfgp93a9WicPSXfjln+qAlcrSb2krG+AKXPOKa92texVzvqjs5pu3a9jU2NdnED2fOa",
-	"dEyZJt0QgTBKofi9vhEe7qUl2T+Rbzv0FM4HAOy5ubaGuNYOfcdMHG5ty6z+p3Roxe3C5v/u9m3z8U4b",
-	"twNXCk9uYP1Q/I12Af0bttpAzSYbFoIsKcT2dpkHrLpM+7cu8j/wLdyR0HoRvK+7MYr2p31d303PE+Fv",
-	"Qfgl8Lx8z+uXQPcm5dgttupqhvJd90nosuaXtLfr+ulwo9Rr80ufFX4dJ8rXGZSHlde1n5TXPyXvoJTH",
-	"9CPdXzY7+EPkHuha46hsobCNUclqtnIPydvfRJsyHLaE8ZTJ5kRZCVoNrpHHyFVhd2LDdoHHyF9Z15dF",
-	"739ba5ebqg/5bLlFQRtCJecNJjeYxIUifcyX16AhNaU0aP13FNY13+FEBreyLUc+dv5CZcUHm7vgH7yn",
-	"P0PuofK8BYaXw+YT9rznx8cR9riMBBtQNDaLdYb8ML1MiQieAHVKQliPgtYTEec+Top7+FUvRXnsYco9",
-	"eB25B4M/7DOtP663tieXDxP3eLkEfmRNY8T1tbx2rWr9EtWLDOjp5Zn+MZ2wuLo2shfO6rtuF4yjGOb5",
-	"cknoMkRzzu6F/ku9FhMRsTvg61D/6kHH/j8bSf8ptK3t5FZGXfDovUq23k+EBcLFLZmkqWX9I3QF9oHf",
-	"WZptNpQlOIIVS2LgQRjkPAlOgpWUmTiZzWrPjiKWzu7eaoda1N+hWFqNkL5DWD2cm8Xp+j22isuKH12q",
-	"iL5x0a0iDcdeI06S9pXJxQXB1eJeVWPrruRunacoYkkCkfk5qPrxkbr/Kb8brmBpt+2Ll4vPwy/yYv2l",
-	"eM98HH4Nmh6oTpT22xFt11bqbfvlV5ubzf8HAAD//66gBPhflQAA",
+	"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",
+	"zrSWoAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

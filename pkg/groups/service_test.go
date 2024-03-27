@@ -12,13 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_logger.go -source=../../internal/logging/interfaces.go

@@ -54,14 +54,35 @@ func serve() {
 	}
 
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
-
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
-	hAdminClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
-	kAdminClient := ik.NewClient(specs.KratosAdminURL, specs.Debug)
-	kPublicClient := ik.NewClient(specs.KratosPublicURL, specs.Debug)
-	oPublicClient := io.NewClient(specs.OathkeeperPublicURL, specs.Debug)
+	extCfg := web.NewExternalClientsConfig(
+		ih.NewClient(specs.HydraAdminURL, specs.Debug),
+		ik.NewClient(specs.KratosAdminURL, specs.Debug),
+		ik.NewClient(specs.KratosPublicURL, specs.Debug),
+		io.NewClient(specs.OathkeeperPublicURL, specs.Debug),
+		openfga.NewClient(
+			openfga.NewConfig(
+				specs.ApiScheme,
+				specs.ApiHost,
+				specs.StoreId,
+				specs.ApiToken,
+				specs.ModelId,
+				specs.Debug,
+				tracer,
+				monitor,
+				logger,
+			),
+		),
+		// default to noop client for authorization
+		openfga.NewNoopClient(tracer, monitor, logger),
+	)
+
+	if specs.AuthorizationEnabled {
+		logger.Info("Authorization is enabled")
+		extCfg.SetAuthorizer(extCfg.OpenFGA())
+	}
 
 	k8sCoreV1, err := k8s.NewCoreV1Client("")
 
@@ -69,6 +90,7 @@ func serve() {
 		panic(err)
 	}
 
+	// TODO @shipperizer standardize idp, schemas and rules configs
 	idpConfig := &idp.Config{
 		K8s:       k8sCoreV1,
 		Name:      specs.IDPConfigMapName,
@@ -77,30 +99,16 @@ func serve() {
 
 	schemasConfig := &schemas.Config{
 		K8s:       k8sCoreV1,
-		Kratos:    kPublicClient.IdentityApi(),
+		Kratos:    extCfg.KratosPublic().IdentityApi(),
 		Name:      specs.SchemasConfigMapName,
 		Namespace: specs.SchemasConfigMapNamespace,
 	}
 
-	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, oPublicClient.ApiApi())
-
-	ofgaClient := openfga.NewClient(
-		openfga.NewConfig(
-			specs.ApiScheme,
-			specs.ApiHost,
-			specs.StoreId,
-			specs.ApiToken,
-			specs.ModelId,
-			specs.Debug,
-			tracer,
-			monitor,
-			logger,
-		),
-	)
+	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, extCfg.OathkeeperPublic().ApiApi())
 
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
-			ofgaClient,
+			extCfg.OpenFGA(),
 			tracer,
 			monitor,
 			logger,
@@ -111,15 +119,7 @@ func serve() {
 		}
 	}
 
-	var router http.Handler
-
-	if specs.AuthorizationEnabled {
-		logger.Info("Authorization is enabled")
-		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, ofgaClient, ofgaClient, tracer, monitor, logger)
-	} else {
-		logger.Info("Authorization is disabled, using noop authorizer")
-		router = web.NewRouter(idpConfig, schemasConfig, rulesConfig, hAdminClient, kAdminClient, ofgaClient, openfga.NewNoopClient(tracer, monitor, logger), tracer, monitor, logger)
-	}
+	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, web.NewO11yConfig(tracer, monitor, logger))
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

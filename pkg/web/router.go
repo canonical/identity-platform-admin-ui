@@ -8,11 +8,8 @@ import (
 
 	chi "github.com/go-chi/chi/v5"
 	middleware "github.com/go-chi/chi/v5/middleware"
-	trace "go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
-	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
-	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -28,8 +25,12 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, hydraClient *ih.Client, kratos *ik.Client, ofga OpenFGAClientInterface, authorizationClient OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
+func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, ollyConfig O11yConfigInterface) http.Handler {
 	router := chi.NewMux()
+
+	logger := ollyConfig.Logger()
+	monitor := ollyConfig.Monitor()
+	tracer := ollyConfig.Tracer()
 
 	middlewares := make(chi.Middlewares, 0)
 	middlewares = append(
@@ -52,17 +53,17 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	// apply authorization middleware using With to overcome issue with <id> URLParams not available
 	router = router.With(
 		authorization.NewMiddleware(
-			authorization.NewAuthorizer(authorizationClient, tracer, monitor, logger), monitor, logger).Authorize(),
+			authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger).Authorize(),
 	).(*chi.Mux)
 
 	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
 	metrics.NewAPI(logger).RegisterEndpoints(router)
 	identities.NewAPI(
-		identities.NewService(kratos.IdentityApi(), tracer, monitor, logger),
+		identities.NewService(externalConfig.KratosAdmin().IdentityApi(), tracer, monitor, logger),
 		logger,
 	).RegisterEndpoints(router)
 	clients.NewAPI(
-		clients.NewService(hydraClient, tracer, monitor, logger),
+		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
 		logger,
 	).RegisterEndpoints(router)
 	idp.NewAPI(
@@ -78,16 +79,17 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	).RegisterEndpoints(router)
 	roles.NewAPI(
-		roles.NewService(ofga, tracer, monitor, logger),
+		roles.NewService(externalConfig.OpenFGA(), tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
 	).RegisterEndpoints(router)
 	groups.NewAPI(
-		groups.NewService(ofga, tracer, monitor, logger),
+		groups.NewService(externalConfig.OpenFGA(), tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
 	).RegisterEndpoints(router)
+
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

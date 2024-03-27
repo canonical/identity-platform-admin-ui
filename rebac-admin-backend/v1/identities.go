@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -36,21 +35,25 @@ func (h handler) GetIdentities(w http.ResponseWriter, req *http.Request, params 
 func (h handler) PostIdentities(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	identity := new(resources.Identity)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(identity); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	identity, err := h.Identities.CreateIdentity(ctx, identity)
+	identity, ok := body.(*resources.Identity)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	result, err := h.Identities.CreateIdentity(ctx, identity)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusCreated, identity)
+	writeResponse(w, http.StatusCreated, result)
 }
 
 // DeleteIdentitiesItem deletes the specified identity.
@@ -86,26 +89,25 @@ func (h handler) GetIdentitiesItem(w http.ResponseWriter, req *http.Request, id 
 func (h handler) PutIdentitiesItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	identity := new(resources.Identity)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(identity); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	if id != *identity.Id {
-		writeErrorResponse(w, NewValidationError("identity ID from path does not match the Identity object"))
+	identity, ok := body.(*resources.Identity)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
 		return
 	}
 
-	identity, err := h.Identities.UpdateIdentity(ctx, identity)
+	result, err := h.Identities.UpdateIdentity(ctx, identity)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
 	}
 
-	writeResponse(w, http.StatusOK, identity)
+	writeResponse(w, http.StatusOK, result)
 }
 
 // GetIdentitiesItemEntitlements returns the list of entitlements for an identity identified by the provided ID.
@@ -134,15 +136,19 @@ func (h handler) GetIdentitiesItemEntitlements(w http.ResponseWriter, req *http.
 func (h handler) PatchIdentitiesItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.IdentityEntitlementsPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Identities.PatchIdentityEntitlements(ctx, id, patchesRequest.Patches)
+	identityEntitlements, ok := body.(*resources.IdentityEntitlementsPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Identities.PatchIdentityEntitlements(ctx, id, identityEntitlements.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
@@ -177,15 +183,19 @@ func (h handler) GetIdentitiesItemGroups(w http.ResponseWriter, req *http.Reques
 func (h handler) PatchIdentitiesItemGroups(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.IdentityGroupsPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Identities.PatchIdentityGroups(ctx, id, patchesRequest.Patches)
+	identityGroups, ok := body.(*resources.IdentityGroupsPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Identities.PatchIdentityGroups(ctx, id, identityGroups.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return
@@ -220,15 +230,19 @@ func (h handler) GetIdentitiesItemRoles(w http.ResponseWriter, req *http.Request
 func (h handler) PatchIdentitiesItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	patchesRequest := new(resources.IdentityRolesPatchRequestBody)
-	defer req.Body.Close()
-
-	if err := json.NewDecoder(req.Body).Decode(patchesRequest); err != nil {
-		writeErrorResponse(w, NewValidationError("request doesn't match the expected schema"))
+	body, err := getRequestBodyFromContext(req.Context())
+	if err != nil {
+		writeErrorResponse(w, err)
 		return
 	}
 
-	_, err := h.Identities.PatchIdentityRoles(ctx, id, patchesRequest.Patches)
+	identityRoles, ok := body.(*resources.IdentityRolesPatchRequestBody)
+	if !ok {
+		writeErrorResponse(w, NewMissingRequestBodyError(""))
+		return
+	}
+
+	_, err = h.Identities.PatchIdentityRoles(ctx, id, identityRoles.Patches)
 	if err != nil {
 		writeServiceErrorResponse(w, h.IdentitiesErrorMapper, err)
 		return

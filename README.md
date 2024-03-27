@@ -30,7 +30,7 @@ This is the Admin UI for the Canonical Identity Platform.
 - `OPENFGA_API_TOKEN`: token used to interact with OpenFGA server, dictated by OpenFGA server
 - `OPENFGA_STORE_ID`: ID of the OpenFGA store the application will talk to 
 - `OPENFGA_AUTHORIZATION_MODEL_ID`: ID of the OpenFGA authorization model the application will talk to
-- `AUTHORIZATION_ENABLED`: flag defining if the OpenFGA authorization middleware is enabled and, for the time being, if any of the RBAC API are using OpenFGA (to be fixed by https://github.com/canonical/identity-platform-admin-ui/issues/221), default to `false`
+- `AUTHORIZATION_ENABLED`: flag defining if the OpenFGA authorization middleware is enabled default to `false`
 
 ## Development setup
 
@@ -66,7 +66,9 @@ To stop any running containers and wipe the container state, run `skaffold delet
 
 ### OpenFGA initialization
 
-The Admin Service comes up with authorization disabled (see `AUTHORIZATION_ENABLED` env var), The env vars `OPENFGA_AUTHORIZATION_MODEL_ID` and `OPENFGA_STORE_ID` which are needed for the correct functioning of the RBAC APIs get set by the job `admin-ui-openfga-setup`, after this has completed a developer is supposed to bounce the deployment to get the application to source the new env vars, setting `AUTHORIZATION_ENABLED` will make sure those endpoints use OpenFGA as a backend instead of a `NoOp implementation` (behaviour will change,  see https://github.com/canonical/identity-platform-admin-ui/issues/221)
+The Admin Service comes up with authorization disabled (see `AUTHORIZATION_ENABLED` env var), The env vars `OPENFGA_AUTHORIZATION_MODEL_ID` and `OPENFGA_STORE_ID` which are needed for the correct functioning of the RBAC APIs get set by the job `admin-ui-openfga-setup`, after this has completed a developer is supposed to bounce the deployment to get the application to source the new env vars
+If `AUTHORIZATION_ENABLED` is set to `false`, the user context passed to OpenFGA will default to `user:anonymous`, which will make every call to roles and groups API return an empty response (unless model is populated with relationship linked to `user:anonymous`)
+ 
 
 ```
 # Wait for the openfga setup job to complete

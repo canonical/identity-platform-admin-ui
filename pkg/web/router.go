@@ -28,7 +28,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, hydraClient *ih.Client, kratos *ik.Client, ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
+func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, hydraClient *ih.Client, kratos *ik.Client, ofga OpenFGAClientInterface, authorizationClient OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) http.Handler {
 	router := chi.NewMux()
 
 	middlewares := make(chi.Middlewares, 0)
@@ -52,7 +52,7 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	// apply authorization middleware using With to overcome issue with <id> URLParams not available
 	router = router.With(
 		authorization.NewMiddleware(
-			authorization.NewAuthorizer(ofga, tracer, monitor, logger), monitor, logger).Authorize(),
+			authorization.NewAuthorizer(authorizationClient, tracer, monitor, logger), monitor, logger).Authorize(),
 	).(*chi.Mux)
 
 	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)

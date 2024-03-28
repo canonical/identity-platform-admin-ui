@@ -6,6 +6,7 @@
 package v1
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 // ReBACAdminBackendParams contains references to user-defined implementation
 // of required abstractions, called "backend"s.
 type ReBACAdminBackendParams struct {
+	// Authenticator is required.
 	Authenticator            interfaces.Authenticator
 	AuthenticatorErrorMapper ErrorResponseMapper
 
@@ -49,7 +51,11 @@ type ReBACAdminBackend struct {
 
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
-func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
+func NewReBACAdminBackend(params ReBACAdminBackendParams) (*ReBACAdminBackend, error) {
+	if params.Authenticator == nil {
+		return nil, errors.New("authenticator cannot be nil")
+	}
+
 	return newReBACAdminBackendWithService(
 		params,
 		newHandlerWithValidation(&handler{
@@ -73,7 +79,7 @@ func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
 
 			Resources:            params.Resources,
 			ResourcesErrorMapper: params.ResourcesErrorMapper,
-		}))
+		})), nil
 }
 
 // newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured

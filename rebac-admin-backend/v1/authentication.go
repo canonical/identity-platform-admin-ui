@@ -22,9 +22,13 @@ func (b *ReBACAdminBackend) authenticationMiddleware() resources.MiddlewareFunc 
 				return
 			}
 
-			identity, err := b.params.Authenticator.Authenticate(*r)
+			identity, err := b.params.Authenticator.Authenticate(r)
 			if err != nil {
 				writeServiceErrorResponse(w, b.params.AuthenticatorErrorMapper, err)
+				return
+			}
+			if identity == nil {
+				writeErrorResponse(w, NewAuthenticationError("nil identity"))
 				return
 			}
 			next.ServeHTTP(w, newRequestWithIdentityInContext(r, identity))

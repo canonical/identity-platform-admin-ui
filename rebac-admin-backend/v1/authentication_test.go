@@ -22,6 +22,14 @@ import (
 //go:generate mockgen -package interfaces -destination ./interfaces/mock_authentication.go -source=./interfaces/authentication.go
 //go:generate mockgen -package v1 -destination ./mock_error_response.go -source=./error.go
 
+// noopAuthenticator is a no-op implementation of Authenticator interface, to be
+// used in tests.
+type noopAuthenticator struct{}
+
+func (a noopAuthenticator) Authenticate(r *http.Request) (any, error) {
+	return struct{}{}, nil
+}
+
 func TestContextualAuthenticatedIdentity(t *testing.T) {
 	c := qt.New(t)
 
@@ -96,16 +104,6 @@ func TestContextualAuthenticatedIdentity_MiddlewareAndContext(t *testing.T) {
 		expectedStatusCode int
 		expectedMessage    string
 	}{{
-		name: "nil authenticator",
-		nextHandler: func(_ *qt.C, w http.ResponseWriter, r *http.Request) {
-			writeResponse(w, http.StatusOK, resources.Response{
-				Status:  http.StatusOK,
-				Message: "done",
-			})
-		},
-		expectedStatusCode: http.StatusOK,
-		expectedMessage:    "done",
-	}, {
 		name: "authentication successful",
 		authenticatorFunc: func(r *http.Request) (any, error) {
 			return "some-identity", nil
@@ -163,7 +161,7 @@ func TestContextualAuthenticatedIdentity_MiddlewareAndContext(t *testing.T) {
 				req = tt.setupRequest()
 			}
 
-			var mockAuthenticator interfaces.Authenticator
+			var mockAuthenticator interfaces.Authenticator = &noopAuthenticator{}
 			if tt.authenticatorFunc != nil {
 				mockIdentity, mockAuthError := tt.authenticatorFunc(req)
 				authenticator := interfaces.NewMockAuthenticator(ctrl)
@@ -178,10 +176,11 @@ func TestContextualAuthenticatedIdentity_MiddlewareAndContext(t *testing.T) {
 				mockErrorMapper = mapper
 			}
 
-			sut := NewReBACAdminBackend(ReBACAdminBackendParams{
+			sut, err := NewReBACAdminBackend(ReBACAdminBackendParams{
 				Authenticator:            mockAuthenticator,
 				AuthenticatorErrorMapper: mockErrorMapper,
 			})
+			c.Assert(err, qt.IsNil)
 
 			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				tt.nextHandler(c, w, r)

@@ -18,7 +18,10 @@ func (b *ReBACAdminBackend) authenticationMiddleware() resources.MiddlewareFunc 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if b.params.Authenticator == nil {
-				next.ServeHTTP(w, newRequestWithIdentityInContext(r, nil))
+				// This should never happen, because the outmost constructor does not
+				// allow nil for authenticator. But it's possible to miss this requirement
+				// in manually created instances (like in tests), we should do the checking.
+				writeErrorResponse(w, NewUnknownError("missing authenticator"))
 				return
 			}
 

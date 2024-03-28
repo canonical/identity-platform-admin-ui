@@ -174,6 +174,7 @@ func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchema
 		s.logger.Error(err.Error())
 		return nil, err
 	}
+
 	i := new(IdentitySchemaData)
 
 	schemas := s.schemas(cm.Data)
@@ -195,6 +196,11 @@ func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchema
 
 	if err != nil {
 		return nil, err
+	}
+
+	// catch if configmap is empty and initialize
+	if cm.Data == nil {
+		cm.Data = make(map[string]string)
 	}
 
 	cm.Data[*data.Id] = string(rawSchema)

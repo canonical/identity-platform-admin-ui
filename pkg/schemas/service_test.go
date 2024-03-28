@@ -801,7 +801,98 @@ func TestCreateSchemaSuccess(t *testing.T) {
 		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
 			i := new(kClient.IdentitySchemaContainer)
 
-			rawSchema, _ := configMap.Data[*c.Id]
+			rawSchema := configMap.Data[*c.Id]
+
+			_ = json.Unmarshal([]byte(rawSchema), &i.Schema)
+
+			if !reflect.DeepEqual(i.Schema, v0Schema) {
+				t.Fatalf("expected schema to be %v not %v", v0Schema, i.Schema)
+			}
+
+			if *c.Id != v0ID {
+				t.Fatalf("expected schema ID to be %v not %v", v0ID, i.Id)
+			}
+
+			return cm, nil
+		},
+	)
+
+	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+
+	if err != nil {
+		t.Fatalf("expected error to be nil not  %v", err)
+	}
+
+	if !reflect.DeepEqual(is.IdentitySchemas[0].Schema, v0Schema) {
+		t.Fatalf("expected schema to be %v not %v", v0Schema, is.IdentitySchemas[0].Schema)
+	}
+
+	if *is.IdentitySchemas[0].Id != v0ID {
+		t.Fatalf("expected schema ID to be %v not %v", v0ID, is.IdentitySchemas[0].Id)
+	}
+
+}
+
+func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	ctx := context.Background()
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.Kratos = mockKratosIdentityApi
+	cfg.Name = "schemas"
+	cfg.Namespace = "default"
+
+	v0Schema := map[string]interface{}{
+		"$id":     "https://schemas.canonical.com/presets/kratos/test_v0.json",
+		"$schema": "http://json-schema.org/draft-07/schema#",
+		"title":   "Admin Account",
+		"type":    "object",
+		"properties": map[string]interface{}{
+			"traits": map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"username": map[string]interface{}{
+						"type":  "string",
+						"title": "Username",
+						"ory.sh/kratos": map[string]interface{}{
+							"credentials": map[string]interface{}{
+								"password": map[string]interface{}{
+									"identifier": true,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"additionalProperties": true,
+	}
+
+	v0ID := "test_v0"
+
+	cm := new(v1.ConfigMap)
+
+	c := new(kClient.IdentitySchemaContainer)
+	c.Id = &v0ID
+	c.Schema = v0Schema
+
+	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
+		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
+			i := new(kClient.IdentitySchemaContainer)
+
+			rawSchema := configMap.Data[*c.Id]
 
 			_ = json.Unmarshal([]byte(rawSchema), &i.Schema)
 

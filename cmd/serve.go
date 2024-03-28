@@ -120,9 +120,10 @@ func serve() {
 		}
 	}
 
-	wpool := pool.NewWorkerPool(specs.WorkersTotal, tracer, monitor, logger)
+	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
+	defer wpool.Stop()
 
-	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, web.NewO11yConfig(tracer, monitor, logger), wpool)
+	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, wpool, web.NewO11yConfig(tracer, monitor, logger))
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

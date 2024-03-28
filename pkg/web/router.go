@@ -26,7 +26,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, ollyConfig O11yConfigInterface, wpool pool.WorkerPoolInterface) http.Handler {
+func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, wpool pool.WorkerPoolInterface, ollyConfig O11yConfigInterface) http.Handler {
 	router := chi.NewMux()
 
 	logger := ollyConfig.Logger()

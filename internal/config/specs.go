@@ -39,5 +39,5 @@ type EnvSpec struct {
 
 	AuthorizationEnabled bool `envconfig:"authorization_enabled" default:"false"`
 
-	WorkersTotal int `envconfig:"workers_total" default:"25"`
+	OpenFGAWorkersTotal int `envconfig:"openfga_workers_total" default:"150"`
 }

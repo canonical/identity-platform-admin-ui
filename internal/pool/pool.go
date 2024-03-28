@@ -15,10 +15,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
-const (
-	jobsBufferSize = 200
-)
-
 type WorkerPool struct {
 	workers int
 
@@ -29,9 +25,9 @@ type WorkerPool struct {
 
 	wg sync.WaitGroup
 
-	Tracer  tracing.TracingInterface
-	Monitor monitoring.MonitorInterface
-	Logger  logging.LoggerInterface
+	tracer  tracing.TracingInterface
+	monitor monitoring.MonitorInterface
+	logger  logging.LoggerInterface
 }
 
 func (p *WorkerPool) Stop() {
@@ -52,7 +48,7 @@ func (p *WorkerPool) Submit(command any, results chan *Result[any], wg *sync.Wai
 func (p *WorkerPool) consume(ID uuid.UUID) {
 	defer func() {
 		if r := recover(); r != nil {
-			p.Logger.Debug("Recovered in consume ", ID.String(), " ", r)
+			p.logger.Debug("Recovered in consume ", ID.String(), " ", r)
 			p.wg.Done()
 			// TODO @shipperizer start another worker
 			return
@@ -62,7 +58,7 @@ func (p *WorkerPool) consume(ID uuid.UUID) {
 	for {
 		select {
 		case <-p.shutdownCtx.Done():
-			p.Logger.Info(ID, " going down")
+			p.logger.Info(ID, " going down")
 			p.wg.Done()
 			return
 		case job := <-p.jobs:
@@ -79,7 +75,7 @@ func (p *WorkerPool) execute(jobID uuid.UUID, command any, results chan *Result[
 
 	select {
 	case <-p.shutdownCtx.Done():
-		p.Logger.Info(jobID, " aborting execution")
+		p.logger.Info(jobID, " aborting execution")
 	default:
 		switch commandFunc := command.(type) {
 		case func():
@@ -100,28 +96,16 @@ func (p *WorkerPool) start() {
 
 func NewWorkerPool(workers int, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *WorkerPool {
 	p := new(WorkerPool)
-	p.Logger = logger
-	p.Monitor = monitor
-	p.Tracer = tracer
+	p.logger = logger
+	p.monitor = monitor
+	p.tracer = tracer
 
 	p.workers = workers
 
 	p.shutdownCtx, p.shutdownFunc = context.WithCancelCause(context.Background())
-	p.jobs = make(chan *job, jobsBufferSize)
+	p.jobs = make(chan *job, 2*workers)
 
 	go p.start()
 
 	return p
-}
-
-func Take[T any](results chan *Result[any], n int) []Result[T] {
-	ret := make([]Result[T], 0)
-
-	for i := 0; i < n; i++ {
-		r := <-results
-		result := NewResult[T](r.key, r.Value.(T))
-		ret = append(ret, *result)
-	}
-
-	return ret
 }

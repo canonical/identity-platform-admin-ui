@@ -34,9 +34,9 @@ func newHandlerWithValidation(handler resources.ServerInterface) *handlerWithVal
 // requestBodyContextKey is the context key to retrieve the parsed request body struct instance.
 type requestBodyContextKey struct{}
 
-// getRequestBodyFromContext fetches request body from given context. If the value
+// GetRequestBodyFromContext fetches request body from given context. If the value
 // was not found in the given context, this will return an error.
-func getRequestBodyFromContext(ctx context.Context) (any, error) {
+func GetRequestBodyFromContext(ctx context.Context) (any, error) {
 	body := ctx.Value(requestBodyContextKey{})
 	if body == nil {
 		return nil, NewMissingRequestBodyError("request body is not available")

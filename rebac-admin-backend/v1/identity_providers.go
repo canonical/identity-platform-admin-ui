@@ -58,7 +58,7 @@ func (h handler) GetIdentityProviders(w http.ResponseWriter, req *http.Request, 
 func (h handler) PostIdentityProviders(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -112,7 +112,7 @@ func (h handler) GetIdentityProvidersItem(w http.ResponseWriter, req *http.Reque
 func (h handler) PutIdentityProvidersItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return

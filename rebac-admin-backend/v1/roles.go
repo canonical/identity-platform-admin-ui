@@ -35,7 +35,7 @@ func (h handler) GetRoles(w http.ResponseWriter, req *http.Request, params resou
 func (h handler) PostRoles(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -89,7 +89,7 @@ func (h handler) GetRolesItem(w http.ResponseWriter, req *http.Request, id strin
 func (h handler) PutRolesItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -136,7 +136,7 @@ func (h handler) GetRolesItemEntitlements(w http.ResponseWriter, req *http.Reque
 func (h handler) PatchRolesItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return

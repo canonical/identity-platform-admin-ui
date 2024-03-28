@@ -35,7 +35,7 @@ func (h handler) GetGroups(w http.ResponseWriter, req *http.Request, params reso
 func (h handler) PostGroups(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -89,7 +89,7 @@ func (h handler) GetGroupsItem(w http.ResponseWriter, req *http.Request, id stri
 func (h handler) PutGroupsItem(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -136,7 +136,7 @@ func (h handler) GetGroupsItemEntitlements(w http.ResponseWriter, req *http.Requ
 func (h handler) PatchGroupsItemEntitlements(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -183,7 +183,7 @@ func (h handler) GetGroupsItemIdentities(w http.ResponseWriter, req *http.Reques
 func (h handler) PatchGroupsItemIdentities(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return
@@ -230,7 +230,7 @@ func (h handler) GetGroupsItemRoles(w http.ResponseWriter, req *http.Request, id
 func (h handler) PatchGroupsItemRoles(w http.ResponseWriter, req *http.Request, id string) {
 	ctx := req.Context()
 
-	body, err := getRequestBodyFromContext(req.Context())
+	body, err := GetRequestBodyFromContext(req.Context())
 	if err != nil {
 		writeErrorResponse(w, err)
 		return

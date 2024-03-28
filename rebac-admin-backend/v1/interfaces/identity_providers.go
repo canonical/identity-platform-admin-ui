@@ -30,7 +30,3 @@ type IdentityProvidersService interface {
 	// UpdateConfiguration update the authentication provider configuration identified by `id`.
 	UpdateConfiguration(ctx context.Context, provider *resources.IdentityProvider) (*resources.IdentityProvider, error)
 }
-
-// IdentityProvidersAuthorization defines an abstract backend to handle authorization for Roles.
-type IdentityProvidersAuthorization interface {
-}

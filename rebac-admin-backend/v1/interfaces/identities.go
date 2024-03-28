@@ -43,7 +43,3 @@ type IdentitiesService interface {
 	// PatchIdentityEntitlements performs addition or removal of an Entitlement to/from an Identity.
 	PatchIdentityEntitlements(ctx context.Context, identityId string, entitlementPatches []resources.IdentityEntitlementsPatchItem) (bool, error)
 }
-
-// IdentitiesAuthorization defines an abstract backend to handle authorization for Identities.
-type IdentitiesAuthorization interface {
-}

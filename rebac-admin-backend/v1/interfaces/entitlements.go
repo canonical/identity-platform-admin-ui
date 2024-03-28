@@ -16,6 +16,3 @@ type EntitlementsService interface {
 	// RawEntitlements returns the list of entitlements as raw text.
 	RawEntitlements(ctx context.Context) (string, error)
 }
-
-type EntitlementsAuthorization interface {
-}

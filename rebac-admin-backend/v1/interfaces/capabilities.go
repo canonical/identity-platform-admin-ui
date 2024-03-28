@@ -13,5 +13,3 @@ import (
 type CapabilitiesService interface {
 	ListCapabilities(ctx context.Context) (*resources.PaginatedResponse[resources.Capability], error)
 }
-
-type CapabilitiesAuthorization interface{}

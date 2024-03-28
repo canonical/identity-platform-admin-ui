@@ -7,31 +7,24 @@ import (
 )
 
 type handler struct {
-	Identities              interfaces.IdentitiesService
-	IdentitiesAuthorization interfaces.IdentitiesAuthorization
-	IdentitiesErrorMapper   ErrorResponseMapper
+	Identities            interfaces.IdentitiesService
+	IdentitiesErrorMapper ErrorResponseMapper
 
-	Roles              interfaces.RolesService
-	RolesAuthorization interfaces.RolesAuthorization
-	RolesErrorMapper   ErrorResponseMapper
+	Roles            interfaces.RolesService
+	RolesErrorMapper ErrorResponseMapper
 
-	IdentityProviders              interfaces.IdentityProvidersService
-	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
-	IdentityProvidersErrorMapper   ErrorResponseMapper
+	IdentityProviders            interfaces.IdentityProvidersService
+	IdentityProvidersErrorMapper ErrorResponseMapper
 
-	Capabilities              interfaces.CapabilitiesService
-	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
-	CapabilitiesErrorMapper   ErrorResponseMapper
+	Capabilities            interfaces.CapabilitiesService
+	CapabilitiesErrorMapper ErrorResponseMapper
 
-	Entitlements              interfaces.EntitlementsService
-	EntitlementsAuthorization interfaces.EntitlementsAuthorization
-	EntitlementsErrorMapper   ErrorResponseMapper
+	Entitlements            interfaces.EntitlementsService
+	EntitlementsErrorMapper ErrorResponseMapper
 
-	Groups              interfaces.GroupsService
-	GroupsAuthorization interfaces.GroupsAuthorization
-	GroupsErrorMapper   ErrorResponseMapper
+	Groups            interfaces.GroupsService
+	GroupsErrorMapper ErrorResponseMapper
 
-	Resources              interfaces.ResourcesService
-	ResourcesAuthorization interfaces.ResourcesAuthorization
-	ResourcesErrorMapper   ErrorResponseMapper
+	Resources            interfaces.ResourcesService
+	ResourcesErrorMapper ErrorResponseMapper
 }

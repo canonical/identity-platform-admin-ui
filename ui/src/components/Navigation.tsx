@@ -54,6 +54,32 @@ const Navigation: FC = () => {
                       Clients
                     </NavLink>
                   </li>
+                  <li className="p-side-navigation__item secondary">
+                    <NavLink
+                      className="p-side-navigation__link"
+                      to={`/identity`}
+                      title={`Identity list`}
+                    >
+                      <Icon
+                        className="is-light p-side-navigation__icon"
+                        name="user"
+                      />{" "}
+                      Identities
+                    </NavLink>
+                  </li>
+                  <li className="p-side-navigation__item secondary">
+                    <NavLink
+                      className="p-side-navigation__link"
+                      to={`/schema`}
+                      title={`Schema list`}
+                    >
+                      <Icon
+                        className="is-light p-side-navigation__icon"
+                        name="profile"
+                      />{" "}
+                      Schemas
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
             </div>

@@ -4,6 +4,8 @@ import Loader from "components/Loader";
 import ClientList from "pages/clients/ClientList";
 import NoMatch from "components/NoMatch";
 import ProviderList from "pages/providers/ProviderList";
+import IdentityList from "pages/identities/IdentityList";
+import SchemaList from "pages/schemas/SchemaList";
 
 const App: FC = () => {
   return (
@@ -12,6 +14,8 @@ const App: FC = () => {
         <Route path="/" element={<Navigate to="/provider" replace={true} />} />
         <Route path="/provider" element={<ProviderList />} />
         <Route path="/client" element={<ClientList />} />
+        <Route path="/identity" element={<IdentityList />} />
+        <Route path="/schema" element={<SchemaList />} />
         <Route path="*" element={<NoMatch />} />
       </Routes>
     </Suspense>

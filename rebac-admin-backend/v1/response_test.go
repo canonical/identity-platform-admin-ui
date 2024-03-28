@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"testing"
 
-	qt "github.com/frankban/quicktest"
 	"go.uber.org/mock/gomock"
+
+	qt "github.com/frankban/quicktest"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
 )
@@ -66,11 +67,18 @@ func TestMapErrorResponse(t *testing.T) {
 			Message: "Bad Request: Expected one value for test-param, got 0",
 		},
 	}, {
-		name: "service error: UnauthorizedError",
-		arg:  NewUnauthorizedError("forbidden"),
+		name: "service error: AuthenticationError",
+		arg:  NewAuthenticationError("unknown user"),
 		expected: &resources.Response{
 			Status:  http.StatusUnauthorized,
-			Message: "Unauthorized: forbidden",
+			Message: "Unauthorized: authentication failed: unknown user",
+		},
+	}, {
+		name: "service error: UnauthorizedError",
+		arg:  NewAuthorizationError("forbidden"),
+		expected: &resources.Response{
+			Status:  http.StatusUnauthorized,
+			Message: "Unauthorized: authorization failed: forbidden",
 		},
 	}, {
 		name: "service error: NotFoundError",

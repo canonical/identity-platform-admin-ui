@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +12,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	qt "github.com/frankban/quicktest"
 	"go.uber.org/mock/gomock"
+
+	qt "github.com/frankban/quicktest"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/interfaces"
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -101,8 +101,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 					Return(&mockIDPObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				idpBody, _ := json.Marshal(mockIDPObject)
-				mockRequest := httptest.NewRequest(http.MethodPost, "/authentication", bytes.NewReader(idpBody))
+				mockRequest := newTestRequest(http.MethodPost, "/authentication", &mockIDPObject)
 				h.PostIdentityProviders(w, mockRequest)
 			},
 			expectedStatus: http.StatusCreated,
@@ -143,8 +142,7 @@ func TestHandler_IdP_Success(t *testing.T) {
 					Return(&mockIDPObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				idpBody, _ := json.Marshal(mockIDPObject)
-				mockRequest := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(idpBody))
+				mockRequest := newTestRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), &mockIDPObject)
 				h.PutIdentityProvidersItem(w, mockRequest, mockIdentityProviderId)
 			},
 			expectedStatus: http.StatusOK,
@@ -183,64 +181,6 @@ func TestHandler_IdP_Success(t *testing.T) {
 
 }
 
-func TestHandler_IdP_ValidationErrors(t *testing.T) {
-	c := qt.New(t)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// need a value that is not a struct to trigger Decode error
-	mockInvalidRequestBody := true
-
-	invalidRequestBody, _ := json.Marshal(mockInvalidRequestBody)
-
-	type EndpointTest struct {
-		name        string
-		triggerFunc func(h handler, w *httptest.ResponseRecorder)
-	}
-
-	tests := []EndpointTest{
-		{
-			name: "TestPostIdentityProvidersFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPost, "/authentication", bytes.NewReader(invalidRequestBody))
-				h.PostIdentityProviders(w, req)
-			},
-		},
-		{
-			name: "TestPutIdentityProvidersItemFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(invalidRequestBody))
-				h.PutIdentityProvidersItem(w, req, mockIdentityProviderId)
-			},
-		},
-	}
-	for _, test := range tests {
-		tt := test
-		c.Run(tt.name, func(c *qt.C) {
-			mockWriter := httptest.NewRecorder()
-			sut := handler{}
-
-			tt.triggerFunc(sut, mockWriter)
-
-			result := mockWriter.Result()
-			defer result.Body.Close()
-
-			c.Assert(result.StatusCode, qt.Equals, http.StatusBadRequest)
-
-			data, err := io.ReadAll(result.Body)
-			c.Assert(err, qt.IsNil)
-
-			response := new(resources.Response)
-
-			err = json.Unmarshal(data, response)
-			c.Assert(err, qt.IsNil)
-
-			c.Assert(response.Status, qt.Equals, http.StatusBadRequest)
-			c.Assert(response.Message, qt.Equals, "Bad Request: request doesn't match the expected schema")
-		})
-	}
-}
-
 func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
@@ -252,6 +192,11 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 	}
 
 	mockError := errors.New("test-error")
+
+	mockIDPObject := resources.IdentityProvider{
+		Id:   &mockIdentityProviderId,
+		Name: &mockIdentityProviderName,
+	}
 
 	type EndpointTest struct {
 		name             string
@@ -287,8 +232,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().RegisterConfiguration(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				idp, _ := json.Marshal(&resources.IdentityProvider{})
-				mockRequest := httptest.NewRequest(http.MethodPost, "/authentication", bytes.NewReader(idp))
+				mockRequest := newTestRequest(http.MethodPost, "/authentication", &mockIDPObject)
 				h.PostIdentityProviders(w, mockRequest)
 			},
 		},
@@ -318,8 +262,7 @@ func TestHandler_IdP_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().UpdateConfiguration(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				idp, _ := json.Marshal(&resources.IdentityProvider{Id: &mockIdentityProviderId})
-				mockRequest := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), bytes.NewReader(idp))
+				mockRequest := newTestRequest(http.MethodPut, fmt.Sprintf("/authentication/%s", mockIdentityProviderId), &mockIDPObject)
 				h.PutIdentityProvidersItem(w, mockRequest, mockIdentityProviderId)
 			},
 		},

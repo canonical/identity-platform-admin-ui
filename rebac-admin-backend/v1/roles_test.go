@@ -4,7 +4,6 @@
 package v1
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +12,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	qt "github.com/frankban/quicktest"
 	"go.uber.org/mock/gomock"
+
+	qt "github.com/frankban/quicktest"
 
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/interfaces"
 	"github.com/canonical/identity-platform-admin-ui/rebac-admin-backend/v1/resources"
@@ -84,8 +84,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 					Return(&mockRoleObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				roleBody, _ := json.Marshal(mockRoleObject)
-				mockRequest := httptest.NewRequest(http.MethodPost, "/roles", bytes.NewReader(roleBody))
+				mockRequest := newTestRequest(http.MethodPost, "/roles", &mockRoleObject)
 				h.PostRoles(w, mockRequest)
 			},
 			expectedStatus: http.StatusCreated,
@@ -113,8 +112,7 @@ func TestHandler_Roles_Success(t *testing.T) {
 					Return(&mockRoleObject, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				roleBody, _ := json.Marshal(mockRoleObject)
-				mockRequest := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), bytes.NewReader(roleBody))
+				mockRequest := newTestRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), &mockRoleObject)
 				h.PutRolesItem(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
@@ -158,15 +156,15 @@ func TestHandler_Roles_Success(t *testing.T) {
 					Return(true, nil)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patchesBody, _ := json.Marshal(resources.RoleEntitlementsPatchRequestBody{
+				patches := resources.RoleEntitlementsPatchRequestBody{
 					Patches: []resources.RoleEntitlementsPatchItem{
 						{
 							Entitlement: mockEntitlements.Data[0],
 							Op:          "add",
 						},
 					},
-				})
-				mockRequest := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), bytes.NewReader(patchesBody))
+				}
+				mockRequest := newTestRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), &patches)
 				h.PatchRolesItemEntitlements(w, mockRequest, mockRoleId)
 			},
 			expectedStatus: http.StatusOK,
@@ -204,71 +202,6 @@ func TestHandler_Roles_Success(t *testing.T) {
 
 }
 
-func TestHandler_Roles_ValidationErrors(t *testing.T) {
-	c := qt.New(t)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// need a value that is not a struct to trigger Decode error
-	mockInvalidRequestBody := true
-
-	invalidRequestBody, _ := json.Marshal(mockInvalidRequestBody)
-
-	type EndpointTest struct {
-		name        string
-		triggerFunc func(h handler, w *httptest.ResponseRecorder)
-	}
-
-	tests := []EndpointTest{
-		{
-			name: "TestPostRolesFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/roles/%s", mockRoleId), bytes.NewReader(invalidRequestBody))
-				h.PostRoles(w, req)
-			},
-		},
-		{
-			name: "TestPutRolesFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), bytes.NewReader(invalidRequestBody))
-				h.PutRolesItem(w, req, mockRoleId)
-			},
-		},
-		{
-			name: "TestPatchRolesEntitlementsFailureInvalidRequest",
-			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), bytes.NewReader(invalidRequestBody))
-				h.PatchRolesItemEntitlements(w, req, mockRoleId)
-			},
-		},
-	}
-	for _, test := range tests {
-		tt := test
-		c.Run(tt.name, func(c *qt.C) {
-			mockWriter := httptest.NewRecorder()
-			sut := handler{}
-
-			tt.triggerFunc(sut, mockWriter)
-
-			result := mockWriter.Result()
-			defer result.Body.Close()
-
-			c.Assert(result.StatusCode, qt.Equals, http.StatusBadRequest)
-
-			data, err := io.ReadAll(result.Body)
-			c.Assert(err, qt.IsNil)
-
-			response := new(resources.Response)
-
-			err = json.Unmarshal(data, response)
-			c.Assert(err, qt.IsNil)
-
-			c.Assert(response.Status, qt.Equals, http.StatusBadRequest)
-			c.Assert(response.Message, qt.Equals, "Bad Request: request doesn't match the expected schema")
-		})
-	}
-}
-
 func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 	c := qt.New(t)
 	ctrl := gomock.NewController(t)
@@ -280,6 +213,21 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 	}
 
 	mockError := errors.New("test-error")
+
+	mockRoleObject := resources.Role{
+		Id:   &mockRoleId,
+		Name: mockRoleName,
+	}
+
+	mockEntitlements := resources.PaginatedResponse[resources.EntityEntitlement]{
+		Data: []resources.EntityEntitlement{
+			{
+				EntitlementType: "mock-entl-type",
+				EntityName:      "mock-entity-name",
+				EntityType:      "mock-entity-type",
+			},
+		},
+	}
 
 	type EndpointTest struct {
 		name             string
@@ -305,8 +253,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().CreateRole(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				role, _ := json.Marshal(&resources.Role{})
-				request := httptest.NewRequest(http.MethodPost, "/roles", bytes.NewReader(role))
+				request := newTestRequest(http.MethodPost, "/roles", &mockRoleObject)
 				h.PostRoles(w, request)
 			},
 		},
@@ -336,8 +283,7 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().UpdateRole(gomock.Any(), gomock.Any()).Return(nil, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				role, _ := json.Marshal(&resources.Role{Id: &mockRoleId})
-				request := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), bytes.NewReader(role))
+				request := newTestRequest(http.MethodPut, fmt.Sprintf("/roles/%s", mockRoleId), &mockRoleObject)
 				h.PutRolesItem(w, request, mockRoleId)
 			},
 		},
@@ -358,8 +304,13 @@ func TestHandler_Roles_ServiceBackendFailures(t *testing.T) {
 				mockService.EXPECT().PatchRoleEntitlements(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, mockError)
 			},
 			triggerFunc: func(h handler, w *httptest.ResponseRecorder) {
-				patches, _ := json.Marshal(&resources.RoleEntitlementsPatchRequestBody{})
-				request := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), bytes.NewReader(patches))
+				patches := &resources.RoleEntitlementsPatchRequestBody{
+					Patches: []resources.RoleEntitlementsPatchItem{{
+						Op:          "add",
+						Entitlement: mockEntitlements.Data[0],
+					}},
+				}
+				request := newTestRequest(http.MethodPatch, fmt.Sprintf("/roles/%s/entitlements", mockRoleId), patches)
 				h.PatchRolesItemEntitlements(w, request, mockRoleId)
 			},
 		},

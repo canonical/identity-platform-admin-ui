@@ -5,10 +5,12 @@ package roles
 
 import (
 	"context"
+	"sync"
 
 	"github.com/openfga/go-sdk/client"
 
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 )
 
 // ServiceInterface is the interface that each business logic service needs to implement
@@ -30,4 +32,8 @@ type OpenFGAClientInterface interface {
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	Check(context.Context, string, string, string) (bool, error)
+}
+
+type WorkerPoolInterface interface {
+	Submit(any, chan *pool.Result[any], *sync.WaitGroup) error
 }

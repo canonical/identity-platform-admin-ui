@@ -16,6 +16,9 @@ import (
 // ReBACAdminBackendParams contains references to user-defined implementation
 // of required abstractions, called "backend"s.
 type ReBACAdminBackendParams struct {
+	Authenticator            interfaces.Authenticator
+	AuthenticatorErrorMapper ErrorResponseMapper
+
 	Identities              interfaces.IdentitiesService
 	IdentitiesAuthorization interfaces.IdentitiesAuthorization
 	IdentitiesErrorMapper   ErrorResponseMapper
@@ -102,6 +105,9 @@ func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	h := newHandlerWithValidation(b.handler)
 	return resources.HandlerWithOptions(h, resources.ChiServerOptions{
 		BaseURL: baseURL + "/v1",
+		Middlewares: []resources.MiddlewareFunc{
+			b.authenticationMiddleware(),
+		},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeErrorResponse(w, err)
 		},

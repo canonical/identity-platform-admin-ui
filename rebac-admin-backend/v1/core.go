@@ -19,33 +19,26 @@ type ReBACAdminBackendParams struct {
 	Authenticator            interfaces.Authenticator
 	AuthenticatorErrorMapper ErrorResponseMapper
 
-	Identities              interfaces.IdentitiesService
-	IdentitiesAuthorization interfaces.IdentitiesAuthorization
-	IdentitiesErrorMapper   ErrorResponseMapper
+	Identities            interfaces.IdentitiesService
+	IdentitiesErrorMapper ErrorResponseMapper
 
-	Roles              interfaces.RolesService
-	RolesAuthorization interfaces.RolesAuthorization
-	RolesErrorMapper   ErrorResponseMapper
+	Roles            interfaces.RolesService
+	RolesErrorMapper ErrorResponseMapper
 
-	IdentityProviders              interfaces.IdentityProvidersService
-	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
-	IdentityProvidersErrorMapper   ErrorResponseMapper
+	IdentityProviders            interfaces.IdentityProvidersService
+	IdentityProvidersErrorMapper ErrorResponseMapper
 
-	Capabilities              interfaces.CapabilitiesService
-	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
-	CapabilitiesErrorMapper   ErrorResponseMapper
+	Capabilities            interfaces.CapabilitiesService
+	CapabilitiesErrorMapper ErrorResponseMapper
 
-	Entitlements              interfaces.EntitlementsService
-	EntitlementsAuthorization interfaces.EntitlementsAuthorization
-	EntitlementsErrorMapper   ErrorResponseMapper
+	Entitlements            interfaces.EntitlementsService
+	EntitlementsErrorMapper ErrorResponseMapper
 
-	Groups              interfaces.GroupsService
-	GroupsAuthorization interfaces.GroupsAuthorization
-	GroupsErrorMapper   ErrorResponseMapper
+	Groups            interfaces.GroupsService
+	GroupsErrorMapper ErrorResponseMapper
 
-	Resources              interfaces.ResourcesService
-	ResourcesAuthorization interfaces.ResourcesAuthorization
-	ResourcesErrorMapper   ErrorResponseMapper
+	Resources            interfaces.ResourcesService
+	ResourcesErrorMapper ErrorResponseMapper
 }
 
 // ReBACAdminBackend represents the ReBAC admin backend as a whole package.
@@ -60,33 +53,26 @@ func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
 	return newReBACAdminBackendWithService(
 		params,
 		newHandlerWithValidation(&handler{
-			Identities:              params.Identities,
-			IdentitiesAuthorization: params.IdentitiesAuthorization,
-			IdentitiesErrorMapper:   params.IdentitiesErrorMapper,
+			Identities:            params.Identities,
+			IdentitiesErrorMapper: params.IdentitiesErrorMapper,
 
-			Roles:              params.Roles,
-			RolesAuthorization: params.RolesAuthorization,
-			RolesErrorMapper:   params.RolesErrorMapper,
+			Roles:            params.Roles,
+			RolesErrorMapper: params.RolesErrorMapper,
 
-			IdentityProviders:              params.IdentityProviders,
-			IdentityProvidersAuthorization: params.IdentityProvidersAuthorization,
-			IdentityProvidersErrorMapper:   params.IdentityProvidersErrorMapper,
+			IdentityProviders:            params.IdentityProviders,
+			IdentityProvidersErrorMapper: params.IdentityProvidersErrorMapper,
 
-			Capabilities:              params.Capabilities,
-			CapabilitiesAuthorization: params.CapabilitiesAuthorization,
-			CapabilitiesErrorMapper:   params.CapabilitiesErrorMapper,
+			Capabilities:            params.Capabilities,
+			CapabilitiesErrorMapper: params.CapabilitiesErrorMapper,
 
-			Entitlements:              params.Entitlements,
-			EntitlementsAuthorization: params.EntitlementsAuthorization,
-			EntitlementsErrorMapper:   params.EntitlementsErrorMapper,
+			Entitlements:            params.Entitlements,
+			EntitlementsErrorMapper: params.EntitlementsErrorMapper,
 
-			Groups:              params.Groups,
-			GroupsAuthorization: params.GroupsAuthorization,
-			GroupsErrorMapper:   params.GroupsErrorMapper,
+			Groups:            params.Groups,
+			GroupsErrorMapper: params.GroupsErrorMapper,
 
-			Resources:              params.Resources,
-			ResourcesAuthorization: params.ResourcesAuthorization,
-			ResourcesErrorMapper:   params.ResourcesErrorMapper,
+			Resources:            params.Resources,
+			ResourcesErrorMapper: params.ResourcesErrorMapper,
 		}))
 }
 

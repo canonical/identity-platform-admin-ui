@@ -43,7 +43,3 @@ type GroupsService interface {
 	// PatchGroupEntitlements performs addition or removal of an Entitlement to/from a Group identified by `groupId`.
 	PatchGroupEntitlements(ctx context.Context, identityId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error)
 }
-
-// GroupsAuthorization defines an abstract backend to handle authorization for Groups.
-type GroupsAuthorization interface {
-}

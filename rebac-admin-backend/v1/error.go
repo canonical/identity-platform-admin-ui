@@ -30,8 +30,16 @@ func (e *errorWithStatus) Error() string {
 	return fmt.Sprintf("%s: %s", statusText, e.message)
 }
 
-// NewUnauthorizedError returns an error instance that represents an unauthorized access error.
-func NewUnauthorizedError(message string) error {
+// NewAuthenticationError returns an error instance that represents an authentication error.
+func NewAuthenticationError(message string) error {
+	return &errorWithStatus{
+		status:  http.StatusUnauthorized,
+		message: fmt.Sprintf("authentication failed: %s", message),
+	}
+}
+
+// NewAuthorizationError returns an error instance that represents an unauthorized access error.
+func NewAuthorizationError(message string) error {
 	return &errorWithStatus{
 		status:  http.StatusUnauthorized,
 		message: fmt.Sprintf("authorization failed: %s", message),

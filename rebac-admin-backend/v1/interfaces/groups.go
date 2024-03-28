@@ -31,7 +31,7 @@ type GroupsService interface {
 	// GetGroupIdentities returns a page of identities in a Group identified by `groupId`.
 	GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error)
 	// PatchGroupIdentities performs addition or removal of identities to/from a Group identified by `groupId`.
-	PatchGroupIdentities(ctx context.Context, groupId string, groupPatches []resources.GroupIdentitiesPatchItem) (bool, error)
+	PatchGroupIdentities(ctx context.Context, groupId string, identityPatches []resources.GroupIdentitiesPatchItem) (bool, error)
 
 	// GetGroupRoles returns a page of Roles for Group `groupId`.
 	GetGroupRoles(ctx context.Context, groupId string, params *resources.GetGroupsItemRolesParams) (*resources.PaginatedResponse[resources.Role], error)
@@ -41,5 +41,5 @@ type GroupsService interface {
 	// GetGroupEntitlements returns a page of Entitlements for Group `groupId`.
 	GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error)
 	// PatchGroupEntitlements performs addition or removal of an Entitlement to/from a Group identified by `groupId`.
-	PatchGroupEntitlements(ctx context.Context, identityId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error)
+	PatchGroupEntitlements(ctx context.Context, groupId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error)
 }

@@ -34,7 +34,7 @@ func (e *errorWithStatus) Error() string {
 func NewUnauthorizedError(message string) error {
 	return &errorWithStatus{
 		status:  http.StatusUnauthorized,
-		message: message,
+		message: fmt.Sprintf("authorization failed: %s", message),
 	}
 }
 

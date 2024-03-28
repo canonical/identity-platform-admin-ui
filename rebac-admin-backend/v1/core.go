@@ -57,35 +57,37 @@ type ReBACAdminBackend struct {
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
 func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
-	return newReBACAdminBackendWithService(params, &handler{
-		Identities:              params.Identities,
-		IdentitiesAuthorization: params.IdentitiesAuthorization,
-		IdentitiesErrorMapper:   params.IdentitiesErrorMapper,
+	return newReBACAdminBackendWithService(
+		params,
+		newHandlerWithValidation(&handler{
+			Identities:              params.Identities,
+			IdentitiesAuthorization: params.IdentitiesAuthorization,
+			IdentitiesErrorMapper:   params.IdentitiesErrorMapper,
 
-		Roles:              params.Roles,
-		RolesAuthorization: params.RolesAuthorization,
-		RolesErrorMapper:   params.RolesErrorMapper,
+			Roles:              params.Roles,
+			RolesAuthorization: params.RolesAuthorization,
+			RolesErrorMapper:   params.RolesErrorMapper,
 
-		IdentityProviders:              params.IdentityProviders,
-		IdentityProvidersAuthorization: params.IdentityProvidersAuthorization,
-		IdentityProvidersErrorMapper:   params.IdentityProvidersErrorMapper,
+			IdentityProviders:              params.IdentityProviders,
+			IdentityProvidersAuthorization: params.IdentityProvidersAuthorization,
+			IdentityProvidersErrorMapper:   params.IdentityProvidersErrorMapper,
 
-		Capabilities:              params.Capabilities,
-		CapabilitiesAuthorization: params.CapabilitiesAuthorization,
-		CapabilitiesErrorMapper:   params.CapabilitiesErrorMapper,
+			Capabilities:              params.Capabilities,
+			CapabilitiesAuthorization: params.CapabilitiesAuthorization,
+			CapabilitiesErrorMapper:   params.CapabilitiesErrorMapper,
 
-		Entitlements:              params.Entitlements,
-		EntitlementsAuthorization: params.EntitlementsAuthorization,
-		EntitlementsErrorMapper:   params.EntitlementsErrorMapper,
+			Entitlements:              params.Entitlements,
+			EntitlementsAuthorization: params.EntitlementsAuthorization,
+			EntitlementsErrorMapper:   params.EntitlementsErrorMapper,
 
-		Groups:              params.Groups,
-		GroupsAuthorization: params.GroupsAuthorization,
-		GroupsErrorMapper:   params.GroupsErrorMapper,
+			Groups:              params.Groups,
+			GroupsAuthorization: params.GroupsAuthorization,
+			GroupsErrorMapper:   params.GroupsErrorMapper,
 
-		Resources:              params.Resources,
-		ResourcesAuthorization: params.ResourcesAuthorization,
-		ResourcesErrorMapper:   params.ResourcesErrorMapper,
-	})
+			Resources:              params.Resources,
+			ResourcesAuthorization: params.ResourcesAuthorization,
+			ResourcesErrorMapper:   params.ResourcesErrorMapper,
+		}))
 }
 
 // newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured
@@ -102,8 +104,7 @@ func newReBACAdminBackendWithService(params ReBACAdminBackendParams, handler res
 // Handler returns HTTP handlers implementing the ReBAC Admin OpenAPI spec.
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
-	h := newHandlerWithValidation(b.handler)
-	return resources.HandlerWithOptions(h, resources.ChiServerOptions{
+	return resources.HandlerWithOptions(b.handler, resources.ChiServerOptions{
 		BaseURL: baseURL + "/v1",
 		Middlewares: []resources.MiddlewareFunc{
 			b.authenticationMiddleware(),

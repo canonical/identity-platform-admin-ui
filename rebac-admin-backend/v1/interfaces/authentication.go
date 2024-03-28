@@ -9,9 +9,14 @@ import "net/http"
 type Authenticator interface {
 	// Authenticate receives an HTTP request and returns the identity of the caller.
 	// The same identity will be available to the service backend through the request
-	// context.
+	// context. To avoid issues with value types, it's best to return a pointer type.
 	//
 	// Note that the implementations of this method should not alter the state of the
 	// received request instance.
-	Authenticate(r http.Request) (any, error)
+	//
+	// If the returned identity is nil it will be regarded as authentication failure.
+	//
+	// To return an error, the implementations should use the provided error functions
+	// (e.g., `NewAuthenticationError`) and avoid creating ad-hoc errors.
+	Authenticate(r *http.Request) (any, error)
 }

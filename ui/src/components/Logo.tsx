@@ -11,7 +11,7 @@ const Logo: FC = () => {
           alt="Circle of friends"
         />
       </div>
-      <div className="logo-text p-heading--4">Canonical IAM</div>
+      <div className="logo-text p-heading--4">Identity platform</div>
     </NavLink>
   );
 };

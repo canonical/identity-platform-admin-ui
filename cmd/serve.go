@@ -24,6 +24,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
@@ -119,7 +120,9 @@ func serve() {
 		}
 	}
 
-	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, web.NewO11yConfig(tracer, monitor, logger))
+	wpool := pool.NewWorkerPool(specs.WorkersTotal, tracer, monitor, logger)
+
+	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, web.NewO11yConfig(tracer, monitor, logger), wpool)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

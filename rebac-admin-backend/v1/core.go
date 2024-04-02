@@ -6,6 +6,7 @@
 package v1
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -16,33 +17,30 @@ import (
 // ReBACAdminBackendParams contains references to user-defined implementation
 // of required abstractions, called "backend"s.
 type ReBACAdminBackendParams struct {
-	Identities              interfaces.IdentitiesService
-	IdentitiesAuthorization interfaces.IdentitiesAuthorization
-	IdentitiesErrorMapper   ErrorResponseMapper
+	// Authenticator is required.
+	Authenticator            interfaces.Authenticator
+	AuthenticatorErrorMapper ErrorResponseMapper
 
-	Roles              interfaces.RolesService
-	RolesAuthorization interfaces.RolesAuthorization
-	RolesErrorMapper   ErrorResponseMapper
+	Identities            interfaces.IdentitiesService
+	IdentitiesErrorMapper ErrorResponseMapper
 
-	IdentityProviders              interfaces.IdentityProvidersService
-	IdentityProvidersAuthorization interfaces.IdentityProvidersAuthorization
-	IdentityProvidersErrorMapper   ErrorResponseMapper
+	Roles            interfaces.RolesService
+	RolesErrorMapper ErrorResponseMapper
 
-	Capabilities              interfaces.CapabilitiesService
-	CapabilitiesAuthorization interfaces.CapabilitiesAuthorization
-	CapabilitiesErrorMapper   ErrorResponseMapper
+	IdentityProviders            interfaces.IdentityProvidersService
+	IdentityProvidersErrorMapper ErrorResponseMapper
 
-	Entitlements              interfaces.EntitlementsService
-	EntitlementsAuthorization interfaces.EntitlementsAuthorization
-	EntitlementsErrorMapper   ErrorResponseMapper
+	Capabilities            interfaces.CapabilitiesService
+	CapabilitiesErrorMapper ErrorResponseMapper
 
-	Groups              interfaces.GroupsService
-	GroupsAuthorization interfaces.GroupsAuthorization
-	GroupsErrorMapper   ErrorResponseMapper
+	Entitlements            interfaces.EntitlementsService
+	EntitlementsErrorMapper ErrorResponseMapper
 
-	Resources              interfaces.ResourcesService
-	ResourcesAuthorization interfaces.ResourcesAuthorization
-	ResourcesErrorMapper   ErrorResponseMapper
+	Groups            interfaces.GroupsService
+	GroupsErrorMapper ErrorResponseMapper
+
+	Resources            interfaces.ResourcesService
+	ResourcesErrorMapper ErrorResponseMapper
 }
 
 // ReBACAdminBackend represents the ReBAC admin backend as a whole package.
@@ -53,36 +51,35 @@ type ReBACAdminBackend struct {
 
 // NewReBACAdminBackend returns a new ReBACAdminBackend instance, configured
 // with given backends.
-func NewReBACAdminBackend(params ReBACAdminBackendParams) *ReBACAdminBackend {
-	return newReBACAdminBackendWithService(params, &handler{
-		Identities:              params.Identities,
-		IdentitiesAuthorization: params.IdentitiesAuthorization,
-		IdentitiesErrorMapper:   params.IdentitiesErrorMapper,
+func NewReBACAdminBackend(params ReBACAdminBackendParams) (*ReBACAdminBackend, error) {
+	if params.Authenticator == nil {
+		return nil, errors.New("authenticator cannot be nil")
+	}
 
-		Roles:              params.Roles,
-		RolesAuthorization: params.RolesAuthorization,
-		RolesErrorMapper:   params.RolesErrorMapper,
+	return newReBACAdminBackendWithService(
+		params,
+		newHandlerWithValidation(&handler{
+			Identities:            params.Identities,
+			IdentitiesErrorMapper: params.IdentitiesErrorMapper,
 
-		IdentityProviders:              params.IdentityProviders,
-		IdentityProvidersAuthorization: params.IdentityProvidersAuthorization,
-		IdentityProvidersErrorMapper:   params.IdentityProvidersErrorMapper,
+			Roles:            params.Roles,
+			RolesErrorMapper: params.RolesErrorMapper,
 
-		Capabilities:              params.Capabilities,
-		CapabilitiesAuthorization: params.CapabilitiesAuthorization,
-		CapabilitiesErrorMapper:   params.CapabilitiesErrorMapper,
+			IdentityProviders:            params.IdentityProviders,
+			IdentityProvidersErrorMapper: params.IdentityProvidersErrorMapper,
 
-		Entitlements:              params.Entitlements,
-		EntitlementsAuthorization: params.EntitlementsAuthorization,
-		EntitlementsErrorMapper:   params.EntitlementsErrorMapper,
+			Capabilities:            params.Capabilities,
+			CapabilitiesErrorMapper: params.CapabilitiesErrorMapper,
 
-		Groups:              params.Groups,
-		GroupsAuthorization: params.GroupsAuthorization,
-		GroupsErrorMapper:   params.GroupsErrorMapper,
+			Entitlements:            params.Entitlements,
+			EntitlementsErrorMapper: params.EntitlementsErrorMapper,
 
-		Resources:              params.Resources,
-		ResourcesAuthorization: params.ResourcesAuthorization,
-		ResourcesErrorMapper:   params.ResourcesErrorMapper,
-	})
+			Groups:            params.Groups,
+			GroupsErrorMapper: params.GroupsErrorMapper,
+
+			Resources:            params.Resources,
+			ResourcesErrorMapper: params.ResourcesErrorMapper,
+		})), nil
 }
 
 // newReBACAdminBackendWithService returns a new ReBACAdminBackend instance, configured
@@ -99,9 +96,11 @@ func newReBACAdminBackendWithService(params ReBACAdminBackendParams, handler res
 // Handler returns HTTP handlers implementing the ReBAC Admin OpenAPI spec.
 func (b *ReBACAdminBackend) Handler(baseURL string) http.Handler {
 	baseURL, _ = strings.CutSuffix(baseURL, "/")
-	h := newHandlerWithValidation(b.handler)
-	return resources.HandlerWithOptions(h, resources.ChiServerOptions{
+	return resources.HandlerWithOptions(b.handler, resources.ChiServerOptions{
 		BaseURL: baseURL + "/v1",
+		Middlewares: []resources.MiddlewareFunc{
+			b.authenticationMiddleware(),
+		},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeErrorResponse(w, err)
 		},

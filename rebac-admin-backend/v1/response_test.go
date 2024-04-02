@@ -66,11 +66,18 @@ func TestMapErrorResponse(t *testing.T) {
 			Message: "Bad Request: Expected one value for test-param, got 0",
 		},
 	}, {
-		name: "service error: UnauthorizedError",
-		arg:  NewUnauthorizedError("forbidden"),
+		name: "service error: AuthenticationError",
+		arg:  NewAuthenticationError("unknown user"),
 		expected: &resources.Response{
 			Status:  http.StatusUnauthorized,
-			Message: "Unauthorized: forbidden",
+			Message: "Unauthorized: authentication failed: unknown user",
+		},
+	}, {
+		name: "service error: UnauthorizedError",
+		arg:  NewAuthorizationError("forbidden"),
+		expected: &resources.Response{
+			Status:  http.StatusUnauthorized,
+			Message: "Unauthorized: authorization failed: forbidden",
 		},
 	}, {
 		name: "service error: NotFoundError",

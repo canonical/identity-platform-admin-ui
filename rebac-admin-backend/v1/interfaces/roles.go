@@ -31,7 +31,3 @@ type RolesService interface {
 	// PatchRoleEntitlements performs addition or removal of an Entitlement to/from a Role.
 	PatchRoleEntitlements(ctx context.Context, roleId string, entitlementPatches []resources.RoleEntitlementsPatchItem) (bool, error)
 }
-
-// RolesAuthorization defines an abstract backend to handle authorization for Roles.
-type RolesAuthorization interface {
-}

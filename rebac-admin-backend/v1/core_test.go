@@ -12,13 +12,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+//go:generate mockgen -package interfaces -destination ./interfaces/mock_authentication.go -source=./interfaces/authentication.go
+
 // TestHandlerWorksWithStandardMux this test ensures that the returned Handler
 // can be used with the Golang standard library multiplexers, and it's not tied
 // to the underlying router library.
 func TestHandlerWorksWithStandardMux(t *testing.T) {
 	c := qt.New(t)
 
-	sut := NewReBACAdminBackend(ReBACAdminBackendParams{})
+	sut, _ := NewReBACAdminBackend(ReBACAdminBackendParams{
+		Authenticator: &noopAuthenticator{},
+	})
 	handler := sut.Handler("/some/base/path/")
 
 	mux := http.NewServeMux()
@@ -44,7 +48,9 @@ func TestHandlerWorksWithStandardMux(t *testing.T) {
 func TestHandlerWorksWithChiMux(t *testing.T) {
 	c := qt.New(t)
 
-	sut := NewReBACAdminBackend(ReBACAdminBackendParams{})
+	sut, _ := NewReBACAdminBackend(ReBACAdminBackendParams{
+		Authenticator: &noopAuthenticator{},
+	})
 	handler := sut.Handler("")
 
 	mux := chi.NewMux()

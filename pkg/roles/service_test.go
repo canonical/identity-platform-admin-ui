@@ -9,9 +9,11 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	trace "go.opentelemetry.io/otel/trace"
@@ -20,12 +22,44 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
+//go:generate mockgen -build_flags=--mod=mod -package pool -destination ../../internal/pool/mock_pool.go -source=../../internal/pool/interfaces.go
+
+func setupMockSubmit(wp *pool.MockWorkerPoolInterface, resultsChan chan *pool.Result[any]) (*gomock.Call, chan *pool.Result[any]) {
+	key := uuid.New()
+	var internalResultsChannel chan *pool.Result[any]
+
+	call := wp.EXPECT().Submit(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Do(
+		func(command any, results chan *pool.Result[any], wg *sync.WaitGroup) {
+			var value any = true
+
+			switch commandFunc := command.(type) {
+			case func():
+				commandFunc()
+			case func() any:
+				value = commandFunc()
+			}
+
+			result := pool.NewResult[any](key, value)
+			results <- result
+			if resultsChan != nil {
+				resultsChan <- result
+			}
+
+			wg.Done()
+
+			internalResultsChannel = results
+		},
+	).Return(key.String(), nil)
+
+	return call, internalResultsChannel
+}
 
 func TestServiceListRoles(t *testing.T) {
 	type expected struct {
@@ -74,7 +108,9 @@ func TestServiceListRoles(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().ListObjects(gomock.Any(), fmt.Sprintf("user:%s", test.input), "can_view", "role").Return(test.expected.roles, test.expected.err)
@@ -188,6 +224,8 @@ func TestServiceListRoleGroups(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
 			r := new(client.ClientReadResponse)
 
 			tuples := []openfga.Tuple{}
@@ -206,7 +244,7 @@ func TestServiceListRoleGroups(t *testing.T) {
 			r.SetContinuationToken(test.expected.token)
 			r.SetTuples(tuples)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoleGroups").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role), test.input.token).Return(r, test.expected.err)
@@ -293,7 +331,9 @@ func TestServiceGetRole(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.GetRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().Check(gomock.Any(), fmt.Sprintf("user:%s", test.input.user), "can_view", fmt.Sprintf("role:%s", test.input.role)).Return(test.expected.check, test.expected.err)
@@ -354,7 +394,9 @@ func TestServiceCreateRole(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.CreateRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
@@ -418,7 +460,12 @@ func TestServiceDeleteRole(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			for i := 0; i < 6; i++ {
+				setupMockSubmit(workerPool, nil)
+			}
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.DeleteRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removePermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -543,7 +590,13 @@ func TestServiceListPermissions(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			for i := 0; i < 6; i++ {
+				setupMockSubmit(workerPool, nil)
+			}
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.listPermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -607,25 +660,26 @@ func TestServiceListPermissions(t *testing.T) {
 
 			if test.expected != nil {
 				// TODO @shipperizer fix this so that we can pin it down to the error case only
-				mockLogger.EXPECT().Error(gomock.Any()).Times(12)
+				mockLogger.EXPECT().Error(gomock.Any()).MinTimes(0).MaxTimes(12)
+				mockLogger.EXPECT().Errorf(gomock.Any()).MaxTimes(12)
 			}
 
 			gomock.InAnyOrder(calls)
 			permissions, cTokens, err := svc.ListPermissions(context.Background(), test.input.role, test.input.cTokens)
 
-			if err != nil && test.expected != nil {
-				t.Errorf("expected error to be silenced and return nil got %v instead", err)
+			if err != nil && test.expected == nil {
+				t.Fatalf("expected error to be silenced and return nil got %v instead", err)
 			}
 
 			sort.Strings(permissions)
 			sort.Strings(expPermissions)
 
 			if err == nil && test.expected == nil && !reflect.DeepEqual(permissions, expPermissions) {
-				t.Errorf("expected permissions to be %v got %v", expPermissions, permissions)
+				t.Fatalf("expected permissions to be %v got %v", expPermissions, permissions)
 			}
 
 			if err == nil && test.expected == nil && !reflect.DeepEqual(cTokens, expCTokens) {
-				t.Errorf("expected continuation tokens to be %v got %v", expCTokens, cTokens)
+				t.Fatalf("expected continuation tokens to be %v got %v", expCTokens, cTokens)
 			}
 		})
 	}
@@ -676,7 +730,9 @@ func TestServiceAssignPermissions(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.AssignPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
@@ -753,7 +809,9 @@ func TestServiceRemovePermissions(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.RemovePermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(

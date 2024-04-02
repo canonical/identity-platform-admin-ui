@@ -38,4 +38,6 @@ type EnvSpec struct {
 	ModelId   string `envconfig:"openfga_authorization_model_id" default:""`
 
 	AuthorizationEnabled bool `envconfig:"authorization_enabled" default:"false"`
+
+	OpenFGAWorkersTotal int `envconfig:"openfga_workers_total" default:"150"`
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
@@ -25,7 +26,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, ollyConfig O11yConfigInterface) http.Handler {
+func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, wpool pool.WorkerPoolInterface, ollyConfig O11yConfigInterface) http.Handler {
 	router := chi.NewMux()
 
 	logger := ollyConfig.Logger()
@@ -79,13 +80,13 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	).RegisterEndpoints(router)
 	roles.NewAPI(
-		roles.NewService(externalConfig.OpenFGA(), tracer, monitor, logger),
+		roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
 	).RegisterEndpoints(router)
 	groups.NewAPI(
-		groups.NewService(externalConfig.OpenFGA(), tracer, monitor, logger),
+		groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,

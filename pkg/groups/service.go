@@ -15,6 +15,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 )
 
 const (
@@ -22,9 +23,18 @@ const (
 	ASSIGNEE_RELATION = "assignee"
 )
 
+type listPermissionsResult struct {
+	permissions []string
+	token       string
+	ofgaType    string
+	err         error
+}
+
 // Service contains the business logic to deal with groups on the Admin UI OpenFGA model
 type Service struct {
 	ofga OpenFGAClientInterface
+
+	wpool pool.WorkerPoolInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -74,54 +84,58 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListPermissions")
 	defer span.End()
 
-	permissionsMap := sync.Map{}
-	tokensMap := sync.Map{}
+	// keep it a buffered channel, if set to unbuffered we would need a goroutine
+	// to consume from it before pushing to it
+	// https://go.dev/ref/spec#Send_statements
+	// A send on an unbuffered channel can proceed if a receiver is ready.
+	// A send on a buffered channel can proceed if there is room in the buffer
+	results := make(chan *pool.Result[any], len(s.permissionTypes()))
 
-	var wg sync.WaitGroup
-
+	wg := sync.WaitGroup{}
 	wg.Add(len(s.permissionTypes()))
 
 	// TODO @shipperizer use a background operator
 	for _, t := range s.permissionTypes() {
-		go func(pType string) {
-			defer wg.Done()
-			p, t, err := s.listPermissionsByType(ctx, ID, pType, continuationTokens[pType])
-
-			permissionsMap.Store(pType, p)
-			tokensMap.Store(pType, t)
-
-			// TODO @shipperizer handle errors better
-			// chain them and return at the end of the function
-			if err != nil {
-				s.logger.Error(err)
-			}
-		}(t)
+		s.wpool.Submit(
+			s.listPermissionsFunc(ctx, ID, t, continuationTokens[t]),
+			results,
+			&wg,
+		)
 	}
 
+	// wait for tasks to finish
 	wg.Wait()
 
+	// close result channel
+	close(results)
+
 	permissions := make([]string, 0)
-	tokens := make(map[string]string)
+	tMap := make(map[string]string)
+	errors := make([]error, 0)
 
-	permissionsMap.Range(
-		func(key any, value any) bool {
-			permissions = append(permissions, value.([]string)...)
+	for r := range results {
+		s.logger.Info(results)
+		v := r.Value.(listPermissionsResult)
+		permissions = append(permissions, v.permissions...)
+		tMap[v.ofgaType] = v.token
 
-			return true
-		},
-	)
+		if v.err != nil {
+			errors = append(errors, v.err)
+		}
+	}
 
-	tokensMap.Range(
-		func(key any, value any) bool {
-			tokens[key.(string)] = value.(string)
+	if len(errors) == 0 {
+		return permissions, tMap, nil
+	}
 
-			return true
-		},
-	)
+	eMsg := ""
 
-	// TODO @shipperizer right now the function fails silently, chain errors from the goroutines
-	// and return
-	return permissions, tokens, nil
+	for n, e := range errors {
+		s.logger.Errorf(e.Error())
+		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
+	}
+
+	return permissions, tMap, fmt.Errorf(eMsg)
 }
 
 // GetGroup returns the specified group using the ID argument, userID is used to validate the visibility by the user
@@ -277,19 +291,29 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.DeleteGroup")
 	defer span.End()
 
-	var wg sync.WaitGroup
-
+	// keep it a buffered channel, if set to unbuffered we would need a goroutine
+	// to consume from it before pushing to it
+	// https://go.dev/ref/spec#Send_statements
+	// A send on an unbuffered channel can proceed if a receiver is ready.
+	// A send on a buffered channel can proceed if there is room in the buffer
+	results := make(chan *pool.Result[any], len(s.permissionTypes()))
+	wg := sync.WaitGroup{}
 	wg.Add(len(s.permissionTypes()))
 
 	// TODO @shipperizer use a background operator
 	for _, t := range s.permissionTypes() {
-		go func(pType string) {
-			defer wg.Done()
-			s.removePermissionsByType(ctx, ID, pType)
-		}(t)
+		s.wpool.Submit(
+			s.removePermissionsFunc(ctx, ID, t),
+			results,
+			&wg,
+		)
 	}
 
+	// wait for tasks to finish
 	wg.Wait()
+
+	// close result channel
+	close(results)
 
 	return s.ofga.DeleteTuples(ctx, *ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("group:%s", ID)))
 }
@@ -426,15 +450,44 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	}
 }
 
+func (s *Service) listPermissionsFunc(ctx context.Context, groupID, ofgaType, cToken string) func() any {
+	return func() any {
+		p, token, err := s.listPermissionsByType(
+			ctx,
+			groupID,
+			ofgaType,
+			cToken,
+		)
+
+		return listPermissionsResult{
+			permissions: p,
+			ofgaType:    ofgaType,
+			token:       token,
+			err:         err,
+		}
+	}
+}
+
+func (s *Service) removePermissionsFunc(ctx context.Context, groupID, ofgaType string) func() {
+	return func() {
+		s.removePermissionsByType(ctx, groupID, ofgaType)
+	}
+}
+
 func (s *Service) permissionTypes() []string {
 	return []string{"group", "role", "identity", "scheme", "provider", "client"}
 }
 
 // NewService returns the implementtation of the business logic for the groups API
-func NewService(ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga
+
+	// TODO @shipperizer make this an input
+	//s.wpool = pool.NewWorkerPool(100, tracer, monitor, logger)
+	s.wpool = wpool
+
 	s.monitor = monitor
 	s.tracer = tracer
 	s.logger = logger

@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package web
 

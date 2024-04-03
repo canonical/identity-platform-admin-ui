@@ -10,11 +10,14 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -48,7 +51,8 @@ type UpdateIdentitiesRequest struct {
 // API is the core HTTP object that implements all the HTTP and business logic for the groups
 // HTTP API functionality
 type API struct {
-	service ServiceInterface
+	service   ServiceInterface
+	validator *validator.Validate
 
 	logger  logging.LoggerInterface
 	tracer  tracing.TracingInterface
@@ -71,6 +75,17 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/groups/{id}/identities", a.handleListIdentities)
 	mux.Patch("/api/v0/groups/{id}/identities", a.handleAssignIdentities)
 	mux.Delete("/api/v0/groups/{id}/identities/{i_id}", a.handleRemoveIdentities)
+}
+
+func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
+	err := v.RegisterValidatingFunc("groups", a.validatingFunc)
+	if err != nil {
+		a.logger.Fatal("unexpected validatingFunc already registered for groups")
+	}
+}
+
+func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
+	return nil
 }
 
 func (a *API) userFromContext(ctx context.Context) *authorization.User {
@@ -685,7 +700,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-
+	a.validator = validator.New(validator.WithRequiredStructEnabled())
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

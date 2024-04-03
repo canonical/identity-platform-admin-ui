@@ -11,13 +11,16 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/responses"
+	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
 type API struct {
-	service ServiceInterface
+	service   ServiceInterface
+	validator *validator.Validate
 
 	logger logging.LoggerInterface
 }
@@ -35,6 +38,17 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/clients/{id}", a.GetClient)
 	mux.Put("/api/v0/clients/{id}", a.UpdateClient)
 	mux.Delete("/api/v0/clients/{id}", a.DeleteClient)
+}
+
+func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
+	err := v.RegisterValidatingFunc("clients", a.validatingFunc)
+	if err != nil {
+		a.logger.Fatal("unexpected validatingFunc already registered for clients")
+	}
+}
+
+func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
+	return nil
 }
 
 func (a *API) WriteJSONResponse(w http.ResponseWriter, data interface{}, msg string, status int, links interface{}, meta interface{}) {
@@ -220,7 +234,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
 	a.service = service
-
+	a.validator = validator.New(validator.WithRequiredStructEnabled())
 	a.logger = logger
 
 	return a

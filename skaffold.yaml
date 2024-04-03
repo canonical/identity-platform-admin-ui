@@ -30,6 +30,9 @@ manifests:
     - "deployments/kubectl/*"
 
 deploy:
+  statusCheck: true
+  statusCheckDeadlineSeconds:	180
+  tolerateFailuresUntilDeadline: true
   kubectl: {}
   helm:
     releases:

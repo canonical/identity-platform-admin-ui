@@ -14,6 +14,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/internal/validator"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
@@ -32,6 +33,8 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	logger := ollyConfig.Logger()
 	monitor := ollyConfig.Monitor()
 	tracer := ollyConfig.Tracer()
+
+	vldtr := validation.NewValidator(tracer, monitor, logger)
 
 	middlewares := make(chi.Middlewares, 0)
 	middlewares = append(

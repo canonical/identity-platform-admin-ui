@@ -63,9 +63,21 @@ func createModel(apiUrl, apiToken, storeId, kubeconfig, k8sConfigMap string) {
 		panic(err)
 	}
 
-	cfg := openfga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
+	// skip validation for openfga object
+	cfg := openfga.Config{
 
-	fgaClient := openfga.NewClient(cfg)
+		ApiScheme:   scheme,
+		ApiHost:     host,
+		StoreID:     storeId,
+		ApiToken:    apiToken,
+		AuthModelID: "",
+		Debug:       false,
+		Tracer:      tracer,
+		Monitor:     monitor,
+		Logger:      logger,
+	}
+
+	fgaClient := openfga.NewClient(&cfg)
 
 	if storeId == "" {
 		storeId, err = fgaClient.CreateStore(ctx, "identity-admin-ui")

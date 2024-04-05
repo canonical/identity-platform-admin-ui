@@ -19,6 +19,9 @@ const (
 	PAGINATION_HEADER = "X-Token-Pagination"
 )
 
+// TODO @shipperizer move this under openfga package or at least change name to reflect this is used for openfga
+// related endpoints
+
 type TokenPaginator struct {
 	tokens map[string]string
 

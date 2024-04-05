@@ -14,8 +14,8 @@ type Client struct {
 	c *client.APIClient
 }
 
-func (c *Client) IdentityApi() client.IdentityApi {
-	return c.c.IdentityApi
+func (c *Client) IdentityAPI() client.IdentityAPI {
+	return c.c.IdentityAPI
 }
 
 func NewClient(url string, debug bool) *Client {

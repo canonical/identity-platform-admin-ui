@@ -28,7 +28,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_corev1.go k8s.io/client-go/kubernetes/typed/core/v1 CoreV1Interface,ConfigMapInterface
-//go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityApi
+//go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
 
 func TestHandleListSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -102,11 +102,16 @@ func TestHandleListSuccess(t *testing.T) {
 				Schema: v1Schema,
 			},
 		},
+		Tokens: PaginationTokens{
+			Next:  "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ",
+			First: "eyJvZmZzZXQiOiIwIiwidiI6Mn0",
+			Prev:  "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0",
+		},
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/schemas", nil)
 
-	mockService.EXPECT().ListSchemas(gomock.Any(), int64(1), int64(100)).Return(&schemas, nil)
+	mockService.EXPECT().ListSchemas(gomock.Any(), int64(100), "").Return(&schemas, nil)
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
@@ -161,7 +166,7 @@ func TestHandleListFails(t *testing.T) {
 	gerr.SetMessage("teapot error")
 	gerr.SetReason("teapot is broken")
 
-	mockService.EXPECT().ListSchemas(gomock.Any(), int64(1), int64(100)).Return(&IdentitySchemaData{IdentitySchemas: make([]kClient.IdentitySchemaContainer, 0), Error: gerr}, fmt.Errorf("error"))
+	mockService.EXPECT().ListSchemas(gomock.Any(), int64(100), "").Return(&IdentitySchemaData{IdentitySchemas: make([]kClient.IdentitySchemaContainer, 0), Error: gerr}, fmt.Errorf("error"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()

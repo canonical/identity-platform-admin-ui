@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	kClient "github.com/ory/kratos-client-go"
+	"github.com/tomnomnom/linkheader"
 	"go.opentelemetry.io/otel/trace"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -26,11 +28,19 @@ type Config struct {
 	Name      string
 	Namespace string
 	K8s       coreV1.CoreV1Interface
-	Kratos    kClient.IdentityApi
+	Kratos    kClient.IdentityAPI
+}
+
+// TODO @shipperizer worth offloading to a different place as it's going to be reused
+type PaginationTokens struct {
+	First string
+	Prev  string
+	Next  string
 }
 
 type IdentitySchemaData struct {
 	IdentitySchemas []kClient.IdentitySchemaContainer
+	Tokens          PaginationTokens
 	Error           *kClient.GenericError
 }
 
@@ -48,15 +58,45 @@ type Service struct {
 	cmNamespace string
 
 	k8s    coreV1.CoreV1Interface
-	kratos kClient.IdentityApi
+	kratos kClient.IdentityAPI
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
 
+func (s *Service) parseLinkURL(linkURL string) string {
+	u, err := url.Parse(linkURL)
+
+	if err != nil {
+		s.logger.Errorf("failed to parse link header successfully: %s", err)
+		return ""
+	}
+
+	return u.Query().Get("page_token")
+}
+
+func (s *Service) parsePagination(r *http.Response) PaginationTokens {
+	links := linkheader.Parse(r.Header.Get("Link"))
+
+	pagination := PaginationTokens{}
+
+	for _, link := range links {
+		switch link.Rel {
+		case "first":
+			pagination.First = s.parseLinkURL(link.URL)
+		case "next":
+			pagination.Next = s.parseLinkURL(link.URL)
+		case "prev":
+			pagination.Prev = s.parseLinkURL(link.URL)
+		}
+	}
+
+	return pagination
+}
+
 func (s *Service) parseError(ctx context.Context, r *http.Response) *kClient.GenericError {
-	ctx, span := s.tracer.Start(ctx, "schemas.Service.parseError")
+	_, span := s.tracer.Start(ctx, "schemas.Service.parseError")
 	defer span.End()
 
 	gerr := KratosError{Error: kClient.NewGenericErrorWithDefaults()}
@@ -72,12 +112,12 @@ func (s *Service) parseError(ctx context.Context, r *http.Response) *kClient.Gen
 	return gerr.Error
 }
 
-func (s *Service) ListSchemas(ctx context.Context, page, size int64) (*IdentitySchemaData, error) {
+func (s *Service) ListSchemas(ctx context.Context, size int64, token string) (*IdentitySchemaData, error) {
 	ctx, span := s.tracer.Start(ctx, "schemas.Service.ListSchemas")
 	defer span.End()
 
 	schemas, rr, err := s.kratos.ListIdentitySchemasExecute(
-		s.kratos.ListIdentitySchemas(ctx).Page(page).PerPage(size),
+		s.kratos.ListIdentitySchemas(ctx).PageToken(token).PageSize(size),
 	)
 
 	data := new(IdentitySchemaData)
@@ -87,6 +127,7 @@ func (s *Service) ListSchemas(ctx context.Context, page, size int64) (*IdentityS
 		data.Error = s.parseError(ctx, rr)
 	}
 
+	data.Tokens = s.parsePagination(rr)
 	data.IdentitySchemas = schemas
 
 	// TODO @shipperizer check if schemas is defaulting to empty slice inside kratos-client

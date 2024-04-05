@@ -52,7 +52,7 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 	pagination := types.ParsePagination(r.URL.Query())
 
-	schemas, err := a.service.ListSchemas(r.Context(), pagination.Page, pagination.Size)
+	schemas, err := a.service.ListSchemas(r.Context(), pagination.Size, pagination.PageToken)
 
 	if err != nil {
 		rr := a.error(schemas.Error)
@@ -62,6 +62,11 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	// TODO @shipperizer improve on this, see if better to stick with link headers
+	pagination.Next = schemas.Tokens.Next
+	pagination.Prev = schemas.Tokens.Prev
+	pagination.First = schemas.Tokens.First
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(

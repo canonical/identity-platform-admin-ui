@@ -24,7 +24,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_corev1.go k8s.io/client-go/kubernetes/typed/core/v1 CoreV1Interface,ConfigMapInterface
-//go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityApi
+//go:generate mockgen -build_flags=--mod=mod -package schemas -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
 
 func TestListSchemasSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -34,12 +34,12 @@ func TestListSchemasSuccess(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -108,28 +108,32 @@ func TestListSchemasSuccess(t *testing.T) {
 		},
 	}
 
-	identitySchemaRequest := kClient.IdentityApiListIdentitySchemasRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIListIdentitySchemasRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.ListSchemas").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
-			if page := (*int64)(reflect.ValueOf(r).FieldByName("page").UnsafePointer()); *page != 1 {
-				t.Fatalf("expected page as 1, got %v", *page)
+			if pageToken := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *pageToken != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" {
+				t.Fatalf("expected pageToken as eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ, got %v", *pageToken)
 			}
 
-			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("perPage").UnsafePointer()); *pageSize != 10 {
+			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *pageSize != 10 {
 				t.Fatalf("expected page size as 10, got %v", *pageSize)
 			}
 
-			return schemas, new(http.Response), nil
+			rr := new(http.Response)
+			rr.Header = make(http.Header)
+			rr.Header.Set("Link", `<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=0&page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=1&page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=-1&page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
+
+			return schemas, rr, nil
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 1, 10)
+	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, schemas) {
 		t.Fatalf("expected schemas to be %v not  %v", schemas, is.IdentitySchemas)
@@ -149,34 +153,34 @@ func TestListSchemasFails(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
-	identitySchemaRequest := kClient.IdentityApiListIdentitySchemasRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIListIdentitySchemasRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	schemas := make([]kClient.IdentitySchemaContainer, 0)
 
-	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+	mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.ListSchemas").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.parseError").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
-			if page := (*int64)(reflect.ValueOf(r).FieldByName("page").UnsafePointer()); *page != 1 {
-				t.Fatalf("expected page as 1, got %v", *page)
+			if pageToken := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *pageToken != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" {
+				t.Fatalf("expected pageToken as eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ, got %v", *pageToken)
 			}
 
-			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("perPage").UnsafePointer()); *pageSize != 10 {
+			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *pageSize != 10 {
 				t.Fatalf("expected page size as 10, got %v", *pageSize)
 			}
 
@@ -202,7 +206,7 @@ func TestListSchemasFails(t *testing.T) {
 			return schemas, rr.Result(), fmt.Errorf("error")
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 1, 10)
+	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if is.Error == nil {
 		t.Fatal("expected ids.Error to be not nil")
@@ -225,39 +229,39 @@ func TestListSchemasSuccessButEmpty(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
 	schemas := []kClient.IdentitySchemaContainer{}
 
-	identitySchemaRequest := kClient.IdentityApiListIdentitySchemasRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIListIdentitySchemasRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.ListSchemas").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemas(ctx).Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().ListIdentitySchemasExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIListIdentitySchemasRequest) ([]kClient.IdentitySchemaContainer, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
-			if page := (*int64)(reflect.ValueOf(r).FieldByName("page").UnsafePointer()); *page != 1 {
-				t.Fatalf("expected page as 1, got %v", *page)
+			if pageToken := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *pageToken != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" {
+				t.Fatalf("expected pageToken as eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ, got %v", *pageToken)
 			}
 
-			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("perPage").UnsafePointer()); *pageSize != 10 {
+			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *pageSize != 10 {
 				t.Fatalf("expected page size as 10, got %v", *pageSize)
 			}
 
 			return schemas, new(http.Response), nil
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 1, 10)
+	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, schemas) {
 		t.Fatalf("expected schemas to be %v not  %v", schemas, is.IdentitySchemas)
@@ -277,17 +281,17 @@ func TestGetSchemaSuccess(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
-	identitySchemaRequest := kClient.IdentityApiGetIdentitySchemaRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIGetIdentitySchemaRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	v0Schema := map[string]interface{}{
@@ -323,8 +327,8 @@ func TestGetSchemaSuccess(t *testing.T) {
 		Schema: v0Schema,
 	}
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().GetIdentitySchema(ctx, v0ID).Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(schema.Schema, new(http.Response), nil)
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchema(ctx, v0ID).Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(schema.Schema, new(http.Response), nil)
 
 	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, v0ID)
 
@@ -344,22 +348,22 @@ func TestGetSchemaSuccessButEmpty(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
-	identitySchemaRequest := kClient.IdentityApiGetIdentitySchemaRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIGetIdentitySchemaRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().GetIdentitySchema(ctx, "test").Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(nil, new(http.Response), nil)
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchema(ctx, "test").Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(nil, new(http.Response), nil)
 
 	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, "test")
 
@@ -379,25 +383,25 @@ func TestGetSchemaFails(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
-	identitySchemaRequest := kClient.IdentityApiGetIdentitySchemaRequest{
-		ApiService: mockKratosIdentityApi,
+	identitySchemaRequest := kClient.IdentityAPIGetIdentitySchemaRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.GetSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.parseError").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().GetIdentitySchema(ctx, "fake").Times(1).Return(identitySchemaRequest)
-	mockKratosIdentityApi.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiGetIdentitySchemaRequest) (map[string]interface{}, *http.Response, error) {
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchema(ctx, "fake").Times(1).Return(identitySchemaRequest)
+	mockKratosIdentityAPI.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIGetIdentitySchemaRequest) (map[string]interface{}, *http.Response, error) {
 			rr := httptest.NewRecorder()
 			rr.Header().Set("Content-Type", "application/json")
 			rr.WriteHeader(http.StatusNotFound)
@@ -449,12 +453,12 @@ func TestEdiSchemaSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -563,12 +567,12 @@ func TestEditSchemaNotfound(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -677,12 +681,12 @@ func TestEditSchemaFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -750,12 +754,12 @@ func TestCreateSchemaSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -842,12 +846,12 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -933,12 +937,12 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1025,12 +1029,12 @@ func TestCreateSchemaFailsConflict(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1096,12 +1100,12 @@ func TestCreateSchemaFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1183,12 +1187,12 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1294,12 +1298,12 @@ func TestDeleteSchemaNotFound(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1395,12 +1399,12 @@ func TestDeleteSchemaFailsIfDefault(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1498,12 +1502,12 @@ func TestDeleteSchemaFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1604,12 +1608,12 @@ func TestGetDefaultSchemaSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1645,12 +1649,12 @@ func TestGetDefaultSchemaNoDefaultSchema(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1688,12 +1692,12 @@ func TestGetDefaultSchemaFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1722,12 +1726,12 @@ func TestUpdateDefaultSchemaSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1798,12 +1802,12 @@ func TestUpdateDefaultSchemaIdNotFound(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1841,12 +1845,12 @@ func TestUpdateDefaultSchemaIdIsDefaultKey(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 
@@ -1884,12 +1888,12 @@ func TestUpdateDefaultSchemaFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.Kratos = mockKratosIdentityApi
+	cfg.Kratos = mockKratosIdentityAPI
 	cfg.Name = "schemas"
 	cfg.Namespace = "default"
 

@@ -77,8 +77,8 @@ func TestListIdentitiesSuccess(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(
-		[]string{ids.Tokens.First, ids.Tokens.Next, ids.Tokens.Prev},
-		[]string{"eyJvZmZzZXQiOiIwIiwidiI6Mn0", "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0"},
+		[]string{ids.Tokens.Next, ids.Tokens.Prev},
+		[]string{"eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0"},
 	) {
 		t.Fatalf("expected tokens to be set, not %v", ids.Tokens)
 	}

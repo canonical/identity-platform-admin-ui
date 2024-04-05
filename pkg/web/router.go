@@ -65,7 +65,7 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	metrics.NewAPI(logger).RegisterEndpoints(router)
 
 	identitiesAPI := identities.NewAPI(
-		identities.NewService(externalConfig.KratosAdmin().IdentityApi(), tracer, monitor, logger),
+		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), tracer, monitor, logger),
 		logger,
 	)
 	identitiesAPI.RegisterEndpoints(router)

@@ -100,7 +100,7 @@ func serve() {
 
 	schemasConfig := &schemas.Config{
 		K8s:       k8sCoreV1,
-		Kratos:    extCfg.KratosPublic().IdentityApi(),
+		Kratos:    extCfg.KratosPublic().IdentityAPI(),
 		Name:      specs.SchemasConfigMapName,
 		Namespace: specs.SchemasConfigMapNamespace,
 	}

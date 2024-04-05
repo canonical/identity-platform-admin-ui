@@ -9,12 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 
 	kClient "github.com/ory/kratos-client-go"
-	"github.com/tomnomnom/linkheader"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
@@ -27,16 +26,9 @@ type Service struct {
 	logger  logging.LoggerInterface
 }
 
-// TODO @shipperizer worth offloading to a different place as it's going to be reused
-type PaginationTokens struct {
-	First string
-	Prev  string
-	Next  string
-}
-
 type IdentityData struct {
 	Identities []kClient.Identity
-	Tokens     PaginationTokens
+	Tokens     types.NavigationTokens
 	Error      *kClient.GenericError
 }
 
@@ -53,36 +45,6 @@ func (s *Service) buildListRequest(ctx context.Context, size int64, token, credI
 	}
 
 	return r
-}
-
-func (s *Service) parseLinkURL(linkURL string) string {
-	u, err := url.Parse(linkURL)
-
-	if err != nil {
-		s.logger.Errorf("failed to parse link header successfully: %s", err)
-		return ""
-	}
-
-	return u.Query().Get("page_token")
-}
-
-func (s *Service) parsePagination(r *http.Response) PaginationTokens {
-	links := linkheader.Parse(r.Header.Get("Link"))
-
-	pagination := PaginationTokens{}
-
-	for _, link := range links {
-		switch link.Rel {
-		case "first":
-			pagination.First = s.parseLinkURL(link.URL)
-		case "next":
-			pagination.Next = s.parseLinkURL(link.URL)
-		case "prev":
-			pagination.Prev = s.parseLinkURL(link.URL)
-		}
-	}
-
-	return pagination
 }
 
 func (s *Service) parseError(r *http.Response) *kClient.GenericError {
@@ -114,7 +76,12 @@ func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID 
 		data.Error = s.parseError(rr)
 	}
 
-	data.Tokens = s.parsePagination(rr)
+	if navTokens, err := types.ParseLinkTokens(rr.Header); err != nil {
+		s.logger.Warnf("failed parsing link header: %s", err)
+	} else {
+		data.Tokens = navTokens
+	}
+
 	data.Identities = identities
 
 	// TODO @shipperizer check if identities is defaulting to empty slice inside kratos-client

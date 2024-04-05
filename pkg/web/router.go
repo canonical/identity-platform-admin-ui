@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package web
 
@@ -14,6 +14,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
@@ -33,6 +34,8 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 	monitor := ollyConfig.Monitor()
 	tracer := ollyConfig.Tracer()
 
+	vldtr := validation.NewRegistry(tracer, monitor, logger)
+
 	middlewares := make(chi.Middlewares, 0)
 	middlewares = append(
 		middlewares,
@@ -51,46 +54,68 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 
 	router.Use(middlewares...)
 
-	// apply authorization middleware using With to overcome issue with <id> URLParams not available
+	// apply authorization and validation middlewares using With to overcome issue with <id> URLParams not available
 	router = router.With(
 		authorization.NewMiddleware(
 			authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger).Authorize(),
+		vldtr.ValidationMiddleware,
 	).(*chi.Mux)
 
 	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
 	metrics.NewAPI(logger).RegisterEndpoints(router)
-	identities.NewAPI(
+
+	identitiesAPI := identities.NewAPI(
 		identities.NewService(externalConfig.KratosAdmin().IdentityApi(), tracer, monitor, logger),
 		logger,
-	).RegisterEndpoints(router)
-	clients.NewAPI(
+	)
+	identitiesAPI.RegisterEndpoints(router)
+	identitiesAPI.RegisterValidation(vldtr)
+
+	clientsAPI := clients.NewAPI(
 		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
 		logger,
-	).RegisterEndpoints(router)
-	idp.NewAPI(
+	)
+	clientsAPI.RegisterEndpoints(router)
+	clientsAPI.RegisterValidation(vldtr)
+
+	idpAPI := idp.NewAPI(
 		idp.NewService(idpConfig, tracer, monitor, logger),
 		logger,
-	).RegisterEndpoints(router)
-	schemas.NewAPI(
+	)
+	idpAPI.RegisterEndpoints(router)
+	idpAPI.RegisterValidation(vldtr)
+
+	schemasAPI := schemas.NewAPI(
 		schemas.NewService(schemasConfig, tracer, monitor, logger),
 		logger,
-	).RegisterEndpoints(router)
-	rules.NewAPI(
+	)
+	schemasAPI.RegisterEndpoints(router)
+	schemasAPI.RegisterValidation(vldtr)
+
+	rulesAPI := rules.NewAPI(
 		rules.NewService(rulesConfig, tracer, monitor, logger),
 		logger,
-	).RegisterEndpoints(router)
-	roles.NewAPI(
+	)
+	rulesAPI.RegisterEndpoints(router)
+	rulesAPI.RegisterValidation(vldtr)
+
+	rolesAPI := roles.NewAPI(
 		roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
-	).RegisterEndpoints(router)
-	groups.NewAPI(
+	)
+	rolesAPI.RegisterEndpoints(router)
+	rolesAPI.RegisterValidation(vldtr)
+
+	groupsAPI := groups.NewAPI(
 		groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
-	).RegisterEndpoints(router)
+	)
+	groupsAPI.RegisterEndpoints(router)
+	groupsAPI.RegisterValidation(vldtr)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

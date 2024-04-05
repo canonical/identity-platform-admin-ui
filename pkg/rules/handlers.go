@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package rules
 
@@ -9,15 +9,19 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 
 	"github.com/go-chi/chi/v5"
 	oathkeeper "github.com/ory/oathkeeper-client-go"
 )
 
 type API struct {
-	service ServiceInterface
+	service   ServiceInterface
+	validator *validator.Validate
 
 	logger logging.LoggerInterface
 }
@@ -28,6 +32,17 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Post("/api/v0/rules", a.handleCreate)
 	mux.Put("/api/v0/rules/{id}", a.handleUpdate)
 	mux.Delete("/api/v0/rules/{id}", a.handleRemove)
+}
+
+func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
+	err := v.RegisterValidatingFunc("rules", a.validatingFunc)
+	if err != nil {
+		a.logger.Fatal("unexpected validatingFunc already registered for rules")
+	}
+}
+
+func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
+	return nil
 }
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +252,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
 	a.service = service
-
+	a.validator = validator.New(validator.WithRequiredStructEnabled())
 	a.logger = logger
 
 	return a

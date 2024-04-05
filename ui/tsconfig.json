@@ -24,7 +24,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["vite/client"]
   },
   "include": [
     "./src",
@@ -32,5 +33,5 @@
     "babel.config.js",
     ".eslintrc.cjs",
     "vite.config.ts"
-  ],
+  ]
 }

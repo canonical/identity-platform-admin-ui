@@ -25,5 +25,5 @@ root.render(
         </div>
       </NotificationProvider>
     </QueryClientProvider>
-  </Router>,
+  </Router>
 );

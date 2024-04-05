@@ -4,7 +4,7 @@ import { handleResponse } from "util/api";
 
 export const fetchClients = (): Promise<Client[]> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/clients")
+    fetch(`${import.meta.env.VITE_API_URL}/clients`)
       .then(handleResponse)
       .then((result: ApiResponse<Client[]>) => resolve(result.data))
       .catch(reject);
@@ -13,7 +13,7 @@ export const fetchClients = (): Promise<Client[]> => {
 
 export const fetchClient = (clientId: string): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/clients/${clientId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/clients/${clientId}`)
       .then(handleResponse)
       .then((result: ApiResponse<Client>) => resolve(result.data))
       .catch(reject);
@@ -22,7 +22,7 @@ export const fetchClient = (clientId: string): Promise<Client> => {
 
 export const createClient = (values: string): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/clients", {
+    fetch(`${import.meta.env.VITE_API_URL}/clients`, {
       method: "POST",
       body: values,
     })
@@ -34,10 +34,10 @@ export const createClient = (values: string): Promise<Client> => {
 
 export const updateClient = (
   clientId: string,
-  values: string,
+  values: string
 ): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/clients/${clientId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/clients/${clientId}`, {
       method: "PUT",
       body: values,
     })
@@ -49,7 +49,7 @@ export const updateClient = (
 
 export const deleteClient = (client: string) => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/clients/${client}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/clients/${client}`, {
       method: "DELETE",
     })
       .then(resolve)

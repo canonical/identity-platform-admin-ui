@@ -6,6 +6,7 @@ import NoMatch from "components/NoMatch";
 import ProviderList from "pages/providers/ProviderList";
 import IdentityList from "pages/identities/IdentityList";
 import SchemaList from "pages/schemas/SchemaList";
+import { ReBACAdmin } from "@canonical/rebac-admin";
 
 const App: FC = () => {
   return (
@@ -16,6 +17,10 @@ const App: FC = () => {
         <Route path="/client" element={<ClientList />} />
         <Route path="/identity" element={<IdentityList />} />
         <Route path="/schema" element={<SchemaList />} />
+        <Route
+          path="/*"
+          element={<ReBACAdmin apiURL={import.meta.env.VITE_API_URL} />}
+        />
         <Route path="*" element={<NoMatch />} />
       </Routes>
     </Suspense>

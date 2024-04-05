@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { Button, Icon } from "@canonical/react-components";
 import classnames from "classnames";
 import Logo from "components/Logo";
+import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
 
 const Navigation: FC = () => {
   return (
@@ -79,6 +80,22 @@ const Navigation: FC = () => {
                       />{" "}
                       Schemas
                     </NavLink>
+                  </li>
+                  <li className="p-side-navigation__item secondary">
+                    <GroupsLink
+                      className="p-side-navigation__link"
+                      baseURL="/"
+                      icon="user-group"
+                      iconIsLight
+                    />
+                  </li>
+                  <li className="p-side-navigation__item secondary">
+                    <RolesLink
+                      className="p-side-navigation__link"
+                      baseURL="/"
+                      icon="profile"
+                      iconIsLight
+                    />
                   </li>
                 </ul>
               </div>

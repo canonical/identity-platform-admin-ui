@@ -1,10 +1,13 @@
 @charset "UTF-8";
 
 @import "vanilla-framework/scss/build";
+@import "@canonical/rebac-admin/dist/rebac-admin.css";
 
 @include vf-p-icon-applications;
 @include vf-p-icon-containers;
 @include vf-p-icon-edit;
+@include vf-p-icon-lock-locked;
+@include vf-p-icon-machines;
 @include vf-p-icon-plans;
 @include vf-p-icon-profile;
 @include vf-p-icon-security;

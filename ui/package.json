@@ -17,13 +17,15 @@
     "hooks-add": "husky install",
     "hooks-remove": "husky uninstall",
     "start": "concurrently --kill-others --raw 'yarn dev-serve' 'yarn proxy-serve'",
-    "dev-serve": "vite | grep -v localhost",
+    "dev-serve": "vite --host | grep -v localhost",
     "proxy-serve": "./entrypoint"
   },
   "dependencies": {
-    "@canonical/react-components": "0.51.0",
+    "@canonical/react-components": "0.51.1",
+    "@canonical/rebac-admin": "0.0.1-alpha.1",
     "@tanstack/react-query": "^5.28.6",
     "@use-it/event-listener": "0.1.7",
+    "axios": "1.6.8",
     "formik": "2.4.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",

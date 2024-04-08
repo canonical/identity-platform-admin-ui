@@ -50,6 +50,10 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 	pagination := types.ParsePagination(r.URL.Query())
 
+	if pagination.Page < 1 {
+		pagination.Page = 1
+	}
+
 	rules, err := a.service.ListRules(r.Context(), pagination.Page, pagination.Size)
 
 	if err != nil {

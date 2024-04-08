@@ -20,30 +20,6 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package validation -destination ./mock_monitor.go -source=../monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package validation -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
-type payloadValidator struct{}
-
-func (_ *payloadValidator) Validate(ctx context.Context, _, _ string, _ []byte) (context.Context, validator.ValidationErrors, error) {
-	e := mockValidationErrors()
-	if e == nil {
-		return ctx, nil, nil
-	}
-	return ctx, e, nil
-}
-
-func (_ *payloadValidator) NeedsValidation(r *http.Request) bool {
-	return true
-}
-
-type noopPayloadValidator struct{}
-
-func (_ *noopPayloadValidator) Validate(ctx context.Context, _, _ string, _ []byte) (context.Context, validator.ValidationErrors, error) {
-	return ctx, nil, nil
-}
-
-func (_ *noopPayloadValidator) NeedsValidation(r *http.Request) bool {
-	return true
-}
-
 func TestValidator_Middleware(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	tracer := NewMockTracer(ctrl)
@@ -60,7 +36,13 @@ func TestValidator_Middleware(t *testing.T) {
 	})
 
 	vld := NewRegistry(tracer, monitor, logger)
-	vld.validators["mock-key"] = &payloadValidator{}
+	vld.validatingFuncs["mock-key"] = func(r *http.Request) (validator.ValidationErrors, error) {
+		e := mockValidationErrors()
+		if e == nil {
+			return nil, nil
+		}
+		return e, nil
+	}
 
 	for _, tt := range []struct {
 		name            string
@@ -131,56 +113,57 @@ func TestValidator_RegisterValidator(t *testing.T) {
 	logger := NewMockLoggerInterface(ctrl)
 
 	emptyValidator := &ValidationRegistry{
-		validators: make(map[string]PayloadValidatorInterface),
-		tracer:     tracer,
-		monitor:    monitor,
-		logger:     logger,
+		validatingFuncs: make(map[string]ValidatingFunc),
+		tracer:          tracer,
+		monitor:         monitor,
+		logger:          logger,
 	}
 
-	noopValidator := &noopPayloadValidator{}
-
-	validators := make(map[string]PayloadValidatorInterface)
-	validators["mock-key-1"] = noopValidator
+	noopVf := ValidatingFunc(func(r *http.Request) (validator.ValidationErrors, error) {
+		return nil, nil
+	})
+	validatingFuncs := make(map[string]ValidatingFunc)
+	validatingFuncs["mock-key-1"] = noopVf
 
 	nonEmptyValidator := &ValidationRegistry{
-		validators: validators,
-		tracer:     tracer,
-		monitor:    monitor,
-		logger:     logger,
+		validatingFuncs: validatingFuncs,
+		tracer:          tracer,
+		monitor:         monitor,
+		logger:          logger,
 	}
 
 	for _, tt := range []struct {
 		name      string
 		validator *ValidationRegistry
 		prefix    string
-		v         PayloadValidatorInterface
+		vf        ValidatingFunc
 		expected  string
 	}{
 		{
 			name:      "Nil middleware",
 			validator: emptyValidator,
 			prefix:    "",
-			v:         nil,
-			expected:  "payloadValidator can't be null",
+			vf:        nil,
+			expected:  "validatingFunc can't be null",
 		},
 		{
 			name:      "Existing key",
 			validator: nonEmptyValidator,
 			prefix:    "mock-key-1",
-			v:         noopValidator,
+			vf:        noopVf,
 			expected:  "key is already registered",
 		},
 		{
 			name:      "Success",
 			validator: emptyValidator,
 			prefix:    "mock-key",
-			v:         noopValidator,
+			vf:        noopVf,
 			expected:  "",
 		},
 	} {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.validator.RegisterPayloadValidator(tt.prefix, tt.v)
+			result := tt.validator.RegisterValidatingFunc(tt.prefix, tt.vf)
 
 			if tt.expected == "" && nil == result {
 				return
@@ -213,12 +196,12 @@ func TestNewValidator(t *testing.T) {
 		t.FailNow()
 	}
 
-	if v.validators == nil {
-		t.Fatalf("validators map expected not empty")
+	if v.validatingFuncs == nil {
+		t.Fatalf("validatingFuncs map expected not empty")
 	}
 
-	if len(v.validators) != 0 {
-		t.Fatalf("validators map expected not populated")
+	if len(v.validatingFuncs) != 0 {
+		t.Fatalf("validatingFuncs map expected not populated")
 	}
 }
 

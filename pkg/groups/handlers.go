@@ -700,7 +700,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-	a.validator = validator.New(validator.WithRequiredStructEnabled())
+	a.validator = validation.NewValidator()
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

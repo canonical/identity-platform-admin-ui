@@ -271,7 +271,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
 	a.service = service
-	a.validator = validator.New(validator.WithRequiredStructEnabled())
+	a.validator = validation.NewValidator()
 	a.logger = logger
 
 	return a

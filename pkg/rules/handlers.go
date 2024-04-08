@@ -4,10 +4,12 @@
 package rules
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 
@@ -18,6 +20,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	oathkeeper "github.com/ory/oathkeeper-client-go"
 )
+
+type PageToken struct {
+	Offset string `json:"offset" validate:"required"`
+}
 
 type API struct {
 	service   ServiceInterface
@@ -45,16 +51,65 @@ func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
 	return nil
 }
 
+func (a *API) pageDecode(pageToken string, size int) int {
+	if pageToken == "" {
+		return 0
+	}
+
+	pt := new(PageToken)
+
+	rawPt, err := base64.StdEncoding.DecodeString(pageToken)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+
+		return 0
+	}
+
+	if err := json.Unmarshal(rawPt, pt); err != nil {
+		a.logger.Warnf("bad page token format, defaulting to an empty one: %s", err)
+
+		return 0
+	}
+
+	if err := a.validator.Struct(c); err != nil {
+		a.logger.Warnf("invalid page token, defaulting ot an empty one: %s", err)
+
+		return 0
+	}
+
+	offset, err := strconv.Atoi(pt.Offset)
+
+	if err != nil {
+		a.logger.Warnf("invalid offset, default to 0: %s", err)
+
+		return 0
+	}
+
+	return offset / size
+}
+
+func (a *API) pageTokenEncode(page, size int) string {
+	pt := new(PageToken)
+	pt.Offset = fmt.Sprintf("%v", page*size)
+
+	token, err := json.Marshal(pt)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+
+		return ""
+	}
+
+	return base64.StdEncoding.EncodeToString(token)
+}
+
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	pagination := types.ParsePagination(r.URL.Query())
 
-	if pagination.Page < 1 {
-		pagination.Page = 1
-	}
+	page := a.pageDecode(pagination.PageToken, int(pagination.Size))
 
-	rules, err := a.service.ListRules(r.Context(), pagination.Page, pagination.Size)
+	rules, err := a.service.ListRules(r.Context(), int64(page), pagination.Size)
 
 	if err != nil {
 
@@ -75,6 +130,10 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 			Data:    rules,
 			Message: "List of rules",
 			Status:  http.StatusOK,
+			Meta: &types.Pagination{
+				Next: a.pageTokenEncode(page+1, int(pagination.Size)),
+				Size: pagination.Size,
+			},
 		},
 	)
 }

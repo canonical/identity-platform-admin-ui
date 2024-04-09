@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
 	kClient "github.com/ory/kratos-client-go"
@@ -16,6 +17,7 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
@@ -26,11 +28,12 @@ type Config struct {
 	Name      string
 	Namespace string
 	K8s       coreV1.CoreV1Interface
-	Kratos    kClient.IdentityApi
+	Kratos    kClient.IdentityAPI
 }
 
 type IdentitySchemaData struct {
 	IdentitySchemas []kClient.IdentitySchemaContainer
+	Tokens          types.NavigationTokens
 	Error           *kClient.GenericError
 }
 
@@ -48,15 +51,26 @@ type Service struct {
 	cmNamespace string
 
 	k8s    coreV1.CoreV1Interface
-	kratos kClient.IdentityApi
+	kratos kClient.IdentityAPI
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
 
+func (s *Service) parseLinkURL(linkURL string) string {
+	u, err := url.Parse(linkURL)
+
+	if err != nil {
+		s.logger.Errorf("failed to parse link header successfully: %s", err)
+		return ""
+	}
+
+	return u.Query().Get("page_token")
+}
+
 func (s *Service) parseError(ctx context.Context, r *http.Response) *kClient.GenericError {
-	ctx, span := s.tracer.Start(ctx, "schemas.Service.parseError")
+	_, span := s.tracer.Start(ctx, "schemas.Service.parseError")
 	defer span.End()
 
 	gerr := KratosError{Error: kClient.NewGenericErrorWithDefaults()}
@@ -72,12 +86,12 @@ func (s *Service) parseError(ctx context.Context, r *http.Response) *kClient.Gen
 	return gerr.Error
 }
 
-func (s *Service) ListSchemas(ctx context.Context, page, size int64) (*IdentitySchemaData, error) {
+func (s *Service) ListSchemas(ctx context.Context, size int64, token string) (*IdentitySchemaData, error) {
 	ctx, span := s.tracer.Start(ctx, "schemas.Service.ListSchemas")
 	defer span.End()
 
 	schemas, rr, err := s.kratos.ListIdentitySchemasExecute(
-		s.kratos.ListIdentitySchemas(ctx).Page(page).PerPage(size),
+		s.kratos.ListIdentitySchemas(ctx).PageToken(token).PageSize(size),
 	)
 
 	data := new(IdentitySchemaData)
@@ -85,6 +99,12 @@ func (s *Service) ListSchemas(ctx context.Context, page, size int64) (*IdentityS
 	if err != nil {
 		s.logger.Error(err)
 		data.Error = s.parseError(ctx, rr)
+	}
+
+	if navTokens, err := types.ParseLinkTokens(rr.Header); err != nil {
+		s.logger.Warnf("failed parsing link header: %s", err)
+	} else {
+		data.Tokens = navTokens
 	}
 
 	data.IdentitySchemas = schemas

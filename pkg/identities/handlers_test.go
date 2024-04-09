@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -19,6 +18,8 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 
+	"io"
+
 	kClient "github.com/ory/kratos-client-go"
 )
 
@@ -26,7 +27,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
-//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityApi
+//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
 
 func TestHandleListSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -43,11 +44,19 @@ func TestHandleListSuccess(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/identities", nil)
 	values := req.URL.Query()
-	values.Add("page", "1")
 	values.Add("size", "100")
 	req.URL.RawQuery = values.Encode()
 
-	mockService.EXPECT().ListIdentities(gomock.Any(), int64(1), int64(100), "").Return(&IdentityData{Identities: identities}, nil)
+	mockService.EXPECT().ListIdentities(gomock.Any(), int64(100), "", "").Return(
+		&IdentityData{
+			Identities: identities,
+			Tokens: types.NavigationTokens{
+				Next: "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ",
+				Prev: "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0",
+			},
+		},
+		nil,
+	)
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
@@ -57,7 +66,7 @@ func TestHandleListSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -113,7 +122,6 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/identities", nil)
 	values := req.URL.Query()
-	values.Add("page", "1")
 	values.Add("size", "100")
 	req.URL.RawQuery = values.Encode()
 
@@ -122,7 +130,7 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 	gerr.SetMessage("teapot error")
 	gerr.SetReason("teapot is broken")
 
-	mockService.EXPECT().ListIdentities(gomock.Any(), int64(1), int64(100), "").Return(&IdentityData{Identities: make([]kClient.Identity, 0), Error: gerr}, fmt.Errorf("error"))
+	mockService.EXPECT().ListIdentities(gomock.Any(), int64(100), "", "").Return(&IdentityData{Identities: make([]kClient.Identity, 0), Error: gerr}, fmt.Errorf("error"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
@@ -132,7 +140,7 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -178,7 +186,7 @@ func TestHandleDetailSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -254,7 +262,7 @@ func TestHandleDetailFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -304,7 +312,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -385,7 +393,7 @@ func TestHandleCreateFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -426,7 +434,7 @@ func TestHandleCreateFailBadRequest(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -457,7 +465,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 	identity := kClient.NewIdentity(credID, "test.json", "https://test.com/test.json", map[string]string{"name": "name"})
 	identityBody := kClient.NewUpdateIdentityBodyWithDefaults()
 	identityBody.SchemaId = identity.SchemaId
-	identityBody.SetState(kClient.IDENTITYSTATE_ACTIVE)
+	identityBody.SetState("active")
 	identityBody.Traits = map[string]interface{}{"name": "name"}
 	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
@@ -475,7 +483,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -536,7 +544,7 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 	identityBody := kClient.NewUpdateIdentityBodyWithDefaults()
 	identityBody.SchemaId = "test.json"
 	identityBody.Traits = map[string]interface{}{"name": "name"}
-	identityBody.SetState(kClient.IDENTITYSTATE_ACTIVE)
+	identityBody.SetState("active")
 	identityBody.AdditionalProperties = map[string]interface{}{"name": "name"}
 
 	payload, err := json.Marshal(identityBody)
@@ -557,7 +565,7 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -598,7 +606,7 @@ func TestHandleUpdateFailBadRequest(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -639,7 +647,7 @@ func TestHandleRemoveSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -687,7 +695,7 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(io.Reader(res.Body))
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)

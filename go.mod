@@ -13,11 +13,12 @@ require (
 	github.com/openfga/go-sdk v0.3.4
 	github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379
 	github.com/ory/hydra-client-go/v2 v2.1.1
-	github.com/ory/kratos-client-go v1.0.0
+	github.com/ory/kratos-client-go v1.1.0
 	github.com/ory/oathkeeper-client-go v0.40.6
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
+	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.20.0
 	go.opentelemetry.io/otel v1.19.0

@@ -13,12 +13,13 @@ import (
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 type Service struct {
-	kratos kClient.IdentityApi
+	kratos kClient.IdentityAPI
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -27,6 +28,7 @@ type Service struct {
 
 type IdentityData struct {
 	Identities []kClient.Identity
+	Tokens     types.NavigationTokens
 	Error      *kClient.GenericError
 }
 
@@ -35,8 +37,8 @@ type KratosError struct {
 	Error *kClient.GenericError `json:"error,omitempty"`
 }
 
-func (s *Service) buildListRequest(ctx context.Context, page, size int64, credID string) kClient.IdentityApiListIdentitiesRequest {
-	r := s.kratos.ListIdentities(ctx).Page(page).PerPage(size)
+func (s *Service) buildListRequest(ctx context.Context, size int64, token, credID string) kClient.IdentityAPIListIdentitiesRequest {
+	r := s.kratos.ListIdentities(ctx).PageToken(token).PageSize(size)
 
 	if credID != "" {
 		r = r.CredentialsIdentifier(credID)
@@ -59,13 +61,12 @@ func (s *Service) parseError(r *http.Response) *kClient.GenericError {
 	return gerr.Error
 }
 
-// TODO @shipperizer fix pagination
-func (s *Service) ListIdentities(ctx context.Context, page, size int64, credID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.ListIdentities")
+func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID string) (*IdentityData, error) {
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.ListIdentities")
 	defer span.End()
 
 	identities, rr, err := s.kratos.ListIdentitiesExecute(
-		s.buildListRequest(ctx, page, size, credID),
+		s.buildListRequest(ctx, size, token, credID),
 	)
 
 	data := new(IdentityData)
@@ -73,6 +74,12 @@ func (s *Service) ListIdentities(ctx context.Context, page, size int64, credID s
 	if err != nil {
 		s.logger.Error(err)
 		data.Error = s.parseError(rr)
+	}
+
+	if navTokens, err := types.ParseLinkTokens(rr.Header); err != nil {
+		s.logger.Warnf("failed parsing link header: %s", err)
+	} else {
+		data.Tokens = navTokens
 	}
 
 	data.Identities = identities
@@ -86,7 +93,7 @@ func (s *Service) ListIdentities(ctx context.Context, page, size int64, credID s
 }
 
 func (s *Service) GetIdentity(ctx context.Context, ID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.GetIdentity")
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.GetIdentity")
 	defer span.End()
 
 	identity, rr, err := s.kratos.GetIdentityExecute(
@@ -110,7 +117,7 @@ func (s *Service) GetIdentity(ctx context.Context, ID string) (*IdentityData, er
 }
 
 func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIdentityBody) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.CreateIdentity")
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.CreateIdentity")
 	defer span.End()
 
 	if bodyID == nil {
@@ -147,7 +154,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 }
 
 func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient.UpdateIdentityBody) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.UpdateIdentity")
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.UpdateIdentity")
 	defer span.End()
 	if ID == "" {
 		err := fmt.Errorf("no identity ID passed")
@@ -196,7 +203,7 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 }
 
 func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityApi.DeleteIdentity")
+	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.DeleteIdentity")
 	defer span.End()
 
 	rr, err := s.kratos.DeleteIdentityExecute(
@@ -215,7 +222,7 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	return data, err
 }
 
-func NewService(kratos kClient.IdentityApi, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(kratos kClient.IdentityAPI, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.kratos = kratos

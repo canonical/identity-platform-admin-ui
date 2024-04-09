@@ -117,8 +117,8 @@ github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379 h1:j42rKsj
 github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379/go.mod h1:dHJaJ7H5tViBCPidTsfl3IOd152FhYxWFQmZXOhZ2pw=
 github.com/ory/hydra-client-go/v2 v2.1.1 h1:3JatU9uFbw5XhF3lgPCas1l1Kok2v5Mq1p26zZwGHNg=
 github.com/ory/hydra-client-go/v2 v2.1.1/go.mod h1:IiIwChp/9wRvPoyFQblqPvg78uVishCCrV9+/M7Pl34=
-github.com/ory/kratos-client-go v1.0.0 h1:mm32FMJrt4pBv2KEuhuNtiewJApc8c1Kmz0+WFHhOMA=
-github.com/ory/kratos-client-go v1.0.0/go.mod h1:a2Tl4cgQAxsjR59w3EfnH5hengabjXUHiEVDzdqiZI0=
+github.com/ory/kratos-client-go v1.1.0 h1:mCk5wxNTxjYq/sbZfoEY/JcxuBtuixStHD14Y0sU1E8=
+github.com/ory/kratos-client-go v1.1.0/go.mod h1:ultwfjWsBxshnZgopqQ3DrKOe/t6SXsM+KKOd21PaTQ=
 github.com/ory/oathkeeper-client-go v0.40.6 h1:Qm/odusPn6DTJ8mXXElNzfXYpcD5wqmb/k3dOYKUfTg=
 github.com/ory/oathkeeper-client-go v0.40.6/go.mod h1:9JUPR04XPH3e53TYbfu+KveCnTIYtlSTJiQ23rEQLJI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -147,6 +147,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
+github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80 h1:nrZ3ySNYwJbSpD6ce9duiP+QkD3JuLCcWkdaehUS/3Y=
+github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80/go.mod h1:iFyPdL66DjUD96XmzVL3ZntbzcflLnznH0fr99w5VqE=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=

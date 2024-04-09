@@ -29,7 +29,6 @@ type UpdateIdentityRequest struct {
 
 type API struct {
 	service   ServiceInterface
-	baseURL   string
 	validator *validator.Validate
 
 	logger logging.LoggerInterface
@@ -64,7 +63,7 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 	credID := r.URL.Query().Get("credID")
 
-	ids, err := a.service.ListIdentities(r.Context(), pagination.Page, pagination.Size, credID)
+	ids, err := a.service.ListIdentities(r.Context(), pagination.Size, pagination.PageToken, credID)
 
 	if err != nil {
 		rr := a.error(ids.Error)
@@ -74,6 +73,10 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	// TODO @shipperizer improve on this, see if better to stick with link headers
+	pagination.Next = ids.Tokens.Next
+	pagination.Prev = ids.Tokens.Prev
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(

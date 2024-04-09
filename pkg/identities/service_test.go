@@ -21,7 +21,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
-//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityApi
+//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
 
 func TestListIdentitiesSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -30,12 +30,12 @@ func TestListIdentitiesSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
-	identityRequest := kClient.IdentityApiListIdentitiesRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIListIdentitiesRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	identities := make([]kClient.Identity, 0)
@@ -44,17 +44,17 @@ func TestListIdentitiesSuccess(t *testing.T) {
 		identities = append(identities, *kClient.NewIdentity(fmt.Sprintf("test-%v", i), "test.json", "https://test.com/test.json", map[string]string{"name": "name"}))
 	}
 
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.ListIdentities").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().ListIdentities(ctx).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().ListIdentitiesExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiListIdentitiesRequest) ([]kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.ListIdentities").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().ListIdentities(ctx).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().ListIdentitiesExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIListIdentitiesRequest) ([]kClient.Identity, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
-			if page := (*int64)(reflect.ValueOf(r).FieldByName("page").UnsafePointer()); *page != 2 {
-				t.Fatalf("expected page as 2, got %v", *page)
+			if pageToken := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *pageToken != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" {
+				t.Fatalf("expected pageToken as eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ, got %v", *pageToken)
 			}
 
-			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("perPage").UnsafePointer()); *pageSize != 10 {
+			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *pageSize != 10 {
 				t.Fatalf("expected page size as 10, got %v", *pageSize)
 			}
 
@@ -62,15 +62,27 @@ func TestListIdentitiesSuccess(t *testing.T) {
 				t.Fatalf("expected credential id to be empty, got %v", *credID)
 			}
 
-			return identities, new(http.Response), nil
+			rr := new(http.Response)
+			rr.Header = make(http.Header)
+			rr.Header.Set("Link", `<http://kratos-admin.default.svc.cluster.local/identities?page=0&page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://kratos-admin.default.svc.cluster.local/identities?page=1&page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://kratos-admin.default.svc.cluster.local/identities?page=-1&page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
+
+			return identities, rr, nil
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 2, 10, "")
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "")
 
 	if !reflect.DeepEqual(ids.Identities, identities) {
 		t.Fatalf("expected identities to be %v not  %v", identities, ids.Identities)
 	}
+
+	if !reflect.DeepEqual(
+		[]string{ids.Tokens.Next, ids.Tokens.Prev},
+		[]string{"eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0"},
+	) {
+		t.Fatalf("expected tokens to be set, not %v", ids.Tokens)
+	}
+
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
 	}
@@ -83,28 +95,28 @@ func TestListIdentitiesFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
-	identityRequest := kClient.IdentityApiListIdentitiesRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIListIdentitiesRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	identities := make([]kClient.Identity, 0)
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.ListIdentities").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().ListIdentities(ctx).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().ListIdentitiesExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiListIdentitiesRequest) ([]kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.ListIdentities").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().ListIdentities(ctx).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().ListIdentitiesExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIListIdentitiesRequest) ([]kClient.Identity, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
-			if page := (*int64)(reflect.ValueOf(r).FieldByName("page").UnsafePointer()); *page != 2 {
-				t.Fatalf("expected page as 2, got %v", *page)
+			if pageToken := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *pageToken != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" {
+				t.Fatalf("expected pageToken as eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ, got %v", *pageToken)
 			}
 
-			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("perPage").UnsafePointer()); *pageSize != 10 {
+			if pageSize := (*int64)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *pageSize != 10 {
 				t.Fatalf("expected page size as 10, got %v", *pageSize)
 			}
 
@@ -135,7 +147,7 @@ func TestListIdentitiesFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 2, 10, "test")
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "test")
 
 	if !reflect.DeepEqual(ids.Identities, identities) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -161,22 +173,22 @@ func TestGetIdentitySuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 	credID := "test-1"
 
-	identityRequest := kClient.IdentityApiGetIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIGetIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	identity := kClient.NewIdentity(credID, "test.json", "https://test.com/test.json", map[string]string{"name": "name"})
 
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.GetIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().GetIdentity(ctx, credID).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().GetIdentityExecute(gomock.Any()).Times(1).Return(identity, new(http.Response), nil)
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.GetIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().GetIdentity(ctx, credID).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().GetIdentityExecute(gomock.Any()).Times(1).Return(identity, new(http.Response), nil)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -193,20 +205,20 @@ func TestGetIdentityFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 	credID := "test"
 
-	identityRequest := kClient.IdentityApiGetIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIGetIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.GetIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().GetIdentity(ctx, credID).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().GetIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiGetIdentityRequest) (*kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.GetIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().GetIdentity(ctx, credID).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().GetIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIGetIdentityRequest) (*kClient.Identity, *http.Response, error) {
 			rr := httptest.NewRecorder()
 			rr.Header().Set("Content-Type", "application/json")
 			rr.WriteHeader(http.StatusNotFound)
@@ -230,7 +242,7 @@ func TestGetIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -256,12 +268,12 @@ func TestCreateIdentitySuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
-	identityRequest := kClient.IdentityApiCreateIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPICreateIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	identity := kClient.NewIdentity("test", "test.json", "https://test.com/test.json", map[string]string{"name": "name"})
@@ -269,10 +281,10 @@ func TestCreateIdentitySuccess(t *testing.T) {
 	identityBody := kClient.NewCreateIdentityBody("test.json", map[string]interface{}{"name": "name"})
 	identityBody.SetCredentials(*credentials)
 
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.CreateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().CreateIdentity(ctx).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().CreateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiCreateIdentityRequest) (*kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.CreateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().CreateIdentity(ctx).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().CreateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPICreateIdentityRequest) (*kClient.Identity, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
 			if IDBody := (*kClient.CreateIdentityBody)(reflect.ValueOf(r).FieldByName("createIdentityBody").UnsafePointer()); !reflect.DeepEqual(*IDBody, *identityBody) {
@@ -283,7 +295,7 @@ func TestCreateIdentitySuccess(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -301,12 +313,12 @@ func TestCreateIdentityFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
-	identityRequest := kClient.IdentityApiCreateIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPICreateIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	credentials := kClient.NewIdentityWithCredentialsWithDefaults()
@@ -314,10 +326,10 @@ func TestCreateIdentityFails(t *testing.T) {
 	identityBody.SetCredentials(*credentials)
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.CreateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().CreateIdentity(ctx).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().CreateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiCreateIdentityRequest) (*kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.CreateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().CreateIdentity(ctx).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().CreateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPICreateIdentityRequest) (*kClient.Identity, *http.Response, error) {
 			rr := httptest.NewRecorder()
 			rr.Header().Set("Content-Type", "application/json")
 			rr.WriteHeader(http.StatusInternalServerError)
@@ -341,7 +353,7 @@ func TestCreateIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -367,12 +379,12 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
-	identityRequest := kClient.IdentityApiUpdateIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIUpdateIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	identity := kClient.NewIdentity("test", "test.json", "https://test.com/test.json", map[string]string{"name": "name"})
@@ -381,10 +393,10 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 	identityBody.SetTraits(map[string]interface{}{"name": "name"})
 	identityBody.SetCredentials(*credentials)
 
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.UpdateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().UpdateIdentity(ctx, identity.Id).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().UpdateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiUpdateIdentityRequest) (*kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.UpdateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().UpdateIdentity(ctx, identity.Id).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().UpdateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIUpdateIdentityRequest) (*kClient.Identity, *http.Response, error) {
 
 			// use reflect as attributes are private, also are pointers so need to cast it multiple times
 			if IDBody := (*kClient.UpdateIdentityBody)(reflect.ValueOf(r).FieldByName("updateIdentityBody").UnsafePointer()); !reflect.DeepEqual(*IDBody, *identityBody) {
@@ -395,7 +407,7 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, identity.Id, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, identity.Id, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -413,14 +425,14 @@ func TestUpdateIdentityFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 
 	credID := "test"
 
-	identityRequest := kClient.IdentityApiUpdateIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIUpdateIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	credentials := kClient.NewIdentityWithCredentialsWithDefaults()
@@ -429,10 +441,10 @@ func TestUpdateIdentityFails(t *testing.T) {
 	identityBody.SetCredentials(*credentials)
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.UpdateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().UpdateIdentity(ctx, credID).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().UpdateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiUpdateIdentityRequest) (*kClient.Identity, *http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.UpdateIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().UpdateIdentity(ctx, credID).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().UpdateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIUpdateIdentityRequest) (*kClient.Identity, *http.Response, error) {
 			rr := httptest.NewRecorder()
 			rr.Header().Set("Content-Type", "application/json")
 			rr.WriteHeader(http.StatusConflict)
@@ -456,7 +468,7 @@ func TestUpdateIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, credID, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, credID, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -482,20 +494,20 @@ func TestDeleteIdentitySuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 	credID := "test-1"
 
-	identityRequest := kClient.IdentityApiDeleteIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIDeleteIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.DeleteIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().DeleteIdentityExecute(gomock.Any()).Times(1).Return(new(http.Response), nil)
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.DeleteIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().DeleteIdentityExecute(gomock.Any()).Times(1).Return(new(http.Response), nil)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
 
 	if len(ids.Identities) > 0 {
 		t.Fatalf("invalid result, expected no identities, got %v", ids.Identities)
@@ -513,20 +525,20 @@ func TestDeleteIdentityFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockKratosIdentityApi := NewMockIdentityApi(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 
 	ctx := context.Background()
 	credID := "test-1"
 
-	identityRequest := kClient.IdentityApiDeleteIdentityRequest{
-		ApiService: mockKratosIdentityApi,
+	identityRequest := kClient.IdentityAPIDeleteIdentityRequest{
+		ApiService: mockKratosIdentityAPI,
 	}
 
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	mockTracer.EXPECT().Start(ctx, "kratos.IdentityApi.DeleteIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
-	mockKratosIdentityApi.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
-	mockKratosIdentityApi.EXPECT().DeleteIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
-		func(r kClient.IdentityApiDeleteIdentityRequest) (*http.Response, error) {
+	mockTracer.EXPECT().Start(ctx, "kratos.IdentityAPI.DeleteIdentity").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
+	mockKratosIdentityAPI.EXPECT().DeleteIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.IdentityAPIDeleteIdentityRequest) (*http.Response, error) {
 			rr := httptest.NewRecorder()
 			rr.Header().Set("Content-Type", "application/json")
 			rr.WriteHeader(http.StatusNotFound)
@@ -550,7 +562,7 @@ func TestDeleteIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityApi, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)

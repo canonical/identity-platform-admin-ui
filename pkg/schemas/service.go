@@ -38,7 +38,7 @@ type IdentitySchemaData struct {
 }
 
 type DefaultSchema struct {
-	ID string `json:"schema_id"`
+	ID string `json:"schema_id" validate:"required"`
 }
 
 // TODO @shipperizer verify during integration test if this is actually the format

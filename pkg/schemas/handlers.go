@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	kClient "github.com/ory/kratos-client-go"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
@@ -17,11 +16,10 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
-const okValue = "ok"
-
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger logging.LoggerInterface
 }
@@ -37,15 +35,62 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("schemas", a.validatingFunc)
+	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
 		a.logger.Fatal("unexpected validatingFunc already registered for schemas")
 	}
 }
 
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
-}
+/*func (a *API) validatingFunc(r *http.Request) (validator.ValidationErrors, error) {
+	if !shouldValidate(r) {
+		return nil, nil
+	}
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		return nil, validation.NoBodyError
+	}
+
+	// don't break existing handlers, replace the body that was consumed
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	// key "schemas" must be there since we registered it in the setup func
+	endpoint, _ := validation.ApiEndpoint(r.URL.Path, a.apiKey)
+
+	validated := false
+
+	if isCreateOrUpdateSchema(r, endpoint) {
+		schema := new(kClient.IdentitySchemaContainer)
+		if err := json.Unmarshal(body, schema); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(schema)
+		validated = true
+	}
+
+	if isPartialUpdate(r, endpoint) {
+		schema := new(DefaultSchema)
+		if err := json.Unmarshal(body, schema); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(schema)
+		validated = true
+	}
+
+	if !validated {
+		return nil, validation.NoMatchError(a.apiKey)
+	}
+
+	if err == nil {
+		return nil, nil
+	}
+
+	return err.(validator.ValidationErrors), nil
+}*/
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -365,8 +410,9 @@ func (a *API) error(e *kClient.GenericError) types.Response {
 func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
+	a.apiKey = "schemas"
 	a.service = service
-	a.validator = validation.NewValidator()
+	//a.payloadValidator = NewSchemasPayloadValidator()
 	a.logger = logger
 
 	return a

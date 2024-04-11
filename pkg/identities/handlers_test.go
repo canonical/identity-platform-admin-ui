@@ -27,6 +27,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
+//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
 func TestHandleListSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -716,4 +717,29 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 	if rr.Status != int(*gerr.Code) {
 		t.Errorf("expected code to be %v got %v", *gerr.Code, rr.Status)
 	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
+
+	apiKey := "identities"
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(nil)
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(fmt.Errorf("key is already registered"))
+
+	// first registration of `apiKey` is successful
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+
+	mockLogger.EXPECT().Fatal(gomock.Any()).Times(1)
+
+	// second registration of `apiKey` causes logger.Fatal invocation
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
 }

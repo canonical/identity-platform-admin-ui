@@ -10,8 +10,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
-
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -28,7 +26,7 @@ const (
 )
 
 type UpdateRolesRequest struct {
-	Roles []string `json:"roles" validate:"required"`
+	Roles []string `json:"roles" validate:"required,dive,required"`
 }
 
 type Permission struct {
@@ -37,7 +35,7 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
-	Permissions []Permission `json:"permissions" validate:"required"`
+	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
 type GroupRequest struct {
@@ -45,14 +43,15 @@ type GroupRequest struct {
 }
 
 type UpdateIdentitiesRequest struct {
-	Identities []string `json:"identities" validate:"required"`
+	Identities []string `json:"identities" validate:"required,dive,required"`
 }
 
 // API is the core HTTP object that implements all the HTTP and business logic for the groups
 // HTTP API functionality
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger  logging.LoggerInterface
 	tracer  tracing.TracingInterface
@@ -78,15 +77,87 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("groups", a.validatingFunc)
+	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
 		a.logger.Fatal("unexpected validatingFunc already registered for groups")
 	}
 }
 
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
-}
+/*func (a *API) validatingFunc(r *http.Request) (validator.ValidationErrors, error) {
+	if !shouldValidate(r) {
+		return nil, nil
+	}
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		return nil, validation.NoBodyError
+	}
+
+	// don't break existing handlers, replace the body that was consumed
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	// key "identities" must be there since we registered it in the setup func
+	endpoint, _ := validation.ApiEndpoint(r.URL.Path, a.apiKey)
+
+	validated := false
+
+	if isCreateGroup(r, endpoint) {
+		group := new(GroupRequest)
+		if err := json.Unmarshal(body, group); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(group)
+		validated = true
+	}
+
+	if isUpdateGroup(r, endpoint) {
+		// TODO: @barco to implement when the UpdateGroup is implemented
+		validated = true
+	}
+
+	if isAssignRoles(r, endpoint) {
+		updateRoles := new(UpdateRolesRequest)
+		if err := json.Unmarshal(body, updateRoles); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(updateRoles)
+		validated = true
+	}
+
+	if isAssignPermissions(r, endpoint) {
+		updatePermissions := new(UpdatePermissionsRequest)
+		if err := json.Unmarshal(body, updatePermissions); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(updatePermissions)
+		validated = true
+	}
+
+	if isAssignIdentities(r, endpoint) {
+		updateIdentities := new(UpdateIdentitiesRequest)
+		if err := json.Unmarshal(body, updateIdentities); err != nil {
+			return nil, err
+		}
+
+		err = a.validator.Struct(updateIdentities)
+		validated = true
+	}
+
+	if !validated {
+		return nil, validation.NoMatchError(a.apiKey)
+	}
+
+	if err == nil {
+		return nil, nil
+	}
+
+	return err.(validator.ValidationErrors), nil
+}*/
 
 func (a *API) userFromContext(ctx context.Context) *authorization.User {
 	// TODO @shipperizer implement the FromContext and NewContext in authorization package
@@ -699,8 +770,9 @@ func (a *API) handleRemoveIdentities(w http.ResponseWriter, r *http.Request) {
 func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
+	a.apiKey = "groups"
 	a.service = service
-	a.validator = validation.NewValidator()
+	//a.payloadValidator = NewGroupsPayloadValidator()
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

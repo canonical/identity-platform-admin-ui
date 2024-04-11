@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -18,8 +17,9 @@ import (
 )
 
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger logging.LoggerInterface
 }
@@ -27,20 +27,16 @@ type API struct {
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/clients", a.ListClients)
 	mux.Post("/api/v0/clients", a.CreateClient)
-	mux.Get("/api/v0/clients/{id:.+}", a.GetClient)
-	mux.Put("/api/v0/clients/{id:.+}", a.UpdateClient)
-	mux.Delete("/api/v0/clients/{id:.+}", a.DeleteClient)
+	mux.Get("/api/v0/clients/{id}", a.GetClient)
+	mux.Put("/api/v0/clients/{id}", a.UpdateClient)
+	mux.Delete("/api/v0/clients/{id}", a.DeleteClient)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("clients", a.validatingFunc)
+	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
 		a.logger.Fatal("unexpected validatingFunc already registered for clients")
 	}
-}
-
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
 }
 
 func (a *API) WriteJSONResponse(w http.ResponseWriter, data interface{}, msg string, status int, links interface{}, meta *types.Pagination) {
@@ -203,9 +199,10 @@ func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, err
 
 func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
+	a.apiKey = "clients"
 
 	a.service = service
-	a.validator = validation.NewValidator()
+	//a.payloadValidator = NewClientsPayloadValidator(a.apiKey)
 	a.logger = logger
 
 	return a

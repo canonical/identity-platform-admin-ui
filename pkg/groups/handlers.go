@@ -62,19 +62,19 @@ type API struct {
 // RegisterEndpoints hooks up all the endpoints to the server mux passed via the arg
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/groups", a.handleList)
-	mux.Get("/api/v0/groups/{id}", a.handleDetail)
+	mux.Get("/api/v0/groups/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/groups", a.handleCreate)
-	mux.Patch("/api/v0/groups/{id}", a.handleUpdate)
-	mux.Delete("/api/v0/groups/{id}", a.handleRemove)
-	mux.Get("/api/v0/groups/{id}/roles", a.handleListRoles)
-	mux.Post("/api/v0/groups/{id}/roles", a.handleAssignRoles)
-	mux.Delete("/api/v0/groups/{id}/roles/{r_id}", a.handleRemoveRole)
-	mux.Get("/api/v0/groups/{id}/entitlements", a.handleListPermission)
-	mux.Patch("/api/v0/groups/{id}/entitlements", a.handleAssignPermission)
-	mux.Delete("/api/v0/groups/{id}/entitlements/{e_id}", a.handleRemovePermission)
-	mux.Get("/api/v0/groups/{id}/identities", a.handleListIdentities)
-	mux.Patch("/api/v0/groups/{id}/identities", a.handleAssignIdentities)
-	mux.Delete("/api/v0/groups/{id}/identities/{i_id}", a.handleRemoveIdentities)
+	mux.Patch("/api/v0/groups/{id:.+}", a.handleUpdate)
+	mux.Delete("/api/v0/groups/{id:.+}", a.handleRemove)
+	mux.Get("/api/v0/groups/{id:.+}/roles", a.handleListRoles)
+	mux.Post("/api/v0/groups/{id:.+}/roles", a.handleAssignRoles)
+	mux.Delete("/api/v0/groups/{id:.+}/roles/{r_id:.+}", a.handleRemoveRole)
+	mux.Get("/api/v0/groups/{id:.+}/entitlements", a.handleListPermission)
+	mux.Patch("/api/v0/groups/{id:.+}/entitlements", a.handleAssignPermission)
+	mux.Delete("/api/v0/groups/{id:.+}/entitlements/{e_id:.+}", a.handleRemovePermission)
+	mux.Get("/api/v0/groups/{id:.+}/identities", a.handleListIdentities)
+	mux.Patch("/api/v0/groups/{id:.+}/identities", a.handleAssignIdentities)
+	mux.Delete("/api/v0/groups/{id:.+}/identities/{i_id:.+}", a.handleRemoveIdentities)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {

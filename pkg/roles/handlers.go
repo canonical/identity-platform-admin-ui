@@ -53,14 +53,14 @@ type API struct {
 // RegisterEndpoints hooks up all the endpoints to the server mux passed via the arg
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/roles", a.handleList)
-	mux.Get("/api/v0/roles/{id}", a.handleDetail)
+	mux.Get("/api/v0/roles/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/roles", a.handleCreate)
-	mux.Patch("/api/v0/roles/{id}", a.handleUpdate)
-	mux.Delete("/api/v0/roles/{id}", a.handleRemove)
-	mux.Get("/api/v0/roles/{id}/entitlements", a.handleListPermission)
-	mux.Patch("/api/v0/roles/{id}/entitlements", a.handleAssignPermission) // this can only work for assignment unless payload includes add and remove
-	mux.Delete("/api/v0/roles/{id}/entitlements/{e_id}", a.handleRemovePermission)
-	mux.Get("/api/v0/roles/{id}/groups", a.handleListRoleGroup)
+	mux.Patch("/api/v0/roles/{id:.+}", a.handleUpdate)
+	mux.Delete("/api/v0/roles/{id:.+}", a.handleRemove)
+	mux.Get("/api/v0/roles/{id:.+}/entitlements", a.handleListPermission)
+	mux.Patch("/api/v0/roles/{id:.+}/entitlements", a.handleAssignPermission) // this can only work for assignment unless payload includes add and remove
+	mux.Delete("/api/v0/roles/{id:.+}/entitlements/{e_id:.+}", a.handleRemovePermission)
+	mux.Get("/api/v0/roles/{id:.+}/groups", a.handleListRoleGroup)
 }
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterValidatingFunc("roles", a.validatingFunc)

@@ -28,10 +28,10 @@ type API struct {
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/rules", a.handleList)
-	mux.Get("/api/v0/rules/{id}", a.handleDetail)
+	mux.Get("/api/v0/rules/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/rules", a.handleCreate)
-	mux.Put("/api/v0/rules/{id}", a.handleUpdate)
-	mux.Delete("/api/v0/rules/{id}", a.handleRemove)
+	mux.Put("/api/v0/rules/{id:.+}", a.handleUpdate)
+	mux.Delete("/api/v0/rules/{id:.+}", a.handleRemove)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {

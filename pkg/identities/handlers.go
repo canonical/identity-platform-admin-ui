@@ -36,13 +36,13 @@ type API struct {
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/identities", a.handleList)
-	mux.Get("/api/v0/identities/{id}", a.handleDetail)
+	mux.Get("/api/v0/identities/{id:.+}", a.handleDetail)
 	mux.Post("/api/v0/identities", a.handleCreate)
-	mux.Put("/api/v0/identities/{id}", a.handleUpdate)
-	// mux.Patch("/api/v0/identities/{id}", a.handlePartialUpdate)
-	mux.Delete("/api/v0/identities/{id}", a.handleRemove)
-	// mux.Delete("/api/v0/identities/{id}/sessions", a.handleSessionRemove)
-	// mux.Delete("/api/v0/identities/{id}/credentials/{type}", a.handleCrededntialRemove)
+	mux.Put("/api/v0/identities/{id:.+}", a.handleUpdate)
+	// mux.Patch("/api/v0/identities/{id:.+}", a.handlePartialUpdate)
+	mux.Delete("/api/v0/identities/{id:.+}", a.handleRemove)
+	// mux.Delete("/api/v0/identities/{id:.+}/sessions", a.handleSessionRemove)
+	// mux.Delete("/api/v0/identities/{id:.+}/credentials/{type}", a.handleCrededntialRemove)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {

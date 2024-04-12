@@ -29,7 +29,7 @@ type NavigationTokens struct {
 // Pagination object is used to serialize and deserialize pagination parameters
 // it will populate the `meta` part for the `Response` struct
 type Pagination struct {
-	PageToken string `json:"page_token"` // serialization only
+	PageToken string `json:"page_token,omitempty"` // serialization only
 	Size      int64  `json:"size"`
 	Page      int64  `json:"page"` // to be deprecated
 

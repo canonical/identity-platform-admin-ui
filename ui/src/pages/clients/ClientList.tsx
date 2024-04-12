@@ -8,13 +8,17 @@ import { isoTimeToString } from "util/date";
 import usePanelParams from "util/usePanelParams";
 import EditClientBtn from "pages/clients/EditClientBtn";
 import DeleteClientBtn from "pages/clients/DeleteClientBtn";
+import Loader from "components/Loader";
+import Pagination from "components/Pagination";
+import { usePagination } from "util/usePagination";
 
 const ClientList: FC = () => {
   const panelParams = usePanelParams();
+  const { pageToken } = usePagination();
 
-  const { data: clients = [] } = useQuery({
-    queryKey: [queryKeys.clients],
-    queryFn: fetchClients,
+  const { data: response, isLoading } = useQuery({
+    queryKey: [queryKeys.clients, pageToken],
+    queryFn: () => fetchClients(pageToken),
   });
 
   return (
@@ -35,16 +39,14 @@ const ClientList: FC = () => {
             <NotificationConsumer />
             <MainTable
               className="u-table-layout--auto"
-              sortable
               responsive
-              paginate={30}
               headers={[
-                { content: "Id", sortKey: "id" },
-                { content: "Name", sortKey: "name" },
+                { content: "Id" },
+                { content: "Name" },
                 { content: "Date" },
                 { content: "Actions" },
               ]}
-              rows={clients.map((client) => {
+              rows={response?.data.map((client) => {
                 return {
                   columns: [
                     {
@@ -82,13 +84,17 @@ const ClientList: FC = () => {
                       "aria-label": "Actions",
                     },
                   ],
-                  sortData: {
-                    id: client.client_id,
-                    name: client.client_name.toLowerCase(),
-                  },
                 };
               })}
+              emptyStateMsg={
+                isLoading ? (
+                  <Loader text="Loading clients..." />
+                ) : (
+                  "No data to display"
+                )
+              }
             />
+            <Pagination response={response} />
           </Col>
         </Row>
       </div>

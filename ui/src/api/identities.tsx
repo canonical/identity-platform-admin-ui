@@ -1,12 +1,14 @@
-import { ApiResponse } from "types/api";
-import { handleResponse } from "util/api";
+import { ApiResponse, PaginatedResponse } from "types/api";
+import { handleResponse, PAGE_SIZE } from "util/api";
 import { Identity } from "types/identity";
 
-export const fetchIdentities = (): Promise<Identity[]> => {
+export const fetchIdentities = (
+  pageToken: string,
+): Promise<PaginatedResponse<Identity[]>> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/identities")
+    fetch(`/api/v0/identities?page_token=${pageToken}&size=${PAGE_SIZE}`)
       .then(handleResponse)
-      .then((result: ApiResponse<Identity[]>) => resolve(result.data))
+      .then((result: PaginatedResponse<Identity[]>) => resolve(result))
       .catch(reject);
   });
 };

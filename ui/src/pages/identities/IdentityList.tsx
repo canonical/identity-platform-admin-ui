@@ -1,15 +1,23 @@
 import React, { FC } from "react";
-import { Col, MainTable, Row } from "@canonical/react-components";
+import { Button, Col, MainTable, Row } from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchIdentities } from "api/identities";
 import { isoTimeToString } from "util/date";
+import Loader from "components/Loader";
+import usePanelParams from "util/usePanelParams";
+import { usePagination } from "util/usePagination";
+import Pagination from "components/Pagination";
+import DeleteIdentityBtn from "pages/identities/DeleteIdentityBtn";
 
 const IdentityList: FC = () => {
-  const { data: identities = [] } = useQuery({
-    queryKey: [queryKeys.identities],
-    queryFn: fetchIdentities,
+  const panelParams = usePanelParams();
+  const { pageToken } = usePagination();
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: [queryKeys.identities, pageToken],
+    queryFn: () => fetchIdentities(pageToken),
   });
 
   return (
@@ -18,6 +26,14 @@ const IdentityList: FC = () => {
         <div className="p-panel__title">
           <h1 className="p-heading--4 u-no-margin--bottom">Identities</h1>
         </div>
+        <div className="p-panel__controls">
+          <Button
+            appearance="positive"
+            onClick={panelParams.openIdentityCreate}
+          >
+            Add identity
+          </Button>
+        </div>
       </div>
       <div className="p-panel__content">
         <Row>
@@ -25,15 +41,14 @@ const IdentityList: FC = () => {
             <NotificationConsumer />
             <MainTable
               className="u-table-layout--auto"
-              sortable
               responsive
-              paginate={30}
               headers={[
-                { content: "Id", sortKey: "id" },
-                { content: "Schema", sortKey: "schema" },
-                { content: "Created at", sortKey: "createdAt" },
+                { content: "Id" },
+                { content: "Schema" },
+                { content: "Created at" },
+                { content: "Actions" },
               ]}
-              rows={identities.map((identity) => {
+              rows={response?.data.map((identity) => {
                 return {
                   columns: [
                     {
@@ -53,15 +68,27 @@ const IdentityList: FC = () => {
                       role: "rowheader",
                       "aria-label": "Created at",
                     },
+                    {
+                      content: (
+                        <>
+                          <DeleteIdentityBtn identity={identity} />
+                        </>
+                      ),
+                      role: "rowheader",
+                      "aria-label": "Actions",
+                    },
                   ],
-                  sortData: {
-                    id: identity.id,
-                    schema: identity.schema_id,
-                    createdAt: identity.created_at,
-                  },
                 };
               })}
+              emptyStateMsg={
+                isLoading ? (
+                  <Loader text="Loading identities..." />
+                ) : (
+                  "No data to display"
+                )
+              }
             />
+            <Pagination response={response} />
           </Col>
         </Row>
       </div>

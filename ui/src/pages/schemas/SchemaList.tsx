@@ -4,11 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
 import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchSchemas } from "api/schema";
+import Loader from "components/Loader";
+import Pagination from "components/Pagination";
+import { usePagination } from "util/usePagination";
 
 const SchemaList: FC = () => {
-  const { data: schemas = [] } = useQuery({
-    queryKey: [queryKeys.schemas],
-    queryFn: fetchSchemas,
+  const { pageToken } = usePagination();
+
+  const { data: response, isLoading } = useQuery({
+    queryKey: [queryKeys.schemas, pageToken],
+    queryFn: () => fetchSchemas(pageToken),
   });
 
   return (
@@ -24,14 +29,9 @@ const SchemaList: FC = () => {
             <NotificationConsumer />
             <MainTable
               className="u-table-layout--auto"
-              sortable
               responsive
-              paginate={30}
-              headers={[
-                { content: "Id", sortKey: "id" },
-                { content: "Schema" },
-              ]}
-              rows={schemas.map((schema) => {
+              headers={[{ content: "Id" }, { content: "Schema" }]}
+              rows={response?.data.map((schema) => {
                 return {
                   columns: [
                     {
@@ -45,12 +45,17 @@ const SchemaList: FC = () => {
                       "aria-label": "Name",
                     },
                   ],
-                  sortData: {
-                    id: schema.id,
-                  },
                 };
               })}
+              emptyStateMsg={
+                isLoading ? (
+                  <Loader text="Loading schemas..." />
+                ) : (
+                  "No data to display"
+                )
+              }
             />
+            <Pagination response={response} />
           </Col>
         </Row>
       </div>

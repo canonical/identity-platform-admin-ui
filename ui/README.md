@@ -40,4 +40,4 @@ Install dotrun as described in https://github.com/canonical/dotrun#installation 
 
     dotrun
 
-browse to https://localhost:8411/ to reach iam-admin-ui.
+browse to http://localhost:8411/ to reach iam-admin-ui.

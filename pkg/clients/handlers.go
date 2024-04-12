@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -23,13 +22,6 @@ type API struct {
 	validator *validator.Validate
 
 	logger logging.LoggerInterface
-}
-
-type PaginationLinksResponse struct {
-	First string `json:"first,omitempty"`
-	Last  string `json:"last,omitempty"`
-	Prev  string `json:"prev,omitempty"`
-	Next  string `json:"next,omitempty"`
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -59,7 +51,7 @@ func (a *API) WriteJSONResponse(w http.ResponseWriter, data interface{}, msg str
 	r.Data = data
 	r.Message = msg
 	r.Status = status
-	r.Links = links
+	// r.Links = links
 	r.Meta = meta
 
 	err := json.NewEncoder(w).Encode(r)
@@ -182,17 +174,15 @@ func (a *API) ListClients(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var links PaginationLinksResponse
-	if res.Links != nil {
-		links = PaginationLinksResponse{
-			First: a.convertLinkToUrl(res.Links.First, r.RequestURI),
-			Last:  a.convertLinkToUrl(res.Links.Last, r.RequestURI),
-			Next:  a.convertLinkToUrl(res.Links.Next, r.RequestURI),
-			Prev:  a.convertLinkToUrl(res.Links.Prev, r.RequestURI),
-		}
+	if res.Tokens.Next != "" {
+		res.Meta["next"] = res.Tokens.Next
 	}
 
-	a.WriteJSONResponse(w, res.Resp, "List of clients", http.StatusOK, links, res.Meta)
+	if res.Tokens.Prev != "" {
+		res.Meta["prev"] = res.Tokens.Prev
+	}
+
+	a.WriteJSONResponse(w, res.Resp, "List of clients", http.StatusOK, nil, res.Meta)
 }
 
 func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, error) {
@@ -200,7 +190,7 @@ func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, err
 
 	cn := q.Get("client_name")
 	owner := q.Get("owner")
-	page := q.Get("page")
+	page_token := q.Get("page_token")
 	s := q.Get("size")
 
 	var size int = 200
@@ -211,23 +201,7 @@ func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, err
 			return nil, err
 		}
 	}
-	return NewListClientsRequest(cn, owner, page, size), nil
-}
-
-func (a *API) convertLinkToUrl(l PaginationMeta, u string) string {
-	if l.Page == "" {
-		return ""
-	}
-	uu, err := url.Parse(u)
-	if err != nil {
-		a.logger.Fatal("Failed to parse URL: ", u)
-	}
-
-	q := uu.Query()
-	q.Set("page", l.Page)
-	q.Set("size", strconv.Itoa(l.Size))
-	uu.RawQuery = q.Encode()
-	return uu.String()
+	return NewListClientsRequest(cn, owner, page_token, size), nil
 }
 
 func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {

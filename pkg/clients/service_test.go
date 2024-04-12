@@ -376,7 +376,12 @@ func TestListClientSuccess(t *testing.T) {
 			if _page := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *_page != page {
 				t.Fatalf("expected id to be %s, got %s", page, *_page)
 			}
-			return cs, new(http.Response), nil
+
+			rr := new(http.Response)
+			rr.Header = make(http.Header)
+			rr.Header.Set("Link", `<http://hydra.default.svc.cluster.local/admin/clients?page=0&page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://hydra.default.svc.cluster.local/admin/clients?page=1&page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://hydra.default.svc.cluster.local/admin/clients?page=-1&page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
+
+			return cs, rr, nil
 		},
 	)
 
@@ -388,6 +393,11 @@ func TestListClientSuccess(t *testing.T) {
 	if !reflect.DeepEqual(resp.Resp, cs) {
 		t.Fatalf("expected data to be %+v, got: %+v", cs, resp.Resp)
 	}
+
+	if resp.Tokens.Next != "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ" || resp.Tokens.Prev != "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0" {
+		t.Fatalf("pagination links invalid, expected %v got %v", []string{"eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0"}, []string{resp.Tokens.Next, resp.Tokens.Prev})
+	}
+
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
 	}
@@ -454,30 +464,6 @@ func TestUnmarshalClient(t *testing.T) {
 	}
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
-	}
-}
-
-func TestParseLinks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockLogger := NewMockLoggerInterface(ctrl)
-	mockHydra := NewMockHydraClientInterface(ctrl)
-	mockTracer := NewMockTracer(ctrl)
-	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-
-	nextToken := "next_token"
-	lastToken := "last_token"
-	size := 10
-	links := "<https://example/next?page_token=" + nextToken + "&page_size=" + fmt.Sprint(size) + ">; rel=\"next\",<https://example/last?page_token=" + lastToken + "&page_size=" + fmt.Sprint(size) + ">; rel=\"last\""
-
-	l := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).parseLinks(links)
-	expectedLinks := new(PaginationLinksMeta)
-	expectedLinks.Next = PaginationMeta{nextToken, size}
-	expectedLinks.Last = PaginationMeta{lastToken, size}
-
-	if !reflect.DeepEqual(l, expectedLinks) {
-		t.Fatalf("expected data to be %+v, got: %+v", expectedLinks, l)
 	}
 }
 

@@ -133,6 +133,7 @@ func TestHandleListSuccess(t *testing.T) {
 	// duplicate types.Response attribute we care and assign the proper type instead of interface{}
 	type Response struct {
 		Data []kClient.IdentitySchemaContainer `json:"data"`
+		Meta types.Pagination                  `json:"_meta"`
 	}
 
 	rr := new(Response)
@@ -144,6 +145,10 @@ func TestHandleListSuccess(t *testing.T) {
 	// cannot use reflect.DeepEqual on the result because Configuration container a json.RawMessage that doesn't play well with it
 	if len(schemas.IdentitySchemas) != len(rr.Data) {
 		t.Fatalf("invalid result, expected %v schemas, got: %v", len(schemas.IdentitySchemas), len(rr.Data))
+	}
+
+	if schemas.Tokens.Next != rr.Meta.Next || schemas.Tokens.Prev != rr.Meta.Prev {
+		t.Fatalf("pagination links invalid, expected %v got %v", schemas.Tokens, rr.Meta)
 	}
 
 	if !reflect.DeepEqual([]string{*schemas.IdentitySchemas[0].Id, *schemas.IdentitySchemas[1].Id}, []string{*rr.Data[0].Id, *rr.Data[1].Id}) {

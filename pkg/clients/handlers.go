@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/responses"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -43,18 +43,19 @@ func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
 	return nil
 }
 
-func (a *API) WriteJSONResponse(w http.ResponseWriter, data interface{}, msg string, status int, links interface{}, meta interface{}) {
+func (a *API) WriteJSONResponse(w http.ResponseWriter, data interface{}, msg string, status int, links interface{}, meta *types.Pagination) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	r := new(responses.Response)
-	r.Data = data
-	r.Message = msg
-	r.Status = status
-	// r.Links = links
-	r.Meta = meta
+	err := json.NewEncoder(w).Encode(
+		types.Response{
+			Data:    data,
+			Meta:    meta,
+			Message: msg,
+			Status:  status,
+		},
+	)
 
-	err := json.NewEncoder(w).Encode(r)
 	if err != nil {
 		a.logger.Errorf("Unexpected error: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -174,15 +175,11 @@ func (a *API) ListClients(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if res.Tokens.Next != "" {
-		res.Meta["next"] = res.Tokens.Next
-	}
+	meta := new(types.Pagination)
+	meta.NavigationTokens = res.Tokens
+	meta.Size = req.Size
 
-	if res.Tokens.Prev != "" {
-		res.Meta["prev"] = res.Tokens.Prev
-	}
-
-	a.WriteJSONResponse(w, res.Resp, "List of clients", http.StatusOK, nil, res.Meta)
+	a.WriteJSONResponse(w, res.Resp, "List of clients", http.StatusOK, nil, meta)
 }
 
 func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, error) {

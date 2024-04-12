@@ -11,13 +11,12 @@ import (
 	reflect "reflect"
 	"testing"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.uber.org/mock/gomock"
 
 	"io"
-
-	"github.com/canonical/identity-platform-admin-ui/internal/responses"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -59,7 +58,7 @@ func TestHandleGetClientSuccess(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := c.MarshalJSON()
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -111,7 +110,7 @@ func TestHandleGetClientServiceError(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -159,7 +158,7 @@ func TestHandleDeleteClientSuccess(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -205,7 +204,7 @@ func TestHandleDeleteClientServiceError(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -254,7 +253,7 @@ func TestHandleCreateClientSuccess(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -300,7 +299,7 @@ func TestHandleCreateClientServiceError(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -376,7 +375,7 @@ func TestHandleUpdateClientSuccess(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -424,7 +423,7 @@ func TestHandleUpdateClientServiceError(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -508,7 +507,7 @@ func TestHandleListClientsSuccess(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -560,7 +559,7 @@ func TestHandleListClientServiceError(t *testing.T) {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)

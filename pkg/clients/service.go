@@ -17,13 +17,8 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
-type PaginationMeta struct {
-	PageToken string `json:"page_token,omitempty"`
-	Size      int    `json:"size,omitempty"`
-}
-
 type ListClientsRequest struct {
-	PaginationMeta
+	types.Pagination
 	Owner      string `json:"owner,omitempty"`
 	ClientName string `json:"client_name,omitempty"`
 }
@@ -226,9 +221,9 @@ func NewListClientsRequest(cn, owner, pageToken string, size int) *ListClientsRe
 	return &ListClientsRequest{
 		ClientName: cn,
 		Owner:      owner,
-		PaginationMeta: PaginationMeta{
+		Pagination: types.Pagination{
 			PageToken: pageToken,
-			Size:      size,
+			Size:      int64(size),
 		},
 	}
 }

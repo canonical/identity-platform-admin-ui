@@ -63,17 +63,19 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO @shipperizer improve on this, see if better to stick with link headers
-	pagination.Next = schemas.Tokens.Next
-	pagination.Prev = schemas.Tokens.Prev
-
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{
 			Data:    schemas.IdentitySchemas,
 			Message: "List of Identity Schemas",
 			Status:  http.StatusOK,
-			Meta:    pagination,
+			Meta: &types.Pagination{
+				NavigationTokens: types.NavigationTokens{
+					Next: schemas.Tokens.Next,
+					Prev: schemas.Tokens.Prev,
+				},
+				Size: pagination.Size,
+			},
 		},
 	)
 }

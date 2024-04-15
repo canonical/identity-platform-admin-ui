@@ -1,12 +1,12 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package clients
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	reflect "reflect"
@@ -16,7 +16,7 @@ import (
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.uber.org/mock/gomock"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/responses"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -51,14 +51,14 @@ func TestHandleGetClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := c.MarshalJSON()
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -103,14 +103,14 @@ func TestHandleGetClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 404 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -151,14 +151,14 @@ func TestHandleDeleteClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -197,14 +197,14 @@ func TestHandleDeleteClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 404 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -246,14 +246,14 @@ func TestHandleCreateClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 201 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -292,14 +292,14 @@ func TestHandleCreateClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -368,14 +368,14 @@ func TestHandleUpdateClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -416,14 +416,14 @@ func TestHandleUpdateClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
@@ -477,13 +477,13 @@ func TestHandleListClientsSuccess(t *testing.T) {
 	resp := NewServiceResponse()
 	resp.Resp = []*OAuth2Client{c}
 
-	page := "10"
+	page_token := "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ"
 	size := "10"
-	listReq := NewListClientsRequest("", "", page, 10)
+	listReq := NewListClientsRequest("", "", page_token, 10)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/clients", nil)
 	q := req.URL.Query()
-	q.Set("page", page)
+	q.Set("page_token", page_token)
 	q.Set("size", size)
 	req.URL.RawQuery = q.Encode()
 	w := httptest.NewRecorder()
@@ -500,14 +500,14 @@ func TestHandleListClientsSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
@@ -529,13 +529,13 @@ func TestHandleListClientServiceError(t *testing.T) {
 	resp.ServiceError = errResp
 	resp.ServiceError.StatusCode = http.StatusBadRequest
 
-	page := "10"
+	page_token := "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ"
 	size := "10"
-	listReq := NewListClientsRequest("", "", page, 10)
+	listReq := NewListClientsRequest("", "", page_token, 10)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/clients", nil)
 	q := req.URL.Query()
-	q.Set("page", page)
+	q.Set("page_token", page_token)
 	q.Set("size", size)
 	req.URL.RawQuery = q.Encode()
 	w := httptest.NewRecorder()
@@ -552,14 +552,14 @@ func TestHandleListClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
 		t.Fatalf("expected error to be nil got %v", err)
 	}
 
-	r := new(responses.Response)
+	r := new(types.Response)
 	expectedData, _ := json.Marshal(errResp)
 	if err := json.Unmarshal(data, r); err != nil {
 		t.Fatalf("expected error to be nil got %v", err)

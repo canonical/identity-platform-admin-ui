@@ -1,5 +1,5 @@
 // Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// SPDX-License-Identifier: AGPL-3.0
 
 package clients
 
@@ -8,31 +8,17 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
-	"regexp"
-	"strconv"
 
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
-type PaginationLinksMeta struct {
-	First PaginationMeta `json:"first,omitempty"`
-	Last  PaginationMeta `json:"last,omitempty"`
-	Prev  PaginationMeta `json:"prev,omitempty"`
-	Next  PaginationMeta `json:"next,omitempty"`
-}
-
-type PaginationMeta struct {
-	Page string `json:"page,omitempty"`
-	Size int    `json:"size,omitempty"`
-}
-
 type ListClientsRequest struct {
-	PaginationMeta
+	types.Pagination
 	Owner      string `json:"owner,omitempty"`
 	ClientName string `json:"client_name,omitempty"`
 }
@@ -44,16 +30,14 @@ type ErrorOAuth2 struct {
 }
 
 type ServiceResponse struct {
-	Links        *PaginationLinksMeta
 	ServiceError *ErrorOAuth2
 	Resp         interface{}
+	Tokens       types.NavigationTokens
 	Meta         map[string]string
 }
 
 type Service struct {
 	hydra HydraClientInterface
-
-	linksRegex *regexp.Regexp
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -155,7 +139,7 @@ func (s *Service) ListClients(ctx context.Context, cs *ListClientsRequest) (*Ser
 		ClientName(cs.ClientName).
 		Owner(cs.Owner).
 		PageSize(int64(cs.Size)).
-		PageToken(cs.Page).
+		PageToken(cs.PageToken).
 		Execute()
 
 	if err != nil {
@@ -167,9 +151,10 @@ func (s *Service) ListClients(ctx context.Context, cs *ListClientsRequest) (*Ser
 	}
 	ret.Resp = c
 
-	l := resp.Header.Get("Link")
-	if l != "" {
-		ret.Links = s.parseLinks(l)
+	if navTokens, err := types.ParseLinkTokens(resp.Header); err != nil {
+		s.logger.Warnf("failed parsing link header: %s", err)
+	} else {
+		ret.Tokens = navTokens
 	}
 
 	ret.Meta["total_count"] = resp.Header.Get("X-Total-Count")
@@ -183,45 +168,6 @@ func (s *Service) UnmarshalClient(data []byte) (*hClient.OAuth2Client, error) {
 		return nil, err
 	}
 	return c, nil
-}
-
-func (s *Service) parseLinks(ls string) *PaginationLinksMeta {
-	p := new(PaginationLinksMeta)
-	links := s.linksRegex.FindAllStringSubmatch(ls, -1)
-	for _, link := range links {
-		l := link[1]
-		t := link[2]
-		if l == "" {
-			continue
-		}
-
-		parsedURL, err := url.Parse(l)
-		if err != nil {
-			s.logger.Errorf("Failed to parse: %s, not a URL: %s", l, err)
-			continue
-		}
-		q := parsedURL.Query()
-		size, _ := strconv.Atoi(q["page_size"][0])
-		if err != nil {
-			s.logger.Errorf("Failed to parse: %s, not an int", err)
-			continue
-		}
-
-		switch t {
-		case "first":
-			p.First = PaginationMeta{q["page_token"][0], size}
-		case "last":
-			p.Last = PaginationMeta{q["page_token"][0], size}
-		case "prev":
-			p.Prev = PaginationMeta{q["page_token"][0], size}
-		case "next":
-			p.Next = PaginationMeta{q["page_token"][0], size}
-		default:
-			// We should never end up here
-			s.logger.Warn("Unexpected Links header format: ", ls)
-		}
-	}
-	return p
 }
 
 func (s *Service) parseServiceError(r *http.Response) (*ErrorOAuth2, error) {
@@ -256,7 +202,6 @@ func (s *Service) parseServiceError(r *http.Response) (*ErrorOAuth2, error) {
 func NewService(hydra HydraClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
-	s.linksRegex = regexp.MustCompile(`<(?P<link>[^>]*)>; rel="(?P<type>\w*)"`)
 	s.hydra = hydra
 
 	s.monitor = monitor
@@ -272,13 +217,13 @@ func NewServiceResponse() *ServiceResponse {
 	return sr
 }
 
-func NewListClientsRequest(cn, owner, page string, size int) *ListClientsRequest {
+func NewListClientsRequest(cn, owner, pageToken string, size int) *ListClientsRequest {
 	return &ListClientsRequest{
 		ClientName: cn,
 		Owner:      owner,
-		PaginationMeta: PaginationMeta{
-			Page: page,
-			Size: size,
+		Pagination: types.Pagination{
+			PageToken: pageToken,
+			Size:      int64(size),
 		},
 	}
 }

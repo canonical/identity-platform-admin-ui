@@ -1,22 +1,22 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package clients
 
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	reflect "reflect"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/go-chi/chi/v5"
 	hClient "github.com/ory/hydra-client-go/v2"
 	"go.uber.org/mock/gomock"
 
-	"io"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -51,7 +51,7 @@ func TestHandleGetClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -103,7 +103,7 @@ func TestHandleGetClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 404 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -151,7 +151,7 @@ func TestHandleDeleteClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -197,7 +197,7 @@ func TestHandleDeleteClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 404 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -246,7 +246,7 @@ func TestHandleCreateClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 201 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -292,7 +292,7 @@ func TestHandleCreateClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -368,7 +368,7 @@ func TestHandleUpdateClientSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -416,7 +416,7 @@ func TestHandleUpdateClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -500,7 +500,7 @@ func TestHandleListClientsSuccess(t *testing.T) {
 		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {
@@ -552,7 +552,7 @@ func TestHandleListClientServiceError(t *testing.T) {
 		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
 	}
 
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 
 	if err != nil {

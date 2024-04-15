@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package identities
 
@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -17,8 +18,6 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
-
-	"io"
 
 	kClient "github.com/ory/kratos-client-go"
 )
@@ -66,7 +65,7 @@ func TestHandleListSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -140,7 +139,7 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -186,7 +185,7 @@ func TestHandleDetailSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -262,7 +261,7 @@ func TestHandleDetailFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -312,7 +311,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -393,7 +392,7 @@ func TestHandleCreateFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -434,7 +433,7 @@ func TestHandleCreateFailBadRequest(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -483,7 +482,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -565,7 +564,7 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -606,7 +605,7 @@ func TestHandleUpdateFailBadRequest(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -647,7 +646,7 @@ func TestHandleRemoveSuccess(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
@@ -695,7 +694,7 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 
 	res := w.Result()
 	defer res.Body.Close()
-	data, err := io.ReadAll(io.Reader(res.Body))
+	data, err := io.ReadAll(res.Body)
 
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)

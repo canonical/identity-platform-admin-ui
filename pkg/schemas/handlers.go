@@ -41,57 +41,6 @@ func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	}
 }
 
-/*func (a *API) validatingFunc(r *http.Request) (validator.ValidationErrors, error) {
-	if !shouldValidate(r) {
-		return nil, nil
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		return nil, validation.NoBodyError
-	}
-
-	// don't break existing handlers, replace the body that was consumed
-	r.Body = io.NopCloser(bytes.NewReader(body))
-
-	// key "schemas" must be there since we registered it in the setup func
-	endpoint, _ := validation.ApiEndpoint(r.URL.Path, a.apiKey)
-
-	validated := false
-
-	if isCreateOrUpdateSchema(r, endpoint) {
-		schema := new(kClient.IdentitySchemaContainer)
-		if err := json.Unmarshal(body, schema); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(schema)
-		validated = true
-	}
-
-	if isPartialUpdate(r, endpoint) {
-		schema := new(DefaultSchema)
-		if err := json.Unmarshal(body, schema); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(schema)
-		validated = true
-	}
-
-	if !validated {
-		return nil, validation.NoMatchError(a.apiKey)
-	}
-
-	if err == nil {
-		return nil, nil
-	}
-
-	return err.(validator.ValidationErrors), nil
-}*/
-
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -412,7 +361,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 
 	a.apiKey = "schemas"
 	a.service = service
-	//a.payloadValidator = NewSchemasPayloadValidator()
+	a.payloadValidator = NewSchemasPayloadValidator(a.apiKey)
 	a.logger = logger
 
 	return a

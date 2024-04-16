@@ -29,6 +29,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
+//go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
 // + http :8000/api/v0/groups X-Authorization:c2hpcHBlcml6ZXI=
 // HTTP/1.1 200 OK
@@ -1984,4 +1985,31 @@ func TestHandleListIdentitiesSuccess(t *testing.T) {
 
 		})
 	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
+
+	apiKey := "groups"
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(nil)
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(fmt.Errorf("key is already registered"))
+
+	// first registration of `apiKey` is successful
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
+
+	mockLogger.EXPECT().Fatal(gomock.Any()).Times(1)
+
+	// second registration of `apiKey` causes logger.Fatal invocation
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }

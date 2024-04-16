@@ -83,82 +83,6 @@ func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	}
 }
 
-/*func (a *API) validatingFunc(r *http.Request) (validator.ValidationErrors, error) {
-	if !shouldValidate(r) {
-		return nil, nil
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		return nil, validation.NoBodyError
-	}
-
-	// don't break existing handlers, replace the body that was consumed
-	r.Body = io.NopCloser(bytes.NewReader(body))
-
-	// key "identities" must be there since we registered it in the setup func
-	endpoint, _ := validation.ApiEndpoint(r.URL.Path, a.apiKey)
-
-	validated := false
-
-	if isCreateGroup(r, endpoint) {
-		group := new(GroupRequest)
-		if err := json.Unmarshal(body, group); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(group)
-		validated = true
-	}
-
-	if isUpdateGroup(r, endpoint) {
-		// TODO: @barco to implement when the UpdateGroup is implemented
-		validated = true
-	}
-
-	if isAssignRoles(r, endpoint) {
-		updateRoles := new(UpdateRolesRequest)
-		if err := json.Unmarshal(body, updateRoles); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(updateRoles)
-		validated = true
-	}
-
-	if isAssignPermissions(r, endpoint) {
-		updatePermissions := new(UpdatePermissionsRequest)
-		if err := json.Unmarshal(body, updatePermissions); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(updatePermissions)
-		validated = true
-	}
-
-	if isAssignIdentities(r, endpoint) {
-		updateIdentities := new(UpdateIdentitiesRequest)
-		if err := json.Unmarshal(body, updateIdentities); err != nil {
-			return nil, err
-		}
-
-		err = a.validator.Struct(updateIdentities)
-		validated = true
-	}
-
-	if !validated {
-		return nil, validation.NoMatchError(a.apiKey)
-	}
-
-	if err == nil {
-		return nil, nil
-	}
-
-	return err.(validator.ValidationErrors), nil
-}*/
-
 func (a *API) userFromContext(ctx context.Context) *authorization.User {
 	// TODO @shipperizer implement the FromContext and NewContext in authorization package
 	// see snippet below copied from https://pkg.go.dev/context#Context
@@ -772,7 +696,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 
 	a.apiKey = "groups"
 	a.service = service
-	//a.payloadValidator = NewGroupsPayloadValidator()
+	a.payloadValidator = NewGroupsPayloadValidator(a.apiKey)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

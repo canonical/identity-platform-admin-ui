@@ -19,7 +19,7 @@ type PayloadValidator struct {
 	validator *validator.Validate
 }
 
-func (_ *PayloadValidator) NeedsValidation(r *http.Request) bool {
+func (p *PayloadValidator) NeedsValidation(r *http.Request) bool {
 	return r.Method == http.MethodPost || r.Method == http.MethodPatch
 }
 

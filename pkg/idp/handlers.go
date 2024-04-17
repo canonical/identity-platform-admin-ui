@@ -36,7 +36,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
-		a.logger.Fatal("unexpected validatingFunc already registered for idps")
+		a.logger.Fatalf("unexpected validatingFunc already registered for idps, %s", err)
 	}
 }
 

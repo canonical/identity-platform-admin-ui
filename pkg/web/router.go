@@ -69,35 +69,35 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	)
 	identitiesAPI.RegisterEndpoints(router)
-	identitiesAPI.RegisterValidation(vldtr)
+	// identitiesAPI.RegisterValidation(vldtr)
 
 	clientsAPI := clients.NewAPI(
 		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
 		logger,
 	)
 	clientsAPI.RegisterEndpoints(router)
-	clientsAPI.RegisterValidation(vldtr)
+	// clientsAPI.RegisterValidation(vldtr)
 
 	idpAPI := idp.NewAPI(
 		idp.NewService(idpConfig, tracer, monitor, logger),
 		logger,
 	)
 	idpAPI.RegisterEndpoints(router)
-	idpAPI.RegisterValidation(vldtr)
+	// idpAPI.RegisterValidation(vldtr)
 
 	schemasAPI := schemas.NewAPI(
 		schemas.NewService(schemasConfig, tracer, monitor, logger),
 		logger,
 	)
 	schemasAPI.RegisterEndpoints(router)
-	schemasAPI.RegisterValidation(vldtr)
+	// schemasAPI.RegisterValidation(vldtr)
 
 	rulesAPI := rules.NewAPI(
 		rules.NewService(rulesConfig, tracer, monitor, logger),
 		logger,
 	)
 	rulesAPI.RegisterEndpoints(router)
-	rulesAPI.RegisterValidation(vldtr)
+	// rulesAPI.RegisterValidation(vldtr)
 
 	rolesAPI := roles.NewAPI(
 		roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
@@ -106,7 +106,7 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	)
 	rolesAPI.RegisterEndpoints(router)
-	rolesAPI.RegisterValidation(vldtr)
+	// rolesAPI.RegisterValidation(vldtr)
 
 	groupsAPI := groups.NewAPI(
 		groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
@@ -115,7 +115,7 @@ func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig
 		logger,
 	)
 	groupsAPI.RegisterEndpoints(router)
-	groupsAPI.RegisterValidation(vldtr)
+	// groupsAPI.RegisterValidation(vldtr)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

@@ -1,12 +1,16 @@
 import { Client } from "types/client";
-import { ApiResponse } from "types/api";
-import { handleResponse } from "util/api";
+import { ApiResponse, PaginatedResponse } from "types/api";
+import { handleResponse, PAGE_SIZE } from "util/api";
 
-export const fetchClients = (): Promise<Client[]> => {
+export const fetchClients = (
+  pageToken: string,
+): Promise<PaginatedResponse<Client[]>> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/clients`)
+    fetch(
+      `${import.meta.env.VITE_API_URL}/clients?page_token=${pageToken}&size=${PAGE_SIZE}`,
+    )
       .then(handleResponse)
-      .then((result: ApiResponse<Client[]>) => resolve(result.data))
+      .then((result: PaginatedResponse<Client[]>) => resolve(result))
       .catch(reject);
   });
 };
@@ -34,7 +38,7 @@ export const createClient = (values: string): Promise<Client> => {
 
 export const updateClient = (
   clientId: string,
-  values: string
+  values: string,
 ): Promise<Client> => {
   return new Promise((resolve, reject) => {
     fetch(`${import.meta.env.VITE_API_URL}/clients/${clientId}`, {

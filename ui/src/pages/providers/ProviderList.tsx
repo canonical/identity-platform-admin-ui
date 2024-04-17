@@ -41,7 +41,6 @@ const ProviderList: FC = () => {
               className="u-table-layout--auto"
               sortable
               responsive
-              paginate={30}
               headers={[
                 { content: "Name", sortKey: "id" },
                 { content: "Provider", sortKey: "provider" },

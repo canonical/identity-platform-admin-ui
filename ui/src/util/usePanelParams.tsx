@@ -9,6 +9,7 @@ export interface PanelHelper {
   openProviderEdit: (id: string) => void;
   openClientCreate: () => void;
   openClientEdit: (id: string) => void;
+  openIdentityCreate: () => void;
   updatePanelParams: (key: string, value: string) => void;
 }
 
@@ -17,6 +18,7 @@ export const panels = {
   providerEdit: "provider-edit",
   clientCreate: "client-create",
   clientEdit: "client-edit",
+  identityCreate: "identity-create",
 };
 
 type ParamMap = Record<string, string>;
@@ -67,6 +69,10 @@ const usePanelParams = (): PanelHelper => {
 
     openClientEdit: (id: string) => {
       setPanelParams(panels.clientEdit, { id });
+    },
+
+    openIdentityCreate: () => {
+      setPanelParams(panels.identityCreate);
     },
 
     updatePanelParams: (key: string, value: string) => {

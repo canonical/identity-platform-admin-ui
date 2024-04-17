@@ -1,12 +1,14 @@
-import { ApiResponse } from "types/api";
-import { handleResponse } from "util/api";
+import { ApiResponse, PaginatedResponse } from "types/api";
+import { handleResponse, PAGE_SIZE } from "util/api";
 import { Schema } from "types/schema";
 
-export const fetchSchemas = (): Promise<Schema[]> => {
+export const fetchSchemas = (
+  pageToken: string,
+): Promise<PaginatedResponse<Schema[]>> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/schemas")
+    fetch(`/api/v0/schemas?page_token=${pageToken}&page_size=${PAGE_SIZE}`)
       .then(handleResponse)
-      .then((result: ApiResponse<Schema[]>) => resolve(result.data))
+      .then((result: PaginatedResponse<Schema[]>) => resolve(result))
       .catch(reject);
   });
 };

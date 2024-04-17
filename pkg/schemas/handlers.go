@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 	kClient "github.com/ory/kratos-client-go"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
@@ -17,11 +16,10 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
-const okValue = "ok"
-
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger logging.LoggerInterface
 }
@@ -37,14 +35,10 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("schemas", a.validatingFunc)
+	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
 		a.logger.Fatal("unexpected validatingFunc already registered for schemas")
 	}
-}
-
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
 }
 
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
@@ -365,8 +359,9 @@ func (a *API) error(e *kClient.GenericError) types.Response {
 func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
+	a.apiKey = "schemas"
 	a.service = service
-	a.validator = validator.New(validator.WithRequiredStructEnabled())
+	a.payloadValidator = NewSchemasPayloadValidator(a.apiKey)
 	a.logger = logger
 
 	return a

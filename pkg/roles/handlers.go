@@ -10,8 +10,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
-
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -42,8 +40,9 @@ type RoleRequest struct {
 // API is the core HTTP object that implements all the HTTP and business logic for the roles
 // HTTP API functionality
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger  logging.LoggerInterface
 	tracer  tracing.TracingInterface
@@ -63,14 +62,10 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/roles/{id:.+}/groups", a.handleListRoleGroup)
 }
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("roles", a.validatingFunc)
+	err := v.RegisterPayloadValidator("roles", a.payloadValidator)
 	if err != nil {
-		a.logger.Fatal("unexpected validatingFunc already registered for roles")
+		a.logger.Fatal("unexpected PayloadValidator already registered for roles")
 	}
-}
-
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
 }
 
 func (a *API) userFromContext(ctx context.Context) *authorization.User {
@@ -472,7 +467,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-	a.validator = validator.New(validator.WithRequiredStructEnabled())
+	//a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

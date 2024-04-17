@@ -10,8 +10,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
-
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -28,7 +26,7 @@ const (
 )
 
 type UpdateRolesRequest struct {
-	Roles []string `json:"roles" validate:"required"`
+	Roles []string `json:"roles" validate:"required,dive,required"`
 }
 
 type Permission struct {
@@ -37,7 +35,7 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
-	Permissions []Permission `json:"permissions" validate:"required"`
+	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
 type GroupRequest struct {
@@ -45,14 +43,15 @@ type GroupRequest struct {
 }
 
 type UpdateIdentitiesRequest struct {
-	Identities []string `json:"identities" validate:"required"`
+	Identities []string `json:"identities" validate:"required,dive,required"`
 }
 
 // API is the core HTTP object that implements all the HTTP and business logic for the groups
 // HTTP API functionality
 type API struct {
-	service   ServiceInterface
-	validator *validator.Validate
+	apiKey           string
+	service          ServiceInterface
+	payloadValidator validation.PayloadValidatorInterface
 
 	logger  logging.LoggerInterface
 	tracer  tracing.TracingInterface
@@ -78,14 +77,10 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
-	err := v.RegisterValidatingFunc("groups", a.validatingFunc)
+	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
 		a.logger.Fatal("unexpected validatingFunc already registered for groups")
 	}
-}
-
-func (a *API) validatingFunc(r *http.Request) validator.ValidationErrors {
-	return nil
 }
 
 func (a *API) userFromContext(ctx context.Context) *authorization.User {
@@ -699,8 +694,9 @@ func (a *API) handleRemoveIdentities(w http.ResponseWriter, r *http.Request) {
 func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
+	a.apiKey = "groups"
 	a.service = service
-	a.validator = validator.New(validator.WithRequiredStructEnabled())
+	a.payloadValidator = NewGroupsPayloadValidator(a.apiKey)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

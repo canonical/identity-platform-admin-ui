@@ -27,9 +27,9 @@ type API struct {
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/clients", a.ListClients)
 	mux.Post("/api/v0/clients", a.CreateClient)
-	mux.Get("/api/v0/clients/{id}", a.GetClient)
-	mux.Put("/api/v0/clients/{id}", a.UpdateClient)
-	mux.Delete("/api/v0/clients/{id}", a.DeleteClient)
+	mux.Get("/api/v0/clients/{id:.+}", a.GetClient)
+	mux.Put("/api/v0/clients/{id:.+}", a.UpdateClient)
+	mux.Delete("/api/v0/clients/{id:.+}", a.DeleteClient)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {

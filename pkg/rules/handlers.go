@@ -250,7 +250,7 @@ func (a *API) handleRemove(w http.ResponseWriter, r *http.Request) {
 func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "rules"
-
+	a.payloadValidator = NewRulesPayloadValidator(a.apiKey)
 	a.service = service
 	a.logger = logger
 

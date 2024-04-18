@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package idp
@@ -27,6 +27,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_corev1.go k8s.io/client-go/kubernetes/typed/core/v1 CoreV1Interface,ConfigMapInterface
+//go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
 func TestHandleListSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -781,4 +782,29 @@ func TestHandleRemoveFails(t *testing.T) {
 	if rr.Status != http.StatusInternalServerError {
 		t.Errorf("expected code to be %v got %v", http.StatusInternalServerError, rr.Status)
 	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
+
+	apiKey := "idps"
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(nil)
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(fmt.Errorf("key is already registered"))
+
+	// first registration of `apiKey` is successful
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+
+	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
+
+	// second registration of `apiKey` causes logger.Fatal invocation
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
 }

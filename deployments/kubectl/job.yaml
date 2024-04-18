@@ -4,6 +4,7 @@ kind: Job
 metadata:
   name: admin-ui-openfga-setup
 spec:
+  ttlSecondsAfterFinished: 60
   template:
     spec:
       securityContext:

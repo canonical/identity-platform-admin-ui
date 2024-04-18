@@ -30,7 +30,7 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
-	Permissions []Permission `json:"permissions" validate:"required"`
+	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
 type RoleRequest struct {
@@ -467,7 +467,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-	//a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
+	a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

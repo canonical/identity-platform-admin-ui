@@ -17,11 +17,14 @@ import (
 
 var (
 	oauth2ClientRules = map[string]string{
-		"AllowedCorsOrigins":      "omitempty,dive,required",
-		"Audience":                "omitempty,dive,required",
-		"ClientName":              "required",
-		"SubjectType":             "omitempty,oneof=pairwise public",
-		"GrantTypes":              "omitempty,dive,required",
+		// if not empy, validate every item is not nil and not empty
+		"AllowedCorsOrigins": "omitempty,dive,required",
+		"Audience":           "omitempty,dive,required",
+		"GrantTypes":         "omitempty,dive,required",
+		"ClientName":         "required",
+		// if not empty, validate value is one of 'pairwise' and 'public'
+		"SubjectType": "omitempty,oneof=pairwise public",
+		// if not empty, validate value is one of 'client_secret_basic', 'client_secret_post', 'private_key_jwt' and 'none'
 		"TokenEndpointAuthMethod": "omitempty,oneof=client_secret_basic client_secret_post private_key_jwt none",
 	}
 )

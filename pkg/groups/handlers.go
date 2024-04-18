@@ -26,6 +26,7 @@ const (
 )
 
 type UpdateRolesRequest struct {
+	// validate slice is not nil, and each item is not nil
 	Roles []string `json:"roles" validate:"required,dive,required"`
 }
 
@@ -35,6 +36,7 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
+	// validate slice is not nil, and each item is not nil
 	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 

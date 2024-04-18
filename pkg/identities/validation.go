@@ -19,8 +19,8 @@ var (
 		"Credentials": "required",
 	}
 
-	// mutually exclusive fields
 	credentialsRules = map[string]string{
+		// mutually exclusive fields
 		"Oidc":     "required_without=Password,excluded_with=Password",
 		"Password": "required_without=Oidc,excluded_with=Oidc",
 	}

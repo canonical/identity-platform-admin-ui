@@ -20,6 +20,7 @@ type PayloadValidator struct {
 }
 
 func (p *PayloadValidator) setupValidator() {
+	// validate Provider to be one of the supported ones
 	p.validator.RegisterAlias("supported_provider", "oneof=generic google github githubapp gitlab microsoft discord slack facebook auth0 vk yandex apple spotify netid dingtalk linkedin patreon")
 }
 

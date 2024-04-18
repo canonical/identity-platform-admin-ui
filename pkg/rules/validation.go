@@ -17,14 +17,17 @@ import (
 
 var (
 	ruleRules = map[string]string{
+		// validate slice is not empty
 		"Authenticators": "required,min=1,dive,required",
 		"Authorizer":     "required",
 		"Match":          "required",
-		"Mutators":       "omitempty,dive,required",
-		"Upstream":       "omitempty,required",
+		// if not empy, validate every item is not nil and not empty
+		"Mutators": "omitempty,dive,required",
+		"Upstream": "omitempty,required",
 	}
 
 	ruleMatchRules = map[string]string{
+		// validate slice is not empty, and each item is a valid uppercase http method
 		"Methods": "required,min=1,dive,httpmethod",
 		"Url":     "required",
 	}

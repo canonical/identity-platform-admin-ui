@@ -256,7 +256,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "idps"
 
-	//a.payloadValidator = NewIdPPayloadValidator(a.apiKey)
+	a.payloadValidator = NewIdPPayloadValidator(a.apiKey)
 	a.service = service
 	a.logger = logger
 

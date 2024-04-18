@@ -594,7 +594,7 @@ func TestRegisterValidation(t *testing.T) {
 	// first registration of `apiKey` is successful
 	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
 
-	mockLogger.EXPECT().Fatal(gomock.Any()).Times(1)
+	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
 
 	// second registration of `apiKey` causes logger.Fatal invocation
 	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)

@@ -36,7 +36,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
-		a.logger.Fatalf("unexpected validatingFunc already registered for rules, %s", err)
+		a.logger.Fatalf("unexpected error while registering PayloadValidator for rules, %s", err)
 	}
 }
 

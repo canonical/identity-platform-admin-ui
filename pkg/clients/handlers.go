@@ -202,7 +202,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a.apiKey = "clients"
 
 	a.service = service
-	//a.payloadValidator = NewClientsPayloadValidator(a.apiKey)
+	a.payloadValidator = NewClientsPayloadValidator(a.apiKey)
 	a.logger = logger
 
 	return a

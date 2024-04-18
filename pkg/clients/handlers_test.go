@@ -21,6 +21,7 @@ import (
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_clients.go -source=./interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
 func TestHandleGetClientSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -572,4 +573,29 @@ func TestHandleListClientServiceError(t *testing.T) {
 	if !reflect.DeepEqual(rr, expectedData) {
 		t.Fatalf("expected data to be %+v, got: %+v", expectedData, rr)
 	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
+
+	apiKey := "clients"
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(nil)
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(fmt.Errorf("key is already registered"))
+
+	// first registration of `apiKey` is successful
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+
+	mockLogger.EXPECT().Fatal(gomock.Any()).Times(1)
+
+	// second registration of `apiKey` causes logger.Fatal invocation
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
 }

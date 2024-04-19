@@ -5,7 +5,12 @@ import classnames from "classnames";
 import Logo from "components/Logo";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
 
-const Navigation: FC = () => {
+type Props = {
+  username?: string;
+  logout: () => void;
+};
+
+const Navigation: FC<Props> = ({ username, logout }) => {
   return (
     <>
       <header className="l-navigation-bar">
@@ -96,6 +101,30 @@ const Navigation: FC = () => {
                       icon="profile"
                       iconIsLight
                     />
+                  </li>
+                </ul>
+              </div>
+              <div className="p-side-navigation--icons is-dark p-side-navigation--user-menu">
+                <ul className="p-side-navigation__list">
+                  <li className="p-side-navigation__item">
+                    <span className="p-side-navigation__text">
+                      <Icon
+                        className="is-light p-side-navigation__icon"
+                        name="user"
+                      />{" "}
+                      {username}
+                    </span>
+                  </li>
+                  <li className="p-side-navigation__item">
+                    <Button
+                      appearance="link"
+                      className="p-side-navigation__link"
+                      onClick={() => {
+                        logout();
+                      }}
+                    >
+                      Logout
+                    </Button>
                   </li>
                 </ul>
               </div>

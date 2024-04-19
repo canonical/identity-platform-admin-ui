@@ -19,8 +19,8 @@ var (
 		"Credentials": "required",
 	}
 
-	// mutually exclusive fields
 	credentialsRules = map[string]string{
+		// mutually exclusive fields
 		"Oidc":     "required_without=Password,excluded_with=Password",
 		"Password": "required_without=Oidc,excluded_with=Oidc",
 	}
@@ -39,7 +39,7 @@ func (p *PayloadValidator) setupValidator() {
 	p.validator.RegisterStructValidationMapRules(credentialsRules, UpdateIdentityRequest{}.UpdateIdentityBody.Credentials)
 }
 
-func (_ *PayloadValidator) NeedsValidation(req *http.Request) bool {
+func (p *PayloadValidator) NeedsValidation(req *http.Request) bool {
 	return req.Method == http.MethodPost || req.Method == http.MethodPut
 }
 
@@ -78,11 +78,11 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	return ctx, err.(validator.ValidationErrors), nil
 }
 
-func (_ *PayloadValidator) isCreateIdentity(method, endpoint string) bool {
+func (p *PayloadValidator) isCreateIdentity(method, endpoint string) bool {
 	return endpoint == "" && method == http.MethodPost
 }
 
-func (_ *PayloadValidator) isUpdateIdentity(method, endpoint string) bool {
+func (p *PayloadValidator) isUpdateIdentity(method, endpoint string) bool {
 	return strings.HasPrefix(endpoint, "/") && method == http.MethodPut
 }
 

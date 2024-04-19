@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package schemas
+package rules
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	kClient "github.com/ory/kratos-client-go"
+	oathkeeper "github.com/ory/oathkeeper-client-go"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -38,13 +38,13 @@ func TestNeedsValidation(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:           http.MethodPatch,
-			req:            httptest.NewRequest(http.MethodPatch, "/", nil),
-			expectedResult: true,
-		},
-		{
 			name:           http.MethodGet,
 			req:            httptest.NewRequest(http.MethodGet, "/", nil),
+			expectedResult: false,
+		},
+		{
+			name:           http.MethodPatch,
+			req:            httptest.NewRequest(http.MethodPatch, "/", nil),
 			expectedResult: false,
 		},
 		{
@@ -82,39 +82,17 @@ func TestNeedsValidation(t *testing.T) {
 			}
 		})
 	}
-}
 
-var mockSchema = map[string]interface{}{
-	"$id":     "https://schemas.canonical.com/presets/kratos/test_v1.json",
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title":   "Admin Account",
-	"type":    "object",
-	"properties": map[string]interface{}{
-		"traits": map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"username": map[string]interface{}{
-					"type":  "string",
-					"title": "Username",
-					"ory.sh/kratos": map[string]interface{}{
-						"credentials": map[string]interface{}{
-							"password": map[string]interface{}{
-								"identifier": true,
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	"additionalProperties": true,
 }
 
 func TestValidate(t *testing.T) {
 	p := new(PayloadValidator)
-	p.apiKey = "schemas"
+	p.apiKey = "rules"
 	p.validator = validation.NewValidator()
 	p.setupValidator()
+
+	mockHandlerIdentifier := "mock-handler"
+	mockUrl := "mock-url-with-oathkeeper-rules"
 
 	for _, tt := range []struct {
 		name           string
@@ -125,45 +103,52 @@ func TestValidate(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:     "CreateSchemaSuccessCreate",
+			name:     "CreateRuleSuccess",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
+				rule := new(oathkeeper.Rule)
+				rule.Authorizer = &oathkeeper.RuleHandler{
+					Handler: &mockHandlerIdentifier,
+				}
+				rule.Authenticators = []oathkeeper.RuleHandler{
+					{
+						Handler: &mockHandlerIdentifier,
+					},
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				rule.Match = &oathkeeper.RuleMatch{
+					Methods: []string{"GET", "POST"},
+					Url:     &mockUrl,
+				}
+
+				marshal, _ := json.Marshal(rule)
 				return marshal
 			},
 			expectedResult: nil,
 			expectedError:  nil,
 		},
 		{
-			name:     "UpdateDefaultSchemaSuccess",
+			name:     "UpdateRuleSuccess",
 			method:   http.MethodPut,
-			endpoint: "/default",
+			endpoint: "/",
 			body: func() []byte {
-				id := "default"
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = id
+				rule := new(oathkeeper.Rule)
+				rule.Authorizer = &oathkeeper.RuleHandler{
+					Handler: &mockHandlerIdentifier,
+				}
+				rule.Authenticators = []oathkeeper.RuleHandler{
+					{
+						Handler: &mockHandlerIdentifier,
+					},
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: nil,
-			expectedError:  nil,
-		},
-		{
-			name:     "PartialUpdateSchemaSuccess",
-			method:   http.MethodPatch,
-			endpoint: "/mock-id",
-			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
-				updateRequest.Id = &id
+				rule.Match = &oathkeeper.RuleMatch{
+					Methods: []string{"GET", "POST"},
+					Url:     &mockUrl,
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(rule)
 				return marshal
 			},
 			expectedResult: nil,
@@ -180,44 +165,52 @@ func TestValidate(t *testing.T) {
 			expectedError:  validation.NoMatchError(p.apiKey),
 		},
 		{
-			name:     "CreateSchemaFailure",
+			name:     "CreateRuleValidationError",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
+				rule := new(oathkeeper.Rule)
+				rule.Authorizer = &oathkeeper.RuleHandler{
+					Handler: &mockHandlerIdentifier,
+				}
+				rule.Authenticators = []oathkeeper.RuleHandler{
+					{
+						Handler: &mockHandlerIdentifier,
+					},
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				rule.Match = &oathkeeper.RuleMatch{
+					Methods: []string{},
+					Url:     &mockUrl,
+				}
+
+				marshal, _ := json.Marshal(rule)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},
 			expectedError:  nil,
 		},
 		{
-			name:     "PartialUpdateSchemaFailure",
-			method:   http.MethodPost,
-			endpoint: "",
+			name:     "UpdateRuleValidationError",
+			method:   http.MethodPut,
+			endpoint: "/identity-id",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
+				wrongHandlerIdentifier := ""
 
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: validator.ValidationErrors{},
-			expectedError:  nil,
-		},
-		{
-			name:     "UpdateDefaultSchemaFailure",
-			method:   http.MethodPatch,
-			endpoint: "/mock-id",
-			body: func() []byte {
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = "mock-id"
+				rule := new(oathkeeper.Rule)
+				rule.Authorizer = &oathkeeper.RuleHandler{}
+				rule.Authenticators = []oathkeeper.RuleHandler{
+					{
+						Handler: &wrongHandlerIdentifier,
+					},
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				rule.Match = &oathkeeper.RuleMatch{
+					Methods: []string{"GET", "non-http-verb"},
+					Url:     &mockUrl,
+				}
+
+				marshal, _ := json.Marshal(rule)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},

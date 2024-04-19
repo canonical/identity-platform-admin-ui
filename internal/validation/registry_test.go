@@ -22,7 +22,7 @@ import (
 
 type payloadValidator struct{}
 
-func (_ *payloadValidator) Validate(ctx context.Context, _, _ string, _ []byte) (context.Context, validator.ValidationErrors, error) {
+func (p *payloadValidator) Validate(ctx context.Context, _, _ string, _ []byte) (context.Context, validator.ValidationErrors, error) {
 	e := mockValidationErrors()
 	if e == nil {
 		return ctx, nil, nil
@@ -30,7 +30,7 @@ func (_ *payloadValidator) Validate(ctx context.Context, _, _ string, _ []byte) 
 	return ctx, e, nil
 }
 
-func (_ *payloadValidator) NeedsValidation(r *http.Request) bool {
+func (p *payloadValidator) NeedsValidation(r *http.Request) bool {
 	return true
 }
 

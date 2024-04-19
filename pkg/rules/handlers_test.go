@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package rules
@@ -25,6 +25,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package rules -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package rules -destination ./mock_corev1.go k8s.io/client-go/kubernetes/typed/core/v1 CoreV1Interface,ConfigMapInterface
 //go:generate mockgen -build_flags=--mod=mod -package rules -destination ./mock_oathkeeper.go github.com/ory/oathkeeper-client-go ApiApi
+//go:generate mockgen -build_flags=--mod=mod -package rules -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
 func TestHandleListSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -630,4 +631,29 @@ func TestHandleRemoveFailed(t *testing.T) {
 	if rr.Message != "mock_error" {
 		t.Fatalf("expected HTTP status code %v got %v", http.StatusInternalServerError, rr.Status)
 	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
+
+	apiKey := "rules"
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(nil)
+	mockValidationRegistry.EXPECT().
+		RegisterPayloadValidator(gomock.Eq(apiKey), gomock.Any()).
+		Return(fmt.Errorf("key is already registered"))
+
+	// first registration of `apiKey` is successful
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+
+	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
+
+	// second registration of `apiKey` causes logger.Fatal invocation
+	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
 }

@@ -26,6 +26,7 @@ const (
 )
 
 type UpdateRolesRequest struct {
+	// validate slice is not nil, and each item is not nil
 	Roles []string `json:"roles" validate:"required,dive,required"`
 }
 
@@ -35,6 +36,7 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
+	// validate slice is not nil, and each item is not nil
 	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
@@ -79,7 +81,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
-		a.logger.Fatalf("unexpected validatingFunc already registered for groups, %s", err)
+		a.logger.Fatalf("unexpected error while registering PayloadValidator for groups, %s", err)
 	}
 }
 

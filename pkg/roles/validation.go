@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package groups
+package roles
 
 import (
 	"context"
@@ -27,28 +27,18 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	validated := false
 	var err error
 
-	if p.isCreateGroup(method, endpoint) {
-		group := new(GroupRequest)
-		if err := json.Unmarshal(body, group); err != nil {
+	if p.isCreateRole(method, endpoint) {
+		roleRequest := new(RoleRequest)
+		if err := json.Unmarshal(body, roleRequest); err != nil {
 			return ctx, nil, err
 		}
 
-		err = p.validator.Struct(group)
+		err = p.validator.Struct(roleRequest)
 		validated = true
 	}
 
-	if p.isUpdateGroup(method, endpoint) {
+	if p.isUpdateRole(method, endpoint) {
 		// TODO: @barco to implement when the UpdateGroup is implemented
-		validated = true
-	}
-
-	if p.isAssignRoles(method, endpoint) {
-		updateRoles := new(UpdateRolesRequest)
-		if err := json.Unmarshal(body, updateRoles); err != nil {
-			return ctx, nil, err
-		}
-
-		err = p.validator.Struct(updateRoles)
 		validated = true
 	}
 
@@ -59,16 +49,6 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 		}
 
 		err = p.validator.Struct(updatePermissions)
-		validated = true
-	}
-
-	if p.isAssignIdentities(method, endpoint) {
-		updateIdentities := new(UpdateIdentitiesRequest)
-		if err := json.Unmarshal(body, updateIdentities); err != nil {
-			return ctx, nil, err
-		}
-
-		err = p.validator.Struct(updateIdentities)
 		validated = true
 	}
 
@@ -83,27 +63,19 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	return ctx, err.(validator.ValidationErrors), nil
 }
 
-func (p *PayloadValidator) isCreateGroup(method, endpoint string) bool {
+func (p *PayloadValidator) isCreateRole(method, endpoint string) bool {
 	return method == http.MethodPost && endpoint == ""
 }
 
-func (p *PayloadValidator) isUpdateGroup(method, endpoint string) bool {
+func (p *PayloadValidator) isUpdateRole(method, endpoint string) bool {
 	return method == http.MethodPatch && strings.HasPrefix(endpoint, "/")
-}
-
-func (p *PayloadValidator) isAssignRoles(method, endpoint string) bool {
-	return method == http.MethodPost && strings.HasSuffix(endpoint, "/roles")
 }
 
 func (p *PayloadValidator) isAssignPermissions(method, endpoint string) bool {
 	return method == http.MethodPatch && strings.HasSuffix(endpoint, "/entitlements")
 }
 
-func (p *PayloadValidator) isAssignIdentities(method, endpoint string) bool {
-	return method == http.MethodPatch && strings.HasSuffix(endpoint, "/identities")
-}
-
-func NewGroupsPayloadValidator(apiKey string) *PayloadValidator {
+func NewRolesPayloadValidator(apiKey string) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
 	p.validator = validation.NewValidator()

@@ -27,15 +27,15 @@ type API struct {
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/clients", a.ListClients)
 	mux.Post("/api/v0/clients", a.CreateClient)
-	mux.Get("/api/v0/clients/{id}", a.GetClient)
-	mux.Put("/api/v0/clients/{id}", a.UpdateClient)
-	mux.Delete("/api/v0/clients/{id}", a.DeleteClient)
+	mux.Get("/api/v0/clients/{id:.+}", a.GetClient)
+	mux.Put("/api/v0/clients/{id:.+}", a.UpdateClient)
+	mux.Delete("/api/v0/clients/{id:.+}", a.DeleteClient)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
-		a.logger.Fatalf("unexpected validatingFunc already registered for clients, %s", err)
+		a.logger.Fatalf("unexpected error while registering PayloadValidator for clients, %s", err)
 	}
 }
 
@@ -202,7 +202,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a.apiKey = "clients"
 
 	a.service = service
-	//a.payloadValidator = NewClientsPayloadValidator(a.apiKey)
+	a.payloadValidator = NewClientsPayloadValidator(a.apiKey)
 	a.logger = logger
 
 	return a

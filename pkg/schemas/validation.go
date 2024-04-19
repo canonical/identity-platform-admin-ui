@@ -33,23 +33,27 @@ func (p *PayloadValidator) setupValidator() {
 	)
 }
 
-func (_ *PayloadValidator) NeedsValidation(r *http.Request) bool {
+func (p *PayloadValidator) NeedsValidation(r *http.Request) bool {
 	return r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch
+}
+
+func (p *PayloadValidator) isCreateSchema(method, endpoint string) bool {
+	return endpoint == "" && method == http.MethodPost
 }
 
 func (p *PayloadValidator) isPartialUpdate(method, endpoint string) bool {
 	return strings.HasPrefix(endpoint, "/") && method == http.MethodPatch
 }
 
-func (p *PayloadValidator) isCreateOrUpdateSchema(method, endpoint string) bool {
-	return (endpoint == "" && method == http.MethodPost) || (endpoint == "/default" && method == http.MethodPut)
+func (p *PayloadValidator) isUpdateDefaultSchema(method, endpoint string) bool {
+	return endpoint == "/default" && method == http.MethodPut
 }
 
 func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string, body []byte) (context.Context, validator.ValidationErrors, error) {
 	validated := false
 	var err error
 
-	if p.isCreateOrUpdateSchema(method, endpoint) {
+	if p.isCreateSchema(method, endpoint) || p.isPartialUpdate(method, endpoint) {
 		schema := new(kClient.IdentitySchemaContainer)
 		if err := json.Unmarshal(body, schema); err != nil {
 			return ctx, nil, err
@@ -59,7 +63,7 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 		validated = true
 	}
 
-	if p.isPartialUpdate(method, endpoint) {
+	if p.isUpdateDefaultSchema(method, endpoint) {
 		schema := new(DefaultSchema)
 		if err := json.Unmarshal(body, schema); err != nil {
 			return ctx, nil, err

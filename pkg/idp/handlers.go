@@ -36,7 +36,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator(a.apiKey, a.payloadValidator)
 	if err != nil {
-		a.logger.Fatalf("unexpected validatingFunc already registered for idps, %s", err)
+		a.logger.Fatalf("unexpected error while registering PayloadValidator for idps, %s", err)
 	}
 }
 
@@ -256,7 +256,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "idps"
 
-	//a.payloadValidator = NewIdPPayloadValidator(a.apiKey)
+	a.payloadValidator = NewIdPPayloadValidator(a.apiKey)
 	a.service = service
 	a.logger = logger
 

@@ -267,11 +267,27 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, result, err := p.Validate(context.TODO(), tt.method, tt.endpoint, tt.body())
 
-			if err != nil && err.Error() != tt.expectedError.Error() {
-				t.Fatalf("Returned error doesn't match expected, obtained '%v' instead of '%v'", err, tt.expectedError)
-			} else if result != nil && errors.Is(result, tt.expectedResult) {
-				t.Fatalf("Returned validation errors don't match expected, obtained '%v' instead of '%v'", result, tt.expectedResult)
-			} else {
+			if err != nil {
+				if tt.expectedError == nil {
+					t.Fatalf("Unexpected error for '%s'", tt.name)
+				}
+
+				if err.Error() != tt.expectedError.Error() {
+					t.Fatalf("Returned error doesn't match expected, obtained '%v' instead of '%v'", err, tt.expectedError)
+				}
+
+				return
+			}
+
+			if result != nil {
+				if tt.expectedResult == nil {
+					t.Fatalf("Unexpected result for '%s'", tt.name)
+				}
+
+				if errors.Is(result, tt.expectedResult) {
+					t.Fatalf("Returned validation errors don't match expected, obtained '%v' instead of '%v'", result, tt.expectedResult)
+				}
+
 				return
 			}
 		})

@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package schemas
+package clients
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	kClient "github.com/ory/kratos-client-go"
+	client "github.com/ory/kratos-client-go"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -38,13 +38,13 @@ func TestNeedsValidation(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:           http.MethodPatch,
-			req:            httptest.NewRequest(http.MethodPatch, "/", nil),
-			expectedResult: true,
-		},
-		{
 			name:           http.MethodGet,
 			req:            httptest.NewRequest(http.MethodGet, "/", nil),
+			expectedResult: false,
+		},
+		{
+			name:           http.MethodPatch,
+			req:            httptest.NewRequest(http.MethodPatch, "/", nil),
 			expectedResult: false,
 		},
 		{
@@ -82,37 +82,12 @@ func TestNeedsValidation(t *testing.T) {
 			}
 		})
 	}
-}
 
-var mockSchema = map[string]interface{}{
-	"$id":     "https://schemas.canonical.com/presets/kratos/test_v1.json",
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title":   "Admin Account",
-	"type":    "object",
-	"properties": map[string]interface{}{
-		"traits": map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"username": map[string]interface{}{
-					"type":  "string",
-					"title": "Username",
-					"ory.sh/kratos": map[string]interface{}{
-						"credentials": map[string]interface{}{
-							"password": map[string]interface{}{
-								"identifier": true,
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	"additionalProperties": true,
 }
 
 func TestValidate(t *testing.T) {
 	p := new(PayloadValidator)
-	p.apiKey = "schemas"
+	p.apiKey = "clients"
 	p.validator = validation.NewValidator()
 	p.setupValidator()
 
@@ -125,45 +100,46 @@ func TestValidate(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:     "CreateSchemaSuccessCreate",
+			name:     "CreateClientSuccess",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
+				clientName := "mock-name"
+				subjectType := "pairwise"
+				tokenAuthMethod := "client_secret_basic"
+				c := client.OAuth2Client{
+					AllowedCorsOrigins:      []string{"mock-origin-1", "mock-origin-2"},
+					Audience:                []string{"mock-aud-1", "mock-aud-2"},
+					ClientName:              &clientName,
+					SubjectType:             &subjectType,
+					GrantTypes:              []string{"code_grant"},
+					TokenEndpointAuthMethod: &tokenAuthMethod,
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(c)
 				return marshal
 			},
 			expectedResult: nil,
 			expectedError:  nil,
 		},
 		{
-			name:     "UpdateDefaultSchemaSuccess",
+			name:     "UpdateClientSuccess",
 			method:   http.MethodPut,
-			endpoint: "/default",
+			endpoint: "/client-id",
 			body: func() []byte {
-				id := "default"
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = id
+				clientName := "mock-name"
+				subjectType := "pairwise"
+				tokenAuthMethod := "client_secret_basic"
+				c := client.OAuth2Client{
+					AllowedCorsOrigins:      []string{"mock-origin-1", "mock-origin-2"},
+					Audience:                []string{"mock-aud-1", "mock-aud-2"},
+					ClientName:              &clientName,
+					SubjectType:             &subjectType,
+					GrantTypes:              []string{},
+					TokenEndpointAuthMethod: &tokenAuthMethod,
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: nil,
-			expectedError:  nil,
-		},
-		{
-			name:     "PartialUpdateSchemaSuccess",
-			method:   http.MethodPatch,
-			endpoint: "/mock-id",
-			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
-				updateRequest.Id = &id
-
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(c)
 				return marshal
 			},
 			expectedResult: nil,
@@ -180,44 +156,42 @@ func TestValidate(t *testing.T) {
 			expectedError:  validation.NoMatchError(p.apiKey),
 		},
 		{
-			name:     "CreateSchemaFailure",
+			name:     "CreateClientFailure",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
+				subjectType := "not-one-of-allowed-values"
+				tokenAuthMethod := "not-one-of-allowed-values"
+				c := client.OAuth2Client{
+					AllowedCorsOrigins:      []string{"", "mock-origin-2"},
+					Audience:                []string{"mock-aud-1", ""},
+					SubjectType:             &subjectType,
+					GrantTypes:              []string{},
+					TokenEndpointAuthMethod: &tokenAuthMethod,
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(c)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},
 			expectedError:  nil,
 		},
 		{
-			name:     "PartialUpdateSchemaFailure",
-			method:   http.MethodPost,
-			endpoint: "",
+			name:     "UpdateClientFailure",
+			method:   http.MethodPut,
+			endpoint: "/client-id",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
+				subjectType := "not-one-of-allowed-values"
+				tokenAuthMethod := "not-one-of-allowed-values"
+				c := client.OAuth2Client{
+					AllowedCorsOrigins:      []string{"", "mock-origin-2"},
+					Audience:                []string{"mock-aud-1", ""},
+					SubjectType:             &subjectType,
+					GrantTypes:              []string{},
+					TokenEndpointAuthMethod: &tokenAuthMethod,
+				}
 
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: validator.ValidationErrors{},
-			expectedError:  nil,
-		},
-		{
-			name:     "UpdateDefaultSchemaFailure",
-			method:   http.MethodPatch,
-			endpoint: "/mock-id",
-			body: func() []byte {
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = "mock-id"
-
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(c)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},

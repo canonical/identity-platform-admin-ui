@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package schemas
+package idp
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	kClient "github.com/ory/kratos-client-go"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -20,7 +19,6 @@ import (
 func TestNeedsValidation(t *testing.T) {
 	p := new(PayloadValidator)
 	p.validator = validation.NewValidator()
-	p.setupValidator()
 
 	for _, tt := range []struct {
 		name           string
@@ -33,14 +31,14 @@ func TestNeedsValidation(t *testing.T) {
 			expectedResult: true,
 		},
 		{
-			name:           http.MethodPut,
-			req:            httptest.NewRequest(http.MethodPut, "/", nil),
-			expectedResult: true,
-		},
-		{
 			name:           http.MethodPatch,
 			req:            httptest.NewRequest(http.MethodPatch, "/", nil),
 			expectedResult: true,
+		},
+		{
+			name:           http.MethodPut,
+			req:            httptest.NewRequest(http.MethodPut, "/", nil),
+			expectedResult: false,
 		},
 		{
 			name:           http.MethodGet,
@@ -82,38 +80,14 @@ func TestNeedsValidation(t *testing.T) {
 			}
 		})
 	}
-}
 
-var mockSchema = map[string]interface{}{
-	"$id":     "https://schemas.canonical.com/presets/kratos/test_v1.json",
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title":   "Admin Account",
-	"type":    "object",
-	"properties": map[string]interface{}{
-		"traits": map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"username": map[string]interface{}{
-					"type":  "string",
-					"title": "Username",
-					"ory.sh/kratos": map[string]interface{}{
-						"credentials": map[string]interface{}{
-							"password": map[string]interface{}{
-								"identifier": true,
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	"additionalProperties": true,
 }
 
 func TestValidate(t *testing.T) {
 	p := new(PayloadValidator)
-	p.apiKey = "schemas"
+	p.apiKey = "roles"
 	p.validator = validation.NewValidator()
+
 	p.setupValidator()
 
 	for _, tt := range []struct {
@@ -125,45 +99,38 @@ func TestValidate(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:     "CreateSchemaSuccessCreate",
+			name:     "CreateIdPSuccess",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
+				conf := new(Configuration)
+				conf.Provider = "generic"
+				conf.IssuerURL = "mock-url"
+				conf.AuthURL = "mock-url"
+				conf.TokenURL = "mock-url"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{}
+				conf.Mapper = "mock-url"
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(conf)
 				return marshal
 			},
 			expectedResult: nil,
 			expectedError:  nil,
 		},
 		{
-			name:     "UpdateDefaultSchemaSuccess",
-			method:   http.MethodPut,
-			endpoint: "/default",
-			body: func() []byte {
-				id := "default"
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = id
-
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: nil,
-			expectedError:  nil,
-		},
-		{
-			name:     "PartialUpdateSchemaSuccess",
+			name:     "PartialUpdateIdPSuccess",
 			method:   http.MethodPatch,
-			endpoint: "/mock-id",
+			endpoint: "/",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Schema = mockSchema
-				updateRequest.Id = &id
+				conf := new(Configuration)
+				conf.Provider = "microsoft"
+				conf.Tenant = "mock-tenant"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{"profile"}
+				conf.Mapper = "mock-url"
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(conf)
 				return marshal
 			},
 			expectedResult: nil,
@@ -180,44 +147,34 @@ func TestValidate(t *testing.T) {
 			expectedError:  validation.NoMatchError(p.apiKey),
 		},
 		{
-			name:     "CreateSchemaFailure",
+			name:     "CreateIdPValidationError",
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
+				conf := new(Configuration)
+				conf.Provider = "microsoft"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{"profile"}
+				conf.Mapper = "mock-url"
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(conf)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},
 			expectedError:  nil,
 		},
 		{
-			name:     "PartialUpdateSchemaFailure",
-			method:   http.MethodPost,
-			endpoint: "",
-			body: func() []byte {
-				id := "mock-id"
-				updateRequest := new(kClient.IdentitySchemaContainer)
-				updateRequest.Id = &id
-
-				marshal, _ := json.Marshal(updateRequest)
-				return marshal
-			},
-			expectedResult: validator.ValidationErrors{},
-			expectedError:  nil,
-		},
-		{
-			name:     "UpdateDefaultSchemaFailure",
+			name:     "PartialUpdateIdPValidationError",
 			method:   http.MethodPatch,
-			endpoint: "/mock-id",
+			endpoint: "/identity-id",
 			body: func() []byte {
-				updateRequest := new(DefaultSchema)
-				updateRequest.ID = "mock-id"
+				conf := new(Configuration)
+				conf.Provider = "apple"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{""}
+				conf.Mapper = "mock-url"
 
-				marshal, _ := json.Marshal(updateRequest)
+				marshal, _ := json.Marshal(conf)
 				return marshal
 			},
 			expectedResult: validator.ValidationErrors{},

@@ -30,7 +30,8 @@ type Permission struct {
 }
 
 type UpdatePermissionsRequest struct {
-	Permissions []Permission `json:"permissions" validate:"required"`
+	// validate slice is not nil, and each item is not nil
+	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
 type RoleRequest struct {
@@ -64,7 +65,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator("roles", a.payloadValidator)
 	if err != nil {
-		a.logger.Fatalf("unexpected validatingFunc already registered for roles, %s", err)
+		a.logger.Fatalf("unexpected error while registering PayloadValidator for roles, %s", err)
 	}
 }
 
@@ -467,7 +468,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-	//a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
+	a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

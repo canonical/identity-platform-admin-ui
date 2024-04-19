@@ -1163,13 +1163,17 @@
     react-table "7.8.0"
     react-useportal "1.0.19"
 
-"@canonical/rebac-admin@0.0.1-alpha.1":
-  version "0.0.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/@canonical/rebac-admin/-/rebac-admin-0.0.1-alpha.1.tgz#2b6185d52b4abf94694fbe33ef2b7bef522679a4"
-  integrity sha512-R0pQxi0D7BEbrOyNI30uVObOkP21Z8hllaxXyG484PEQUnvHsKWA5b8Tk1bQ6naushWcsniY/olAkZ90MY6mEA==
+"@canonical/rebac-admin@0.0.1-alpha.2":
+  version "0.0.1-alpha.2"
+  resolved "https://registry.yarnpkg.com/@canonical/rebac-admin/-/rebac-admin-0.0.1-alpha.2.tgz#0f64303c80f2489a23da4f063a5aab0e100204b4"
+  integrity sha512-zr4DoVpKa2Mj/9XFWFiyTmPkox62h2V3d2XqxvO1hqEdnXIYQetIHQkpfHSaga4cu6bHStzqYmGlwkD0cG+YYw==
   dependencies:
+    async-limiter "2.0.0"
     classnames "2.5.1"
     clone-deep "4.0.1"
+    process "0.11.10"
+    react-hot-toast "2.4.1"
+    react-useportal "1.0.19"
 
 "@csstools/css-parser-algorithms@^2.5.0":
   version "2.6.1"
@@ -2210,6 +2214,11 @@ astral-regex@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-2.0.0.tgz#483143c567aeed4785759c0865786dc77d7d2e31"
   integrity sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==
+
+async-limiter@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-2.0.0.tgz#ae693f11cac67f4ac5eb6e0c1512fb9b2c2e9ea8"
+  integrity sha512-nyHFzvVaR+4mfHc90/VqOUQjlnk9+ioDxQfqDuqKnm3m9sIT7joVKW8dkxeaKpamMJ3MYD73t6M8PMKEWlQESQ==
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -3742,6 +3751,11 @@ globrex@^0.1.2:
   resolved "https://registry.yarnpkg.com/globrex/-/globrex-0.1.2.tgz#dd5d9ec826232730cd6793a5e33a9302985e6098"
   integrity sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==
 
+goober@^2.1.10:
+  version "2.1.14"
+  resolved "https://registry.yarnpkg.com/goober/-/goober-2.1.14.tgz#4a5c94fc34dc086a8e6035360ae1800005135acd"
+  integrity sha512-4UpC0NdGyAFqLNPnhCT2iHpza2q+RAY3GV85a/mRPdzyPQMsj0KmMMuetdIkzWRbJ+Hgau1EZztq8ImmiMGhsg==
+
 gopd@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/gopd/-/gopd-1.0.1.tgz#29ff76de69dac7489b7c0918a5788e56477c332c"
@@ -5077,6 +5091,11 @@ pretty-hrtime@^1.0.3:
   resolved "https://registry.yarnpkg.com/pretty-hrtime/-/pretty-hrtime-1.0.3.tgz#b7e3ea42435a4c9b2759d99e0f201eb195802ee1"
   integrity sha512-66hKPCr+72mlfiSjlEB1+45IjXSqvVAIy6mocupoww4tBFE9R9IhwwUGoI4G++Tc9Aq+2rxOt0RFU6gPcrte0A==
 
+process@0.11.10:
+  version "0.11.10"
+  resolved "https://registry.yarnpkg.com/process/-/process-0.11.10.tgz#7332300e840161bda3e69a1d1d91a7d4bc16f182"
+  integrity sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==
+
 prop-types@15.8.1, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
@@ -5153,6 +5172,13 @@ react-fast-compare@^2.0.1:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/react-fast-compare/-/react-fast-compare-2.0.4.tgz#e84b4d455b0fec113e0402c329352715196f81f9"
   integrity sha512-suNP+J1VU1MWFKcyt7RtjiSWUjvidmQSlqu+eHslq+342xCbGTYmC0mEhPCOHxlW0CywylOC1u2DFAT+bv4dBw==
+
+react-hot-toast@2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/react-hot-toast/-/react-hot-toast-2.4.1.tgz#df04295eda8a7b12c4f968e54a61c8d36f4c0994"
+  integrity sha512-j8z+cQbWIM5LY37pR6uZR6D4LfseplqnuAO4co4u8917hBUvXlEqyP1ZzqVLcqoyUesZZv/ImreoCeHVDpE5pQ==
+  dependencies:
+    goober "^2.1.10"
 
 react-is@^16.13.1, react-is@^16.7.0:
   version "16.13.1"

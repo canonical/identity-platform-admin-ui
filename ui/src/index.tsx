@@ -1,11 +1,9 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router } from "react-router-dom";
-import Navigation from "components/Navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./sass/styles.scss";
 import { NotificationProvider } from "@canonical/react-components";
-import Panels from "components/Panels";
 
 const queryClient = new QueryClient();
 
@@ -16,13 +14,7 @@ root.render(
   <Router>
     <QueryClientProvider client={queryClient}>
       <NotificationProvider>
-        <div className="l-application" role="presentation">
-          <Navigation />
-          <main className="l-main">
-            <App />
-          </main>
-          <Panels />
-        </div>
+        <App />
       </NotificationProvider>
     </QueryClientProvider>
   </Router>

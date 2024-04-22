@@ -541,7 +541,7 @@ func TestServiceAssignIdentities(t *testing.T) {
 					ids := make([]ofga.Tuple, 0)
 
 					for _, i := range test.input.identities {
-						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), MEMBER_RELATION, fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION)))
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)))
 					}
 
 					if !reflect.DeepEqual(ids, tuples) {

@@ -354,7 +354,7 @@ func (s *Service) AssignIdentities(ctx context.Context, ID string, identities ..
 
 	for _, identity := range identities {
 		// TODO @shipperizer swap user for identity if/when model changes
-		ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", identity), MEMBER_RELATION, s.buildGroupMember(ctx, ID)))
+		ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", identity), MEMBER_RELATION, fmt.Sprintf("group:%s", ID)))
 	}
 
 	err := s.ofga.WriteTuples(ctx, ids...)

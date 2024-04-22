@@ -62,6 +62,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Delete("/api/v0/roles/{id:.+}/entitlements/{e_id:.+}", a.handleRemovePermission)
 	mux.Get("/api/v0/roles/{id:.+}/groups", a.handleListRoleGroup)
 }
+
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	err := v.RegisterPayloadValidator("roles", a.payloadValidator)
 	if err != nil {

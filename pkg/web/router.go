@@ -6,8 +6,8 @@ package web
 import (
 	"net/http"
 
-	chi "github.com/go-chi/chi/v5"
-	middleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -27,12 +27,37 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 )
 
-func NewRouter(idpConfig *idp.Config, schemasConfig *schemas.Config, rulesConfig *rules.Config, externalConfig ExternalClientsConfigInterface, wpool pool.WorkerPoolInterface, ollyConfig O11yConfigInterface) http.Handler {
+type RouterConfig struct {
+	payloadValidationEnabled bool
+	idp                      *idp.Config
+	schemas                  *schemas.Config
+	rules                    *rules.Config
+	external                 ExternalClientsConfigInterface
+	olly                     O11yConfigInterface
+}
+
+func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, external ExternalClientsConfigInterface, olly O11yConfigInterface) *RouterConfig {
+	return &RouterConfig{
+		payloadValidationEnabled: payloadValidationEnabled,
+		idp:                      idp,
+		schemas:                  schemas,
+		rules:                    rules,
+		external:                 external,
+		olly:                     olly,
+	}
+}
+
+func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handler {
 	router := chi.NewMux()
 
-	logger := ollyConfig.Logger()
-	monitor := ollyConfig.Monitor()
-	tracer := ollyConfig.Tracer()
+	idpConfig := config.idp
+	schemasConfig := config.schemas
+	rulesConfig := config.rules
+	externalConfig := config.external
+
+	logger := config.olly.Logger()
+	monitor := config.olly.Monitor()
+	tracer := config.olly.Tracer()
 
 	validationRegistry := validation.NewRegistry(tracer, monitor, logger)
 

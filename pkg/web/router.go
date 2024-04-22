@@ -15,7 +15,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
-
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
@@ -59,8 +58,6 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	monitor := config.olly.Monitor()
 	tracer := config.olly.Tracer()
 
-	validationRegistry := validation.NewRegistry(tracer, monitor, logger)
-
 	middlewares := make(chi.Middlewares, 0)
 	middlewares = append(
 		middlewares,
@@ -83,46 +80,35 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	router = router.With(
 		authorization.NewMiddleware(
 			authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger).Authorize(),
-		validationRegistry.ValidationMiddleware,
 	).(*chi.Mux)
 
-	status.NewAPI(tracer, monitor, logger).RegisterEndpoints(router)
-	metrics.NewAPI(logger).RegisterEndpoints(router)
+	statusAPI := status.NewAPI(tracer, monitor, logger)
+	metricsAPI := metrics.NewAPI(logger)
 
 	identitiesAPI := identities.NewAPI(
 		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), tracer, monitor, logger),
 		logger,
 	)
-	identitiesAPI.RegisterEndpoints(router)
-	identitiesAPI.RegisterValidation(validationRegistry)
 
 	clientsAPI := clients.NewAPI(
 		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
 		logger,
 	)
-	clientsAPI.RegisterEndpoints(router)
-	clientsAPI.RegisterValidation(validationRegistry)
 
 	idpAPI := idp.NewAPI(
 		idp.NewService(idpConfig, tracer, monitor, logger),
 		logger,
 	)
-	idpAPI.RegisterEndpoints(router)
-	idpAPI.RegisterValidation(validationRegistry)
 
 	schemasAPI := schemas.NewAPI(
 		schemas.NewService(schemasConfig, tracer, monitor, logger),
 		logger,
 	)
-	schemasAPI.RegisterEndpoints(router)
-	schemasAPI.RegisterValidation(validationRegistry)
 
 	rulesAPI := rules.NewAPI(
 		rules.NewService(rulesConfig, tracer, monitor, logger),
 		logger,
 	)
-	rulesAPI.RegisterEndpoints(router)
-	rulesAPI.RegisterValidation(validationRegistry)
 
 	rolesAPI := roles.NewAPI(
 		roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
@@ -130,8 +116,6 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		monitor,
 		logger,
 	)
-	rolesAPI.RegisterEndpoints(router)
-	rolesAPI.RegisterValidation(validationRegistry)
 
 	groupsAPI := groups.NewAPI(
 		groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
@@ -139,8 +123,31 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		monitor,
 		logger,
 	)
+
+	if config.payloadValidationEnabled {
+		validationRegistry := validation.NewRegistry(tracer, monitor, logger)
+		router = router.With(validationRegistry.ValidationMiddleware).(*chi.Mux)
+
+		identitiesAPI.RegisterValidation(validationRegistry)
+		clientsAPI.RegisterValidation(validationRegistry)
+		idpAPI.RegisterValidation(validationRegistry)
+		schemasAPI.RegisterValidation(validationRegistry)
+		rulesAPI.RegisterValidation(validationRegistry)
+		rolesAPI.RegisterValidation(validationRegistry)
+		groupsAPI.RegisterValidation(validationRegistry)
+	}
+
+	// register endpoints as last step
+	statusAPI.RegisterEndpoints(router)
+	metricsAPI.RegisterEndpoints(router)
+
+	identitiesAPI.RegisterEndpoints(router)
+	clientsAPI.RegisterEndpoints(router)
+	idpAPI.RegisterEndpoints(router)
+	schemasAPI.RegisterEndpoints(router)
+	rulesAPI.RegisterEndpoints(router)
+	rolesAPI.RegisterEndpoints(router)
 	groupsAPI.RegisterEndpoints(router)
-	groupsAPI.RegisterValidation(validationRegistry)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

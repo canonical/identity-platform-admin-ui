@@ -243,6 +243,10 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 		// edit permission on group {id} and view permissions on identity {i_id}
 		return []Permission{
 			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			// TODO @shipperizer this checks for an identity being present, even though the relation
+			// is between a user type and the group
+			// we need to work and sync users and identities or drop the check below as this would
+			// be missing 100% of the times
 			{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, identity_id)},
 		}
 	}

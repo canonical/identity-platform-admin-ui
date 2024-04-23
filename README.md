@@ -18,6 +18,7 @@ This is the Admin UI for the Canonical Identity Platform.
 - `LOG_FILE`: file where to dump logs, defaults to `log.txt`
 - `PORT `: http server port, defaults to `8080`
 - `DEBUG`: debugging flag for hydra and kratos clients
+- `KUBECONFIG_FILE`: optional path of kube config file, default to empty string
 - `KRATOS_PUBLIC_URL`: Kratos public endpoints address
 - `KRATOS_ADMIN_URL`: Kratos admin endpoints address
 - `HYDRA_ADMIN_URL`: Hydra admin endpoints address

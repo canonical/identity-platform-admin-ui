@@ -16,6 +16,7 @@ type EnvSpec struct {
 
 	Debug bool `envconfig:"debug" default:"false"`
 
+	KubeconfigFile      string `envconfig:"kubeconfig_file"`
 	KratosPublicURL     string `envconfig:"kratos_public_url" required:"true"`
 	KratosAdminURL      string `envconfig:"kratos_admin_url" required:"true"`
 	HydraAdminURL       string `envconfig:"hydra_admin_url" required:"true"`

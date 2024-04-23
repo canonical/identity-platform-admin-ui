@@ -21,7 +21,7 @@ data:
   OPENFGA_API_SCHEME: http
   OPENFGA_API_HOST: openfga.default.svc.cluster.local:8080
   OPENFGA_API_TOKEN: "42"
-  AUTHORIZATION_ENABLED: "false"
+  AUTHORIZATION_ENABLED: "true"
   OPENFGA_STORE_ID: "-----to-be-replaced----"
   OPENFGA_AUTHORIZATION_MODEL_ID: "-----to-be-replaced----"
 ---

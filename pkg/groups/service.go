@@ -296,9 +296,11 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 	// https://go.dev/ref/spec#Send_statements
 	// A send on an unbuffered channel can proceed if a receiver is ready.
 	// A send on a buffered channel can proceed if there is room in the buffer
-	results := make(chan *pool.Result[any], len(s.permissionTypes()))
+	jobs := len(s.permissionTypes()) + 1
+
+	results := make(chan *pool.Result[any], jobs)
 	wg := sync.WaitGroup{}
-	wg.Add(len(s.permissionTypes()))
+	wg.Add(jobs)
 
 	// TODO @shipperizer use a background operator
 	for _, t := range s.permissionTypes() {
@@ -308,6 +310,12 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 			&wg,
 		)
 	}
+
+	s.wpool.Submit(
+		s.removeMembersFunc(ctx, ID),
+		results,
+		&wg,
+	)
 
 	// wait for tasks to finish
 	wg.Wait()
@@ -450,6 +458,42 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	}
 }
 
+func (s *Service) removeMembers(ctx context.Context, ID string) {
+	ctx, span := s.tracer.Start(ctx, "roles.Service.removeMembers")
+	defer span.End()
+
+	cToken := ""
+	members := make([]ofga.Tuple, 0)
+	for {
+		r, err := s.ofga.ReadTuples(ctx, "", MEMBER_RELATION, fmt.Sprintf("group:%s", ID), cToken)
+
+		if err != nil {
+			s.logger.Errorf("error when retrieving tuples for %s group:%s", MEMBER_RELATION, ID)
+			return
+		}
+
+		for _, t := range r.Tuples {
+			members = append(members, *ofga.NewTuple(t.Key.User, t.Key.Relation, t.Key.Object))
+		}
+
+		// if there are more pages, keep going with the loop
+		if cToken = r.ContinuationToken; cToken != "" {
+			continue
+		}
+
+		// TODO @shipperizer understand if better breaking at every cycle or reverting if clause
+		break
+	}
+
+	if len(members) == 0 {
+		return
+	}
+
+	if err := s.ofga.DeleteTuples(ctx, members...); err != nil {
+		s.logger.Error(err.Error())
+	}
+}
+
 func (s *Service) listPermissionsFunc(ctx context.Context, groupID, ofgaType, cToken string) func() any {
 	return func() any {
 		p, token, err := s.listPermissionsByType(
@@ -474,6 +518,12 @@ func (s *Service) removePermissionsFunc(ctx context.Context, groupID, ofgaType s
 	}
 }
 
+func (s *Service) removeMembersFunc(ctx context.Context, roleID string) func() {
+	return func() {
+		s.removeMembers(ctx, roleID)
+	}
+}
+
 func (s *Service) permissionTypes() []string {
 	return []string{"group", "role", "identity", "scheme", "provider", "client"}
 }
@@ -484,8 +534,6 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 
 	s.ofga = ofga
 
-	// TODO @shipperizer make this an input
-	//s.wpool = pool.NewWorkerPool(100, tracer, monitor, logger)
 	s.wpool = wpool
 
 	s.monitor = monitor

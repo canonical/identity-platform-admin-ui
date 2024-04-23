@@ -831,7 +831,7 @@ func TestServiceDeleteGroup(t *testing.T) {
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
 			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
-			for i := 0; i < 6; i++ {
+			for i := 0; i < 7; i++ {
 				setupMockSubmit(workerPool, nil)
 			}
 
@@ -840,6 +840,7 @@ func TestServiceDeleteGroup(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.DeleteGroup").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.removePermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removeMembers").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
 			pTypes := []string{"role", "group", "identity", "scheme", "provider", "client"}
 
@@ -875,30 +876,76 @@ func TestServiceDeleteGroup(t *testing.T) {
 
 			}
 
+			calls = append(
+				calls,
+				mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", MEMBER_RELATION, fmt.Sprintf("group:%s", test.input), "").Times(1).DoAndReturn(
+					func(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
+						if test.expected != nil {
+							return nil, test.expected
+						}
+
+						tuples := []openfga.Tuple{
+							*openfga.NewTuple(
+								*openfga.NewTupleKey(
+									"user:test", MEMBER_RELATION, object,
+								),
+								time.Now(),
+							),
+							*openfga.NewTuple(
+								*openfga.NewTupleKey(
+									"group:test#member", MEMBER_RELATION, object,
+								),
+								time.Now(),
+							),
+						}
+
+						r := new(client.ClientReadResponse)
+						r.SetContinuationToken("")
+						r.SetTuples(tuples)
+
+						return r, nil
+					},
+				),
+			)
+
 			if test.expected == nil {
 				mockOpenFGA.EXPECT().DeleteTuples(
 					gomock.Any(),
 					gomock.Any(),
-				).Times(7).DoAndReturn(
+				).Times(8).DoAndReturn(
 					func(ctx context.Context, tuples ...ofga.Tuple) error {
-						if len(tuples) != 1 {
+						switch len(tuples) {
+						case 1:
+							tuple := tuples[0]
+
+							if tuple.User != fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION) && tuple.User != authorization.ADMIN_PRIVILEGE {
+								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), authorization.ADMIN_PRIVILEGE}, tuple.User)
+							}
+
+							if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
+								t.Errorf("expected relation to be one of %v got %v", []string{"privileged", "can_edit"}, tuple.Relation)
+							}
+
+							if tuple.Object != fmt.Sprintf("group:%s", test.input) && !strings.HasSuffix(tuple.Object, ":test") {
+								t.Errorf("expected object to be one of %v got %v", []string{fmt.Sprintf("group:%s", test.input), "<*>:test"}, tuple.Object)
+							}
+						case 2:
+							for _, tuple := range tuples {
+								if tuple.User != "user:test" && tuple.User != "group:test#member" {
+									t.Errorf("expected user to be one of %v got %v", []string{"user:test", "group:test#member"}, tuple.User)
+								}
+
+								if tuple.Relation != MEMBER_RELATION {
+									t.Errorf("expected relation to be of %v got %v", MEMBER_RELATION, tuple.Relation)
+								}
+
+								if tuple.Object != fmt.Sprintf("group:%s", test.input) {
+									t.Errorf("expected object to be one of %v got %v", fmt.Sprintf("group:%s", test.input), tuple.Object)
+								}
+							}
+						default:
 							t.Errorf("too many tuples")
 						}
-
-						tuple := tuples[0]
-
-						if tuple.User != fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION) && tuple.User != authorization.ADMIN_PRIVILEGE {
-							t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), authorization.ADMIN_PRIVILEGE}, tuple.User)
-						}
-
-						if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
-							t.Errorf("expected relation to be one of %v got %v", []string{"privileged", "can_edit"}, tuple.Relation)
-						}
-
-						if tuple.Object != fmt.Sprintf("group:%s", test.input) && !strings.HasSuffix(tuple.Object, ":test") {
-							t.Errorf("expected object to be one of %v got %v", []string{fmt.Sprintf("group:%s", test.input), "<*>:test"}, tuple.Object)
-						}
-
 						return nil
 					},
 				)

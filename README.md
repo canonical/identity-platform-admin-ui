@@ -32,6 +32,7 @@ This is the Admin UI for the Canonical Identity Platform.
 - `OPENFGA_STORE_ID`: ID of the OpenFGA store the application will talk to 
 - `OPENFGA_AUTHORIZATION_MODEL_ID`: ID of the OpenFGA authorization model the application will talk to
 - `AUTHORIZATION_ENABLED`: flag defining if the OpenFGA authorization middleware is enabled default to `false`
+- `PAYLOAD_VALIDATION_ENABLED`: flag defining if the Payload Validation middleware is enabled default to `true`
 
 ## Development setup
 

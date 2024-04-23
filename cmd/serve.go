@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package cmd
 
@@ -85,7 +85,7 @@ func serve() {
 		extCfg.SetAuthorizer(extCfg.OpenFGA())
 	}
 
-	k8sCoreV1, err := k8s.NewCoreV1Client("")
+	k8sCoreV1, err := k8s.NewCoreV1Client(specs.KubeconfigFile)
 
 	if err != nil {
 		panic(err)

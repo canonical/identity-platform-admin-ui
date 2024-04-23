@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package config
 
@@ -15,6 +15,8 @@ type EnvSpec struct {
 	Port int `envconfig:"port" default:"8080"`
 
 	Debug bool `envconfig:"debug" default:"false"`
+
+	KubeconfigFile string `envconfig:"kubeconfig_file"`
 
 	KratosPublicURL     string `envconfig:"kratos_public_url" required:"true"`
 	KratosAdminURL      string `envconfig:"kratos_admin_url" required:"true"`

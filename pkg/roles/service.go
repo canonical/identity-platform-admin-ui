@@ -20,6 +20,8 @@ import (
 
 const (
 	ASSIGNEE_RELATION = "assignee"
+	CAN_VIEW_RELATION = "can_view"
+	ALL_USERS         = "user:*"
 )
 
 type listPermissionsResult struct {
@@ -112,7 +114,7 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
 
-	// TODO @shipperizer will we need also the can_view?
+	// TODO @shipperizer @barco will we need also the can_edit, can_delete?
 	// does creating a role mean that you are the owner, therefore u get all the permissions on it?
 	// right now assumption is only admins will be able to do this
 	// potentially changing the model to say
@@ -120,10 +122,14 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 	// might sort the problem
 
 	// TODO @shipperizer offload to privileged creator object
+	role := fmt.Sprintf("role:%s", ID)
+	user := fmt.Sprintf("user:%s", userID)
+
 	err := s.ofga.WriteTuples(
 		ctx,
-		*ofga.NewTuple(fmt.Sprintf("user:%s", userID), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID)),
-		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", ID)),
+		*ofga.NewTuple(user, ASSIGNEE_RELATION, role),
+		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", role),
+		*ofga.NewTuple(user, CAN_VIEW_RELATION, role),
 	)
 
 	if err != nil {

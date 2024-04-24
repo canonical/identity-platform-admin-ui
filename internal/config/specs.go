@@ -39,7 +39,8 @@ type EnvSpec struct {
 	StoreId   string `envconfig:"openfga_store_id"`
 	ModelId   string `envconfig:"openfga_authorization_model_id" default:""`
 
-	AuthorizationEnabled bool `envconfig:"authorization_enabled" default:"false"`
+	AuthorizationEnabled     bool `envconfig:"authorization_enabled" default:"false"`
+	PayloadValidationEnabled bool `envconfig:"payload_validation_enabled" default:"true"`
 
 	OpenFGAWorkersTotal int `envconfig:"openfga_workers_total" default:"150"`
 }

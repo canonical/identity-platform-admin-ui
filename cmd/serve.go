@@ -58,7 +58,7 @@ func serve() {
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
-	extCfg := web.NewExternalClientsConfig(
+	externalConfig := web.NewExternalClientsConfig(
 		ih.NewClient(specs.HydraAdminURL, specs.Debug),
 		ik.NewClient(specs.KratosAdminURL, specs.Debug),
 		ik.NewClient(specs.KratosPublicURL, specs.Debug),
@@ -82,7 +82,7 @@ func serve() {
 
 	if specs.AuthorizationEnabled {
 		logger.Info("Authorization is enabled")
-		extCfg.SetAuthorizer(extCfg.OpenFGA())
+		externalConfig.SetAuthorizer(externalConfig.OpenFGA())
 	}
 
 	k8sCoreV1, err := k8s.NewCoreV1Client(specs.KubeconfigFile)
@@ -100,16 +100,16 @@ func serve() {
 
 	schemasConfig := &schemas.Config{
 		K8s:       k8sCoreV1,
-		Kratos:    extCfg.KratosPublic().IdentityAPI(),
+		Kratos:    externalConfig.KratosPublic().IdentityAPI(),
 		Name:      specs.SchemasConfigMapName,
 		Namespace: specs.SchemasConfigMapNamespace,
 	}
 
-	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, extCfg.OathkeeperPublic().ApiApi())
+	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
-			extCfg.OpenFGA(),
+			externalConfig.OpenFGA(),
 			tracer,
 			monitor,
 			logger,
@@ -120,10 +120,14 @@ func serve() {
 		}
 	}
 
+	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
+
+	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, externalConfig, ollyConfig)
+
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()
 
-	router := web.NewRouter(idpConfig, schemasConfig, rulesConfig, extCfg, wpool, web.NewO11yConfig(tracer, monitor, logger))
+	router := web.NewRouter(routerConfig, wpool)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

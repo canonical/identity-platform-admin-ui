@@ -55,5 +55,6 @@ dev:
 	@$(MICROK8S_REGISTRY_FLAG) $(SKAFFOLD) run \
 		--port-forward \
 		--no-prune=false \
+		--tail \
 		--cache-artifacts=false
 .PHONY: dev

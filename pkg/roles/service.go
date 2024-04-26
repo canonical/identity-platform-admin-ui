@@ -259,15 +259,17 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 	// https://go.dev/ref/spec#Send_statements
 	// A send on an unbuffered channel can proceed if a receiver is ready.
 	// A send on a buffered channel can proceed if there is room in the buffer
-	jobs := len(s.permissionTypes()) + 1
+	permissionTypes := s.permissionTypes()
+	directRelations := s.directRelations()
+
+	jobs := len(permissionTypes) + len(directRelations)
 
 	results := make(chan *pool.Result[any], jobs)
 	wg := sync.WaitGroup{}
-	// number of types + 1 for assignees job
 	wg.Add(jobs)
 
 	// TODO @shipperizer use a background operator
-	for _, t := range s.permissionTypes() {
+	for _, t := range permissionTypes {
 		s.wpool.Submit(
 			s.removePermissionsFunc(ctx, ID, t),
 			results,
@@ -275,11 +277,13 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 		)
 	}
 
-	s.wpool.Submit(
-		s.removeAssigneesFunc(ctx, ID),
-		results,
-		&wg,
-	)
+	for _, t := range directRelations {
+		s.wpool.Submit(
+			s.removeDirectAssociationsFunc(ctx, ID, t),
+			results,
+			&wg,
+		)
+	}
 
 	// wait for tasks to finish
 	wg.Wait()
@@ -287,7 +291,8 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 	// close result channel
 	close(results)
 
-	return s.ofga.DeleteTuples(ctx, *ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", ID)))
+	// TODO: @barco collect errors from results chan and return composite error or single summing up
+	return nil
 }
 
 // TODO @shipperizer make this more scalable by pushing to a channel and using goroutine pool
@@ -350,22 +355,22 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	}
 }
 
-func (s *Service) removeAssignees(ctx context.Context, ID string) {
-	ctx, span := s.tracer.Start(ctx, "roles.Service.removeAssignees")
+func (s *Service) removeDirectAssociations(ctx context.Context, ID, relation string) {
+	ctx, span := s.tracer.Start(ctx, "roles.Service.removeDirectAssociations")
 	defer span.End()
 
 	cToken := ""
-	assignees := make([]ofga.Tuple, 0)
+	directs := make([]ofga.Tuple, 0)
 	for {
-		r, err := s.ofga.ReadTuples(ctx, "", ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID), cToken)
+		r, err := s.ofga.ReadTuples(ctx, "", relation, fmt.Sprintf("role:%s", ID), cToken)
 
 		if err != nil {
-			s.logger.Errorf("error when retrieving tuples for %s role:%s", ASSIGNEE_RELATION, ID)
+			s.logger.Errorf("error when retrieving tuples for %s role, %s relation", relation, ID)
 			return
 		}
 
 		for _, t := range r.Tuples {
-			assignees = append(assignees, *ofga.NewTuple(t.Key.User, t.Key.Relation, t.Key.Object))
+			directs = append(directs, *ofga.NewTuple(t.Key.User, t.Key.Relation, t.Key.Object))
 		}
 
 		// if there are more pages, keep going with the loop
@@ -373,15 +378,14 @@ func (s *Service) removeAssignees(ctx context.Context, ID string) {
 			continue
 		}
 
-		// TODO @shipperizer understand if better breaking at every cycle or reverting if clause
 		break
 	}
 
-	if len(assignees) == 0 {
+	if len(directs) == 0 {
 		return
 	}
 
-	if err := s.ofga.DeleteTuples(ctx, assignees...); err != nil {
+	if err := s.ofga.DeleteTuples(ctx, directs...); err != nil {
 		s.logger.Error(err.Error())
 	}
 }
@@ -410,14 +414,18 @@ func (s *Service) removePermissionsFunc(ctx context.Context, roleID, ofgaType st
 	}
 }
 
-func (s *Service) removeAssigneesFunc(ctx context.Context, roleID string) func() {
+func (s *Service) removeDirectAssociationsFunc(ctx context.Context, roleID, relation string) func() {
 	return func() {
-		s.removeAssignees(ctx, roleID)
+		s.removeDirectAssociations(ctx, roleID, relation)
 	}
 }
 
 func (s *Service) permissionTypes() []string {
 	return []string{"role", "group", "identity", "scheme", "provider", "client"}
+}
+
+func (s *Service) directRelations() []string {
+	return []string{"privileged", "assignee", "can_create", "can_delete", "can_edit", "can_view"}
 }
 
 // NewService returns the implementtation of the business logic for the roles API

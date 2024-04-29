@@ -40,8 +40,9 @@ type UpdatePermissionsRequest struct {
 	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
-type GroupRequest struct {
-	ID string `json:"id" validate:"required"`
+type Group struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty" validate:"required,notblank"`
 }
 
 type UpdateIdentitiesRequest struct {
@@ -200,7 +201,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group := new(GroupRequest)
+	group := new(Group)
 	if err := json.Unmarshal(body, group); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(

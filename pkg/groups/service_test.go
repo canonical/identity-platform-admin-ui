@@ -718,7 +718,7 @@ func TestServiceGetGroup(t *testing.T) {
 				t.Errorf("expected error to be %v got %v", test.expected.err, err)
 			}
 
-			if test.expected.err == nil && test.expected.check && group != test.input.group {
+			if test.expected.err == nil && test.expected.check && group.ID != test.input.group {
 				t.Errorf("invalid result, expected: %v, got: %v", test.input.group, group)
 			}
 		})

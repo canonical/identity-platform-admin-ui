@@ -14,7 +14,7 @@ import (
 // ServiceInterface is the interface that each business logic service needs to implement
 type ServiceInterface interface {
 	ListGroups(context.Context, string) ([]string, error) // list of groups, continuation token, error
-	GetGroup(context.Context, string, string) (string, error)
+	GetGroup(context.Context, string, string) (*Group, error)
 	CreateGroup(context.Context, string, string) error
 	DeleteGroup(context.Context, string) error
 	ListRoles(context.Context, string) ([]string, error)

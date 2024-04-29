@@ -146,6 +146,17 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if role == "" {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Role not found",
+				Status:  http.StatusNotFound,
+			},
+		)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{

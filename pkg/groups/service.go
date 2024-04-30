@@ -21,6 +21,8 @@ import (
 const (
 	MEMBER_RELATION   = "member"
 	ASSIGNEE_RELATION = "assignee"
+	// TODO: @barco centralize common relation name definitions
+	CAN_VIEW_RELATION = "can_view"
 )
 
 type listPermissionsResult struct {
@@ -174,10 +176,14 @@ func (s *Service) CreateGroup(ctx context.Context, userID, ID string) error {
 	// might sort the problem
 
 	// TODO @shipperizer offload to privileged creator object
+	group := fmt.Sprintf("group:%s", ID)
+	user := fmt.Sprintf("user:%s", userID)
+
 	err := s.ofga.WriteTuples(
 		ctx,
-		*ofga.NewTuple(fmt.Sprintf("user:%s", userID), MEMBER_RELATION, fmt.Sprintf("group:%s", ID)),
-		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("group:%s", ID)),
+		*ofga.NewTuple(user, MEMBER_RELATION, group),
+		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", group),
+		*ofga.NewTuple(user, CAN_VIEW_RELATION, group),
 	)
 
 	if err != nil {

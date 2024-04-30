@@ -146,7 +146,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 
 	ID := chi.URLParam(r, "id")
 	user := a.userFromContext(r.Context())
-	role, err := a.service.GetGroup(r.Context(), user.ID, ID)
+	group, err := a.service.GetGroup(r.Context(), user.ID, ID)
 
 	if err != nil {
 
@@ -161,10 +161,21 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if group == "" {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Group not found",
+				Status:  http.StatusNotFound,
+			},
+		)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{
-			Data:    []string{role},
+			Data:    []string{group},
 			Message: "Group detail",
 			Status:  http.StatusOK,
 		},

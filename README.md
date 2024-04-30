@@ -66,6 +66,34 @@ Run `make dev` to get a working environment in k8s.
 
 To stop any running containers and wipe the container state, run `skaffold delete` from the top of the repository. 
 
+### Image rebuild and redeployment
+
+To avoid a continuos redeployment of the whole setup, there is always the manual process of building 
+the `admin-ui` image 
+ 
+```shell
+$ SKAFFOLD_DEFAULT_REPO=localhost:32000 skaffold build --push=true --cache-artifacts=false
+Generating tags...
+ - identity-platform-admin-ui -> localhost:32000/identity-platform-admin-ui:v1.5.0-181-g1107165-dirty
+Starting build...
+Building [identity-platform-admin-ui]...
+Target platforms: [linux/amd64]
+Starting rockcraft, version 1.2.3
+Logging execution to '/home/shipperizer/.local/state/rockcraft/log/rockcraft-20240424-135944.672894.log'
+Launching managed ubuntu 22.04 instance...
+.
+.
+v1.5.0-181-g1107165-dirty: digest: sha256:027745f048faddda78b4cd7b9c7dbb59bec8b446941b163006da32f29b9eb377 size: 943
+```
+
+and then substituting the final artifact in the deployment via `kubectl` with
+
+`kubectl edit deployments.apps identity-platform-admin-ui`
+
+where you will swap whatever is in `spec.template.spec.containers.0.image` with the new image tag (with sha)
+
+
+
 ### OpenFGA initialization
 
 The Admin Service comes up with authorization disabled (see `AUTHORIZATION_ENABLED` env var), The env vars `OPENFGA_AUTHORIZATION_MODEL_ID` and `OPENFGA_STORE_ID` which are needed for the correct functioning of the RBAC APIs get set by the job `admin-ui-openfga-setup`, after this has completed a developer is supposed to bounce the deployment to get the application to source the new env vars

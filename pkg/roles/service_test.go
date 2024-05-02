@@ -348,7 +348,7 @@ func TestServiceGetRole(t *testing.T) {
 				t.Errorf("expected error to be %v got %v", test.expected.err, err)
 			}
 
-			if test.expected.err == nil && test.expected.check && role != test.input.role {
+			if test.expected.err == nil && test.expected.check && role.ID != test.input.role {
 				t.Errorf("invalid result, expected: %v, got: %v", test.input.role, role)
 			}
 		})

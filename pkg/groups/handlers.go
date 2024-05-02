@@ -40,8 +40,9 @@ type UpdatePermissionsRequest struct {
 	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
-type GroupRequest struct {
-	ID string `json:"id" validate:"required"`
+type Group struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty" validate:"required,notblank"`
 }
 
 type UpdateIdentitiesRequest struct {
@@ -161,7 +162,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if group == "" {
+	if group == nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(
 			types.Response{
@@ -175,7 +176,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{
-			Data:    []string{group},
+			Data:    []Group{*group},
 			Message: "Group detail",
 			Status:  http.StatusOK,
 		},
@@ -200,7 +201,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group := new(GroupRequest)
+	group := new(Group)
 	if err := json.Unmarshal(body, group); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(
@@ -213,8 +214,21 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+
+	if group.ID != "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Group ID field is not allowed to be passed in",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
 	user := a.userFromContext(r.Context())
-	err = a.service.CreateGroup(r.Context(), user.ID, group.ID)
+	err = a.service.CreateGroup(r.Context(), user.ID, group.Name)
 
 	if err != nil {
 
@@ -232,7 +246,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(
 		types.Response{
-			Message: fmt.Sprintf("Created group %s", group.ID),
+			Message: fmt.Sprintf("Created group %s", group.Name),
 			Status:  http.StatusCreated,
 		},
 	)

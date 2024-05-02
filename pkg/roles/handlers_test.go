@@ -196,7 +196,10 @@ func TestHandleDetail(t *testing.T) {
 			input:    "administrator",
 			expected: nil,
 			output: &types.Response{
-				Data:    []string{"administrator"},
+				Data: []Role{{
+					ID:   "administrator",
+					Name: "administrator",
+				}},
 				Message: "Rule detail",
 				Status:  http.StatusOK,
 			},
@@ -216,12 +219,15 @@ func TestHandleDetail(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/roles/%s", test.input), nil)
 
 			mockService.EXPECT().GetRole(gomock.Any(), "anonymous", test.input).DoAndReturn(
-				func(context.Context, string, string) (string, error) {
+				func(context.Context, string, string) (*Role, error) {
 					if test.expected != nil {
-						return "", test.expected
+						return nil, test.expected
 					}
 
-					return test.input, nil
+					return &Role{
+						ID:   test.input,
+						Name: test.input,
+					}, nil
 
 				},
 			)
@@ -246,7 +252,7 @@ func TestHandleDetail(t *testing.T) {
 
 			// duplicate types.Response attribute we care and assign the proper type instead of interface{}
 			type Response struct {
-				Data    []string          `json:"data"`
+				Data    []Role            `json:"data"`
 				Message string            `json:"message"`
 				Status  int               `json:"status"`
 				Meta    *types.Pagination `json:"_meta"`
@@ -1198,7 +1204,7 @@ func TestHandleCreate(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockService := NewMockServiceInterface(ctrl)
 
-			upr := new(RoleRequest)
+			upr := new(Role)
 			upr.ID = test.input
 			payload, _ := json.Marshal(upr)
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10/non-standard/validators"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -17,6 +18,10 @@ import (
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+}
+
+func (p *PayloadValidator) setupValidator() {
+	_ = p.validator.RegisterValidation("notblank", validators.NotBlank)
 }
 
 func (p *PayloadValidator) NeedsValidation(r *http.Request) bool {
@@ -28,7 +33,7 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	var err error
 
 	if p.isCreateGroup(method, endpoint) {
-		group := new(GroupRequest)
+		group := new(Group)
 		if err := json.Unmarshal(body, group); err != nil {
 			return ctx, nil, err
 		}
@@ -107,6 +112,8 @@ func NewGroupsPayloadValidator(apiKey string) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
 	p.validator = validation.NewValidator()
+
+	p.setupValidator()
 
 	return p
 }

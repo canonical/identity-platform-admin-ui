@@ -142,29 +142,31 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 
 // GetGroup returns the specified group using the ID argument, userID is used to validate the visibility by the user
 // making the call
-func (s *Service) GetGroup(ctx context.Context, userID, ID string) (string, error) {
+func (s *Service) GetGroup(ctx context.Context, userID, ID string) (*Group, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.GetGroup")
 	defer span.End()
 
 	exists, err := s.ofga.Check(ctx, fmt.Sprintf("user:%s", userID), "can_view", fmt.Sprintf("group:%s", ID))
 
 	if err != nil {
-
 		s.logger.Error(err.Error())
-		return "", err
+		return nil, err
 	}
 
-	if exists {
-		return ID, nil
+	if !exists {
+		return nil, nil
 	}
 
-	// if we got here it means authorization check hasn't worked
-	return "", nil
+	group := new(Group)
+	group.ID = ID
+	group.Name = ID
+
+	return group, nil
 }
 
 // CreateGroup creates a group and associates it with the userID passed as argument
 // an extra tuple is created to estabilish the "privileged" relatin for admin users
-func (s *Service) CreateGroup(ctx context.Context, userID, ID string) error {
+func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) error {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.CreateGroup")
 	defer span.End()
 
@@ -176,7 +178,7 @@ func (s *Service) CreateGroup(ctx context.Context, userID, ID string) error {
 	// might sort the problem
 
 	// TODO @shipperizer offload to privileged creator object
-	group := fmt.Sprintf("group:%s", ID)
+	group := fmt.Sprintf("group:%s", groupName)
 	user := fmt.Sprintf("user:%s", userID)
 
 	err := s.ofga.WriteTuples(

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10/non-standard/validators"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -86,6 +87,7 @@ func TestValidate(t *testing.T) {
 	p := new(PayloadValidator)
 	p.apiKey = "groups"
 	p.validator = validation.NewValidator()
+	_ = p.validator.RegisterValidation("notblank", validators.NotBlank)
 
 	for _, tt := range []struct {
 		name           string
@@ -100,8 +102,8 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				r := new(GroupRequest)
-				r.ID = "mock-id"
+				r := new(Group)
+				r.Name = "mock-name"
 
 				marshal, _ := json.Marshal(r)
 				return marshal
@@ -115,7 +117,7 @@ func TestValidate(t *testing.T) {
 			endpoint: "/mock-id",
 			body: func() []byte {
 				id := "mock-id"
-				r := new(GroupRequest)
+				r := new(Group)
 				r.ID = id
 
 				marshal, _ := json.Marshal(r)
@@ -190,7 +192,7 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				r := new(GroupRequest)
+				r := new(Group)
 
 				marshal, _ := json.Marshal(r)
 				return marshal
@@ -203,7 +205,7 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPatch,
 			endpoint: "/mock-id",
 			body: func() []byte {
-				r := new(GroupRequest)
+				r := new(Group)
 
 				marshal, _ := json.Marshal(r)
 				return marshal

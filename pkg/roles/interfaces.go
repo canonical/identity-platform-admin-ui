@@ -14,7 +14,7 @@ import (
 // ServiceInterface is the interface that each business logic service needs to implement
 type ServiceInterface interface {
 	ListRoles(context.Context, string) ([]string, error)
-	GetRole(context.Context, string, string) (string, error)
+	GetRole(context.Context, string, string) (*Role, error)
 	CreateRole(context.Context, string, string) error
 	DeleteRole(context.Context, string) error
 	ListRoleGroups(context.Context, string, string) ([]string, string, error)

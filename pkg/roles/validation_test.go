@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10/non-standard/validators"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
@@ -87,6 +88,7 @@ func TestValidate(t *testing.T) {
 	p := new(PayloadValidator)
 	p.apiKey = "roles"
 	p.validator = validation.NewValidator()
+	_ = p.validator.RegisterValidation("notblank", validators.NotBlank)
 
 	for _, tt := range []struct {
 		name           string
@@ -101,8 +103,8 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				role := new(RoleRequest)
-				role.ID = "mock-role-id"
+				role := new(Role)
+				role.Name = "mock-role-id"
 
 				marshal, _ := json.Marshal(role)
 				return marshal
@@ -115,7 +117,7 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPatch,
 			endpoint: "/",
 			body: func() []byte {
-				role := new(RoleRequest)
+				role := new(Role)
 				role.ID = "mock-role-id"
 
 				marshal, _ := json.Marshal(role)
@@ -172,7 +174,7 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPost,
 			endpoint: "",
 			body: func() []byte {
-				role := new(RoleRequest)
+				role := new(Role)
 
 				marshal, _ := json.Marshal(role)
 				return marshal
@@ -185,7 +187,7 @@ func TestValidate(t *testing.T) {
 			method:   http.MethodPatch,
 			endpoint: "/identity-id",
 			body: func() []byte {
-				role := new(RoleRequest)
+				role := new(Role)
 
 				marshal, _ := json.Marshal(role)
 				return marshal

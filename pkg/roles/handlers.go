@@ -34,8 +34,9 @@ type UpdatePermissionsRequest struct {
 	Permissions []Permission `json:"permissions" validate:"required,dive,required"`
 }
 
-type RoleRequest struct {
-	ID string `json:"id" validate:"required"`
+type Role struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty" validate:"required,notblank"`
 }
 
 // API is the core HTTP object that implements all the HTTP and business logic for the roles
@@ -185,7 +186,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role := new(RoleRequest)
+	role := new(Role)
 	if err := json.Unmarshal(body, role); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(

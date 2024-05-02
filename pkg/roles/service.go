@@ -88,24 +88,26 @@ func (s *Service) ListRoleGroups(ctx context.Context, ID, continuationToken stri
 
 // GetRole returns the specified role using the ID argument, userID is used to validate the visibility by the user
 // making the call
-func (s *Service) GetRole(ctx context.Context, userID, ID string) (string, error) {
+func (s *Service) GetRole(ctx context.Context, userID, ID string) (*Role, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.GetRole")
 	defer span.End()
 
 	exists, err := s.ofga.Check(ctx, fmt.Sprintf("user:%s", userID), "can_view", fmt.Sprintf("role:%s", ID))
 
 	if err != nil {
-
 		s.logger.Error(err.Error())
-		return "", err
+		return nil, err
 	}
 
-	if exists {
-		return ID, nil
+	if !exists {
+		return nil, nil
 	}
 
-	// if we got here it means authorization check hasn't worked
-	return "", nil
+	role := new(Role)
+	role.ID = ID
+	role.Name = ID
+
+	return role, nil
 }
 
 // CreateRole creates a role and associates it with the userID passed as argument

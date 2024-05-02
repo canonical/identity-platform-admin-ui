@@ -147,7 +147,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if role == "" {
+	if role == nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(
 			types.Response{
@@ -161,7 +161,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{
-			Data:    []string{role},
+			Data:    []Role{*role},
 			Message: "Rule detail",
 			Status:  http.StatusOK,
 		},

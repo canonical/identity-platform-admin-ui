@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.6.0...v1.6.1) (2024-05-06)
+
+
+### Bug Fixes
+
+* **role:** error out when ID is passed for creation ([2a46a5e](https://github.com/canonical/identity-platform-admin-ui/commit/2a46a5ec7a04a3aafbe6a899167acfe8ea8ff00e))
+* **role:** use `Name` field for creation ([e63fdaa](https://github.com/canonical/identity-platform-admin-ui/commit/e63fdaa70fb58e8c3001a23cc2ecc9e140e9cb81))
+
 ## [1.6.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.5.0...v1.6.0) (2024-04-30)
 
 

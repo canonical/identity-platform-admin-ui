@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.6.1...v1.7.0) (2024-05-06)
+
+
+### Features
+
+* implement new Create{Group,Role} interface + adjust handlers ([0adce3c](https://github.com/canonical/identity-platform-admin-ui/commit/0adce3cd75227c7cfa1d479ca94b69ef8eea6b86))
+* let Create{Group,Role} return newly created object ([e1ba968](https://github.com/canonical/identity-platform-admin-ui/commit/e1ba96806f98fdf05d56104f44632f6bb935c274))
+
 ## [1.6.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.6.0...v1.6.1) (2024-05-06)
 
 

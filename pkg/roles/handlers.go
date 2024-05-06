@@ -199,6 +199,19 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
+
+	if role.ID != "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "Role ID field is not allowed to be passed in",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
 	user := a.userFromContext(r.Context())
 	err = a.service.CreateRole(r.Context(), user.ID, role.Name)
 

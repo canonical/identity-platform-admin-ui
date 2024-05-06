@@ -1205,7 +1205,7 @@ func TestHandleCreate(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			upr := new(Role)
-			upr.ID = test.input
+			upr.Name = test.input
 			payload, _ := json.Marshal(upr)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v0/roles", bytes.NewReader(payload))

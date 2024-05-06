@@ -423,10 +423,14 @@ func TestServiceCreateRole(t *testing.T) {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			err := svc.CreateRole(context.Background(), test.input.user, test.input.role)
+			role, err := svc.CreateRole(context.Background(), test.input.user, test.input.role)
 
 			if test.expected != nil && err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
+			}
+
+			if role != nil && (role.ID != test.input.role || role.Name != test.input.role) {
+				t.Errorf("expected role ID and Name to be %v got %s, %s", test.input.role, role.ID, role.Name)
 			}
 		})
 	}

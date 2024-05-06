@@ -112,7 +112,7 @@ func (s *Service) GetRole(ctx context.Context, userID, ID string) (*Role, error)
 
 // CreateRole creates a role and associates it with the userID passed as argument
 // an extra tuple is created to estabilish the "privileged" relatin for admin users
-func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
+func (s *Service) CreateRole(ctx context.Context, userID, ID string) (*Role, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
 
@@ -136,10 +136,13 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) error {
 
 	if err != nil {
 		s.logger.Error(err.Error())
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &Role{
+		ID:   ID,
+		Name: ID,
+	}, nil
 }
 
 // AssignPermissions assigns permissions to a role

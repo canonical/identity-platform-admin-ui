@@ -1184,7 +1184,11 @@ func TestHandleCreate(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v0/groups", bytes.NewReader(payload))
 
-			mockService.EXPECT().CreateGroup(gomock.Any(), "anonymous", test.input).Return(test.expected)
+			var group *Group = nil
+			if test.expected == nil {
+				group = &Group{ID: test.input, Name: test.input}
+			}
+			mockService.EXPECT().CreateGroup(gomock.Any(), "anonymous", test.input).Return(group, test.expected)
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1206,7 +1210,7 @@ func TestHandleCreate(t *testing.T) {
 
 			// duplicate types.Response attribute we care and assign the proper type instead of interface{}
 			type Response struct {
-				Data    []string          `json:"data"`
+				Data    []Group           `json:"data"`
 				Message string            `json:"message"`
 				Status  int               `json:"status"`
 				Meta    *types.Pagination `json:"_meta"`
@@ -1218,7 +1222,7 @@ func TestHandleCreate(t *testing.T) {
 				t.Errorf("expected error to be nil got %v", err)
 			}
 
-			if test.expected == nil && len(rr.Data) != 0 {
+			if test.expected == nil && (len(rr.Data) != 1 || rr.Data[0].Name != test.input || rr.Data[0].ID != test.input) {
 				t.Errorf("invalid result, expected: %v, got: %v", test.output.Data, rr.Data)
 			}
 

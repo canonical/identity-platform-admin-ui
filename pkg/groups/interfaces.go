@@ -15,7 +15,7 @@ import (
 type ServiceInterface interface {
 	ListGroups(context.Context, string) ([]string, error) // list of groups, continuation token, error
 	GetGroup(context.Context, string, string) (*Group, error)
-	CreateGroup(context.Context, string, string) error
+	CreateGroup(context.Context, string, string) (*Group, error)
 	DeleteGroup(context.Context, string) error
 	ListRoles(context.Context, string) ([]string, error)
 	AssignRoles(context.Context, string, ...string) error

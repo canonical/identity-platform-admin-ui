@@ -794,10 +794,14 @@ func TestServiceCreateGroup(t *testing.T) {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			err := svc.CreateGroup(context.Background(), test.input.user, test.input.group)
+			group, err := svc.CreateGroup(context.Background(), test.input.user, test.input.group)
 
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
+			}
+
+			if group != nil && (group.ID != test.input.group || group.Name != test.input.group) {
+				t.Errorf("expected group ID and Name to be %v got %s, %s", test.input.group, group.ID, group.Name)
 			}
 		})
 	}

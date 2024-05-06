@@ -166,7 +166,7 @@ func (s *Service) GetGroup(ctx context.Context, userID, ID string) (*Group, erro
 
 // CreateGroup creates a group and associates it with the userID passed as argument
 // an extra tuple is created to estabilish the "privileged" relatin for admin users
-func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) error {
+func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) (*Group, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.CreateGroup")
 	defer span.End()
 
@@ -190,10 +190,13 @@ func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) err
 
 	if err != nil {
 		s.logger.Error(err.Error())
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &Group{
+		ID:   groupName,
+		Name: groupName,
+	}, nil
 }
 
 // AssignRoles assigns roles to a group

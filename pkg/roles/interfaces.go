@@ -15,7 +15,7 @@ import (
 type ServiceInterface interface {
 	ListRoles(context.Context, string) ([]string, error)
 	GetRole(context.Context, string, string) (*Role, error)
-	CreateRole(context.Context, string, string) error
+	CreateRole(context.Context, string, string) (*Role, error)
 	DeleteRole(context.Context, string) error
 	ListRoleGroups(context.Context, string, string) ([]string, string, error)
 	ListPermissions(context.Context, string, map[string]string) ([]string, map[string]string, error)

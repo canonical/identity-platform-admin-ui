@@ -213,7 +213,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := a.userFromContext(r.Context())
-	err = a.service.CreateRole(r.Context(), user.ID, role.Name)
+	role, err = a.service.CreateRole(r.Context(), user.ID, role.Name)
 
 	if err != nil {
 
@@ -231,6 +231,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(
 		types.Response{
+			Data:    []Role{*role},
 			Message: fmt.Sprintf("Created role %s", role.Name),
 			Status:  http.StatusCreated,
 		},

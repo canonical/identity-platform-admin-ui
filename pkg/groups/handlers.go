@@ -228,7 +228,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := a.userFromContext(r.Context())
-	err = a.service.CreateGroup(r.Context(), user.ID, group.Name)
+	group, err = a.service.CreateGroup(r.Context(), user.ID, group.Name)
 
 	if err != nil {
 
@@ -246,6 +246,7 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(
 		types.Response{
+			Data:    []Group{*group},
 			Message: fmt.Sprintf("Created group %s", group.Name),
 			Status:  http.StatusCreated,
 		},

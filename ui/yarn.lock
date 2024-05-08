@@ -1163,10 +1163,10 @@
     react-table "7.8.0"
     react-useportal "1.0.19"
 
-"@canonical/rebac-admin@0.0.1-alpha.2":
-  version "0.0.1-alpha.2"
-  resolved "https://registry.yarnpkg.com/@canonical/rebac-admin/-/rebac-admin-0.0.1-alpha.2.tgz#0f64303c80f2489a23da4f063a5aab0e100204b4"
-  integrity sha512-zr4DoVpKa2Mj/9XFWFiyTmPkox62h2V3d2XqxvO1hqEdnXIYQetIHQkpfHSaga4cu6bHStzqYmGlwkD0cG+YYw==
+"@canonical/rebac-admin@0.0.1-alpha.3":
+  version "0.0.1-alpha.3"
+  resolved "https://registry.yarnpkg.com/@canonical/rebac-admin/-/rebac-admin-0.0.1-alpha.3.tgz#4bb249ad2db2da63869e8aaa4351c3cda2df95b2"
+  integrity sha512-ouHaQ2/KU0FJ+e16+cdLVrBSuIId+U/FooL0R/5ysZ7n1Q7/tswttuPbRjjk/lZ+PfwiNi9lyOmyEG0seyToxw==
   dependencies:
     async-limiter "2.0.0"
     classnames "2.5.1"

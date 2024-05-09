@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.7.0...v1.8.0) (2024-05-09)
+
+
+### Features
+
+* upgrade rebac-admin to 0.0.1-alpha.3 ([96aca77](https://github.com/canonical/identity-platform-admin-ui/commit/96aca771bfe328bc27e8e656bd471345a5c43b25))
+
 ## [1.7.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.6.1...v1.7.0) (2024-05-06)
 
 

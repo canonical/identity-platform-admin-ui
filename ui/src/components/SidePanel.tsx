@@ -1,7 +1,7 @@
 import { FC, PropsWithChildren, ReactNode } from "react";
 import Loader from "components/Loader";
 import classnames from "classnames";
-import { Spinner } from "@canonical/react-components";
+import { AppAside, Panel, Spinner } from "@canonical/react-components";
 
 interface CommonProps {
   className?: string;
@@ -49,7 +49,7 @@ const Container: FC<PropsWithChildren & CommonProps> = ({
   children,
   className,
 }) => {
-  return <div className={classnames("p-panel", className)}>{children}</div>;
+  return <Panel className={className}>{children}</Panel>;
 };
 
 const Content: FC<PropsWithChildren & CommonProps> = ({
@@ -96,15 +96,15 @@ const SidePanelComponent: FC<SidePanelProps> = ({
   pinned,
 }) => {
   return (
-    <aside
-      className={classnames("l-aside", className, {
+    <AppAside
+      className={classnames(className, {
         "is-narrow": width === "narrow",
         "is-wide": width === "wide",
-        "is-pinned": pinned,
         "is-split": isSplit,
         "is-overlay": isOverlay,
       })}
       aria-label="Side panel"
+      pinned={pinned}
     >
       {loading ? (
         <div className="loading">
@@ -117,7 +117,7 @@ const SidePanelComponent: FC<SidePanelProps> = ({
           {!hasError && children}
         </>
       )}
-    </aside>
+    </AppAside>
   );
 };
 

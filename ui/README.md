@@ -2,42 +2,51 @@
 
 This is the Admin UI for the Canonical identity platform.
 
-### Development server
+## Development server
 
-Haproxy needs to be installed
+Haproxy needs to be installed:
 
-    apt install haproxy
+```shell
+apt install haproxy
+```
 
-and configured
+and configured `/etc/haproxy/haproxy.cfg` with the following:
 
-    vim /etc/haproxy/haproxy.cfg
+```text
+global
+  daemon
 
-use this content for the file
+defaults
+  mode  http
 
-    global
-      daemon
-    
-    defaults
-      mode  http
+frontend iam_frontend
+  bind 172.17.0.1:8000
+  default_backend iam_admin_be
 
+backend iam_admin_be
+  server admin_be 127.0.0.1:8000
+```
 
-    frontend iam_frontend
-      bind 172.17.0.1:8000
-      default_backend iam_admin_be
+and restart it:
 
-    backend iam_admin_be
-      server admin_be 127.0.0.1:8000
+```shell
+service haproxy restart
+```
 
-and restart it
+Start the build server as described in the main README.md in the root of the
+repo:
 
-    service haproxy restart
+```shell
+make dev
+```
 
-Start the build server as described in the main README.md in the root of this repo
+Install `dotrun` as described
+in [HERE](https://github.com/canonical/dotrun#installation).
+Launch it from
+the `ui/` directory of the repo:
 
-    make dev
+```shell
+dotrun
+```
 
-Install dotrun as described in https://github.com/canonical/dotrun#installation Launch it from the `ui/` directory of this repo
-
-    dotrun
-
-browse to http://localhost:8411/ to reach iam-admin-ui.
+Browse <http://localhost:8411/> to reach IAM Admin UI.

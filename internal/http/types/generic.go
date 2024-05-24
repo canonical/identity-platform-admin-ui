@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package types
 
@@ -21,7 +21,7 @@ type Response struct {
 
 // NavigationTokens are parameters used to navigate `list` result endpoints
 type NavigationTokens struct {
-	// deserialization only
+	// serialization only
 	Next string `json:"next,omitempty"`
 	Prev string `json:"prev,omitempty"`
 }
@@ -29,11 +29,11 @@ type NavigationTokens struct {
 // Pagination object is used to serialize and deserialize pagination parameters
 // it will populate the `meta` part for the `Response` struct
 type Pagination struct {
-	PageToken string `json:"page_token,omitempty"` // serialization only
+	PageToken string `json:"page_token,omitempty"` // deserialization only
 	Size      int64  `json:"size"`
 	Page      int64  `json:"page"` // to be deprecated
 
-	// deserialization only
+	// serialization only
 	NavigationTokens
 }
 
@@ -51,6 +51,7 @@ func ParsePagination(q url.Values) *Pagination {
 
 	p := NewPaginationWithDefaults()
 
+	// TODO @barco deprecate `page`
 	if page, err := strconv.ParseInt(q.Get("page"), 10, 64); err == nil && page > 1 {
 		p.Page = page
 	}

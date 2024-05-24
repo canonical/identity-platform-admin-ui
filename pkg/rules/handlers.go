@@ -4,6 +4,7 @@
 package rules
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,12 +18,18 @@ import (
 	oathkeeper "github.com/ory/oathkeeper-client-go"
 )
 
+const DEFAULT_OFFSET int64 = 0
+
 type API struct {
 	apiKey           string
 	service          ServiceInterface
 	payloadValidator validation.PayloadValidatorInterface
 
 	logger logging.LoggerInterface
+}
+
+type PageToken struct {
+	Offset int64 `json:"offset" validate:"required"`
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -45,11 +52,9 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 	pagination := types.ParsePagination(r.URL.Query())
 
-	if pagination.Page < 1 {
-		pagination.Page = 1
-	}
+	offset := a.offsetDecode(pagination.PageToken)
 
-	rules, err := a.service.ListRules(r.Context(), pagination.Page, pagination.Size)
+	rules, err := a.service.ListRules(r.Context(), offset, pagination.Size)
 
 	if err != nil {
 
@@ -59,19 +64,69 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(rr)
+		_ = json.NewEncoder(w).Encode(rr)
 
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(
+	_ = json.NewEncoder(w).Encode(
 		types.Response{
 			Data:    rules,
 			Message: "List of rules",
 			Status:  http.StatusOK,
+			Meta: &types.Pagination{
+				NavigationTokens: types.NavigationTokens{
+					Next: a.offsetTokenEncode(offset + pagination.Size),
+					Prev: a.offsetTokenEncode(offset - pagination.Size),
+				},
+				Size: pagination.Size,
+			},
 		},
 	)
+}
+
+func (a *API) offsetTokenEncode(offset int64) string {
+	if offset < DEFAULT_OFFSET {
+		return ""
+	}
+
+	pt := new(PageToken)
+	pt.Offset = offset
+
+	token, err := json.Marshal(pt)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+		return ""
+	}
+
+	return base64.RawURLEncoding.EncodeToString(token)
+}
+
+func (a *API) offsetDecode(pageToken string) int64 {
+	if pageToken == "" {
+		return DEFAULT_OFFSET
+	}
+
+	pt := new(PageToken)
+
+	rawPt, err := base64.RawURLEncoding.DecodeString(pageToken)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+		return DEFAULT_OFFSET
+	}
+
+	if err := json.Unmarshal(rawPt, pt); err != nil {
+		a.logger.Warnf("bad page token format, defaulting to an empty one: %s", err)
+		return DEFAULT_OFFSET
+	}
+
+	if err != nil || pt.Offset < DEFAULT_OFFSET {
+		a.logger.Warnf("invalid offset, default to %d %s", DEFAULT_OFFSET, err)
+		return DEFAULT_OFFSET
+	}
+
+	return pt.Offset
 }
 
 func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {

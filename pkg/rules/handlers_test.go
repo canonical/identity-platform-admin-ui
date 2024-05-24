@@ -82,12 +82,12 @@ func TestHandleListSuccess(t *testing.T) {
 		},
 	}
 
-	var page int64 = 1
+	var offset int64 = 0
 	var size int64 = 100
 
-	mockService.EXPECT().ListRules(gomock.Any(), page, size).Return(serviceOutput, nil)
+	mockService.EXPECT().ListRules(gomock.Any(), offset, size).Return(serviceOutput, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?page=1&size=100", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?page_token=eyJvZmZzZXQiOjB9&size=100", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
 	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
@@ -130,10 +130,10 @@ func TestHandleListFailed(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
-	var page int64 = 1
+	var offset int64 = 0
 	var size int64 = 100
 
-	mockService.EXPECT().ListRules(gomock.Any(), page, size).Return(nil, fmt.Errorf("mock_error"))
+	mockService.EXPECT().ListRules(gomock.Any(), offset, size).Return(nil, fmt.Errorf("mock_error"))
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?page=0&offset=100", nil)
 	w := httptest.NewRecorder()

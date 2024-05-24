@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package rules
@@ -52,14 +52,11 @@ type Service struct {
 	logger  logging.LoggerInterface
 }
 
-func (s *Service) ListRules(ctx context.Context, page, size int64) ([]oathkeeper.Rule, error) {
+func (s *Service) ListRules(ctx context.Context, offset, size int64) ([]oathkeeper.Rule, error) {
 	ctx, span := s.tracer.Start(ctx, "rules.Service.ListRules")
 	defer span.End()
 
-	limit := size
-	offset := (page - 1) * size
-
-	rules, _, err := s.oathkeeper.ListRules(ctx).Limit(limit).Offset(offset).Execute()
+	rules, _, err := s.oathkeeper.ListRules(ctx).Limit(size).Offset(offset).Execute()
 
 	if err != nil {
 		s.logger.Error(err.Error())

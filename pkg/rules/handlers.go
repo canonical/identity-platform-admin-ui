@@ -4,10 +4,12 @@
 package rules
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -17,12 +19,18 @@ import (
 	oathkeeper "github.com/ory/oathkeeper-client-go"
 )
 
+const DEFAULT_PAGE_NUMBER = 1
+
 type API struct {
 	apiKey           string
 	service          ServiceInterface
 	payloadValidator validation.PayloadValidatorInterface
 
 	logger logging.LoggerInterface
+}
+
+type PageToken struct {
+	Offset string `json:"offset" validate:"required"`
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -45,11 +53,13 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 
 	pagination := types.ParsePagination(r.URL.Query())
 
-	if pagination.Page < 1 {
-		pagination.Page = 1
+	page := a.pageDecode(pagination.PageToken, pagination.Size)
+
+	if page < 1 {
+		page = 1
 	}
 
-	rules, err := a.service.ListRules(r.Context(), pagination.Page, pagination.Size)
+	rules, err := a.service.ListRules(r.Context(), page, pagination.Size)
 
 	if err != nil {
 
@@ -59,19 +69,67 @@ func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(rr)
+		_ = json.NewEncoder(w).Encode(rr)
 
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(
+	_ = json.NewEncoder(w).Encode(
 		types.Response{
 			Data:    rules,
 			Message: "List of rules",
 			Status:  http.StatusOK,
+			Meta: &types.Pagination{
+				NavigationTokens: types.NavigationTokens{
+					Next: a.pageTokenEncode(page+1, pagination.Size),
+				},
+				Size: pagination.Size,
+			},
 		},
 	)
+}
+
+func (a *API) pageTokenEncode(page, size int64) string {
+	pt := new(PageToken)
+	pt.Offset = fmt.Sprintf("%v", page*size)
+
+	token, err := json.Marshal(pt)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+
+		return ""
+	}
+
+	return base64.StdEncoding.EncodeToString(token)
+}
+
+func (a *API) pageDecode(pageToken string, size int64) int64 {
+	if pageToken == "" {
+		return DEFAULT_PAGE_NUMBER
+	}
+
+	pt := new(PageToken)
+
+	rawPt, err := base64.StdEncoding.DecodeString(pageToken)
+	if err != nil {
+		a.logger.Warnf("bad page token encoding, defaulting to an empty one: %s", err)
+		return DEFAULT_PAGE_NUMBER
+	}
+
+	if err := json.Unmarshal(rawPt, pt); err != nil {
+		a.logger.Warnf("bad page token format, defaulting to an empty one: %s", err)
+		return DEFAULT_PAGE_NUMBER
+	}
+
+	offset, err := strconv.ParseInt(pt.Offset, 10, 64)
+
+	if err != nil || offset < DEFAULT_PAGE_NUMBER {
+		a.logger.Warnf("invalid offset, default to %d %s", DEFAULT_PAGE_NUMBER, err)
+		return DEFAULT_PAGE_NUMBER
+	}
+
+	return offset / size
 }
 
 func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {

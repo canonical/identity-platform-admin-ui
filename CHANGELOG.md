@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.8.0...v1.9.0) (2024-05-24)
+
+
+### Features
+
+* uniform rules handlers to pageToken pagination ([7c70cc6](https://github.com/canonical/identity-platform-admin-ui/commit/7c70cc69c76a8cd1a9e4e17b4d9a6e21a86f63e8))
+
 ## [1.8.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.7.0...v1.8.0) (2024-05-09)
 
 

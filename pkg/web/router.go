@@ -24,6 +24,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
+	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
 type RouterConfig struct {
@@ -31,16 +32,18 @@ type RouterConfig struct {
 	idp                      *idp.Config
 	schemas                  *schemas.Config
 	rules                    *rules.Config
+	ui                       *ui.Config
 	external                 ExternalClientsConfigInterface
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, external ExternalClientsConfigInterface, olly O11yConfigInterface) *RouterConfig {
+func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, olly O11yConfigInterface) *RouterConfig {
 	return &RouterConfig{
 		payloadValidationEnabled: payloadValidationEnabled,
 		idp:                      idp,
 		schemas:                  schemas,
 		rules:                    rules,
+		ui:                       ui,
 		external:                 external,
 		olly:                     olly,
 	}
@@ -52,6 +55,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	idpConfig := config.idp
 	schemasConfig := config.schemas
 	rulesConfig := config.rules
+	uiConfig := config.ui
 	externalConfig := config.external
 
 	logger := config.olly.Logger()
@@ -124,6 +128,8 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		logger,
 	)
 
+	uiAPI := ui.NewAPI(uiConfig, tracer, monitor, logger)
+
 	if config.payloadValidationEnabled {
 		validationRegistry := validation.NewRegistry(tracer, monitor, logger)
 		router = router.With(validationRegistry.ValidationMiddleware).(*chi.Mux)
@@ -148,6 +154,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	rulesAPI.RegisterEndpoints(router)
 	rolesAPI.RegisterEndpoints(router)
 	groupsAPI.RegisterEndpoints(router)
+	uiAPI.RegisterEndpoints(router)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

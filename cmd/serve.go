@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"context"
+	"embed"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,8 +31,13 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
+	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
+
+//go:embed ui/dist
+//go:embed ui/dist/assets
+var jsFS embed.FS
 
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
@@ -57,6 +64,11 @@ func serve() {
 	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
+
+	distFS, err := fs.Sub(jsFS, "ui/dist")
+	if err != nil {
+		logger.Fatalf("issue with ui files %s", err)
+	}
 
 	externalConfig := web.NewExternalClientsConfig(
 		ih.NewClient(specs.HydraAdminURL, specs.Debug),
@@ -107,6 +119,10 @@ func serve() {
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
+	uiConfig := &ui.Config{
+		DistFS: distFS,
+	}
+
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
 			externalConfig.OpenFGA(),
@@ -122,7 +138,7 @@ func serve() {
 
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, externalConfig, ollyConfig)
+	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, ollyConfig)
 
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()

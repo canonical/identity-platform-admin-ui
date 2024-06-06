@@ -6,6 +6,7 @@ package web
 import (
 	"net/http"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
@@ -34,10 +36,11 @@ type RouterConfig struct {
 	rules                    *rules.Config
 	ui                       *ui.Config
 	external                 ExternalClientsConfigInterface
+	oauth2                   *authentication.Config
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, olly O11yConfigInterface) *RouterConfig {
+func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, olly O11yConfigInterface) *RouterConfig {
 	return &RouterConfig{
 		payloadValidationEnabled: payloadValidationEnabled,
 		idp:                      idp,
@@ -45,6 +48,7 @@ func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *sc
 		rules:                    rules,
 		ui:                       ui,
 		external:                 external,
+		oauth2:                   oauth2,
 		olly:                     olly,
 	}
 }
@@ -57,6 +61,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	rulesConfig := config.rules
 	uiConfig := config.ui
 	externalConfig := config.external
+	oauth2Config := config.oauth2
 
 	logger := config.olly.Logger()
 	monitor := config.olly.Monitor()
@@ -132,6 +137,16 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		r.Use(authorizationMiddleware)
 	}).(*chi.Mux)
 
+	var oauth2Context *authentication.OAuth2Context
+
+	if oauth2Config.Enabled {
+		oauth2Context = authentication.NewOAuth2Context(config.oauth2, oidc.NewProvider, tracer, logger, monitor)
+
+		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, tracer, logger)
+		authenticationMiddleware.SetAllowListedEndpoints("/api/v0/login", "/api/v0/status", "api/v0/metrics")
+		apiRouter.Use(authenticationMiddleware.OAuth2Authentication)
+	}
+
 	if config.payloadValidationEnabled {
 		validationRegistry := validation.NewRegistry(tracer, monitor, logger)
 		apiRouter.Use(validationRegistry.ValidationMiddleware)
@@ -156,6 +171,11 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	rulesAPI.RegisterEndpoints(apiRouter)
 	rolesAPI.RegisterEndpoints(apiRouter)
 	groupsAPI.RegisterEndpoints(apiRouter)
+
+	if oauth2Config.Enabled {
+		login := authentication.NewAPI(oauth2Context, tracer, logger)
+		login.RegisterEndpoints(apiRouter)
+	}
 
 	uiAPI.RegisterEndpoints(router)
 

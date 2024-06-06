@@ -28,6 +28,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
@@ -137,9 +138,20 @@ func serve() {
 		}
 	}
 
+	oauth2Config := authentication.NewAuthenticationConfig(
+		specs.AuthenticationEnabled,
+		specs.OIDCIssuer,
+		specs.OAuth2ClientId,
+		specs.OAuth2ClientSecret,
+		specs.OAuth2RedirectURI,
+		specs.AccessTokenVerificationStrategy,
+		specs.OAuth2NonceCookieTTL,
+		specs.OAuth2CodeGrantScopes,
+	)
+
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, ollyConfig)
+	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
 
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()

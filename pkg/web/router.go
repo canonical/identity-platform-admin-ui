@@ -69,6 +69,9 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		monitoring.NewMiddleware(monitor, logger).ResponseTime(),
 		middlewareCORS([]string{"*"}),
 	)
+	authorizationMiddleware := authorization.NewMiddleware(
+		authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger,
+	).Authorize()
 
 	// TODO @shipperizer add a proper configuration to enable http logger middleware as it's expensive
 	if true {
@@ -79,12 +82,6 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	}
 
 	router.Use(middlewares...)
-
-	// apply authorization and validation middlewares using With to overcome issue with <id> URLParams not available
-	router = router.With(
-		authorization.NewMiddleware(
-			authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger).Authorize(),
-	).(*chi.Mux)
 
 	statusAPI := status.NewAPI(tracer, monitor, logger)
 	metricsAPI := metrics.NewAPI(logger)
@@ -130,9 +127,14 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	uiAPI := ui.NewAPI(uiConfig, tracer, monitor, logger)
 
+	// Create a new router for the API so that we can add extra middlewares
+	apiRouter := router.Group(func(r chi.Router) {
+		r.Use(authorizationMiddleware)
+	}).(*chi.Mux)
+
 	if config.payloadValidationEnabled {
 		validationRegistry := validation.NewRegistry(tracer, monitor, logger)
-		router = router.With(validationRegistry.ValidationMiddleware).(*chi.Mux)
+		apiRouter.Use(validationRegistry.ValidationMiddleware)
 
 		identitiesAPI.RegisterValidation(validationRegistry)
 		clientsAPI.RegisterValidation(validationRegistry)
@@ -144,16 +146,17 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	}
 
 	// register endpoints as last step
-	statusAPI.RegisterEndpoints(router)
-	metricsAPI.RegisterEndpoints(router)
+	statusAPI.RegisterEndpoints(apiRouter)
+	metricsAPI.RegisterEndpoints(apiRouter)
 
-	identitiesAPI.RegisterEndpoints(router)
-	clientsAPI.RegisterEndpoints(router)
-	idpAPI.RegisterEndpoints(router)
-	schemasAPI.RegisterEndpoints(router)
-	rulesAPI.RegisterEndpoints(router)
-	rolesAPI.RegisterEndpoints(router)
-	groupsAPI.RegisterEndpoints(router)
+	identitiesAPI.RegisterEndpoints(apiRouter)
+	clientsAPI.RegisterEndpoints(apiRouter)
+	idpAPI.RegisterEndpoints(apiRouter)
+	schemasAPI.RegisterEndpoints(apiRouter)
+	rulesAPI.RegisterEndpoints(apiRouter)
+	rolesAPI.RegisterEndpoints(apiRouter)
+	groupsAPI.RegisterEndpoints(apiRouter)
+
 	uiAPI.RegisterEndpoints(router)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)

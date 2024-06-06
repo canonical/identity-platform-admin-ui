@@ -1,9 +1,12 @@
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 package ui
 
 import (
 	"io/fs"
 	"net/http"
-	"path"
+	"strings"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
@@ -24,15 +27,19 @@ type Config struct {
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
-	// Add the trailing slash if it's missing
 	mux.NotFound(a.uiFiles)
 }
 
-// TODO: Validate response when server error handling is implemented
 func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
-	// If the path is not /ui/ add the html suffix to make file system serving work
-	if ext := path.Ext(r.URL.Path); ext == "" && r.URL.Path != "/" {
-		r.URL.Path += "%s.html"
+	// If a `/api` request ends up here, it means that the route does not exist
+	// Do not rely on the UI to return the 404 response
+	if strings.HasPrefix(r.URL.Path, "/api") {
+		http.NotFound(w, r)
+		return
+	}
+	// This is a SPA, everything HTML page uses the same `index.html`
+	if !strings.HasPrefix(r.URL.Path, "/assets") {
+		r.URL.Path = "/"
 	}
 
 	// Set the UI headers

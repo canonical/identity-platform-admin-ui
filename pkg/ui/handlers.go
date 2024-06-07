@@ -4,8 +4,11 @@
 package ui
 
 import (
+	"fmt"
 	"io/fs"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -14,30 +17,43 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const UIPrefix = "/ui"
+
+type Config struct {
+	DistFS  fs.FS
+	BaseURL string
+}
+
 type API struct {
 	fileServer http.Handler
+	BaseURL    *url.URL
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
 
-type Config struct {
-	DistFS fs.FS
-}
-
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
-	mux.NotFound(a.uiFiles)
+	// We force the trailing slash to make the UI routing easier
+	// The UI relies on relative routes to fetch it's assets and to call the backend api
+	// If we didn't force the trailing slash it would be harder to use relative paths:
+	//     "example.com/a"    + "./b"  -> "example.com/b"
+	//     "example.com/a/"   + "./b"  -> "example.com/a/b"
+	//     "example.com/a/b"  + "../c" -> "example.com/c"
+	//     "example.com/a/b/" + "../c" -> "example.com/a/c"
+	mux.Get(UIPrefix, func(w http.ResponseWriter, r *http.Request) {
+		url := UIPrefix
+		if a.BaseURL != nil {
+			url = path.Join(a.BaseURL.Path, url) + "/"
+		}
+		http.Redirect(w, r, url, http.StatusMovedPermanently)
+	})
+	mux.Get(UIPrefix+"/*", a.uiFiles)
 }
 
 func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
-	// If a `/api` request ends up here, it means that the route does not exist
-	// Do not rely on the UI to return the 404 response
-	if strings.HasPrefix(r.URL.Path, "/api") {
-		http.NotFound(w, r)
-		return
-	}
-	// This is a SPA, everything HTML page uses the same `index.html`
+	r.URL.Path = strings.TrimPrefix(r.URL.Path, UIPrefix)
+	// This is a SPA, every HTML page serves the same `index.html`
 	if !strings.HasPrefix(r.URL.Path, "/assets") {
 		r.URL.Path = "/"
 	}
@@ -64,6 +80,13 @@ func NewAPI(config *Config, tracer tracing.TracingInterface, monitor monitoring.
 	a := new(API)
 
 	a.fileServer = http.FileServer(http.FS(config.DistFS))
+	if config.BaseURL != "" {
+		url, err := url.Parse(config.BaseURL)
+		if err != nil {
+			panic(fmt.Errorf("invalid Base URL provided: %s", err))
+		}
+		a.BaseURL = url
+	}
 
 	a.tracer = tracer
 	a.monitor = monitor

@@ -448,9 +448,9 @@ func (a *API) handleRemovePermission(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ID := chi.URLParam(r, "id")
-	permissionUrn := authorization.NewUrnFromURLParam(chi.URLParam(r, "e_id"))
+	permissionURN := authorization.NewURNFromURLParam(chi.URLParam(r, "e_id"))
 
-	if permissionUrn == nil {
+	if permissionURN == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(
 			types.Response{
@@ -465,7 +465,7 @@ func (a *API) handleRemovePermission(w http.ResponseWriter, r *http.Request) {
 	err := a.service.RemovePermissions(
 		r.Context(),
 		ID,
-		Permission{Relation: permissionUrn.Relation(), Object: permissionUrn.Object()},
+		Permission{Relation: permissionURN.Relation(), Object: permissionURN.Object()},
 	)
 
 	if err != nil {
@@ -484,7 +484,7 @@ func (a *API) handleRemovePermission(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		types.Response{
-			Message: fmt.Sprintf("Removed permission %s for role %s", permissionUrn.ID(), ID),
+			Message: fmt.Sprintf("Removed permission %s for role %s", permissionURN.ID(), ID),
 			Status:  http.StatusOK,
 		},
 	)

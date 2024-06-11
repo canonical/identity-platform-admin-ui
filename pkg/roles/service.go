@@ -317,7 +317,7 @@ func (s *Service) listPermissionsByType(ctx context.Context, roleIDAssignee, pTy
 	permissions := make([]string, 0)
 
 	for _, t := range r.GetTuples() {
-		permissions = append(permissions, authorization.NewUrn(t.Key.Relation, t.Key.Object).ID())
+		permissions = append(permissions, authorization.NewURN(t.Key.Relation, t.Key.Object).ID())
 	}
 
 	return permissions, r.GetContinuationToken(), nil

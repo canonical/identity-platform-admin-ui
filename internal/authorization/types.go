@@ -12,25 +12,25 @@ const (
 	PERMISSION_SEPARATOR = "::"
 )
 
-type Urn struct {
+type URN struct {
 	relation string
 	object   string
 }
 
-func (a *Urn) ID() string {
+func (a *URN) ID() string {
 	return fmt.Sprintf("%s%s%s", a.relation, PERMISSION_SEPARATOR, a.object)
 }
 
-func (a *Urn) Relation() string {
+func (a *URN) Relation() string {
 	return a.relation
 }
 
-func (a *Urn) Object() string {
+func (a *URN) Object() string {
 	return a.object
 }
 
-func NewUrn(relation, object string) *Urn {
-	u := new(Urn)
+func NewURN(relation, object string) *URN {
+	u := new(URN)
 
 	u.relation = relation
 	u.object = object
@@ -38,14 +38,14 @@ func NewUrn(relation, object string) *Urn {
 	return u
 }
 
-func NewUrnFromURLParam(ID string) *Urn {
+func NewURNFromURLParam(ID string) *URN {
 	values := strings.Split(ID, PERMISSION_SEPARATOR)
 
 	if len(values) < 2 {
-		// not a valid Urn
+		// not a valid URN
 		return nil
 	}
 
 	// use only first two elements
-	return NewUrn(values[0], values[1])
+	return NewURN(values[0], values[1])
 }

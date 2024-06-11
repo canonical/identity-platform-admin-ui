@@ -436,7 +436,7 @@ func (s *Service) listPermissionsByType(ctx context.Context, ID, pType, continua
 			continue
 		}
 
-		permissions = append(permissions, authorization.NewUrn(t.Key.Relation, t.Key.Object).ID())
+		permissions = append(permissions, authorization.NewURN(t.Key.Relation, t.Key.Object).ID())
 	}
 
 	return permissions, r.GetContinuationToken(), nil

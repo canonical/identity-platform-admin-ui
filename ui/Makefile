@@ -3,7 +3,7 @@ YARN?=yarn
 
 build: install
 	$(YARN) install --frozen=lockfile
-	$(YARN) build
+	$(YARN) build --base=./
 .PHONY=build
 
 install:

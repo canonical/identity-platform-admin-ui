@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.10.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.9.0...v1.10.0) (2024-06-12)
+
+
+### Features
+
+* add 2 implementations of token verifier + tests ([1d1c5f9](https://github.com/canonical/identity-platform-admin-ui/commit/1d1c5f995ffbf5b63917248503d066a69b7d0334))
+* add interfaces for oauth2 integration ([684abac](https://github.com/canonical/identity-platform-admin-ui/commit/684abacdd462ea47057958af84aa165b7960d7e5))
+* add OAuth2 and OIDC related env vars to the Spec struct ([b900cc4](https://github.com/canonical/identity-platform-admin-ui/commit/b900cc40e8cf9edf98f0b6d636b54ab24b4173e4))
+* add OAuth2 authentication middleware + tests ([e054552](https://github.com/canonical/identity-platform-admin-ui/commit/e0545528b811d608b3003c3d0e950397cf48043f))
+* add oauth2 context to manage oauth2/oidc operations + tests ([62bff44](https://github.com/canonical/identity-platform-admin-ui/commit/62bff44252b349a5fbd9a2ebdf2628e39ad953cf))
+* add OAuth2 login handler + tests ([88c29e6](https://github.com/canonical/identity-platform-admin-ui/commit/88c29e672a0fe2b256e8248ea9d086e4b9957587))
+* adopt new oauth2 integration ([912029c](https://github.com/canonical/identity-platform-admin-ui/commit/912029ce63a34e481315a4ff816d0e672b401dd8))
+* **dependencies:** add coreos/go-oidc v3 dependency ([fe20b2f](https://github.com/canonical/identity-platform-admin-ui/commit/fe20b2fa74516ea968f99cf7f71e218d3fd3a832))
+
+
+### Bug Fixes
+
+* add security headers to UI handler ([ea3c6ba](https://github.com/canonical/identity-platform-admin-ui/commit/ea3c6baf1ae9f95848ac8f8414226f25c2079c95))
+* rename Urn to URN ([603418d](https://github.com/canonical/identity-platform-admin-ui/commit/603418d507dddd9b8519fc439bba336f44707f66))
+* serve the same file for all ui routes ([29ee190](https://github.com/canonical/identity-platform-admin-ui/commit/29ee190d9a8ee5620521745375c889f2d9ab4fea))
+* serve ui assets under relative path ([c3f21a9](https://github.com/canonical/identity-platform-admin-ui/commit/c3f21a9404bdf2f1ef04b3e01de9758626620d74))
+* serve UI files ([9007b77](https://github.com/canonical/identity-platform-admin-ui/commit/9007b77f9489f57c1a557870644affa622948db9))
+* serve UI from root path ([e5ecf42](https://github.com/canonical/identity-platform-admin-ui/commit/e5ecf42857ce26cf590ea9052a52133e4da750e5))
+* use BASE_URL to add trailing slash ([30b7b1b](https://github.com/canonical/identity-platform-admin-ui/commit/30b7b1b4792f528c34512683d0d3b182621c6916))
+
 ## [1.9.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.8.0...v1.9.0) (2024-05-24)
 
 

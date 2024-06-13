@@ -5,11 +5,7 @@ package authentication
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -22,10 +18,7 @@ import (
 
 type principalContextKey int
 
-const stateSize = 18
-
 var (
-	letterRunes         = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	PrincipalContextKey principalContextKey
 	otelHTTPClient      = http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 )
@@ -69,22 +62,15 @@ type OIDCProviderSupplier = func(ctx context.Context, issuer string) (*oidc.Prov
 type OAuth2Context struct {
 	client   *oauth2.Config
 	verifier TokenVerifier
-	nonceTTL time.Duration
-	rand     *rand.Rand
 
 	tracer  trace.Tracer
 	logger  logging.LoggerInterface
 	monitor monitoring.MonitorInterface
 }
 
-func (o *OAuth2Context) LoginRedirect(w http.ResponseWriter, r *http.Request) {
+func (o *OAuth2Context) LoginRedirect(w http.ResponseWriter, r *http.Request, nonce, state string) {
 	_, span := o.tracer.Start(r.Context(), "authentication.OAuth2Context.LoginRedirect")
 	defer span.End()
-
-	nonce, _ := nonce(r)
-	state := o.state(stateSize)
-
-	SetNonceCookie(w, nonce, o.nonceTTL)
 
 	// TODO: remove `audience` parameter when https://github.com/canonical/identity-platform-login-ui/issues/244 is addressed
 	http.Redirect(
@@ -92,19 +78,6 @@ func (o *OAuth2Context) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 		o.client.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("audience", o.client.ClientID)),
 		http.StatusFound,
 	)
-}
-
-func (o *OAuth2Context) state(size int) string {
-	state := make([]rune, size)
-	for i := range state {
-		state[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(state)
-}
-
-func nonce(r *http.Request) (string, error) {
-	marshal, err := json.Marshal(map[string]string{"referer": r.Referer(), "remote-address": r.RemoteAddr})
-	return base64.URLEncoding.EncodeToString(marshal), err
 }
 
 func (o *OAuth2Context) RetrieveTokens(ctx context.Context, code string) (*oauth2.Token, error) {
@@ -159,10 +132,6 @@ func NewOAuth2Context(config *Config, getProvider OIDCProviderSupplier, tracer t
 		Endpoint: provider.Endpoint(),
 		Scopes:   config.scopes,
 	}
-
-	o.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	o.nonceTTL = config.nonceTTL
 
 	return o
 }

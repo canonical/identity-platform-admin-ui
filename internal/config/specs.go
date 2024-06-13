@@ -3,8 +3,6 @@
 
 package config
 
-import "time"
-
 // EnvSpec is the basic environment configuration setup needed for the app to start
 type EnvSpec struct {
 	OtelGRPCEndpoint string `envconfig:"otel_grpc_endpoint"`
@@ -26,14 +24,14 @@ type EnvSpec struct {
 	HydraAdminURL       string `envconfig:"hydra_admin_url" required:"true"`
 	OathkeeperPublicURL string `envconfig:"oathkeeper_public_url" required:"true"`
 
-	AuthenticationEnabled           bool          `envconfig:"authentication_enabled" default:"false" validate:"required"`
-	OIDCIssuer                      string        `envconfig:"oidc_issuer" validate:"required"`
-	OAuth2ClientId                  string        `envconfig:"oauth2_client_id" validate:"required"`
-	OAuth2ClientSecret              string        `envconfig:"oauth2_client_secret" validate:"required"`
-	OAuth2RedirectURI               string        `envconfig:"oauth2_redirect_uri" validate:"required"`
-	OAuth2CodeGrantScopes           []string      `envconfig:"oauth2_codegrant_scopes" default:"openid,offline_access" validate:"required"`
-	OAuth2NonceCookieTTL            time.Duration `envconfig:"oauth2_nonce_cookie_ttl" default:"5m0s" validate:"required"`
-	AccessTokenVerificationStrategy string        `envconfig:"access_token_verification_strategy" default:"jwks" validate:"oneof=jwks userinfo"`
+	AuthenticationEnabled           bool     `envconfig:"authentication_enabled" default:"false" validate:"required"`
+	OIDCIssuer                      string   `envconfig:"oidc_issuer" validate:"required"`
+	OAuth2ClientId                  string   `envconfig:"oauth2_client_id" validate:"required"`
+	OAuth2ClientSecret              string   `envconfig:"oauth2_client_secret" validate:"required"`
+	OAuth2RedirectURI               string   `envconfig:"oauth2_redirect_uri" validate:"required"`
+	OAuth2CodeGrantScopes           []string `envconfig:"oauth2_codegrant_scopes" default:"openid,offline_access" validate:"required"`
+	OAuth2AuthCookieTTLSeconds      int      `envconfig:"oauth2_auth_cookies_ttl_seconds" default:"300" validate:"required"`
+	AccessTokenVerificationStrategy string   `envconfig:"access_token_verification_strategy" default:"jwks" validate:"oneof=jwks userinfo"`
 
 	IDPConfigMapName      string `envconfig:"idp_configmap_name" required:"true"`
 	IDPConfigMapNamespace string `envconfig:"idp_configmap_namespace" required:"true"`

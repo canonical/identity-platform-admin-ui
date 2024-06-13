@@ -24,6 +24,10 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
+var (
+	authCookiesTTLSeconds = 2 * 60
+)
+
 func TestHandleLogin(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -35,9 +39,11 @@ func TestHandleLogin(t *testing.T) {
 		Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 	mockMonitor := NewMockMonitorInterface(ctrl)
 
+	mockHelper := NewMockOAuth2HelperInterface(ctrl)
+	mockHelper.EXPECT().RandomURLString().Return("mock-nonce")
+	mockHelper.EXPECT().RandomURLString().Return("mock-state")
+
 	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/login", nil)
-	mockRequest.RemoteAddr = "0.0.0.0"
-	mockRequest.Header.Set("Referer", "mock-referer")
 	mockResponse := httptest.NewRecorder()
 
 	config := &Config{
@@ -49,7 +55,8 @@ func TestHandleLogin(t *testing.T) {
 		verificationStrategy: "jwks",
 		scopes:               []string{"openid", "offline_access"},
 	}
-	api := NewAPI(NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor), mockTracer, mockLogger)
+
+	api := NewAPI(authCookiesTTLSeconds, NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor), mockHelper, NewAuthCookieManager(), mockTracer, mockLogger)
 
 	api.handleLogin(mockResponse, mockRequest)
 
@@ -57,7 +64,7 @@ func TestHandleLogin(t *testing.T) {
 		t.Fatalf("response code error, expected %d, got %d", http.StatusFound, mockResponse.Code)
 	}
 
-	expectedLocation := "/api/v0/?audience=mock-client-id&client_id=mock-client-id&nonce=eyJyZWZlcmVyIjoibW9jay1yZWZlcmVyIiwicmVtb3RlLWFkZHJlc3MiOiIwLjAuMC4wIn0%3D&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect&response_type=code&scope=openid+offline_access&state="
+	expectedLocation := "/api/v0/?audience=mock-client-id&client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect&response_type=code&scope=openid+offline_access&state=mock-state"
 	location := mockResponse.Header().Get("Location")
 	if !strings.HasPrefix(location, expectedLocation) {
 		t.Fatalf("location header error, expected %s, got %s", expectedLocation, location)
@@ -71,7 +78,7 @@ func TestHandleLogin(t *testing.T) {
 		}
 	}
 
-	expectedNonceValue := "eyJyZWZlcmVyIjoibW9jay1yZWZlcmVyIiwicmVtb3RlLWFkZHJlc3MiOiIwLjAuMC4wIn0="
+	expectedNonceValue := "mock-nonce"
 	if nonceCookie == nil {
 		t.Fatal("nonce cookie not found")
 	}
@@ -89,6 +96,8 @@ func TestHandleLoginWithCode(t *testing.T) {
 	mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).Times(1)
 	mockTracer := NewMockTracer(ctrl)
 
+	mockHelper := NewMockOAuth2HelperInterface(ctrl)
+
 	mockVerifier := NewMockTokenVerifier(ctrl)
 	mockVerifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
@@ -104,16 +113,21 @@ func TestHandleLoginWithCode(t *testing.T) {
 		RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).
 		Return(mockToken, nil)
 
-	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/login?code=mock-code", nil)
+	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code&state=mock-state", nil)
 	mockRequest.AddCookie(&http.Cookie{
 		Name:  "nonce",
 		Value: "mock-nonce",
 	})
+	mockRequest.AddCookie(&http.Cookie{
+		Name:  "state",
+		Value: "mock-state",
+	})
+
 	mockResponse := httptest.NewRecorder()
 
-	api := NewAPI(mockOauth2Ctx, mockTracer, mockLogger)
+	api := NewAPI(authCookiesTTLSeconds, mockOauth2Ctx, mockHelper, NewAuthCookieManager(), mockTracer, mockLogger)
 
-	api.handleLogin(mockResponse, mockRequest)
+	api.handleCallback(mockResponse, mockRequest)
 
 	result := mockResponse.Result()
 
@@ -151,9 +165,29 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 	mockToken.AccessToken = "mock-access-token"
 	mockToken.RefreshToken = "mock-refresh-token"
 
-	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/login?code=mock-code", nil)
-	mockRequestWithNonce := httptest.NewRequest(http.MethodGet, "/api/v0/login?code=mock-code", nil)
-	mockRequestWithNonce.AddCookie(&http.Cookie{
+	mockRequestNoParams := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback", nil)
+	mockRequestNoStateParam := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code", nil)
+
+	mockRequestNoStateCookie := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code&state=mock-state", nil)
+
+	mockRequestWithInvalidStateCookie := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code&state=mock-state", nil)
+	mockRequestWithInvalidStateCookie.AddCookie(&http.Cookie{
+		Name:  "state",
+		Value: "invalid-state",
+	})
+
+	mockRequestWithValidStateCookie := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code&state=mock-state", nil)
+	mockRequestWithValidStateCookie.AddCookie(&http.Cookie{
+		Name:  "state",
+		Value: "mock-state",
+	})
+
+	mockRequestWithInvalidNonce := httptest.NewRequest(http.MethodGet, "/api/v0/auth/callback?code=mock-code&state=mock-state", nil)
+	mockRequestWithInvalidNonce.AddCookie(&http.Cookie{
+		Name:  "state",
+		Value: "mock-state",
+	})
+	mockRequestWithInvalidNonce.AddCookie(&http.Cookie{
 		Name:  "nonce",
 		Value: "invalid-nonce",
 	})
@@ -165,9 +199,42 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 		setupMocks   func(*MockOAuth2ContextInterface, *MockLoggerInterface, *MockTokenVerifier)
 	}{
 		{
-			name:    "RetrieveTokenError",
-			request: mockRequest,
+			name:    "CodeParamNotFound",
+			request: mockRequestNoParams,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Error("OAuth2 code not found")
+			},
+			errorMessage: "OAuth2 code not found",
+		},
+		{
+			name:    "StateParamNotFound",
+			request: mockRequestNoStateParam,
+			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Error("OAuth2 state not found")
+			},
+			errorMessage: "OAuth2 state not found",
+		},
+		{
+			name:    "StateCookieNotFound",
+			request: mockRequestNoStateCookie,
+			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Error("state cookie not found")
+			},
+			errorMessage: "state cookie not found",
+		},
+		{
+			name:    "StateCookieNotValid",
+			request: mockRequestWithInvalidStateCookie,
+			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Error("state parameter does not match state cookie")
+			},
+			errorMessage: "state parameter does not match state cookie",
+		},
+		{
+			name:    "RetrieveTokenError",
+			request: mockRequestWithValidStateCookie,
+			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Times(1).Return(nil, errors.New("mock-error"))
 				logger.EXPECT().Errorf("unable to retrieve tokens with code '%s', error: %v", "mock-code", errors.New("mock-error"))
 			},
@@ -175,8 +242,9 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 		},
 		{
 			name:    "IDTokenNotFound",
-			request: mockRequest,
+			request: mockRequestWithValidStateCookie,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 				logger.EXPECT().Error("unable to retrieve ID token")
 			},
@@ -184,8 +252,9 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 		},
 		{
 			name:    "IDTokenNotVerifiable",
-			request: mockRequest,
+			request: mockRequestWithValidStateCookie,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				mockToken = mockToken.WithExtra(map[string]interface{}{"id_token": "mock-id-token"})
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 
@@ -198,8 +267,9 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 		},
 		{
 			name:    "NonceCookieNotFound",
-			request: mockRequest,
+			request: mockRequestWithValidStateCookie,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
+				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				logger.EXPECT().Error("nonce cookie not found")
 				mockToken = mockToken.WithExtra(map[string]interface{}{"id_token": "mock-id-token"})
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
@@ -216,9 +286,10 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 		},
 		{
 			name:    "NonceCookieNotValid",
-			request: mockRequestWithNonce,
+			request: mockRequestWithInvalidNonce,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier) {
-				logger.EXPECT().Error("id token nonce does not match")
+				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
+				logger.EXPECT().Error("id token nonce does not match nonce cookie")
 				mockToken = mockToken.WithExtra(map[string]interface{}{"id_token": "mock-id-token"})
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 
@@ -230,7 +301,7 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 
 				oauth2Ctx.EXPECT().Verifier().Return(verifier)
 			},
-			errorMessage: "id token nonce error",
+			errorMessage: "id token nonce does not match nonce cookie",
 		},
 	} {
 		tt := tt
@@ -238,14 +309,15 @@ func TestHandleLoginWithCodeFailures(t *testing.T) {
 			mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
 			mockVerifier := NewMockTokenVerifier(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
-			mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).Times(1)
+
+			mockHelper := NewMockOAuth2HelperInterface(ctrl)
 
 			tt.setupMocks(mockOauth2Ctx, mockLogger, mockVerifier)
 
 			mockResponse := httptest.NewRecorder()
 
-			api := NewAPI(mockOauth2Ctx, mockTracer, mockLogger)
-			api.handleLogin(mockResponse, tt.request)
+			api := NewAPI(authCookiesTTLSeconds, mockOauth2Ctx, mockHelper, NewAuthCookieManager(), mockTracer, mockLogger)
+			api.handleCallback(mockResponse, tt.request)
 
 			result := mockResponse.Result()
 

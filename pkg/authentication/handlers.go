@@ -5,7 +5,7 @@ package authentication
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -17,15 +17,20 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
+const (
+	codeParameter  = "code"
+	stateParameter = "state"
+)
+
 type Config struct {
-	Enabled              bool          `validate:"required,boolean"`
-	AuthCookieTTL        time.Duration `validate:"required,min=30s,max:1h"`
-	issuer               string        `validate:"required"`
-	clientID             string        `validate:"required"`
-	clientSecret         string        `validate:"required"`
-	redirectURL          string        `validate:"required"`
-	verificationStrategy string        `validate:"required,oneof=jwks userinfo"`
-	scopes               []string      `validate:"required,dive,required"`
+	Enabled              bool     `validate:"required,boolean"`
+	AuthCookieTTLSeconds int      `validate:"required"`
+	issuer               string   `validate:"required"`
+	clientID             string   `validate:"required"`
+	clientSecret         string   `validate:"required"`
+	redirectURL          string   `validate:"required"`
+	verificationStrategy string   `validate:"required,oneof=jwks userinfo"`
+	scopes               []string `validate:"required,dive,required"`
 }
 
 type oauth2Tokens struct {
@@ -34,7 +39,7 @@ type oauth2Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTL time.Duration, scopes []string) *Config {
+func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTLSeconds int, scopes []string) *Config {
 	c := new(Config)
 	c.Enabled = enabled
 
@@ -44,37 +49,68 @@ func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redir
 	c.redirectURL = redirectURL
 	c.verificationStrategy = verificationStrategy
 	c.scopes = scopes
-	c.AuthCookieTTL = cookieTTL
+	c.AuthCookieTTLSeconds = cookieTTLSeconds
 
 	return c
 }
 
 type API struct {
-	apiKey           string
-	payloadValidator validation.PayloadValidatorInterface
-	oauth2           OAuth2ContextInterface
-	helper           OAuth2HelperInterface
-	authCookiesTTL   time.Duration
+	apiKey                string
+	payloadValidator      validation.PayloadValidatorInterface
+	oauth2                OAuth2ContextInterface
+	helper                OAuth2HelperInterface
+	cookieManager         AuthCookieManagerInterface
+	authCookiesTTLSeconds int
 
-	tracer        trace.Tracer
-	logger        logging.LoggerInterface
-	cookieManager AuthCookieManagerInterface
+	tracer trace.Tracer
+	logger logging.LoggerInterface
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/login", a.handleLogin)
+	mux.Get("/api/v0/auth/callback", a.handleCallback)
 }
 
 func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// add the Otel HTTP Client
 	r = r.WithContext(OtelHTTPClientContext(r.Context()))
 
-	code := r.URL.Query().Get("code")
+	nonce := a.helper.RandomURLString()
+	state := a.helper.RandomURLString()
+
+	ttl := time.Duration(a.authCookiesTTLSeconds) * time.Second
+
+	a.cookieManager.SetNonceCookie(w, nonce, ttl)
+	a.cookieManager.SetStateCookie(w, state, ttl)
+
+	a.oauth2.LoginRedirect(w, r, nonce, state)
+}
+
+func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
+	// add the Otel HTTP Client
+	r = r.WithContext(OtelHTTPClientContext(r.Context()))
+
+	code := r.URL.Query().Get(codeParameter)
 	if code == "" {
-		// no code means login flow init
-		a.oauth2.LoginRedirect(w, r)
+		a.logger.Error("OAuth2 code not found")
+		badRequest(w, fmt.Errorf("OAuth2 code not found"))
 		return
 	}
+
+	state := r.URL.Query().Get(stateParameter)
+	if state == "" {
+		a.logger.Error("OAuth2 state not found")
+		badRequest(w, fmt.Errorf("OAuth2 state not found"))
+		return
+	}
+
+	err := a.checkState(r, state)
+	a.cookieManager.ClearStateCookie(w)
+	if err != nil {
+		badRequest(w, err)
+		return
+	}
+
 	// else handle OAuth2 login second leg - retrieve tokens
 	a.logger.Debugf("user login second leg with code '%s'", code)
 	ctx := r.Context()
@@ -89,7 +125,7 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		a.logger.Error("unable to retrieve ID token")
-		badRequest(w, errors.New("unable to retrieve ID token"))
+		badRequest(w, fmt.Errorf("unable to retrieve ID token"))
 		return
 	}
 
@@ -100,20 +136,12 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	nonce := GetNonceCookie(r)
-	if nonce == "" {
-		a.logger.Error("nonce cookie not found")
-		badRequest(w, errors.New("nonce cookie not found"))
+	err = a.checkNonce(r, idToken)
+	a.cookieManager.ClearNonceCookie(w)
+	if err != nil {
+		badRequest(w, err)
 		return
 	}
-
-	if idToken.Nonce != nonce {
-		a.logger.Error("id token nonce does not match")
-		badRequest(w, errors.New("id token nonce error"))
-		return
-	}
-
-	ClearNonceCookie(w)
 
 	// TODO @barco: until we implement spec ID036 we just return tokens
 	w.Header().Set("Content-Type", "application/json")
@@ -125,6 +153,37 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = json.NewEncoder(w).Encode(tokens)
+
+}
+
+func (a *API) checkNonce(r *http.Request, idToken *Principal) error {
+	nonce := a.cookieManager.GetNonceCookie(r)
+	if nonce == "" {
+		a.logger.Error("nonce cookie not found")
+		return fmt.Errorf("nonce cookie not found")
+	}
+
+	if idToken.Nonce != nonce {
+		a.logger.Error("id token nonce does not match nonce cookie")
+		return fmt.Errorf("id token nonce does not match nonce cookie")
+	}
+
+	return nil
+}
+
+func (a *API) checkState(r *http.Request, state string) error {
+	stateCookieValue := a.cookieManager.GetStateCookie(r)
+	if stateCookieValue == "" {
+		a.logger.Error("state cookie not found")
+		return fmt.Errorf("state cookie not found")
+	}
+
+	if stateCookieValue != state {
+		a.logger.Error("state parameter does not match state cookie")
+		return fmt.Errorf("state parameter does not match state cookie")
+	}
+
+	return nil
 }
 
 func badRequest(w http.ResponseWriter, err error) {
@@ -138,14 +197,14 @@ func badRequest(w http.ResponseWriter, err error) {
 	return
 }
 
-func NewAPI(oauth2Context OAuth2ContextInterface, helper OAuth2HelperInterface, cookieManager AuthCookieManagerInterface, authCookiesTTL time.Duration, tracer trace.Tracer, logger logging.LoggerInterface) *API {
+func NewAPI(authCookiesTTLSeconds int, oauth2Context OAuth2ContextInterface, helper OAuth2HelperInterface, cookieManager AuthCookieManagerInterface, tracer trace.Tracer, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "authentication"
 	a.tracer = tracer
 	a.logger = logger
 	a.oauth2 = oauth2Context
 	a.helper = helper
-	a.authCookiesTTL = authCookiesTTL
+	a.authCookiesTTLSeconds = authCookiesTTLSeconds
 	a.cookieManager = cookieManager
 
 	return a

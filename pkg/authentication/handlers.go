@@ -19,13 +19,13 @@ import (
 
 type Config struct {
 	Enabled              bool          `validate:"required,boolean"`
+	AuthCookieTTL        time.Duration `validate:"required,min=30s,max:1h"`
 	issuer               string        `validate:"required"`
 	clientID             string        `validate:"required"`
 	clientSecret         string        `validate:"required"`
 	redirectURL          string        `validate:"required"`
 	verificationStrategy string        `validate:"required,oneof=jwks userinfo"`
 	scopes               []string      `validate:"required,dive,required"`
-	nonceTTL             time.Duration `validate:"required,min=30s,max:1h"`
 }
 
 type oauth2Tokens struct {
@@ -34,7 +34,7 @@ type oauth2Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, nonceTTL time.Duration, scopes []string) *Config {
+func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTL time.Duration, scopes []string) *Config {
 	c := new(Config)
 	c.Enabled = enabled
 
@@ -44,7 +44,7 @@ func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redir
 	c.redirectURL = redirectURL
 	c.verificationStrategy = verificationStrategy
 	c.scopes = scopes
-	c.nonceTTL = nonceTTL
+	c.AuthCookieTTL = cookieTTL
 
 	return c
 }
@@ -53,10 +53,12 @@ type API struct {
 	apiKey           string
 	payloadValidator validation.PayloadValidatorInterface
 	oauth2           OAuth2ContextInterface
+	helper           OAuth2HelperInterface
+	authCookiesTTL   time.Duration
 
-	tracer   trace.Tracer
-	logger   logging.LoggerInterface
-	nonceTTL time.Duration
+	tracer        trace.Tracer
+	logger        logging.LoggerInterface
+	cookieManager AuthCookieManagerInterface
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -136,12 +138,15 @@ func badRequest(w http.ResponseWriter, err error) {
 	return
 }
 
-func NewAPI(oauth2Context OAuth2ContextInterface, tracer trace.Tracer, logger logging.LoggerInterface) *API {
+func NewAPI(oauth2Context OAuth2ContextInterface, helper OAuth2HelperInterface, cookieManager AuthCookieManagerInterface, authCookiesTTL time.Duration, tracer trace.Tracer, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "authentication"
 	a.tracer = tracer
 	a.logger = logger
 	a.oauth2 = oauth2Context
+	a.helper = helper
+	a.authCookiesTTL = authCookiesTTL
+	a.cookieManager = cookieManager
 
 	return a
 }

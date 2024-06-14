@@ -67,7 +67,7 @@ type API struct {
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
-	mux.Get("/api/v0/login", a.handleLogin)
+	mux.Get("/api/v0/auth", a.handleLogin)
 	mux.Get("/api/v0/auth/callback", a.handleCallback)
 }
 
@@ -83,7 +83,8 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.SetNonceCookie(w, nonce, ttl)
 	a.cookieManager.SetStateCookie(w, state, ttl)
 
-	a.oauth2.LoginRedirect(w, r, nonce, state)
+	redirect := a.oauth2.LoginRedirect(r.Context(), nonce, state)
+	http.Redirect(w, r, redirect, http.StatusFound)
 }
 
 func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {

@@ -36,8 +36,8 @@ type ProviderInterface interface {
 type OAuth2ContextInterface interface {
 	// Verifier returns an abstract TokenVerifier for Hydra token verification
 	Verifier() TokenVerifier
-	// LoginRedirect implements the OAuth2 login process according to the authorization_code grant, and allows for specifying the nonce and state string values
-	LoginRedirect(http.ResponseWriter, *http.Request, string, string)
+	// LoginRedirect returns the URL preparaed for OAuth2 login process according to the authorization_code grant, and allows for specifying the nonce and state string values
+	LoginRedirect(context.Context, string, string) string
 	// RetrieveTokens performs the second leg of the OAuth2 authorization_code grant login flow
 	RetrieveTokens(context.Context, string) (*oauth2.Token, error)
 	// RefreshToken performs the OAuth2 refresh_token grant

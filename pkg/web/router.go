@@ -144,7 +144,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, tracer, logger)
 		authenticationMiddleware.SetAllowListedEndpoints(
-			"/api/v0/login",
+			"/api/v0/auth",
 			"/api/v0/auth/callback",
 			"/api/v0/status",
 			"/api/v0/metrics",

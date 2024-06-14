@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -125,28 +124,19 @@ func TestOAuth2Context_LoginRedirect(t *testing.T) {
 		issuer:               "http://localhost/issuer",
 		clientID:             "mock-client-id",
 		clientSecret:         "mock-client-secret",
-		redirectURL:          "http://localhost/redirect",
+		redirectURL:          "http://localhost/api/v0/auth/callback",
 		verificationStrategy: "jwks",
 		scopes:               []string{"openid", "offline_access"},
 	}
 
 	oauth2Context := NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor)
+	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/auth", nil)
 
-	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/login", nil)
-	mockRequest.RemoteAddr = "0.0.0.0"
-	mockRequest.Header.Set("Referer", "mock-referer")
+	location := oauth2Context.LoginRedirect(mockRequest.Context(), "mock-nonce", "mock-state")
 
-	mockResponse := httptest.NewRecorder()
+	expectedLocation := "?audience=mock-client-id&client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fapi%2Fv0%2Fauth%2Fcallback&response_type=code&scope=openid+offline_access&state=mock-state"
 
-	oauth2Context.LoginRedirect(mockResponse, mockRequest, "mock-nonce", "mock-state")
-
-	if mockResponse.Code != http.StatusFound {
-		t.Fatalf("response code error, expected %d, got %d", http.StatusFound, mockResponse.Code)
-	}
-
-	expectedLocation := "/api/v0/?audience=mock-client-id&client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect&response_type=code&scope=openid+offline_access&state=mock-state"
-	location := mockResponse.Header().Get("Location")
-	if !strings.HasPrefix(location, expectedLocation) {
+	if location != expectedLocation {
 		t.Fatalf("location header error, expected %s, got %s", expectedLocation, location)
 	}
 }

@@ -68,16 +68,12 @@ type OAuth2Context struct {
 	monitor monitoring.MonitorInterface
 }
 
-func (o *OAuth2Context) LoginRedirect(w http.ResponseWriter, r *http.Request, nonce, state string) {
-	_, span := o.tracer.Start(r.Context(), "authentication.OAuth2Context.LoginRedirect")
+func (o *OAuth2Context) LoginRedirect(ctx context.Context, nonce, state string) string {
+	_, span := o.tracer.Start(ctx, "authentication.OAuth2Context.LoginRedirect")
 	defer span.End()
 
 	// TODO: remove `audience` parameter when https://github.com/canonical/identity-platform-login-ui/issues/244 is addressed
-	http.Redirect(
-		w, r,
-		o.client.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("audience", o.client.ClientID)),
-		http.StatusFound,
-	)
+	return o.client.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("audience", o.client.ClientID))
 }
 
 func (o *OAuth2Context) RetrieveTokens(ctx context.Context, code string) (*oauth2.Token, error) {

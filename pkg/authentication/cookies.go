@@ -8,26 +8,61 @@ import (
 	"time"
 )
 
-var (
-	EPOCH             = time.Unix(0, 0)
-	NONCE_COOKIE_NAME = "nonce"
+const (
+	authCookiePath  = "/api/v0/auth/callback"
+	nonceCookieName = "nonce"
+	stateCookieName = "state"
 )
 
-func SetNonceCookie(w http.ResponseWriter, nonce string, ttl time.Duration) {
+var (
+	epoch = time.Unix(0, 0).UTC()
+)
+
+type AuthCookieManager struct{}
+
+func (a *AuthCookieManager) SetNonceCookie(w http.ResponseWriter, nonce string, ttl time.Duration) {
+	a.setCookie(w, nonceCookieName, nonce, authCookiePath, ttl)
+}
+
+func (a *AuthCookieManager) GetNonceCookie(r *http.Request) string {
+	return a.getCookie(r, nonceCookieName)
+}
+
+func (a *AuthCookieManager) ClearNonceCookie(w http.ResponseWriter) {
+	a.clearCookie(w, nonceCookieName)
+}
+
+func (a *AuthCookieManager) SetStateCookie(w http.ResponseWriter, state string, ttl time.Duration) {
+	a.setCookie(w, stateCookieName, state, authCookiePath, ttl)
+}
+
+func (a *AuthCookieManager) GetStateCookie(r *http.Request) string {
+	return a.getCookie(r, stateCookieName)
+}
+
+func (a *AuthCookieManager) ClearStateCookie(w http.ResponseWriter) {
+	a.clearCookie(w, stateCookieName)
+}
+
+func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string, path string, ttl time.Duration) {
 	expires := time.Now().Add(ttl)
 	http.SetCookie(w, &http.Cookie{
-		Name: NONCE_COOKIE_NAME,
+		Name: name,
 		// TODO @barco: encrypt this value when cookie encryption is added to the codebase
-		Value:    nonce,
-		Path:     "/api/v0/login",
+		Value:    value,
+		Path:     path,
 		Expires:  expires,
 		Secure:   true,
 		HttpOnly: true,
 	})
 }
 
-func GetNonceCookie(r *http.Request) string {
-	cookie, err := r.Cookie(NONCE_COOKIE_NAME)
+func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string) {
+	http.SetCookie(w, &http.Cookie{Name: name, Expires: epoch})
+}
+
+func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
+	cookie, err := r.Cookie(name)
 	if err != nil {
 		return ""
 	}
@@ -35,6 +70,6 @@ func GetNonceCookie(r *http.Request) string {
 	return cookie.Value
 }
 
-func ClearNonceCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{Name: NONCE_COOKIE_NAME, Expires: EPOCH})
+func NewAuthCookieManager() *AuthCookieManager {
+	return new(AuthCookieManager)
 }

@@ -16,9 +16,10 @@ import (
 
 type Middleware struct {
 	allowListedEndpoints map[string]bool
-	tracer               tracing.TracingInterface
-	logger               logging.LoggerInterface
 	oauth2               OAuth2ContextInterface
+
+	tracer tracing.TracingInterface
+	logger logging.LoggerInterface
 }
 
 func (m *Middleware) SetAllowListedEndpoints(endpointsPrefixes ...string) {

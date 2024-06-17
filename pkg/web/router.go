@@ -143,7 +143,12 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		oauth2Context = authentication.NewOAuth2Context(config.oauth2, oidc.NewProvider, tracer, logger, monitor)
 
 		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, tracer, logger)
-		authenticationMiddleware.SetAllowListedEndpoints("/api/v0/login", "/api/v0/status", "api/v0/metrics")
+		authenticationMiddleware.SetAllowListedEndpoints(
+			"/api/v0/auth",
+			"/api/v0/auth/callback",
+			"/api/v0/status",
+			"/api/v0/metrics",
+		)
 		apiRouter.Use(authenticationMiddleware.OAuth2Authentication)
 	}
 
@@ -173,7 +178,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	groupsAPI.RegisterEndpoints(apiRouter)
 
 	if oauth2Config.Enabled {
-		login := authentication.NewAPI(oauth2Context, tracer, logger)
+		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(), tracer, logger)
 		login.RegisterEndpoints(apiRouter)
 	}
 

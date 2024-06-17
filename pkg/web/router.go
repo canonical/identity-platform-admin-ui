@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/encryption"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
@@ -178,7 +179,8 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	groupsAPI.RegisterEndpoints(apiRouter)
 
 	if oauth2Config.Enabled {
-		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(), tracer, logger)
+		encrypt := encryption.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
+		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(encrypt, logger), tracer, logger)
 		login.RegisterEndpoints(apiRouter)
 	}
 

@@ -53,11 +53,18 @@ type OAuth2HelperInterface interface {
 	// RandomURLString generates a URL safe random string
 	RandomURLString() string
 }
+
 type AuthCookieManagerInterface interface {
+	// SetNonceCookie sets the nonce cookie on the response with the specified duration as MaxAge
 	SetNonceCookie(http.ResponseWriter, string, time.Duration)
+	// GetNonceCookie returns the string value of the nonce cookie if present, or empty string otherwise
 	GetNonceCookie(*http.Request) string
+	// ClearNonceCookie sets the expiration of the cookie to epoch
 	ClearNonceCookie(http.ResponseWriter)
+	// SetStateCookie  sets the nonce cookie on the response with the specified duration as MaxAge
 	SetStateCookie(http.ResponseWriter, string, time.Duration)
+	// GetStateCookie returns the string value of the state cookie if present, or empty string otherwise
 	GetStateCookie(*http.Request) string
+	// ClearStateCookie sets the expiration of the cookie to epoch
 	ClearStateCookie(http.ResponseWriter)
 }

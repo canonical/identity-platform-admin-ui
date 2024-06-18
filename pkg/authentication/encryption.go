@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package encryption
+package authentication
 
 import (
 	"crypto/aes"

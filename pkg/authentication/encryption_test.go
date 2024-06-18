@@ -1,7 +1,7 @@
 // Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
-package encryption
+package authentication
 
 import (
 	"encoding/hex"
@@ -12,9 +12,9 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-//go:generate mockgen -build_flags=--mod=mod -package encryption -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
-//go:generate mockgen -build_flags=--mod=mod -package encryption -destination ./mock_cipher.go crypto/cipher AEAD
-//go:generate mockgen -build_flags=--mod=mod -package encryption -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
+//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_cipher.go crypto/cipher AEAD
+//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
 const (
 	mockSecretKey       = "caskjdflasjkfdlaksjfalskdfjasfda"

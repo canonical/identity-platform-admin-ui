@@ -68,3 +68,10 @@ type AuthCookieManagerInterface interface {
 	// ClearStateCookie sets the expiration of the cookie to epoch
 	ClearStateCookie(http.ResponseWriter)
 }
+
+type EncryptInterface interface {
+	// Encrypt a plain text string, returns the encrypted string in hex format or an error
+	Encrypt(string) (string, error)
+	// Decrypt a hex string, returns the decrypted string or an error
+	Decrypt(string) (string, error)
+}

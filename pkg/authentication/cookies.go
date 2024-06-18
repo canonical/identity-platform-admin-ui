@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/encryption"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 )
 
@@ -22,7 +21,7 @@ var (
 )
 
 type AuthCookieManager struct {
-	encrypt encryption.EncryptInterface
+	encrypt EncryptInterface
 	logger  logging.LoggerInterface
 }
 
@@ -88,7 +87,7 @@ func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
 	return value
 }
 
-func NewAuthCookieManager(encrypt encryption.EncryptInterface, logger logging.LoggerInterface) *AuthCookieManager {
+func NewAuthCookieManager(encrypt EncryptInterface, logger logging.LoggerInterface) *AuthCookieManager {
 	a := new(AuthCookieManager)
 	a.encrypt = encrypt
 	a.logger = logger

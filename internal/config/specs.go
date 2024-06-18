@@ -30,7 +30,8 @@ type EnvSpec struct {
 	OAuth2ClientSecret              string   `envconfig:"oauth2_client_secret" validate:"required"`
 	OAuth2RedirectURI               string   `envconfig:"oauth2_redirect_uri" validate:"required"`
 	OAuth2CodeGrantScopes           []string `envconfig:"oauth2_codegrant_scopes" default:"openid,offline_access" validate:"required"`
-	OAuth2AuthCookieTTLSeconds      int      `envconfig:"oauth2_auth_cookies_ttl_seconds" default:"300" validate:"required"`
+	OAuth2AuthCookiesTTLSeconds     int      `envconfig:"oauth2_auth_cookies_ttl_seconds" default:"300" validate:"required"`
+	OAuth2AuthCookiesEncryptionKey  string   `envconfig:"oauth2_auth_cookies_encryption_key" required:"true" validate:"required,min=32,max=32"`
 	AccessTokenVerificationStrategy string   `envconfig:"access_token_verification_strategy" default:"jwks" validate:"oneof=jwks userinfo"`
 
 	IDPConfigMapName      string `envconfig:"idp_configmap_name" required:"true"`

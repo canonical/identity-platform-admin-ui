@@ -9,6 +9,7 @@ OAUTH2_CLIENT_ID="hydra client id for the Admin UI backend"
 OAUTH2_CLIENT_SECRET=client secret
 OAUTH2_REDIRECT_URI=http://localhost:${PORT}/api/v0/login
 OAUTH2_CODEGRANT_SCOPES=openid,offline_access (defaults to these two, technically two more would be needed: "profile,email")
+OAUTH2_AUTH_COOKIES_ENCRYPTION_KEY="WrfOcYmVBwyduEbKYTUhO4X7XVaOQ1wF" (required, this needs to be exactly 32 bytes in lenght secret key)
 ACCESS_TOKEN_VERIFICATION_STRATEGY="jwks|userinfo", (defaults to jwks)
 ```
 

@@ -6,6 +6,8 @@ package authentication
 import (
 	"net/http"
 	"time"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 )
 
 const (
@@ -18,7 +20,10 @@ var (
 	epoch = time.Unix(0, 0).UTC()
 )
 
-type AuthCookieManager struct{}
+type AuthCookieManager struct {
+	encrypt EncryptInterface
+	logger  logging.LoggerInterface
+}
 
 func (a *AuthCookieManager) SetNonceCookie(w http.ResponseWriter, nonce string, ttl time.Duration) {
 	a.setCookie(w, nonceCookieName, nonce, authCookiePath, ttl)
@@ -46,10 +51,16 @@ func (a *AuthCookieManager) ClearStateCookie(w http.ResponseWriter) {
 
 func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string, path string, ttl time.Duration) {
 	expires := time.Now().Add(ttl)
+
+	encrypted, err := a.encrypt.Encrypt(value)
+	if err != nil {
+		a.logger.Errorf("can't encrypt cookie value, %v", err)
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
-		Name: name,
-		// TODO @barco: encrypt this value when cookie encryption is added to the codebase
-		Value:    value,
+		Name:     name,
+		Value:    encrypted,
 		Path:     path,
 		Expires:  expires,
 		Secure:   true,
@@ -64,12 +75,22 @@ func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string) {
 func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
 	cookie, err := r.Cookie(name)
 	if err != nil {
+		a.logger.Errorf("can't get cookie %s, %v", name, err)
 		return ""
 	}
 
-	return cookie.Value
+	value, err := a.encrypt.Decrypt(cookie.Value)
+	if err != nil {
+		a.logger.Errorf("can't decrypt cookie value, %v", err)
+		return ""
+	}
+	return value
 }
 
-func NewAuthCookieManager() *AuthCookieManager {
-	return new(AuthCookieManager)
+func NewAuthCookieManager(encrypt EncryptInterface, logger logging.LoggerInterface) *AuthCookieManager {
+	a := new(AuthCookieManager)
+	a.encrypt = encrypt
+	a.logger = logger
+	return a
+
 }

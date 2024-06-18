@@ -178,7 +178,8 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	groupsAPI.RegisterEndpoints(apiRouter)
 
 	if oauth2Config.Enabled {
-		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(), tracer, logger)
+		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
+		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(encrypt, logger), tracer, logger)
 		login.RegisterEndpoints(apiRouter)
 	}
 

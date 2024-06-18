@@ -25,6 +25,7 @@ const (
 type Config struct {
 	Enabled              bool     `validate:"required,boolean"`
 	AuthCookieTTLSeconds int      `validate:"required"`
+	CookiesEncryptionKey string   `validate:"required,min=32,max=32"`
 	issuer               string   `validate:"required"`
 	clientID             string   `validate:"required"`
 	clientSecret         string   `validate:"required"`
@@ -39,9 +40,10 @@ type oauth2Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTLSeconds int, scopes []string) *Config {
+func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
 	c := new(Config)
 	c.Enabled = enabled
+	c.CookiesEncryptionKey = cookiesEncryptionKey
 
 	c.issuer = issuer
 	c.clientID = clientID

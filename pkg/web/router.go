@@ -145,8 +145,6 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
 		cookieManager = authentication.NewAuthCookieManager(
 			oauth2Config.AuthCookieTTLSeconds,
-			oauth2Config.IdTokenCookieTTLSeconds,
-			oauth2Config.AccessTokenCookieTTLSeconds,
 			oauth2Config.RefreshTokenCookieTTLSeconds,
 			encrypt,
 			logger,

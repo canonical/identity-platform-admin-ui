@@ -14,6 +14,9 @@ const (
 	authCookiePath  = "/api/v0/auth/callback"
 	nonceCookieName = "nonce"
 	stateCookieName = "state"
+	itCookieName    = "id-token"
+	atCookieName    = "access-token"
+	rtCookieName    = "refresh-token"
 )
 
 var (
@@ -21,12 +24,51 @@ var (
 )
 
 type AuthCookieManager struct {
-	encrypt EncryptInterface
-	logger  logging.LoggerInterface
+	authCookiesTTL       time.Duration
+	userSessionCookieTTL time.Duration
+	encrypt              EncryptInterface
+
+	logger logging.LoggerInterface
 }
 
-func (a *AuthCookieManager) SetNonceCookie(w http.ResponseWriter, nonce string, ttl time.Duration) {
-	a.setCookie(w, nonceCookieName, nonce, authCookiePath, ttl)
+func (a *AuthCookieManager) SetIDTokenCookie(w http.ResponseWriter, rawIDToken string) {
+	a.setCookie(w, itCookieName, rawIDToken, "/", a.userSessionCookieTTL)
+}
+
+func (a *AuthCookieManager) GetIDTokenCookie(r *http.Request) string {
+	return a.getCookie(r, itCookieName)
+}
+
+func (a *AuthCookieManager) ClearIDTokenCookie(w http.ResponseWriter) {
+	a.clearCookie(w, itCookieName)
+}
+
+func (a *AuthCookieManager) SetAccessTokenCookie(w http.ResponseWriter, rawAccessToken string) {
+	a.setCookie(w, atCookieName, rawAccessToken, "/", a.userSessionCookieTTL)
+}
+
+func (a *AuthCookieManager) GetAccessTokenCookie(r *http.Request) string {
+	return a.getCookie(r, atCookieName)
+}
+
+func (a *AuthCookieManager) ClearAccessTokenCookie(w http.ResponseWriter) {
+	a.clearCookie(w, atCookieName)
+}
+
+func (a *AuthCookieManager) SetRefreshTokenCookie(w http.ResponseWriter, rawRefreshToken string) {
+	a.setCookie(w, rtCookieName, rawRefreshToken, "/", a.userSessionCookieTTL)
+}
+
+func (a *AuthCookieManager) GetRefreshTokenCookie(r *http.Request) string {
+	return a.getCookie(r, rtCookieName)
+}
+
+func (a *AuthCookieManager) ClearRefreshTokenCookie(w http.ResponseWriter) {
+	a.clearCookie(w, rtCookieName)
+}
+
+func (a *AuthCookieManager) SetNonceCookie(w http.ResponseWriter, nonce string) {
+	a.setCookie(w, nonceCookieName, nonce, authCookiePath, a.authCookiesTTL)
 }
 
 func (a *AuthCookieManager) GetNonceCookie(r *http.Request) string {
@@ -37,8 +79,8 @@ func (a *AuthCookieManager) ClearNonceCookie(w http.ResponseWriter) {
 	a.clearCookie(w, nonceCookieName)
 }
 
-func (a *AuthCookieManager) SetStateCookie(w http.ResponseWriter, state string, ttl time.Duration) {
-	a.setCookie(w, stateCookieName, state, authCookiePath, ttl)
+func (a *AuthCookieManager) SetStateCookie(w http.ResponseWriter, state string) {
+	a.setCookie(w, stateCookieName, state, authCookiePath, a.authCookiesTTL)
 }
 
 func (a *AuthCookieManager) GetStateCookie(r *http.Request) string {
@@ -50,6 +92,10 @@ func (a *AuthCookieManager) ClearStateCookie(w http.ResponseWriter) {
 }
 
 func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string, path string, ttl time.Duration) {
+	if value == "" {
+		return
+	}
+
 	expires := time.Now().Add(ttl)
 
 	encrypted, err := a.encrypt.Encrypt(value)
@@ -62,14 +108,17 @@ func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string,
 		Name:     name,
 		Value:    encrypted,
 		Path:     path,
+		Domain:   "",
 		Expires:  expires,
+		MaxAge:   int(ttl.Seconds()),
 		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
 func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string) {
-	http.SetCookie(w, &http.Cookie{Name: name, Expires: epoch})
+	http.SetCookie(w, &http.Cookie{Name: name, Expires: epoch, MaxAge: -1})
 }
 
 func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
@@ -87,9 +136,17 @@ func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
 	return value
 }
 
-func NewAuthCookieManager(encrypt EncryptInterface, logger logging.LoggerInterface) *AuthCookieManager {
+func NewAuthCookieManager(
+	authCookiesTTLSeconds,
+	userSessionCookieTTLSeconds int,
+	encrypt EncryptInterface,
+	logger logging.LoggerInterface,
+) *AuthCookieManager {
 	a := new(AuthCookieManager)
+	a.authCookiesTTL = time.Duration(authCookiesTTLSeconds) * time.Second
+	a.userSessionCookieTTL = time.Duration(userSessionCookieTTLSeconds) * time.Second
 	a.encrypt = encrypt
+
 	a.logger = logger
 	return a
 

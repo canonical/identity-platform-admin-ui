@@ -146,6 +146,7 @@ func serve() {
 		specs.OAuth2RedirectURI,
 		specs.AccessTokenVerificationStrategy,
 		specs.OAuth2AuthCookiesTTLSeconds,
+		specs.OAuth2UserSessionTTLSeconds,
 		specs.OAuth2AuthCookiesEncryptionKey,
 		specs.OAuth2CodeGrantScopes,
 	)

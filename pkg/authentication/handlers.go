@@ -23,24 +23,19 @@ const (
 )
 
 type Config struct {
-	Enabled              bool     `validate:"required,boolean"`
-	AuthCookieTTLSeconds int      `validate:"required"`
-	CookiesEncryptionKey string   `validate:"required,min=32,max=32"`
-	issuer               string   `validate:"required"`
-	clientID             string   `validate:"required"`
-	clientSecret         string   `validate:"required"`
-	redirectURL          string   `validate:"required"`
-	verificationStrategy string   `validate:"required,oneof=jwks userinfo"`
-	scopes               []string `validate:"required,dive,required"`
+	Enabled                     bool     `validate:"required,boolean"`
+	AuthCookieTTLSeconds        int      `validate:"required"`
+	UserSessionCookieTTLSeconds int      `validate:"required"`
+	CookiesEncryptionKey        string   `validate:"required,min=32,max=32"`
+	issuer                      string   `validate:"required"`
+	clientID                    string   `validate:"required"`
+	clientSecret                string   `validate:"required"`
+	redirectURL                 string   `validate:"required"`
+	verificationStrategy        string   `validate:"required,oneof=jwks userinfo"`
+	scopes                      []string `validate:"required,dive,required"`
 }
 
-type oauth2Tokens struct {
-	IDToken      string `json:"id_token"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
+func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, authCookiesTTLSeconds, userSessionCookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
 	c := new(Config)
 	c.Enabled = enabled
 	c.CookiesEncryptionKey = cookiesEncryptionKey
@@ -51,18 +46,18 @@ func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redir
 	c.redirectURL = redirectURL
 	c.verificationStrategy = verificationStrategy
 	c.scopes = scopes
-	c.AuthCookieTTLSeconds = cookieTTLSeconds
+	c.AuthCookieTTLSeconds = authCookiesTTLSeconds
+	c.UserSessionCookieTTLSeconds = userSessionCookieTTLSeconds
 
 	return c
 }
 
 type API struct {
-	apiKey                string
-	payloadValidator      validation.PayloadValidatorInterface
-	oauth2                OAuth2ContextInterface
-	helper                OAuth2HelperInterface
-	cookieManager         AuthCookieManagerInterface
-	authCookiesTTLSeconds int
+	apiKey           string
+	payloadValidator validation.PayloadValidatorInterface
+	oauth2           OAuth2ContextInterface
+	helper           OAuth2HelperInterface
+	cookieManager    AuthCookieManagerInterface
 
 	tracer trace.Tracer
 	logger logging.LoggerInterface
@@ -80,10 +75,8 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	nonce := a.helper.RandomURLString()
 	state := a.helper.RandomURLString()
 
-	ttl := time.Duration(a.authCookiesTTLSeconds) * time.Second
-
-	a.cookieManager.SetNonceCookie(w, nonce, ttl)
-	a.cookieManager.SetStateCookie(w, state, ttl)
+	a.cookieManager.SetNonceCookie(w, nonce, a.authCookiesTTL)
+	a.cookieManager.SetStateCookie(w, state, a.authCookiesTTL)
 
 	redirect := a.oauth2.LoginRedirect(r.Context(), nonce, state)
 	http.Redirect(w, r, redirect, http.StatusFound)
@@ -200,15 +193,21 @@ func badRequest(w http.ResponseWriter, err error) {
 	return
 }
 
-func NewAPI(authCookiesTTLSeconds int, oauth2Context OAuth2ContextInterface, helper OAuth2HelperInterface, cookieManager AuthCookieManagerInterface, tracer trace.Tracer, logger logging.LoggerInterface) *API {
+func NewAPI(
+	oauth2Context OAuth2ContextInterface,
+	helper OAuth2HelperInterface,
+	cookieManager AuthCookieManagerInterface,
+	tracer trace.Tracer,
+	logger logging.LoggerInterface,
+) *API {
 	a := new(API)
 	a.apiKey = "authentication"
-	a.tracer = tracer
-	a.logger = logger
 	a.oauth2 = oauth2Context
 	a.helper = helper
-	a.authCookiesTTLSeconds = authCookiesTTLSeconds
 	a.cookieManager = cookieManager
+
+	a.logger = logger
+	a.tracer = tracer
 
 	return a
 }

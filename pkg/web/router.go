@@ -137,12 +137,22 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		r.Use(authorizationMiddleware)
 	}).(*chi.Mux)
 
-	var oauth2Context *authentication.OAuth2Context
+	var oauth2Context authentication.OAuth2ContextInterface
+	var cookieManager authentication.AuthCookieManagerInterface
 
 	if oauth2Config.Enabled {
 		oauth2Context = authentication.NewOAuth2Context(config.oauth2, oidc.NewProvider, tracer, logger, monitor)
+		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
+		cookieManager = authentication.NewAuthCookieManager(
+			oauth2Config.AuthCookieTTLSeconds,
+			oauth2Config.IdTokenCookieTTLSeconds,
+			oauth2Config.AccessTokenCookieTTLSeconds,
+			oauth2Config.RefreshTokenCookieTTLSeconds,
+			encrypt,
+			logger,
+		)
 
-		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, tracer, logger)
+		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, cookieManager, tracer, logger)
 		authenticationMiddleware.SetAllowListedEndpoints(
 			"/api/v0/auth",
 			"/api/v0/auth/callback",
@@ -178,8 +188,14 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	groupsAPI.RegisterEndpoints(apiRouter)
 
 	if oauth2Config.Enabled {
-		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
-		login := authentication.NewAPI(oauth2Config.AuthCookieTTLSeconds, oauth2Context, authentication.NewOAuth2Helper(), authentication.NewAuthCookieManager(encrypt, logger), tracer, logger)
+
+		login := authentication.NewAPI(
+			oauth2Context,
+			authentication.NewOAuth2Helper(),
+			cookieManager,
+			tracer,
+			logger,
+		)
 		login.RegisterEndpoints(apiRouter)
 	}
 

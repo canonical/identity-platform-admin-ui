@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +14,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
+	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
 const (
@@ -75,8 +75,8 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	nonce := a.helper.RandomURLString()
 	state := a.helper.RandomURLString()
 
-	a.cookieManager.SetNonceCookie(w, nonce, a.authCookiesTTL)
-	a.cookieManager.SetStateCookie(w, state, a.authCookiesTTL)
+	a.cookieManager.SetNonceCookie(w, nonce)
+	a.cookieManager.SetStateCookie(w, state)
 
 	redirect := a.oauth2.LoginRedirect(r.Context(), nonce, state)
 	http.Redirect(w, r, redirect, http.StatusFound)
@@ -89,21 +89,21 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get(codeParameter)
 	if code == "" {
 		a.logger.Error("OAuth2 code not found")
-		badRequest(w, fmt.Errorf("OAuth2 code not found"))
+		a.badRequest(w, fmt.Errorf("OAuth2 code not found"))
 		return
 	}
 
 	state := r.URL.Query().Get(stateParameter)
 	if state == "" {
 		a.logger.Error("OAuth2 state not found")
-		badRequest(w, fmt.Errorf("OAuth2 state not found"))
+		a.badRequest(w, fmt.Errorf("OAuth2 state not found"))
 		return
 	}
 
 	err := a.checkState(r, state)
 	a.cookieManager.ClearStateCookie(w)
 	if err != nil {
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
@@ -114,42 +114,36 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	oauth2Token, err := a.oauth2.RetrieveTokens(ctx, code)
 	if err != nil {
 		a.logger.Errorf("unable to retrieve tokens with code '%s', error: %v", code, err)
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		a.logger.Error("unable to retrieve ID token")
-		badRequest(w, fmt.Errorf("unable to retrieve ID token"))
+		a.badRequest(w, fmt.Errorf("unable to retrieve ID token"))
 		return
 	}
 
 	idToken, err := a.oauth2.Verifier().VerifyIDToken(ctx, rawIDToken)
 	if err != nil {
 		a.logger.Errorf("unable to verify ID token, error: %v", err)
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
 	err = a.checkNonce(r, idToken)
 	a.cookieManager.ClearNonceCookie(w)
 	if err != nil {
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
-	// TODO @barco: until we implement spec ID036 we just return tokens
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	tokens := oauth2Tokens{
-		IDToken:      rawIDToken,
-		AccessToken:  oauth2Token.AccessToken,
-		RefreshToken: oauth2Token.RefreshToken,
-	}
+	a.cookieManager.SetIDTokenCookie(w, rawIDToken)
+	a.cookieManager.SetAccessTokenCookie(w, oauth2Token.AccessToken)
+	a.cookieManager.SetRefreshTokenCookie(w, oauth2Token.RefreshToken)
 
-	_ = json.NewEncoder(w).Encode(tokens)
-
+	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
 }
 
 func (a *API) checkNonce(r *http.Request, idToken *Principal) error {
@@ -182,7 +176,10 @@ func (a *API) checkState(r *http.Request, state string) error {
 	return nil
 }
 
-func badRequest(w http.ResponseWriter, err error) {
+func (a *API) badRequest(w http.ResponseWriter, err error) {
+	a.cookieManager.ClearNonceCookie(w)
+	a.cookieManager.ClearStateCookie(w)
+
 	w.WriteHeader(http.StatusBadRequest)
 	_ = json.NewEncoder(w).Encode(
 		types.Response{

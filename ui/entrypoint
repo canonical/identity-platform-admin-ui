@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 set -e
 
-echo "Listening on http://localhost:8411"
+echo "Listening on http://localhost:8411/ui/"
 
 haproxy -f haproxy.cfg -db

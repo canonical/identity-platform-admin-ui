@@ -11,6 +11,7 @@ import SchemaList from "pages/schemas/SchemaList";
 import Navigation from "components/Navigation";
 import Panels from "components/Panels";
 import useLocalStorage from "util/useLocalStorage";
+import { apiBasePath, basePath } from "util/basePaths";
 
 const App: FC = () => {
   // Store a user token that will be passed to the API using the
@@ -33,24 +34,24 @@ const App: FC = () => {
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route
-              path="/"
+              path={basePath}
               element={
                 <Login isAuthenticated={!!authUser} setAuthUser={setAuthUser} />
               }
             >
               <Route
-                path="/"
-                element={<Navigate to="/provider" replace={true} />}
+                path={basePath}
+                element={<Navigate to={`${basePath}provider`} replace={true} />}
               />
-              <Route path="/provider" element={<ProviderList />} />
-              <Route path="/client" element={<ClientList />} />
-              <Route path="/identity" element={<IdentityList />} />
-              <Route path="/schema" element={<SchemaList />} />
+              <Route path={`${basePath}provider`} element={<ProviderList />} />
+              <Route path={`${basePath}client`} element={<ClientList />} />
+              <Route path={`${basePath}identity`} element={<IdentityList />} />
+              <Route path={`${basePath}schema`} element={<SchemaList />} />
               <Route
-                path="/*"
+                path={basePath + "*"}
                 element={
                   <ReBACAdmin
-                    apiURL={import.meta.env.VITE_API_URL}
+                    apiURL={apiBasePath}
                     asidePanelId="rebac-admin-panel"
                     authToken={authUser?.token}
                   />

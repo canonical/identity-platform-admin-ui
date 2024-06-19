@@ -1,14 +1,13 @@
 import { Client } from "types/client";
 import { ApiResponse, PaginatedResponse } from "types/api";
 import { handleResponse, PAGE_SIZE } from "util/api";
+import { apiBasePath } from "util/basePaths";
 
 export const fetchClients = (
   pageToken: string,
 ): Promise<PaginatedResponse<Client[]>> => {
   return new Promise((resolve, reject) => {
-    fetch(
-      `${import.meta.env.VITE_API_URL}/clients?page_token=${pageToken}&size=${PAGE_SIZE}`,
-    )
+    fetch(`${apiBasePath}clients?page_token=${pageToken}&size=${PAGE_SIZE}`)
       .then(handleResponse)
       .then((result: PaginatedResponse<Client[]>) => resolve(result))
       .catch(reject);
@@ -17,7 +16,7 @@ export const fetchClients = (
 
 export const fetchClient = (clientId: string): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/clients/${clientId}`)
+    fetch(`${apiBasePath}clients/${clientId}`)
       .then(handleResponse)
       .then((result: ApiResponse<Client>) => resolve(result.data))
       .catch(reject);
@@ -26,7 +25,7 @@ export const fetchClient = (clientId: string): Promise<Client> => {
 
 export const createClient = (values: string): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/clients`, {
+    fetch(`${apiBasePath}clients`, {
       method: "POST",
       body: values,
     })
@@ -41,7 +40,7 @@ export const updateClient = (
   values: string,
 ): Promise<Client> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/clients/${clientId}`, {
+    fetch(`${apiBasePath}clients/${clientId}`, {
       method: "PUT",
       body: values,
     })
@@ -53,7 +52,7 @@ export const updateClient = (
 
 export const deleteClient = (client: string) => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/clients/${client}`, {
+    fetch(`${apiBasePath}clients/${client}`, {
       method: "DELETE",
     })
       .then(resolve)

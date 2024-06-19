@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationButton, useNotify } from "@canonical/react-components";
 import { Identity } from "types/identity";
 import { deleteIdentity } from "api/identities";
+import { basePath } from "util/basePaths";
 
 interface Props {
   identity: Identity;
@@ -21,7 +22,7 @@ const DeleteIdentityBtn: FC<Props> = ({ identity }) => {
     deleteIdentity(identity.id)
       .then(() => {
         navigate(
-          "/identity",
+          `${basePath}identity`,
           notify.queue(
             notify.success(`Identity ${identity.traits?.email} deleted.`),
           ),

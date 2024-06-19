@@ -16,6 +16,7 @@ import { fetchClient, updateClient } from "api/client";
 import usePanelParams from "util/usePanelParams";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
+import { basePath } from "util/basePaths";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();
@@ -55,7 +56,10 @@ const ClientEdit: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.clients],
           });
-          navigate(`/client`, notify.queue(notify.success("Client updated")));
+          navigate(
+            `${basePath}client`,
+            notify.queue(notify.success("Client updated")),
+          );
         })
         .catch((e) => {
           formik.setSubmitting(false);
@@ -87,7 +91,7 @@ const ClientEdit: FC = () => {
               <Button
                 appearance="base"
                 className="u-no-margin--bottom u-sv2"
-                onClick={() => navigate(`/client`)}
+                onClick={() => navigate(`${basePath}client`)}
               >
                 Cancel
               </Button>

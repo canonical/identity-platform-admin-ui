@@ -15,6 +15,7 @@ import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { createClient } from "api/client";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
+import { basePath } from "util/basePaths";
 
 const ClientCreate: FC = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const ClientCreate: FC = () => {
             queryKey: [queryKeys.clients],
           });
           const msg = `Client created. Id: ${result.client_id} Secret: ${result.client_secret}`;
-          navigate("/client", notify.queue(notify.success(msg)));
+          navigate(`${basePath}client`, notify.queue(notify.success(msg)));
         })
         .catch((e) => {
           formik.setSubmitting(false);
@@ -72,7 +73,10 @@ const ClientCreate: FC = () => {
         <SidePanel.Footer>
           <Row className="u-align-text--right">
             <Col size={12}>
-              <Button appearance="base" onClick={() => navigate("/client")}>
+              <Button
+                appearance="base"
+                onClick={() => navigate(`${basePath}client`)}
+              >
                 Cancel
               </Button>
               <ActionButton

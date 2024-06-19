@@ -1,12 +1,13 @@
 import { ApiResponse, PaginatedResponse } from "types/api";
 import { handleResponse, PAGE_SIZE } from "util/api";
 import { Identity } from "types/identity";
+import { apiBasePath } from "util/basePaths";
 
 export const fetchIdentities = (
   pageToken: string,
 ): Promise<PaginatedResponse<Identity[]>> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/identities?page_token=${pageToken}&size=${PAGE_SIZE}`)
+    fetch(`${apiBasePath}identities?page_token=${pageToken}&size=${PAGE_SIZE}`)
       .then(handleResponse)
       .then((result: PaginatedResponse<Identity[]>) => resolve(result))
       .catch(reject);
@@ -15,7 +16,7 @@ export const fetchIdentities = (
 
 export const fetchIdentity = (identityId: string): Promise<Identity> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/identities/${identityId}`)
+    fetch(`${apiBasePath}identities/${identityId}`)
       .then(handleResponse)
       .then((result: ApiResponse<Identity[]>) => resolve(result.data[0]))
       .catch(reject);
@@ -24,7 +25,7 @@ export const fetchIdentity = (identityId: string): Promise<Identity> => {
 
 export const createIdentity = (body: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/identities", {
+    fetch(`${apiBasePath}identities`, {
       method: "POST",
       body: body,
     })
@@ -39,7 +40,7 @@ export const updateIdentity = (
   values: string,
 ): Promise<Identity> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/identities/${identityId}`, {
+    fetch(`${apiBasePath}identities/${identityId}`, {
       method: "PATCH",
       body: values,
     })
@@ -51,7 +52,7 @@ export const updateIdentity = (
 
 export const deleteIdentity = (identityId: string) => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/identities/${identityId}`, {
+    fetch(`${apiBasePath}identities/${identityId}`, {
       method: "DELETE",
     })
       .then(resolve)

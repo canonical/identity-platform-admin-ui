@@ -1,10 +1,11 @@
 import { ApiResponse } from "types/api";
 import { handleResponse } from "util/api";
 import { IdentityProvider } from "types/provider";
+import { apiBasePath } from "util/basePaths";
 
 export const fetchProviders = (): Promise<IdentityProvider[]> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/idps`)
+    fetch(`${apiBasePath}idps`)
       .then(handleResponse)
       .then((result: ApiResponse<IdentityProvider[]>) => resolve(result.data))
       .catch(reject);
@@ -12,13 +13,13 @@ export const fetchProviders = (): Promise<IdentityProvider[]> => {
 };
 
 export const fetchProvider = (
-  providerId: string
+  providerId: string,
 ): Promise<IdentityProvider> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/idps/${providerId}`)
+    fetch(`${apiBasePath}idps/${providerId}`)
       .then(handleResponse)
       .then((result: ApiResponse<IdentityProvider[]>) =>
-        resolve(result.data[0])
+        resolve(result.data[0]),
       )
       .catch(reject);
   });
@@ -26,7 +27,7 @@ export const fetchProvider = (
 
 export const createProvider = (body: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/idps`, {
+    fetch(`${apiBasePath}idps`, {
       method: "POST",
       body: body,
     })
@@ -38,10 +39,10 @@ export const createProvider = (body: string): Promise<void> => {
 
 export const updateProvider = (
   providerId: string,
-  values: string
+  values: string,
 ): Promise<IdentityProvider> => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/idps/${providerId}`, {
+    fetch(`${apiBasePath}idps/${providerId}`, {
       method: "PATCH",
       body: values,
     })
@@ -53,7 +54,7 @@ export const updateProvider = (
 
 export const deleteProvider = (providerId: string) => {
   return new Promise((resolve, reject) => {
-    fetch(`${import.meta.env.VITE_API_URL}/idps/${providerId}`, {
+    fetch(`${apiBasePath}idps/${providerId}`, {
       method: "DELETE",
     })
       .then(resolve)

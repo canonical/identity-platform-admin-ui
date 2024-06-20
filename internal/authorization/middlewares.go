@@ -161,6 +161,7 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 				// not all endpoints need to validate authorization
 				if mdw.skipRoute(r) {
 					next.ServeHTTP(w, r)
+					return
 				}
 
 				user := mdw.user(r)

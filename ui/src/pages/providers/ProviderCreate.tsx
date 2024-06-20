@@ -15,7 +15,6 @@ import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { createProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { basePath } from "util/basePaths";
 
 const ProviderCreate: FC = () => {
   const navigate = useNavigate();
@@ -46,7 +45,7 @@ const ProviderCreate: FC = () => {
             queryKey: [queryKeys.providers],
           });
           const msg = `Provider created.`;
-          navigate(`${basePath}provider`, notify.queue(notify.success(msg)));
+          navigate("/provider", notify.queue(notify.success(msg)));
         })
         .catch((e) => {
           formik.setSubmitting(false);
@@ -75,10 +74,7 @@ const ProviderCreate: FC = () => {
         <SidePanel.Footer>
           <Row className="u-align-text--right">
             <Col size={12}>
-              <Button
-                appearance="base"
-                onClick={() => navigate(`${basePath}provider`)}
-              >
+              <Button appearance="base" onClick={() => navigate("/provider")}>
                 Cancel
               </Button>
               <ActionButton

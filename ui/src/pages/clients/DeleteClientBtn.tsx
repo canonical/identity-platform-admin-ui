@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationButton, useNotify } from "@canonical/react-components";
 import { deleteClient } from "api/client";
 import { Client } from "types/client";
-import { basePath } from "util/basePaths";
 
 interface Props {
   client: Client;
@@ -22,7 +21,7 @@ const DeleteClientBtn: FC<Props> = ({ client }) => {
     deleteClient(client.client_id)
       .then(() => {
         navigate(
-          `${basePath}client`,
+          "/client",
           notify.queue(notify.success(`Client ${client.client_name} deleted.`)),
         );
       })

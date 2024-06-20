@@ -4,7 +4,6 @@ import { Button, Icon } from "@canonical/react-components";
 import classnames from "classnames";
 import Logo from "components/Logo";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
-import { basePath } from "util/basePaths";
 
 type Props = {
   username?: string;
@@ -38,7 +37,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`${basePath}provider`}
+                      to="/provider"
                       title={`Provider list`}
                     >
                       <Icon
@@ -51,7 +50,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`${basePath}client`}
+                      to="/client"
                       title={`Client list`}
                     >
                       <Icon
@@ -64,7 +63,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`${basePath}identity`}
+                      to="/identity"
                       title={`Identity list`}
                     >
                       <Icon
@@ -77,7 +76,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`${basePath}schema`}
+                      to="/schema"
                       title={`Schema list`}
                     >
                       <Icon
@@ -90,7 +89,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <GroupsLink
                       className="p-side-navigation__link"
-                      baseURL={basePath}
+                      baseURL="/"
                       icon="user-group"
                       iconIsLight
                     />
@@ -98,7 +97,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <RolesLink
                       className="p-side-navigation__link"
-                      baseURL={basePath}
+                      baseURL="/"
                       icon="profile"
                       iconIsLight
                     />

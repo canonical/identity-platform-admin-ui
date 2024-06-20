@@ -17,6 +17,7 @@
     "hooks-add": "husky install",
     "hooks-remove": "husky uninstall",
     "start": "concurrently --kill-others --raw 'yarn dev-serve' 'yarn proxy-serve'",
+    "test-js": "vitest --run",
     "dev-serve": "vite --host | grep -v localhost",
     "proxy-serve": "./entrypoint"
   },
@@ -67,8 +68,9 @@
     "stylelint-prettier": "5.0.0",
     "stylelint-scss": "6.2.1",
     "typescript": "5.4.3",
-    "vite": "^5.2.2",
-    "vite-tsconfig-paths": "4.3.2"
+    "vite": "5.2.8",
+    "vite-tsconfig-paths": "4.3.2",
+    "vitest": "1.2.1"
   },
   "lint-staged": {
     "src/**/*.{json,jsx,ts,tsx}": [

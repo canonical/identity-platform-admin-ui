@@ -1,10 +1,9 @@
 import { FC } from "react";
 import { NavLink } from "react-router-dom";
-import { basePath } from "util/basePaths";
 
 const Logo: FC = () => {
   return (
-    <NavLink className="p-panel__logo" to={basePath}>
+    <NavLink className="p-panel__logo" to="/">
       <div className="p-navigation__logo-tag">
         <img
           className="p-navigation__logo-icon"

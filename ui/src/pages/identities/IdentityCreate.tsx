@@ -15,7 +15,6 @@ import IdentityForm, { IdentityFormTypes } from "pages/identities/IdentityForm";
 import { createIdentity } from "api/identities";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { basePath } from "util/basePaths";
 
 const IdentityCreate: FC = () => {
   const navigate = useNavigate();
@@ -45,7 +44,7 @@ const IdentityCreate: FC = () => {
             queryKey: [queryKeys.identities],
           });
           const msg = `Identity created.`;
-          navigate(`${basePath}identity`, notify.queue(notify.success(msg)));
+          navigate("/identity", notify.queue(notify.success(msg)));
         })
         .catch((e) => {
           formik.setSubmitting(false);
@@ -74,10 +73,7 @@ const IdentityCreate: FC = () => {
         <SidePanel.Footer>
           <Row className="u-align-text--right">
             <Col size={12}>
-              <Button
-                appearance="base"
-                onClick={() => navigate(`${basePath}identity`)}
-              >
+              <Button appearance="base" onClick={() => navigate("/identity")}>
                 Cancel
               </Button>
               <ActionButton

@@ -13,7 +13,6 @@ import {
 import { deleteProvider } from "api/provider";
 import { IdentityProvider } from "types/provider";
 import usePortal from "react-useportal";
-import { basePath } from "util/basePaths";
 
 interface Props {
   provider: IdentityProvider;
@@ -32,7 +31,7 @@ const DeleteProviderBtn: FC<Props> = ({ provider }) => {
     deleteProvider(provider.id)
       .then(() => {
         navigate(
-          `${basePath}provider`,
+          "/provider",
           notify.queue(notify.success(`Provider ${provider.id} deleted.`)),
         );
       })

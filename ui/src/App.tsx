@@ -11,7 +11,7 @@ import SchemaList from "pages/schemas/SchemaList";
 import Navigation from "components/Navigation";
 import Panels from "components/Panels";
 import useLocalStorage from "util/useLocalStorage";
-import { apiBasePath, basePath } from "util/basePaths";
+import { apiBasePath } from "util/basePaths";
 
 const App: FC = () => {
   // Store a user token that will be passed to the API using the
@@ -34,21 +34,21 @@ const App: FC = () => {
         <Suspense fallback={<Loader />}>
           <Routes>
             <Route
-              path={basePath}
+              path="/"
               element={
                 <Login isAuthenticated={!!authUser} setAuthUser={setAuthUser} />
               }
             >
               <Route
-                path={basePath}
-                element={<Navigate to={`${basePath}provider`} replace={true} />}
+                path="/"
+                element={<Navigate to="/provider" replace={true} />}
               />
-              <Route path={`${basePath}provider`} element={<ProviderList />} />
-              <Route path={`${basePath}client`} element={<ClientList />} />
-              <Route path={`${basePath}identity`} element={<IdentityList />} />
-              <Route path={`${basePath}schema`} element={<SchemaList />} />
+              <Route path="/provider" element={<ProviderList />} />
+              <Route path="/client" element={<ClientList />} />
+              <Route path="/identity" element={<IdentityList />} />
+              <Route path="/schema" element={<SchemaList />} />
               <Route
-                path={basePath + "*"}
+                path="/*"
                 element={
                   <ReBACAdmin
                     apiURL={apiBasePath}

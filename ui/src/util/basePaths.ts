@@ -1,6 +1,6 @@
 type BasePath = `/${string}`;
 
-const calculateBasePath = (): BasePath => {
+export const calculateBasePath = (): BasePath => {
   const path = window.location.pathname;
   // find first occurrence of /ui/ and return the string before it
   const basePath = path.match(/(.*\/ui\/)/);

@@ -47,6 +47,15 @@ This is the Admin UI for the Canonical Identity Platform.
   is enabled default to `false`
 - `PAYLOAD_VALIDATION_ENABLED`: flag defining if the Payload Validation
   middleware is enabled default to `true`
+- `AUTHENTICATION_ENABLED`: flag defining if the OAuth authentication middleware
+  is enabled, default to `false`
+- `OIDC_ISSUER`: URL of the OIDC provider 
+- `OAUTH2_CLIENT_ID`: OAuth2 client ID used for authentication purposes
+- `OAUTH2_CLIENT_SECRET`: OAuth2 client secret used for authentication purposes
+- `OAUTH2_REDIRECT_URI`: URI used by the Oauth2 provider for the redirecting callback
+- `OAUTH2_CODEGRANT_SCOPES`: OAuth2 scopes, defaults to `openid,offline_access`
+- `OAUTH2_AUTH_COOKIES_ENCRYPTION_KEY`: 32 bytes string used for encrypting cookies
+- `ACCESS_TOKEN_VERIFICATION_STRATEGY`: OAuth2 verification startegy, one of `jwks` or `userinfo``
 
 ## Development setup
 

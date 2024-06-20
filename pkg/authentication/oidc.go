@@ -24,8 +24,15 @@ var (
 )
 
 type Principal struct {
-	Subject string `json:"sub"`
-	Nonce   string `json:"nonce"`
+	Subject   string `json:"sub"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	SessionID string `json:"sid"`
+	Nonce     string `json:"nonce"`
+
+	RawAccessToken  string `json:"-"`
+	RawIdToken      string `json:"-"`
+	RawRefreshToken string `json:"-"`
 }
 
 func NewPrincipalFromClaims(c ReadableClaims) (*Principal, error) {
@@ -50,7 +57,12 @@ func PrincipalFromContext(ctx context.Context) *Principal {
 		return nil
 	}
 
-	return ctx.Value(PrincipalContextKey).(*Principal)
+	value := ctx.Value(PrincipalContextKey)
+	if value == nil {
+		return nil
+	}
+
+	return value.(*Principal)
 }
 
 func OtelHTTPClientContext(ctx context.Context) context.Context {

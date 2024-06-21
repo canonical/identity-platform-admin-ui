@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.11.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.10.0...v1.11.0) (2024-06-21)
+
+
+### Features
+
+* add encrypt implementation ([1a88aad](https://github.com/canonical/identity-platform-admin-ui/commit/1a88aadeb196f6827af41dbcd790cfc050ea3724))
+
+
+### Bug Fixes
+
+* typo in variable name ([4558fd0](https://github.com/canonical/identity-platform-admin-ui/commit/4558fd08646c109d87a0ac75f542812b7ac6adda))
+* ui use react routers base path and add tests for base path calculation ([85da4c0](https://github.com/canonical/identity-platform-admin-ui/commit/85da4c0e9ae985671d562d30f277128f9f19108e))
+* ui uses relative base path. in case /ui/ is found in the current page url, all urls and api routes use the found prefix from the path. If /ui/ is not found, fall back to / as the base path. Fixes [#317](https://github.com/canonical/identity-platform-admin-ui/issues/317) Fixes IAM-911 Fixes WD-12306 ([709399c](https://github.com/canonical/identity-platform-admin-ui/commit/709399ceb80bc42e6847312b124df09ca518b61e))
+* unauthenticated handlers were called twice ([1d7ebb9](https://github.com/canonical/identity-platform-admin-ui/commit/1d7ebb9b8290639b156f2f09f85fe618c5b6bd12))
+
 ## [1.10.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.9.0...v1.10.0) (2024-06-17)
 
 

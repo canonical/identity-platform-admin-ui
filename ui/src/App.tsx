@@ -11,6 +11,7 @@ import SchemaList from "pages/schemas/SchemaList";
 import Navigation from "components/Navigation";
 import Panels from "components/Panels";
 import useLocalStorage from "util/useLocalStorage";
+import { apiBasePath } from "util/basePaths";
 
 const App: FC = () => {
   // Store a user token that will be passed to the API using the
@@ -50,7 +51,7 @@ const App: FC = () => {
                 path="/*"
                 element={
                   <ReBACAdmin
-                    apiURL={import.meta.env.VITE_API_URL}
+                    apiURL={apiBasePath}
                     asidePanelId="rebac-admin-panel"
                     authToken={authUser?.token}
                   />

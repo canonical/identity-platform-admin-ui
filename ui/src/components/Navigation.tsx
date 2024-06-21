@@ -37,7 +37,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`/provider`}
+                      to="/provider"
                       title={`Provider list`}
                     >
                       <Icon
@@ -50,7 +50,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`/client`}
+                      to="/client"
                       title={`Client list`}
                     >
                       <Icon
@@ -63,7 +63,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`/identity`}
+                      to="/identity"
                       title={`Identity list`}
                     >
                       <Icon
@@ -76,7 +76,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                   <li className="p-side-navigation__item secondary">
                     <NavLink
                       className="p-side-navigation__link"
-                      to={`/schema`}
+                      to="/schema"
                       title={`Schema list`}
                     >
                       <Icon

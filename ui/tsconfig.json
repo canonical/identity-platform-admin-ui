@@ -25,13 +25,14 @@
     "isolatedModules": true,
     "noEmit": false,
     "sourceMap": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vitest/globals"]
   },
   "include": [
     "./src",
     ".eslintrc.js",
     "babel.config.js",
     ".eslintrc.cjs",
-    "vite.config.ts"
+    "vite.config.ts",
+    "vitest.config.ts"
   ]
 }

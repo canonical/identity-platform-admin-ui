@@ -1,12 +1,15 @@
 import { ApiResponse, PaginatedResponse } from "types/api";
 import { handleResponse, PAGE_SIZE } from "util/api";
 import { Schema } from "types/schema";
+import { apiBasePath } from "util/basePaths";
 
 export const fetchSchemas = (
   pageToken: string,
 ): Promise<PaginatedResponse<Schema[]>> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/schemas?page_token=${pageToken}&page_size=${PAGE_SIZE}`)
+    fetch(
+      `${apiBasePath}schemas?page_token=${pageToken}&page_size=${PAGE_SIZE}`,
+    )
       .then(handleResponse)
       .then((result: PaginatedResponse<Schema[]>) => resolve(result))
       .catch(reject);
@@ -15,7 +18,7 @@ export const fetchSchemas = (
 
 export const fetchSchema = (schemaId: string): Promise<Schema> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/schemas/${schemaId}`)
+    fetch(`${apiBasePath}schemas/${schemaId}`)
       .then(handleResponse)
       .then((result: ApiResponse<Schema[]>) => resolve(result.data[0]))
       .catch(reject);
@@ -24,7 +27,7 @@ export const fetchSchema = (schemaId: string): Promise<Schema> => {
 
 export const createSchema = (body: string): Promise<void> => {
   return new Promise((resolve, reject) => {
-    fetch("/api/v0/schemas", {
+    fetch(`${apiBasePath}schemas`, {
       method: "POST",
       body: body,
     })
@@ -39,7 +42,7 @@ export const updateSchema = (
   values: string,
 ): Promise<Schema> => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/schemas/${schemaId}`, {
+    fetch(`${apiBasePath}schemas/${schemaId}`, {
       method: "PATCH",
       body: values,
     })
@@ -51,7 +54,7 @@ export const updateSchema = (
 
 export const deleteSchema = (schemaId: string) => {
   return new Promise((resolve, reject) => {
-    fetch(`/api/v0/schemas/${schemaId}`, {
+    fetch(`${apiBasePath}schemas/${schemaId}`, {
       method: "DELETE",
     })
       .then(resolve)

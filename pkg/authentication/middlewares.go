@@ -5,9 +5,12 @@ package authentication
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/coreos/go-oidc/v3/oidc"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -17,9 +20,16 @@ import (
 type Middleware struct {
 	allowListedEndpoints map[string]bool
 	oauth2               OAuth2ContextInterface
+	cookieManager        AuthCookieManagerInterface
 
 	tracer tracing.TracingInterface
 	logger logging.LoggerInterface
+}
+
+type cookieTokens struct {
+	accessToken  string
+	idToken      string
+	refreshToken string
 }
 
 func (m *Middleware) SetAllowListedEndpoints(endpointsPrefixes ...string) {
@@ -38,29 +48,89 @@ func (m *Middleware) isAllowListed(r *http.Request) bool {
 	return false
 }
 
-func (m *Middleware) OAuth2Authentication(next http.Handler) http.Handler {
+func (m *Middleware) OAuth2AuthenticationChain() []func(http.Handler) http.Handler {
+	return []func(http.Handler) http.Handler{
+		m.oAuth2BearerAuthentication,
+		m.oAuth2CookieAuthentication,
+	}
+}
+
+func (m *Middleware) oAuth2BearerAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := m.tracer.Start(r.Context(), "authentication.Middleware.OAuth2Authentication")
+		ctx, span := m.tracer.Start(r.Context(), "authentication.Middleware.oAuth2BearerAuthentication")
 		defer span.End()
-		r = r.WithContext(ctx)
 
 		if m.isAllowListed(r) {
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 			return
 		}
 
-		rawAccessToken, err := getBearerToken(r.Header)
-		if err != nil {
-			m.unauthorizedResponse(w, err)
-			return
-		}
+		var (
+			principal *Principal
+			err       error
+		)
 
 		// add the Otel HTTP Client
 		r.WithContext(OtelHTTPClientContext(r.Context()))
 
-		principal, err := m.oauth2.Verifier().VerifyAccessToken(r.Context(), rawAccessToken)
+		if rawAccessToken, found := m.getBearerToken(r.Header); found {
+			principal, err = m.oauth2.Verifier().VerifyAccessToken(r.Context(), rawAccessToken)
+			if err != nil {
+				m.unauthorizedResponse(w, err)
+				return
+			}
+			principal.RawAccessToken = rawAccessToken
+		}
+
+		ctx = PrincipalContext(ctx, principal)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (m *Middleware) oAuth2CookieAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := m.tracer.Start(r.Context(), "authentication.Middleware.oAuth2CookieAuthentication")
+		defer span.End()
+
+		if m.isAllowListed(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		err := fmt.Errorf("no authentication token found")
+
+		// request context also carries over the OTEL http client set previously in the chain
+		principal := PrincipalFromContext(r.Context())
+		if principal != nil {
+			// principal != nil means bearer authentication set the principal and we can move on
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if tokens, foundAny := m.getCookieTokens(r); foundAny &&
+			tokens.accessToken != "" && tokens.idToken != "" {
+			// we first validate accessToken, but rely on ID token validity and info to populate Principal attributes
+			_, errAccessToken := m.oauth2.Verifier().VerifyAccessToken(r.Context(), tokens.accessToken)
+			principal, err = m.oauth2.Verifier().VerifyIDToken(r.Context(), tokens.idToken)
+			if principal != nil {
+				principal.RawIdToken = tokens.idToken
+				principal.RawAccessToken = tokens.accessToken
+				principal.RawRefreshToken = tokens.refreshToken
+			}
+
+			// we give precedence to access token errors by overwriting ID token error if any
+			if errAccessToken != nil {
+				err = errAccessToken
+			}
+
+			if err != nil && m.shouldRefresh(err, tokens) {
+				// if the error is a TokenExpiredError and the refresh token is available, we try to refresh it
+				principal, err = m.performRefresh(w, r, tokens, principal)
+			}
+		}
+
 		if err != nil {
-			m.unauthorizedResponse(w, err)
+			m.unauthorizedResponse(w, fmt.Errorf("unable to authenticate from either bearer or cookie token, %v", err))
 			return
 		}
 
@@ -69,7 +139,80 @@ func (m *Middleware) OAuth2Authentication(next http.Handler) http.Handler {
 	})
 }
 
+func (m *Middleware) clearTokensCookies(w http.ResponseWriter) {
+	m.cookieManager.ClearIDTokenCookie(w)
+	m.cookieManager.ClearAccessTokenCookie(w)
+	m.cookieManager.ClearRefreshTokenCookie(w)
+}
+
+func (m *Middleware) shouldRefresh(err error, tokens *cookieTokens) bool {
+	var expiredError *oidc.TokenExpiredError
+	return errors.As(err, &expiredError) && tokens.refreshToken != ""
+}
+
+func (m *Middleware) performRefresh(w http.ResponseWriter, r *http.Request, cookieTokens *cookieTokens, principal *Principal) (*Principal, error) {
+	tokens, err := m.oauth2.RefreshToken(r.Context(), cookieTokens.refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	rawIdToken := tokens.Extra("id_token").(string)
+
+	// overwrite existing tokens cookies
+	m.cookieManager.SetIDTokenCookie(w, rawIdToken)
+	m.cookieManager.SetAccessTokenCookie(w, tokens.AccessToken)
+	m.cookieManager.SetRefreshTokenCookie(w, tokens.RefreshToken)
+
+	// get a populated Principal object from the ID Token
+	principal, err = m.oauth2.Verifier().VerifyIDToken(r.Context(), rawIdToken)
+	if err != nil {
+		return nil, err
+	}
+
+	principal.RawIdToken = rawIdToken
+	principal.RawAccessToken = tokens.AccessToken
+	principal.RawRefreshToken = tokens.RefreshToken
+
+	return principal, nil
+}
+
+func (m *Middleware) getCookieTokens(r *http.Request) (*cookieTokens, bool) {
+	ret := new(cookieTokens)
+	foundAny := false
+
+	idToken := m.cookieManager.GetIDTokenCookie(r)
+	if idToken != "" {
+		foundAny = true
+		ret.idToken = idToken
+	}
+
+	accessToken := m.cookieManager.GetAccessTokenCookie(r)
+	if accessToken != "" {
+		foundAny = true
+		ret.accessToken = accessToken
+	}
+
+	refreshToken := m.cookieManager.GetRefreshTokenCookie(r)
+	if refreshToken != "" {
+		foundAny = true
+		ret.refreshToken = refreshToken
+	}
+
+	return ret, foundAny
+}
+
+func (m *Middleware) getBearerToken(headers http.Header) (string, bool) {
+	bearer := headers.Get("Authorization")
+	if bearer == "" {
+		return "", false
+	}
+
+	return strings.TrimPrefix(bearer, "Bearer "), true
+}
+
 func (m *Middleware) unauthorizedResponse(w http.ResponseWriter, err error) {
+	// in case of any unauthorized response we clear all cookies
+	m.clearTokensCookies(w)
 	w.WriteHeader(http.StatusUnauthorized)
 	_ = json.NewEncoder(w).Encode(types.Response{
 		Status:  http.StatusUnauthorized,
@@ -77,23 +220,14 @@ func (m *Middleware) unauthorizedResponse(w http.ResponseWriter, err error) {
 	})
 }
 
-func getBearerToken(headers http.Header) (string, error) {
-	bearer := headers.Get("Authorization")
-
-	if bearer == "" {
-		return "", fmt.Errorf("bearer token is not present")
-	}
-
-	return strings.TrimPrefix(bearer, "Bearer "), nil
-}
-
-func NewAuthenticationMiddleware(oauth2 OAuth2ContextInterface, tracer tracing.TracingInterface, logger logging.LoggerInterface) *Middleware {
+func NewAuthenticationMiddleware(oauth2 OAuth2ContextInterface, cookieManager AuthCookieManagerInterface, tracer tracing.TracingInterface, logger logging.LoggerInterface) *Middleware {
 	m := new(Middleware)
-	m.tracer = tracer
-	m.logger = logger
 
 	m.allowListedEndpoints = make(map[string]bool, 0)
 	m.oauth2 = oauth2
+	m.cookieManager = cookieManager
 
+	m.tracer = tracer
+	m.logger = logger
 	return m
 }

@@ -145,7 +145,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
 		cookieManager = authentication.NewAuthCookieManager(
 			oauth2Config.AuthCookieTTLSeconds,
-			oauth2Config.RefreshTokenCookieTTLSeconds,
+			oauth2Config.UserSessionCookieTTLSeconds,
 			encrypt,
 			logger,
 		)
@@ -157,7 +157,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 			"/api/v0/status",
 			"/api/v0/metrics",
 		)
-		apiRouter.Use(authenticationMiddleware.OAuth2Authentication)
+		apiRouter.Use(authenticationMiddleware.OAuth2AuthenticationChain()...)
 	}
 
 	if config.payloadValidationEnabled {

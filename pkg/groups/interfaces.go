@@ -34,5 +34,5 @@ type OpenFGAClientInterface interface {
 	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error
-	Check(context.Context, string, string, string) (bool, error)
+	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
 }

@@ -116,7 +116,9 @@ func (mdw *Middleware) check(ctx context.Context, userID string, r *http.Request
 
 	// TODO @shipperizer implement BatchCheck
 	for _, permission := range mdw.mapper(r) {
-		authorized, err := mdw.auth.Check(ctx, userID, permission.Relation, permission.ResourceID)
+		authorized, err := mdw.auth.Check(
+			ctx, userID, permission.Relation, permission.ResourceID, permission.ContextualTuples...,
+		)
 
 		select {
 		case <-ctx.Done():

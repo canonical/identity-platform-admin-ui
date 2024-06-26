@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -30,14 +31,28 @@ func TestIdentityConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/identities",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/identities"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", IDENTITY_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", IDENTITY_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/identities",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/identities"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", IDENTITY_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", IDENTITY_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -97,14 +112,28 @@ func TestClientConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/clients",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/clients"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", CLIENT_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", CLIENT_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", CLIENT_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", CLIENT_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/clients",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/clients"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", CLIENT_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", CLIENT_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", CLIENT_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", CLIENT_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -142,7 +171,7 @@ func TestClientConverterMapReturnsPermissions(t *testing.T) {
 			result := new(ClientConverter).Map(r)
 
 			if !reflect.DeepEqual(result, test.output) {
-				t.Errorf("Map returned %v", result)
+				t.Errorf("Map returned %v, expected %v", result, test.output)
 			}
 		})
 	}
@@ -164,14 +193,28 @@ func TestProviderConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/idps",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/idps"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", PROVIDER_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", PROVIDER_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/idps",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/idps"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", PROVIDER_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", PROVIDER_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -231,14 +274,28 @@ func TestRuleConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/rules",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/rules"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/rules",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/rules"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -298,14 +355,28 @@ func TestSchemeConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/schemas",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/schemas"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", SCHEME_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", SCHEME_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/schemas",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/schemas"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", SCHEME_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", SCHEME_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -381,14 +452,28 @@ func TestRoleConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/roles",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/roles"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", ROLE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", ROLE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/roles",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/roles"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", ROLE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", ROLE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
@@ -482,14 +567,28 @@ func TestGroupConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/groups",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/groups"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "global")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", GROUP_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", GROUP_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/groups",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/groups"},
 			output: []Permission{
-				{Relation: CAN_CREATE, ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "global")},
+				{
+					Relation:   CAN_CREATE,
+					ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "__system__global"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", GROUP_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", GROUP_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
+					},
+				},
 			},
 		},
 		{

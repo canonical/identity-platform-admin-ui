@@ -66,6 +66,7 @@ type API struct {
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/auth", a.handleLogin)
 	mux.Get("/api/v0/auth/callback", a.handleCallback)
+	mux.Get("/api/v0/auth/me", a.handleMe)
 }
 
 func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +189,31 @@ func (a *API) badRequest(w http.ResponseWriter, err error) {
 		},
 	)
 	return
+}
+
+func (a *API) handleMe(w http.ResponseWriter, r *http.Request) {
+	// if we got here then principal must be populated by the middleware chain
+	principal := PrincipalFromContext(r.Context())
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(w).Encode(principal)
+	if err != nil {
+		// this should never happen
+		a.logger.Errorf("error serializing user me response, %v", err)
+		a.internalServerError(w, err)
+		return
+	}
+}
+
+func (a *API) internalServerError(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	_ = json.NewEncoder(w).Encode(
+		types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		},
+	)
 }
 
 func NewAPI(

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -379,5 +380,67 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 				t.Fatalf("response message error, expected %s, got %s", tt.errorMessage, response.Message)
 			}
 		})
+	}
+}
+
+func TestHandleMe(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	p := &Principal{
+		Subject:         "mock-subject",
+		Name:            "mock-name",
+		Email:           "mock-email",
+		SessionID:       "mock-sid",
+		Nonce:           "mock-nonce",
+		RawAccessToken:  "mock-access-token",
+		RawIdToken:      "mock-id-token",
+		RawRefreshToken: "mock-refresh-token",
+	}
+
+	mockTracer := NewMockTracer(ctrl)
+	mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
+	mockLogger := NewMockLoggerInterface(ctrl)
+
+	mockHelper := NewMockOAuth2HelperInterface(ctrl)
+	mockEncrypt := NewMockEncryptInterface(ctrl)
+
+	mockResponse := httptest.NewRecorder()
+
+	api := NewAPI(
+		mockOauth2Ctx,
+		mockHelper,
+		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+		mockTracer,
+		mockLogger,
+	)
+
+	mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/auth/me", nil)
+	mockCtx := PrincipalContext(context.Background(), p)
+	mockRequest = mockRequest.WithContext(mockCtx)
+
+	api.handleMe(mockResponse, mockRequest)
+
+	response := mockResponse.Result()
+	defer response.Body.Close()
+
+	got := new(Principal)
+	_ = json.NewDecoder(response.Body).Decode(got)
+
+	expectedPrincipal := Principal{
+		Subject:         "mock-subject",
+		Name:            "mock-name",
+		Email:           "mock-email",
+		SessionID:       "mock-sid",
+		Nonce:           "mock-nonce",
+		RawAccessToken:  "",
+		RawIdToken:      "",
+		RawRefreshToken: "",
+	}
+
+	if response.StatusCode != http.StatusOK {
+		t.Fatalf("response object status error, expected %d, got %d", http.StatusOK, response.StatusCode)
+	}
+
+	if !reflect.DeepEqual(*got, expectedPrincipal) {
+		t.Fatalf("response body not matching, expected %v, got %v", expectedPrincipal, *got)
 	}
 }

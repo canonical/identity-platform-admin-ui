@@ -12,7 +12,8 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
-const ADMIN_OBJECT = "privileged:user"
+const PRIVILEGED_RELATION = "privileged"
+const ADMIN_OBJECT = "privileged:superuser"
 
 type AdminAuthorizer struct {
 	client AuthzClientInterface

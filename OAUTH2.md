@@ -10,6 +10,7 @@ OAUTH2_CLIENT_SECRET=client secret
 OAUTH2_REDIRECT_URI=http://localhost:${PORT}/api/v0/auth/callback
 OAUTH2_CODEGRANT_SCOPES=openid,offline_access (defaults to these two, technically two more would be needed: "profile,email")
 OAUTH2_AUTH_COOKIES_ENCRYPTION_KEY="WrfOcYmVBwyduEbKYTUhO4X7XVaOQ1wF" (required, this needs to be exactly 32 bytes in lenght secret key)
+OAUTH2_USER_SESSION_TTL_SECONDS=expiration in seconds for the refresh token cookie, should match the hydra refresh token ttl, (defaults to 21600)
 ACCESS_TOKEN_VERIFICATION_STRATEGY="jwks|userinfo", (defaults to jwks)
 ```
 
@@ -79,7 +80,9 @@ The Hydra client for Admin UI needs to be set with the proper:
 - response types: `"token,code,id_token"`
 - grant types: `"authorization_code,refresh_token"`
 
-If you use the Login UI [docker compose](https://github.com/canonical/identity-platform-login-ui/blob/main/docker-compose.yml) to deploy the solution with Github integration, you can first create an OAuth2
+If you use the Login
+UI [docker compose](https://github.com/canonical/identity-platform-login-ui/blob/main/docker-compose.yml) to deploy the
+solution with Github integration, you can first create an OAuth2
 client.
 Then update it with the correct values, as in the following script:
 

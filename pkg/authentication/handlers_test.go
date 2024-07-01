@@ -18,6 +18,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -25,7 +26,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
 var (
-	authCookiesTTLSeconds = 2 * 60
+	mockTTLSeconds = 2 * 60
 )
 
 func TestHandleLogin(t *testing.T) {
@@ -61,10 +62,9 @@ func TestHandleLogin(t *testing.T) {
 	}
 
 	api := NewAPI(
-		authCookiesTTLSeconds,
 		NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor),
 		mockHelper,
-		NewAuthCookieManager(mockEncrypt, mockLogger),
+		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
 		mockTracer,
 		mockLogger,
 	)
@@ -111,6 +111,8 @@ func TestHandleLoginCallback(t *testing.T) {
 	mockEncrypt := NewMockEncryptInterface(ctrl)
 	mockEncrypt.EXPECT().Decrypt(gomock.Any()).Times(2).
 		DoAndReturn(func(data string) (string, error) { return data, nil })
+	mockEncrypt.EXPECT().Encrypt(gomock.Any()).Times(3).
+		DoAndReturn(func(data string) (string, error) { return data, nil })
 
 	mockVerifier := NewMockTokenVerifier(ctrl)
 	mockVerifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
@@ -139,33 +141,41 @@ func TestHandleLoginCallback(t *testing.T) {
 
 	mockResponse := httptest.NewRecorder()
 
-	api := NewAPI(authCookiesTTLSeconds, mockOauth2Ctx, mockHelper, NewAuthCookieManager(mockEncrypt, mockLogger), mockTracer, mockLogger)
+	api := NewAPI(
+		mockOauth2Ctx,
+		mockHelper,
+		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+		mockTracer,
+		mockLogger,
+	)
 
 	api.handleCallback(mockResponse, mockRequest)
 
 	result := mockResponse.Result()
 
-	if result.StatusCode != http.StatusOK {
-		t.Fatalf("response code error, expected %d, got %d", http.StatusOK, result.StatusCode)
+	if result.StatusCode != http.StatusFound {
+		t.Fatalf("response code error, expected %d, got %d", http.StatusFound, result.StatusCode)
 	}
 
-	body := result.Body
-	defer result.Body.Close()
+	location := result.Header.Get("Location")
 
-	tokens := new(oauth2Tokens)
-
-	_ = json.NewDecoder(body).Decode(tokens)
-
-	if tokens.AccessToken != "mock-access-token" {
-		t.Fatalf("access token does not match expected, got %s, expected %s", tokens.AccessToken, "mock-access-token")
+	if location != ui.UIPrefix {
+		t.Fatalf("redirect doesn't point to the right location, expected %s, got %s", ui.UIPrefix, location)
 	}
 
-	if tokens.RefreshToken != "mock-refresh-token" {
-		t.Fatalf("refresh token does not match expected, got %s, expected %s", tokens.RefreshToken, "mock-refresh-token")
+	cookie, found := findCookie("id-token", result.Cookies())
+	if !found || cookie.Value != "mock-id-token" {
+		t.Fatalf("id-token cookie not found or does not match, expected %s, got %s", "mock-id-token", cookie.Value)
 	}
 
-	if tokens.IDToken != "mock-id-token" {
-		t.Fatalf("id token does not match expected, got %s, expected %s", tokens.IDToken, "mock-id-token")
+	cookie, found = findCookie("access-token", result.Cookies())
+	if !found || cookie.Value != "mock-access-token" {
+		t.Fatalf("access-token cookie not found or does not match, expected %s, got %s", "mock-access-token", cookie.Value)
+	}
+
+	cookie, found = findCookie("refresh-token", result.Cookies())
+	if !found || cookie.Value != "mock-refresh-token" {
+		t.Fatalf("refresh-token cookie not found or does not match, expected %s, got %s", "mock-refresh-token", cookie.Value)
 	}
 }
 
@@ -339,7 +349,13 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 
 			mockResponse := httptest.NewRecorder()
 
-			api := NewAPI(authCookiesTTLSeconds, mockOauth2Ctx, mockHelper, NewAuthCookieManager(mockEncrypt, mockLogger), mockTracer, mockLogger)
+			api := NewAPI(
+				mockOauth2Ctx,
+				mockHelper,
+				NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+				mockTracer,
+				mockLogger,
+			)
 			api.handleCallback(mockResponse, tt.request)
 
 			result := mockResponse.Result()

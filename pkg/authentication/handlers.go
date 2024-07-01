@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +14,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
+	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
 const (
@@ -23,24 +23,19 @@ const (
 )
 
 type Config struct {
-	Enabled              bool     `validate:"required,boolean"`
-	AuthCookieTTLSeconds int      `validate:"required"`
-	CookiesEncryptionKey string   `validate:"required,min=32,max=32"`
-	issuer               string   `validate:"required"`
-	clientID             string   `validate:"required"`
-	clientSecret         string   `validate:"required"`
-	redirectURL          string   `validate:"required"`
-	verificationStrategy string   `validate:"required,oneof=jwks userinfo"`
-	scopes               []string `validate:"required,dive,required"`
+	Enabled                     bool     `validate:"required,boolean"`
+	AuthCookieTTLSeconds        int      `validate:"required"`
+	UserSessionCookieTTLSeconds int      `validate:"required"`
+	CookiesEncryptionKey        string   `validate:"required,min=32,max=32"`
+	issuer                      string   `validate:"required"`
+	clientID                    string   `validate:"required"`
+	clientSecret                string   `validate:"required"`
+	redirectURL                 string   `validate:"required"`
+	verificationStrategy        string   `validate:"required,oneof=jwks userinfo"`
+	scopes                      []string `validate:"required,dive,required"`
 }
 
-type oauth2Tokens struct {
-	IDToken      string `json:"id_token"`
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, cookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
+func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, authCookiesTTLSeconds, userSessionCookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
 	c := new(Config)
 	c.Enabled = enabled
 	c.CookiesEncryptionKey = cookiesEncryptionKey
@@ -51,18 +46,18 @@ func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redir
 	c.redirectURL = redirectURL
 	c.verificationStrategy = verificationStrategy
 	c.scopes = scopes
-	c.AuthCookieTTLSeconds = cookieTTLSeconds
+	c.AuthCookieTTLSeconds = authCookiesTTLSeconds
+	c.UserSessionCookieTTLSeconds = userSessionCookieTTLSeconds
 
 	return c
 }
 
 type API struct {
-	apiKey                string
-	payloadValidator      validation.PayloadValidatorInterface
-	oauth2                OAuth2ContextInterface
-	helper                OAuth2HelperInterface
-	cookieManager         AuthCookieManagerInterface
-	authCookiesTTLSeconds int
+	apiKey           string
+	payloadValidator validation.PayloadValidatorInterface
+	oauth2           OAuth2ContextInterface
+	helper           OAuth2HelperInterface
+	cookieManager    AuthCookieManagerInterface
 
 	tracer trace.Tracer
 	logger logging.LoggerInterface
@@ -80,10 +75,8 @@ func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	nonce := a.helper.RandomURLString()
 	state := a.helper.RandomURLString()
 
-	ttl := time.Duration(a.authCookiesTTLSeconds) * time.Second
-
-	a.cookieManager.SetNonceCookie(w, nonce, ttl)
-	a.cookieManager.SetStateCookie(w, state, ttl)
+	a.cookieManager.SetNonceCookie(w, nonce)
+	a.cookieManager.SetStateCookie(w, state)
 
 	redirect := a.oauth2.LoginRedirect(r.Context(), nonce, state)
 	http.Redirect(w, r, redirect, http.StatusFound)
@@ -96,21 +89,21 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get(codeParameter)
 	if code == "" {
 		a.logger.Error("OAuth2 code not found")
-		badRequest(w, fmt.Errorf("OAuth2 code not found"))
+		a.badRequest(w, fmt.Errorf("OAuth2 code not found"))
 		return
 	}
 
 	state := r.URL.Query().Get(stateParameter)
 	if state == "" {
 		a.logger.Error("OAuth2 state not found")
-		badRequest(w, fmt.Errorf("OAuth2 state not found"))
+		a.badRequest(w, fmt.Errorf("OAuth2 state not found"))
 		return
 	}
 
 	err := a.checkState(r, state)
 	a.cookieManager.ClearStateCookie(w)
 	if err != nil {
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
@@ -121,42 +114,36 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	oauth2Token, err := a.oauth2.RetrieveTokens(ctx, code)
 	if err != nil {
 		a.logger.Errorf("unable to retrieve tokens with code '%s', error: %v", code, err)
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
 		a.logger.Error("unable to retrieve ID token")
-		badRequest(w, fmt.Errorf("unable to retrieve ID token"))
+		a.badRequest(w, fmt.Errorf("unable to retrieve ID token"))
 		return
 	}
 
 	idToken, err := a.oauth2.Verifier().VerifyIDToken(ctx, rawIDToken)
 	if err != nil {
 		a.logger.Errorf("unable to verify ID token, error: %v", err)
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
 	err = a.checkNonce(r, idToken)
 	a.cookieManager.ClearNonceCookie(w)
 	if err != nil {
-		badRequest(w, err)
+		a.badRequest(w, err)
 		return
 	}
 
-	// TODO @barco: until we implement spec ID036 we just return tokens
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	tokens := oauth2Tokens{
-		IDToken:      rawIDToken,
-		AccessToken:  oauth2Token.AccessToken,
-		RefreshToken: oauth2Token.RefreshToken,
-	}
+	a.cookieManager.SetIDTokenCookie(w, rawIDToken)
+	a.cookieManager.SetAccessTokenCookie(w, oauth2Token.AccessToken)
+	a.cookieManager.SetRefreshTokenCookie(w, oauth2Token.RefreshToken)
 
-	_ = json.NewEncoder(w).Encode(tokens)
-
+	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
 }
 
 func (a *API) checkNonce(r *http.Request, idToken *Principal) error {
@@ -189,7 +176,10 @@ func (a *API) checkState(r *http.Request, state string) error {
 	return nil
 }
 
-func badRequest(w http.ResponseWriter, err error) {
+func (a *API) badRequest(w http.ResponseWriter, err error) {
+	a.cookieManager.ClearNonceCookie(w)
+	a.cookieManager.ClearStateCookie(w)
+
 	w.WriteHeader(http.StatusBadRequest)
 	_ = json.NewEncoder(w).Encode(
 		types.Response{
@@ -200,15 +190,21 @@ func badRequest(w http.ResponseWriter, err error) {
 	return
 }
 
-func NewAPI(authCookiesTTLSeconds int, oauth2Context OAuth2ContextInterface, helper OAuth2HelperInterface, cookieManager AuthCookieManagerInterface, tracer trace.Tracer, logger logging.LoggerInterface) *API {
+func NewAPI(
+	oauth2Context OAuth2ContextInterface,
+	helper OAuth2HelperInterface,
+	cookieManager AuthCookieManagerInterface,
+	tracer trace.Tracer,
+	logger logging.LoggerInterface,
+) *API {
 	a := new(API)
 	a.apiKey = "authentication"
-	a.tracer = tracer
-	a.logger = logger
 	a.oauth2 = oauth2Context
 	a.helper = helper
-	a.authCookiesTTLSeconds = authCookiesTTLSeconds
 	a.cookieManager = cookieManager
+
+	a.logger = logger
+	a.tracer = tracer
 
 	return a
 }

@@ -6,7 +6,6 @@ package authentication
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -56,17 +55,35 @@ type OAuth2HelperInterface interface {
 
 type AuthCookieManagerInterface interface {
 	// SetNonceCookie sets the nonce cookie on the response with the specified duration as MaxAge
-	SetNonceCookie(http.ResponseWriter, string, time.Duration)
+	SetNonceCookie(http.ResponseWriter, string)
 	// GetNonceCookie returns the string value of the nonce cookie if present, or empty string otherwise
 	GetNonceCookie(*http.Request) string
 	// ClearNonceCookie sets the expiration of the cookie to epoch
 	ClearNonceCookie(http.ResponseWriter)
 	// SetStateCookie  sets the nonce cookie on the response with the specified duration as MaxAge
-	SetStateCookie(http.ResponseWriter, string, time.Duration)
+	SetStateCookie(http.ResponseWriter, string)
 	// GetStateCookie returns the string value of the state cookie if present, or empty string otherwise
 	GetStateCookie(*http.Request) string
 	// ClearStateCookie sets the expiration of the cookie to epoch
 	ClearStateCookie(http.ResponseWriter)
+	// SetIDTokenCookie sets the encrypted ID token value cookie
+	SetIDTokenCookie(http.ResponseWriter, string)
+	// GetIDTokenCookie returns the string value of the ID token cookie if present, or empty string otherwise
+	GetIDTokenCookie(*http.Request) string
+	// ClearIDTokenCookie sets the expiration of the cookie to epoch
+	ClearIDTokenCookie(http.ResponseWriter)
+	// SetAccessTokenCookie sets the encrypted access token value cookie
+	SetAccessTokenCookie(http.ResponseWriter, string)
+	// GetAccessTokenCookie returns the string value of the access token cookie if present, or empty string otherwise
+	GetAccessTokenCookie(*http.Request) string
+	// ClearAccessTokenCookie sets the expiration of the cookie to epoch
+	ClearAccessTokenCookie(http.ResponseWriter)
+	// SetRefreshTokenCookie sets the encrypted refresh token value cookie
+	SetRefreshTokenCookie(http.ResponseWriter, string)
+	// GetRefreshTokenCookie returns the string value of the refresh token cookie if present, or empty string otherwise
+	GetRefreshTokenCookie(*http.Request) string
+	// ClearRefreshTokenCookie sets the expiration of the cookie to epoch
+	ClearRefreshTokenCookie(http.ResponseWriter)
 }
 
 type EncryptInterface interface {

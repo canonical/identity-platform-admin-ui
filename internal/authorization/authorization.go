@@ -9,6 +9,7 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
@@ -24,11 +25,11 @@ type Authorizer struct {
 	AdminAuthorizer
 }
 
-func (a *Authorizer) Check(ctx context.Context, user string, relation string, object string) (bool, error) {
+func (a *Authorizer) Check(ctx context.Context, user string, relation string, object string, contextualTuples ...openfga.Tuple) (bool, error) {
 	ctx, span := a.tracer.Start(ctx, "authorization.Authorizer.Check")
 	defer span.End()
 
-	return a.client.Check(ctx, user, relation, object)
+	return a.client.Check(ctx, user, relation, object, contextualTuples...)
 }
 
 func (a *Authorizer) ListObjects(ctx context.Context, user string, relation string, objectType string) ([]string, error) {

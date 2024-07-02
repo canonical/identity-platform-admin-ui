@@ -219,15 +219,24 @@ func (c *Client) DeleteTuples(ctx context.Context, tuples ...Tuple) error {
 // ########################## Write Operations #######################################
 
 // ########################## Check Operations #######################################
-func (c *Client) Check(ctx context.Context, user, relation, object string) (bool, error) {
+func (c *Client) Check(ctx context.Context, user, relation, object string, tuples ...Tuple) (bool, error) {
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.Check")
 	defer span.End()
 
+	contextualTuples := make([]client.ClientContextualTupleKey, len(tuples))
+	for i, t := range tuples {
+		contextualTuples[i] = client.ClientContextualTupleKey{
+			User:     t.User,
+			Relation: t.Relation,
+			Object:   t.Object,
+		}
+	}
 	r := c.c.Check(ctx)
 	body := client.ClientCheckRequest{
-		User:     user,
-		Relation: relation,
-		Object:   object,
+		User:             user,
+		Relation:         relation,
+		Object:           object,
+		ContextualTuples: contextualTuples,
 	}
 
 	r = r.Body(body)

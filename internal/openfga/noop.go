@@ -34,7 +34,7 @@ func (c *NoopClient) ListObjects(ctx context.Context, user, relation, objectType
 	return make([]string, 0), nil
 }
 
-func (c *NoopClient) Check(ctx context.Context, user, relation, object string) (bool, error) {
+func (c *NoopClient) Check(ctx context.Context, user, relation, object string, tuples ...Tuple) (bool, error) {
 	return true, nil
 }
 

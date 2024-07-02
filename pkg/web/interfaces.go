@@ -22,7 +22,7 @@ type OpenFGAClientInterface interface {
 	CompareModel(context.Context, fga.AuthorizationModel) (bool, error)
 	WriteTuple(context.Context, string, string, string) error
 	DeleteTuple(context.Context, string, string, string) error
-	Check(context.Context, string, string, string) (bool, error)
+	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
 	ListObjects(context.Context, string, string, string) ([]string, error)
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error

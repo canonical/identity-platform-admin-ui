@@ -57,16 +57,29 @@ func PrincipalFromContext(ctx context.Context) *Principal {
 		return nil
 	}
 
-	value := ctx.Value(PrincipalContextKey)
-	if value == nil {
-		return nil
+	if value, ok := ctx.Value(PrincipalContextKey).(*Principal); ok {
+		return value
 	}
 
-	return value.(*Principal)
+	return nil
 }
 
 func OtelHTTPClientContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, oauth2.HTTPClient, otelHTTPClient)
+}
+
+func HTTPClientFromContext(ctx context.Context) *http.Client {
+	client := http.DefaultClient
+
+	if ctx == nil {
+		return client
+	}
+
+	if c, ok := ctx.Value(oauth2.HTTPClient).(*http.Client); ok {
+		client = c
+	}
+
+	return client
 }
 
 type OIDCProviderSupplier = func(ctx context.Context, issuer string) (*oidc.Provider, error)

@@ -85,9 +85,10 @@ func HTTPClientFromContext(ctx context.Context) *http.Client {
 type OIDCProviderSupplier = func(ctx context.Context, issuer string) (*oidc.Provider, error)
 
 type OAuth2Context struct {
-	hydraAdminURL string
-	client        *oauth2.Config
-	verifier      TokenVerifier
+	client      *oauth2.Config
+	verifier    TokenVerifier
+	hydraAdmin  clients.HydraClientInterface
+	hydraPublic clients.HydraClientInterface
 
 	tracer  trace.Tracer
 	logger  logging.LoggerInterface
@@ -155,7 +156,8 @@ func NewOAuth2Context(config *Config, getProvider OIDCProviderSupplier, tracer t
 		Scopes:   config.scopes,
 	}
 
-	o.hydraAdminURL = config.hydraAdminURL
+	o.hydraAdmin = config.hydraAdminAPIClient
+	o.hydraPublic = config.hydraPublicAPIClient
 
 	return o
 }

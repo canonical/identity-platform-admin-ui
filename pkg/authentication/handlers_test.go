@@ -444,3 +444,91 @@ func TestHandleMe(t *testing.T) {
 		t.Fatalf("response body not matching, expected %v, got %v", expectedPrincipal, *got)
 	}
 }
+
+func TestLogout(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	for _, tt := range []struct {
+		name         string
+		errorMessage string
+		setupMocks   func(*MockOAuth2ContextInterface, *MockAuthCookieManagerInterface, *MockLoggerInterface)
+	}{
+		{
+			name:         "Success",
+			errorMessage: "",
+			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface) {
+				m.EXPECT().ClearIDTokenCookie(gomock.Any())
+				m.EXPECT().ClearAccessTokenCookie(gomock.Any())
+				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
+
+				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(nil)
+			},
+		},
+		{
+			name:         "Failure",
+			errorMessage: "logout request failed, err mock-err",
+			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface) {
+				err := errors.New("mock-error")
+				l.EXPECT().Errorf("logout request failed, err %v", err)
+
+				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(err)
+
+				m.EXPECT().ClearNonceCookie(gomock.Any()).Times(1)
+				m.EXPECT().ClearStateCookie(gomock.Any()).Times(1)
+			},
+		},
+	} {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			p := &Principal{
+				Subject:         "mock-subject",
+				Name:            "mock-name",
+				Email:           "mock-email",
+				SessionID:       "mock-sid",
+				Nonce:           "mock-nonce",
+				RawAccessToken:  "mock-access-token",
+				RawIdToken:      "mock-id-token",
+				RawRefreshToken: "mock-refresh-token",
+			}
+
+			mockTracer := NewMockTracer(ctrl)
+			mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
+			mockLogger := NewMockLoggerInterface(ctrl)
+
+			mockHelper := NewMockOAuth2HelperInterface(ctrl)
+
+			mockResponse := httptest.NewRecorder()
+
+			mockCookieManager := NewMockAuthCookieManagerInterface(ctrl)
+			api := NewAPI(
+				mockOauth2Ctx,
+				mockHelper,
+				mockCookieManager,
+				mockTracer,
+				mockLogger,
+			)
+
+			mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/auth/logout", nil)
+			mockCtx := PrincipalContext(context.Background(), p)
+			mockRequest = mockRequest.WithContext(mockCtx)
+
+			tt.setupMocks(mockOauth2Ctx, mockCookieManager, mockLogger)
+
+			api.handleLogout(mockResponse, mockRequest)
+
+			response := mockResponse.Result()
+
+			if tt.errorMessage != "" {
+				if response.StatusCode != http.StatusBadRequest {
+					t.Fatalf("response code error, expected %d, got %d", http.StatusBadRequest, response.StatusCode)
+				}
+
+			} else {
+				if response.StatusCode != http.StatusFound {
+					t.Fatalf("response code error, expected %d, got %d", http.StatusBadRequest, response.StatusCode)
+				}
+			}
+
+		})
+	}
+}

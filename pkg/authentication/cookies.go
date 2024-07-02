@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	authCookiePath  = "/api/v0/auth/callback"
-	nonceCookieName = "nonce"
-	stateCookieName = "state"
-	itCookieName    = "id-token"
-	atCookieName    = "access-token"
-	rtCookieName    = "refresh-token"
+	defaultCookiePath = "/"
+	authCookiePath    = "/api/v0/auth/callback"
+	nonceCookieName   = "nonce"
+	stateCookieName   = "state"
+	itCookieName      = "id-token"
+	atCookieName      = "access-token"
+	rtCookieName      = "refresh-token"
 )
 
 var (
@@ -32,7 +33,7 @@ type AuthCookieManager struct {
 }
 
 func (a *AuthCookieManager) SetIDTokenCookie(w http.ResponseWriter, rawIDToken string) {
-	a.setCookie(w, itCookieName, rawIDToken, "/", a.userSessionCookieTTL)
+	a.setCookie(w, itCookieName, rawIDToken, defaultCookiePath, a.userSessionCookieTTL)
 }
 
 func (a *AuthCookieManager) GetIDTokenCookie(r *http.Request) string {
@@ -40,11 +41,11 @@ func (a *AuthCookieManager) GetIDTokenCookie(r *http.Request) string {
 }
 
 func (a *AuthCookieManager) ClearIDTokenCookie(w http.ResponseWriter) {
-	a.clearCookie(w, itCookieName)
+	a.clearCookie(w, itCookieName, defaultCookiePath)
 }
 
 func (a *AuthCookieManager) SetAccessTokenCookie(w http.ResponseWriter, rawAccessToken string) {
-	a.setCookie(w, atCookieName, rawAccessToken, "/", a.userSessionCookieTTL)
+	a.setCookie(w, atCookieName, rawAccessToken, defaultCookiePath, a.userSessionCookieTTL)
 }
 
 func (a *AuthCookieManager) GetAccessTokenCookie(r *http.Request) string {
@@ -52,11 +53,11 @@ func (a *AuthCookieManager) GetAccessTokenCookie(r *http.Request) string {
 }
 
 func (a *AuthCookieManager) ClearAccessTokenCookie(w http.ResponseWriter) {
-	a.clearCookie(w, atCookieName)
+	a.clearCookie(w, atCookieName, defaultCookiePath)
 }
 
 func (a *AuthCookieManager) SetRefreshTokenCookie(w http.ResponseWriter, rawRefreshToken string) {
-	a.setCookie(w, rtCookieName, rawRefreshToken, "/", a.userSessionCookieTTL)
+	a.setCookie(w, rtCookieName, rawRefreshToken, defaultCookiePath, a.userSessionCookieTTL)
 }
 
 func (a *AuthCookieManager) GetRefreshTokenCookie(r *http.Request) string {
@@ -64,7 +65,7 @@ func (a *AuthCookieManager) GetRefreshTokenCookie(r *http.Request) string {
 }
 
 func (a *AuthCookieManager) ClearRefreshTokenCookie(w http.ResponseWriter) {
-	a.clearCookie(w, rtCookieName)
+	a.clearCookie(w, rtCookieName, defaultCookiePath)
 }
 
 func (a *AuthCookieManager) SetNonceCookie(w http.ResponseWriter, nonce string) {
@@ -76,7 +77,7 @@ func (a *AuthCookieManager) GetNonceCookie(r *http.Request) string {
 }
 
 func (a *AuthCookieManager) ClearNonceCookie(w http.ResponseWriter) {
-	a.clearCookie(w, nonceCookieName)
+	a.clearCookie(w, nonceCookieName, authCookiePath)
 }
 
 func (a *AuthCookieManager) SetStateCookie(w http.ResponseWriter, state string) {
@@ -88,7 +89,7 @@ func (a *AuthCookieManager) GetStateCookie(r *http.Request) string {
 }
 
 func (a *AuthCookieManager) ClearStateCookie(w http.ResponseWriter) {
-	a.clearCookie(w, stateCookieName)
+	a.clearCookie(w, stateCookieName, authCookiePath)
 }
 
 func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string, path string, ttl time.Duration) {
@@ -117,8 +118,18 @@ func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string,
 	})
 }
 
-func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string) {
-	http.SetCookie(w, &http.Cookie{Name: name, Expires: epoch, MaxAge: -1})
+func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string, path string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     path,
+		Domain:   "",
+		Expires:  epoch,
+		MaxAge:   -1,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 }
 
 func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {

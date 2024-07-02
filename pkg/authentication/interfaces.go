@@ -41,6 +41,8 @@ type OAuth2ContextInterface interface {
 	RetrieveTokens(context.Context, string) (*oauth2.Token, error)
 	// RefreshToken performs the OAuth2 refresh_token grant
 	RefreshToken(context.Context, string) (*oauth2.Token, error)
+	// Logout performs session and tokens revocation against the Hydra Admin APIs
+	Logout(ctx context.Context, principal *Principal) error
 }
 
 type ReadableClaims interface {
@@ -91,4 +93,8 @@ type EncryptInterface interface {
 	Encrypt(string) (string, error)
 	// Decrypt a hex string, returns the decrypted string or an error
 	Decrypt(string) (string, error)
+}
+
+type HTTPClientInterface interface {
+	Do(*http.Request) (*http.Response, error)
 }

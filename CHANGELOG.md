@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.12.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.11.0...v1.12.0) (2024-07-02)
+
+
+### Features
+
+* add `/auth/me` endpoint handler to return json with principal info ([9fa92a3](https://github.com/canonical/identity-platform-admin-ui/commit/9fa92a35ce0b0886cfc3caefc2af41281b0748a9))
+* add user session cookies ttl external config ([b4da23d](https://github.com/canonical/identity-platform-admin-ui/commit/b4da23da8513c3d5535eec54836aa91bae091d2b))
+* cookie + refresh token support for middleware ([cab3f84](https://github.com/canonical/identity-platform-admin-ui/commit/cab3f84e8e106e6335263a6af7aae9d2a9c40b19))
+* expand cookie manager interface + implementation for tokens cookies + tests ([a026e24](https://github.com/canonical/identity-platform-admin-ui/commit/a026e24ddd518c895179f010a7e8ce1eaee63934))
+* expand on Principal attributes + improve PrincipalFromContext ([4104b3a](https://github.com/canonical/identity-platform-admin-ui/commit/4104b3a7f319700c17f58a08a29d1026b8aa93bb))
+* set tokens cookies in callback and redirect to UI url + adjust tests ([f6e8277](https://github.com/canonical/identity-platform-admin-ui/commit/f6e82777ca290bd80e22a397c4a08d6853c60f16))
+
+
+### Bug Fixes
+
+* add contextual tuples to openfga ([03d313d](https://github.com/canonical/identity-platform-admin-ui/commit/03d313dd5b2adf51cb9ef62af913a7fecd06f4af))
+* always add tuples for global read and admins ([992f283](https://github.com/canonical/identity-platform-admin-ui/commit/992f283cb924465c1e837d09c33fae538dbfd7f7))
+* rename admin user ([2f01a27](https://github.com/canonical/identity-platform-admin-ui/commit/2f01a27a40d47045aa38aebd6180b108b1cbec02))
+
 ## [1.11.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.10.0...v1.11.0) (2024-06-21)
 
 

@@ -80,6 +80,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/auth", a.handleLogin)
 	mux.Get("/api/v0/auth/callback", a.handleCallback)
 	mux.Get("/api/v0/auth/me", a.handleMe)
+	mux.Get("/api/v0/auth/logout", a.handleLogout)
 }
 
 func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -227,6 +228,23 @@ func (a *API) internalServerError(w http.ResponseWriter, err error) {
 			Message: err.Error(),
 		},
 	)
+}
+
+func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	err := a.oauth2.Logout(ctx, PrincipalFromContext(ctx))
+	if err != nil {
+		a.logger.Errorf("logout request failed, err %v", err)
+		a.badRequest(w, err)
+		return
+	}
+
+	a.cookieManager.ClearIDTokenCookie(w)
+	a.cookieManager.ClearAccessTokenCookie(w)
+	a.cookieManager.ClearRefreshTokenCookie(w)
+
+	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
 }
 
 func NewAPI(

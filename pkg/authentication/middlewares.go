@@ -40,12 +40,8 @@ func (m *Middleware) SetAllowListedEndpoints(endpointsPrefixes ...string) {
 
 func (m *Middleware) isAllowListed(r *http.Request) bool {
 	endpoint := r.URL.Path
-	for prefix, _ := range m.allowListedEndpoints {
-		if strings.HasPrefix(endpoint, prefix) {
-			return true
-		}
-	}
-	return false
+	_, ok := m.allowListedEndpoints[endpoint]
+	return ok
 }
 
 func (m *Middleware) OAuth2AuthenticationChain() []func(http.Handler) http.Handler {

@@ -72,8 +72,9 @@ func OtelHTTPClientContext(ctx context.Context) context.Context {
 type OIDCProviderSupplier = func(ctx context.Context, issuer string) (*oidc.Provider, error)
 
 type OAuth2Context struct {
-	client   *oauth2.Config
-	verifier TokenVerifier
+	hydraAdminURL string
+	client        *oauth2.Config
+	verifier      TokenVerifier
 
 	tracer  trace.Tracer
 	logger  logging.LoggerInterface
@@ -140,6 +141,8 @@ func NewOAuth2Context(config *Config, getProvider OIDCProviderSupplier, tracer t
 		Endpoint: provider.Endpoint(),
 		Scopes:   config.scopes,
 	}
+
+	o.hydraAdminURL = config.hydraAdminURL
 
 	return o
 }

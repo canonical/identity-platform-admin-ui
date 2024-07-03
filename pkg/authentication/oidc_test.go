@@ -5,12 +5,16 @@ package authentication
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	client "github.com/ory/hydra-client-go/v2"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
 )
@@ -19,6 +23,8 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_hydra.go github.com/ory/hydra-client-go/v2 OAuth2Api
+//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_clients.go -source=../clients/interfaces.go
 
 func TestNewPrincipalFromClaims(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -204,6 +210,183 @@ func TestNewOAuth2Context(t *testing.T) {
 			}
 
 			_ = NewOAuth2Context(tt.config, tt.supplier, mockTracer, mockLogger, mockMonitor)
+
+		})
+	}
+}
+
+func TestOAuth2Context_Logout(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p := &Principal{
+		Subject:         "mock-subject",
+		Name:            "mock-name",
+		Email:           "mock-email",
+		SessionID:       "mock-sid",
+		Nonce:           "mock-nonce",
+		RawAccessToken:  "mock-access-token",
+		RawIdToken:      "mock-id-token",
+		RawRefreshToken: "mock-refresh-token",
+	}
+
+	errorStructString := "{\"error\":\"mock-error\", \"error_description\":\"mock-error-descr\"}"
+	tests := []struct {
+		name          string
+		principal     *Principal
+		setupMock     func(*MockOAuth2Api, *MockOAuth2Api)
+		expectedError string
+	}{
+		{
+			name:      "Success",
+			principal: p,
+			setupMock: func(admin, public *MockOAuth2Api) {
+				sessionRevokeRequest := client.OAuth2ApiRevokeOAuth2LoginSessionsRequest{ApiService: admin}
+				admin.EXPECT().RevokeOAuth2LoginSessions(gomock.Any()).Return(sessionRevokeRequest)
+
+				admin.EXPECT().RevokeOAuth2LoginSessionsExecute(gomock.Any()).
+					Return(&http.Response{StatusCode: http.StatusNoContent}, nil)
+
+				tokenRevokeReq := client.OAuth2ApiRevokeOAuth2TokenRequest{ApiService: public}
+				public.EXPECT().RevokeOAuth2Token(gomock.Any()).Return(tokenRevokeReq)
+
+				public.EXPECT().RevokeOAuth2TokenExecute(gomock.Any()).
+					Return(&http.Response{StatusCode: http.StatusOK}, nil)
+			},
+			expectedError: "",
+		},
+		{
+			name:          "NoPrincipal",
+			setupMock:     func(admin, public *MockOAuth2Api) {},
+			expectedError: "no principal provided",
+		},
+		{
+			name:      "RevokeSessionFailure",
+			principal: p,
+			setupMock: func(admin, public *MockOAuth2Api) {
+				sessionRevokeRequest := client.OAuth2ApiRevokeOAuth2LoginSessionsRequest{ApiService: admin}
+				admin.EXPECT().RevokeOAuth2LoginSessions(gomock.Any()).Return(sessionRevokeRequest)
+				admin.EXPECT().RevokeOAuth2LoginSessionsExecute(gomock.Any()).
+					Return(nil, errors.New("mock-error"))
+			},
+			expectedError: "mock-error",
+		},
+		{
+			name:      "RevokeSessionStatusCodeFailure",
+			principal: p,
+			setupMock: func(admin, public *MockOAuth2Api) {
+				sessionRevokeRequest := client.OAuth2ApiRevokeOAuth2LoginSessionsRequest{ApiService: admin}
+				admin.EXPECT().RevokeOAuth2LoginSessions(gomock.Any()).Return(sessionRevokeRequest)
+				admin.EXPECT().RevokeOAuth2LoginSessionsExecute(gomock.Any()).
+					Return(
+						&http.Response{
+							StatusCode: http.StatusBadRequest,
+							Body:       io.NopCloser(strings.NewReader(errorStructString)),
+						},
+						nil,
+					)
+
+			},
+			expectedError: "revoke session request failed, error: mock-error, description: mock-error-descr",
+		},
+		{
+			name:      "RevokeTokenFailure",
+			principal: p,
+			setupMock: func(admin, public *MockOAuth2Api) {
+				sessionRevokeRequest := client.OAuth2ApiRevokeOAuth2LoginSessionsRequest{ApiService: admin}
+				admin.EXPECT().RevokeOAuth2LoginSessions(gomock.Any()).
+					Return(sessionRevokeRequest)
+				admin.EXPECT().RevokeOAuth2LoginSessionsExecute(gomock.Any()).
+					Return(&http.Response{StatusCode: http.StatusNoContent}, nil)
+
+				tokenRevokeReq := client.OAuth2ApiRevokeOAuth2TokenRequest{ApiService: public}
+				public.EXPECT().RevokeOAuth2Token(gomock.Any()).
+					Return(tokenRevokeReq)
+				public.EXPECT().RevokeOAuth2TokenExecute(gomock.Any()).
+					Return(nil, errors.New("mock-error"))
+			},
+			expectedError: "mock-error",
+		},
+		{
+			name:      "RevokeTokenStatusCodeFailure",
+			principal: p,
+			setupMock: func(admin, public *MockOAuth2Api) {
+				sessionRevokeRequest := client.OAuth2ApiRevokeOAuth2LoginSessionsRequest{ApiService: admin}
+				admin.EXPECT().RevokeOAuth2LoginSessions(gomock.Any()).
+					Return(sessionRevokeRequest)
+				admin.EXPECT().RevokeOAuth2LoginSessionsExecute(gomock.Any()).
+					Return(&http.Response{StatusCode: http.StatusNoContent}, nil)
+
+				tokenRevokeReq := client.OAuth2ApiRevokeOAuth2TokenRequest{ApiService: public}
+				public.EXPECT().RevokeOAuth2Token(gomock.Any()).
+					Return(tokenRevokeReq)
+				public.EXPECT().RevokeOAuth2TokenExecute(gomock.Any()).
+					Return(
+						&http.Response{
+							StatusCode: http.StatusBadRequest,
+							Body:       io.NopCloser(strings.NewReader(errorStructString)),
+						},
+						nil,
+					)
+			},
+			expectedError: "revoke token request failed, error: mock-error, description: mock-error-descr",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := NewMockMonitorInterface(ctrl)
+
+			mockTracer.EXPECT().Start(gomock.Any(), "authentication.OAuth2Context.Logout").
+				Times(1).
+				Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+
+			mockHydraAdminClient := NewMockOAuth2Api(ctrl)
+			mockHydraPublicClient := NewMockOAuth2Api(ctrl)
+
+			mockInternalHydraAdminClient := NewMockHydraClientInterface(ctrl)
+			mockInternalHydraAdminClient.EXPECT().OAuth2Api().AnyTimes().Return(mockHydraAdminClient)
+			mockInternalHydraPublicClient := NewMockHydraClientInterface(ctrl)
+			mockInternalHydraPublicClient.EXPECT().OAuth2Api().AnyTimes().Return(mockHydraPublicClient)
+
+			config := &Config{
+				Enabled:              true,
+				issuer:               "http://localhost/issuer",
+				clientID:             "mock-client-id",
+				clientSecret:         "mock-client-secret",
+				redirectURL:          "http://localhost/api/v0/auth/callback",
+				verificationStrategy: "jwks",
+				scopes:               []string{"openid", "offline_access"},
+				hydraPublicAPIClient: mockInternalHydraPublicClient,
+				hydraAdminAPIClient:  mockInternalHydraAdminClient,
+			}
+
+			tt.setupMock(mockHydraAdminClient, mockHydraPublicClient)
+
+			oauth2Context := NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor)
+
+			result := oauth2Context.Logout(context.TODO(), tt.principal)
+
+			if tt.expectedError == "" {
+				if result != nil {
+					t.Fatalf("unexpected error returned, expected nil, got %v", result)
+				}
+			}
+
+			if tt.expectedError != "" {
+				if result == nil {
+					t.Fatalf("unexpected nil value returned, expected %v", tt.expectedError)
+				}
+
+				errorMessage := result.Error()
+				if errorMessage != tt.expectedError {
+					t.Fatalf("expected error message does not match, expected %v, got %v", tt.expectedError, errorMessage)
+				}
+			}
 
 		})
 	}

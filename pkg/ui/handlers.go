@@ -4,17 +4,15 @@
 package ui
 
 import (
-	"fmt"
 	"io/fs"
 	"net/http"
-	"net/url"
-	"path"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"github.com/go-chi/chi/v5"
 )
 
 const UIPrefix = "/ui"
@@ -26,7 +24,6 @@ type Config struct {
 
 type API struct {
 	fileServer http.Handler
-	BaseURL    *url.URL
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
@@ -34,20 +31,7 @@ type API struct {
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
-	// We force the trailing slash to make the UI routing easier
-	// The UI relies on relative routes to fetch it's assets and to call the backend api
-	// If we didn't force the trailing slash it would be harder to use relative paths:
-	//     "example.com/a"    + "./b"  -> "example.com/b"
-	//     "example.com/a/"   + "./b"  -> "example.com/a/b"
-	//     "example.com/a/b"  + "../c" -> "example.com/c"
-	//     "example.com/a/b/" + "../c" -> "example.com/a/c"
-	mux.Get(UIPrefix, func(w http.ResponseWriter, r *http.Request) {
-		url := UIPrefix
-		if a.BaseURL != nil {
-			url = path.Join(a.BaseURL.Path, url) + "/"
-		}
-		http.Redirect(w, r, url, http.StatusMovedPermanently)
-	})
+	mux.Get(UIPrefix, a.uiFiles)
 	mux.Get(UIPrefix+"/*", a.uiFiles)
 }
 
@@ -80,13 +64,6 @@ func NewAPI(config *Config, tracer tracing.TracingInterface, monitor monitoring.
 	a := new(API)
 
 	a.fileServer = http.FileServer(http.FS(config.DistFS))
-	if config.BaseURL != "" {
-		url, err := url.Parse(config.BaseURL)
-		if err != nil {
-			panic(fmt.Errorf("invalid Base URL provided: %s", err))
-		}
-		a.BaseURL = url
-	}
 
 	a.tracer = tracer
 	a.monitor = monitor

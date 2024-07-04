@@ -18,8 +18,7 @@ import (
 const UIPrefix = "/ui"
 
 type Config struct {
-	DistFS  fs.FS
-	BaseURL string
+	DistFS fs.FS
 }
 
 type API struct {

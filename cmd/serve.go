@@ -122,8 +122,7 @@ func serve() {
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
 	uiConfig := &ui.Config{
-		DistFS:  distFS,
-		BaseURL: specs.BaseURL,
+		DistFS: distFS,
 	}
 
 	if specs.AuthorizationEnabled {

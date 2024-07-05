@@ -21,7 +21,7 @@ const Panels = () => {
       case panels.identityCreate:
         return <IdentityCreate />;
       default:
-        return <div id="rebac-admin-panel"></div>;
+        return null;
     }
   };
   return <>{generatePanel()}</>;

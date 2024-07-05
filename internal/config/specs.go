@@ -19,8 +19,9 @@ type EnvSpec struct {
 
 	KubeconfigFile string `envconfig:"kubeconfig_file"`
 
-	KratosPublicURL     string `envconfig:"kratos_public_url" required:"true"`
-	KratosAdminURL      string `envconfig:"kratos_admin_url" required:"true"`
+	KratosPublicURL string `envconfig:"kratos_public_url" required:"true"`
+	KratosAdminURL  string `envconfig:"kratos_admin_url" required:"true"`
+	// with no slash suffix
 	HydraAdminURL       string `envconfig:"hydra_admin_url" required:"true"`
 	OathkeeperPublicURL string `envconfig:"oathkeeper_public_url" required:"true"`
 

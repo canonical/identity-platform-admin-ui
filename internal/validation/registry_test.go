@@ -234,13 +234,9 @@ func TestNewValidationError(t *testing.T) {
 		t.Fatalf("response message does not match expected")
 	}
 
-	expectedData := map[string][]string{
-		"first_name": {
-			"value '' fails validation of type `required`",
-		},
-	}
+	expectedData := map[string][]string{"first_name": {"Missing required field 'first_name'"}}
 
 	if !reflect.DeepEqual(expectedData, response.Data) {
-		t.Fatalf("response data does not match expected validation errors")
+		t.Fatalf("Expected '%s', got '%s'", expectedData, response.Data)
 	}
 }

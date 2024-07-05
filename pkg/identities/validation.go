@@ -6,11 +6,13 @@ package identities
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -29,6 +31,8 @@ var (
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -50,7 +54,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateIdentity(method, endpoint) {
 		createIdentity := new(CreateIdentityRequest)
 		if err := json.Unmarshal(body, createIdentity); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(createIdentity)
@@ -59,7 +64,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	} else if p.isUpdateIdentity(method, endpoint) {
 		updateIdentity := new(UpdateIdentityRequest)
 		if err := json.Unmarshal(body, updateIdentity); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(updateIdentity)
@@ -86,9 +92,10 @@ func (p *PayloadValidator) isUpdateIdentity(method, endpoint string) bool {
 	return strings.HasPrefix(endpoint, "/") && method == http.MethodPut
 }
 
-func NewIdentitiesPayloadValidator(apiKey string) *PayloadValidator {
+func NewIdentitiesPayloadValidator(apiKey string, logger logging.LoggerInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
+	p.logger = logger
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()

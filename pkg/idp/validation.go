@@ -6,17 +6,21 @@ package idp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -35,7 +39,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateIdP(method, endpoint) || p.isPartialUpdateIdP(method, endpoint) {
 		conf := new(Configuration)
 		if err := json.Unmarshal(body, conf); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(conf)
@@ -61,9 +66,10 @@ func (p *PayloadValidator) isPartialUpdateIdP(method, endpoint string) bool {
 	return method == http.MethodPatch && strings.HasPrefix(endpoint, "/")
 }
 
-func NewIdPPayloadValidator(apiKey string) *PayloadValidator {
+func NewIdPPayloadValidator(apiKey string, logger logging.LoggerInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
+	p.logger = logger
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()

@@ -1,8 +1,7 @@
+import { SideNavigation } from "@canonical/react-components";
 import { FC } from "react";
-import { NavLink } from "react-router-dom";
-import { Button, Icon } from "@canonical/react-components";
-import classnames from "classnames";
-import Logo from "components/Logo";
+import { NavLink, NavLinkProps } from "react-router-dom";
+import { Button } from "@canonical/react-components";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
 
 type Props = {
@@ -13,125 +12,76 @@ type Props = {
 const Navigation: FC<Props> = ({ username, logout }) => {
   return (
     <>
-      <header className="l-navigation-bar">
-        <div className="p-panel is-dark">
-          <div className="p-panel__header">
-            <Logo />
-            <div className="p-panel__controls">
-              <Button dense className="p-panel__toggle">
-                Menu
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-      <nav aria-label="main navigation" className={classnames("l-navigation")}>
-        <div className="l-navigation__drawer">
-          <div className="p-panel is-dark">
-            <div className="p-panel__header is-sticky">
-              <Logo />
-            </div>
-            <div className="p-panel__content">
-              <div className="p-side-navigation--icons is-dark">
-                <ul className="p-side-navigation__list sidenav-top-ul">
-                  <li className="p-side-navigation__item secondary">
-                    <NavLink
-                      className="p-side-navigation__link"
-                      to="/provider"
-                      title={`Provider list`}
-                    >
-                      <Icon
-                        className="is-light p-side-navigation__icon"
-                        name="plans"
-                      />{" "}
-                      Identity providers
-                    </NavLink>
-                  </li>
-                  <li className="p-side-navigation__item secondary">
-                    <NavLink
-                      className="p-side-navigation__link"
-                      to="/client"
-                      title={`Client list`}
-                    >
-                      <Icon
-                        className="is-light p-side-navigation__icon"
-                        name="applications"
-                      />{" "}
-                      Clients
-                    </NavLink>
-                  </li>
-                  <li className="p-side-navigation__item secondary">
-                    <NavLink
-                      className="p-side-navigation__link"
-                      to="/identity"
-                      title={`Identity list`}
-                    >
-                      <Icon
-                        className="is-light p-side-navigation__icon"
-                        name="user"
-                      />{" "}
-                      Identities
-                    </NavLink>
-                  </li>
-                  <li className="p-side-navigation__item secondary">
-                    <NavLink
-                      className="p-side-navigation__link"
-                      to="/schema"
-                      title={`Schema list`}
-                    >
-                      <Icon
-                        className="is-light p-side-navigation__icon"
-                        name="profile"
-                      />{" "}
-                      Schemas
-                    </NavLink>
-                  </li>
-                  <li className="p-side-navigation__item secondary">
-                    <GroupsLink
-                      className="p-side-navigation__link"
-                      baseURL="/"
-                      icon="user-group"
-                      iconIsLight
-                    />
-                  </li>
-                  <li className="p-side-navigation__item secondary">
-                    <RolesLink
-                      className="p-side-navigation__link"
-                      baseURL="/"
-                      icon="profile"
-                      iconIsLight
-                    />
-                  </li>
-                </ul>
-              </div>
-              <div className="p-side-navigation--icons is-dark p-side-navigation--user-menu">
-                <ul className="p-side-navigation__list">
-                  <li className="p-side-navigation__item">
-                    <span className="p-side-navigation__text">
-                      <Icon
-                        className="is-light p-side-navigation__icon"
-                        name="user"
-                      />{" "}
-                      {username}
-                    </span>
-                  </li>
-                  <li className="p-side-navigation__item">
-                    <Button
-                      appearance="link"
-                      className="p-side-navigation__link"
-                      onClick={() => {
-                        logout();
-                      }}
-                    >
-                      Logout
-                    </Button>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <SideNavigation<NavLinkProps>
+        dark={true}
+        items={[
+          {
+            items: [
+              {
+                icon: "plans",
+                label: "Identity providers",
+                to: "/provider",
+              },
+              {
+                icon: "applications",
+                label: "Clients",
+                to: "/client",
+              },
+              {
+                icon: "user",
+                label: "Identities",
+                to: "/identity",
+              },
+              {
+                icon: "profile",
+                label: "Schemas",
+                to: "/schema",
+              },
+              <GroupsLink
+                className="p-side-navigation__link"
+                baseURL="/"
+                icon="user-group"
+                iconIsLight
+                key="groups"
+              />,
+              <RolesLink
+                className="p-side-navigation__link"
+                baseURL="/"
+                icon="profile"
+                iconIsLight
+                key="roles"
+              />,
+            ],
+          },
+        ]}
+        linkComponent={NavLink}
+      />
+      <SideNavigation
+        className="p-side-navigation--user-menu"
+        dark={true}
+        items={[
+          {
+            items: [
+              {
+                icon: "user",
+                label: username,
+                nonInteractive: true,
+              },
+              <Button
+                appearance="link"
+                className="p-side-navigation__link"
+                onClick={() => {
+                  logout();
+                }}
+                key="logout"
+              >
+                Logout
+              </Button>,
+            ],
+          },
+        ]}
+        linkComponent={NavLink}
+      />
     </>
   );
 };

@@ -1,8 +1,13 @@
 import { FC } from "react";
-import { Button, Col, MainTable, Row } from "@canonical/react-components";
+import {
+  Button,
+  Col,
+  MainTable,
+  NotificationConsumer,
+  Row,
+} from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchProviders } from "api/provider";
 import usePanelParams from "util/usePanelParams";
 import EditProviderBtn from "pages/providers/EditProviderBtn";

@@ -1,8 +1,12 @@
 import React, { FC } from "react";
-import { Col, MainTable, Row } from "@canonical/react-components";
+import {
+  Col,
+  MainTable,
+  Row,
+  NotificationConsumer,
+} from "@canonical/react-components";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
-import { NotificationConsumer } from "@canonical/react-components/dist/components/NotificationProvider/NotificationProvider";
 import { fetchSchemas } from "api/schema";
 import Loader from "components/Loader";
 import Pagination from "components/Pagination";

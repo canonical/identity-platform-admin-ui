@@ -12,8 +12,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
+	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
@@ -23,19 +25,28 @@ const (
 )
 
 type Config struct {
-	Enabled                     bool     `validate:"required,boolean"`
-	AuthCookieTTLSeconds        int      `validate:"required"`
-	UserSessionCookieTTLSeconds int      `validate:"required"`
-	CookiesEncryptionKey        string   `validate:"required,min=32,max=32"`
-	issuer                      string   `validate:"required"`
-	clientID                    string   `validate:"required"`
-	clientSecret                string   `validate:"required"`
-	redirectURL                 string   `validate:"required"`
-	verificationStrategy        string   `validate:"required,oneof=jwks userinfo"`
-	scopes                      []string `validate:"required,dive,required"`
+	Enabled                     bool                         `validate:"required,boolean"`
+	AuthCookieTTLSeconds        int                          `validate:"required"`
+	UserSessionCookieTTLSeconds int                          `validate:"required"`
+	CookiesEncryptionKey        string                       `validate:"required,min=32,max=32"`
+	issuer                      string                       `validate:"required"`
+	clientID                    string                       `validate:"required"`
+	clientSecret                string                       `validate:"required"`
+	redirectURL                 string                       `validate:"required"`
+	verificationStrategy        string                       `validate:"required,oneof=jwks userinfo"`
+	scopes                      []string                     `validate:"required,dive,required"`
+	hydraPublicAPIClient        clients.HydraClientInterface `validate:"required"`
+	hydraAdminAPIClient         clients.HydraClientInterface `validate:"required"`
 }
 
-func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redirectURL, verificationStrategy string, authCookiesTTLSeconds, userSessionCookieTTLSeconds int, cookiesEncryptionKey string, scopes []string) *Config {
+func NewAuthenticationConfig(
+	enabled bool,
+	issuer, clientID, clientSecret, redirectURL, verificationStrategy string,
+	authCookiesTTLSeconds, userSessionCookieTTLSeconds int,
+	cookiesEncryptionKey string,
+	scopes []string,
+	hydraPublicAPIClient, hydraAdminAPIClient *hydra.Client,
+) *Config {
 	c := new(Config)
 	c.Enabled = enabled
 	c.CookiesEncryptionKey = cookiesEncryptionKey
@@ -49,6 +60,8 @@ func NewAuthenticationConfig(enabled bool, issuer, clientID, clientSecret, redir
 	c.AuthCookieTTLSeconds = authCookiesTTLSeconds
 	c.UserSessionCookieTTLSeconds = userSessionCookieTTLSeconds
 
+	c.hydraPublicAPIClient = hydraPublicAPIClient
+	c.hydraAdminAPIClient = hydraAdminAPIClient
 	return c
 }
 
@@ -67,6 +80,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get("/api/v0/auth", a.handleLogin)
 	mux.Get("/api/v0/auth/callback", a.handleCallback)
 	mux.Get("/api/v0/auth/me", a.handleMe)
+	mux.Get("/api/v0/auth/logout", a.handleLogout)
 }
 
 func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -214,6 +228,23 @@ func (a *API) internalServerError(w http.ResponseWriter, err error) {
 			Message: err.Error(),
 		},
 	)
+}
+
+func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	err := a.oauth2.Logout(ctx, PrincipalFromContext(ctx))
+	if err != nil {
+		a.logger.Errorf("logout request failed, err %v", err)
+		a.badRequest(w, err)
+		return
+	}
+
+	a.cookieManager.ClearIDTokenCookie(w)
+	a.cookieManager.ClearAccessTokenCookie(w)
+	a.cookieManager.ClearRefreshTokenCookie(w)
+
+	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
 }
 
 func NewAPI(

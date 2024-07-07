@@ -71,8 +71,9 @@ func serve() {
 		logger.Fatalf("issue with ui files %s", err)
 	}
 
+	hydraAdminClient := ih.NewClient(specs.HydraAdminURL, specs.Debug)
 	externalConfig := web.NewExternalClientsConfig(
-		ih.NewClient(specs.HydraAdminURL, specs.Debug),
+		hydraAdminClient,
 		ik.NewClient(specs.KratosAdminURL, specs.Debug),
 		ik.NewClient(specs.KratosPublicURL, specs.Debug),
 		io.NewClient(specs.OathkeeperPublicURL, specs.Debug),
@@ -149,6 +150,8 @@ func serve() {
 		specs.OAuth2UserSessionTTLSeconds,
 		specs.OAuth2AuthCookiesEncryptionKey,
 		specs.OAuth2CodeGrantScopes,
+		ih.NewClient(specs.OIDCIssuer, specs.Debug),
+		hydraAdminClient,
 	)
 
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)

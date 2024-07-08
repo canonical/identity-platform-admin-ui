@@ -135,7 +135,6 @@ func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string, path
 func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
 	cookie, err := r.Cookie(name)
 	if err != nil {
-		a.logger.Errorf("can't get cookie %s, %v", name, err)
 		return ""
 	}
 

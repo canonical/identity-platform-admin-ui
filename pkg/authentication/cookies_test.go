@@ -154,7 +154,6 @@ func TestAuthCookieManager_GetNonceCookieFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockLogger := NewMockLoggerInterface(ctrl)
-	mockLogger.EXPECT().Errorf("can't get cookie %s, %v", "nonce", gomock.Any()).Times(1)
 	mockRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewAuthCookieManager(5, 5, nil, mockLogger)
@@ -208,7 +207,6 @@ func TestAuthCookieManager_GetStateCookieFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockLogger := NewMockLoggerInterface(ctrl)
-	mockLogger.EXPECT().Errorf("can't get cookie %s, %v", "state", gomock.Any()).Times(1)
 	mockRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewAuthCookieManager(5, 5, nil, mockLogger)
@@ -262,7 +260,6 @@ func TestAuthCookieManager_GetIDTokenCookieFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockLogger := NewMockLoggerInterface(ctrl)
-	mockLogger.EXPECT().Errorf("can't get cookie %s, %v", "id-token", gomock.Any()).Times(1)
 	mockRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewAuthCookieManager(5, 5, nil, mockLogger)
@@ -316,7 +313,6 @@ func TestAuthCookieManager_GetAccessTokenCookieFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockLogger := NewMockLoggerInterface(ctrl)
-	mockLogger.EXPECT().Errorf("can't get cookie %s, %v", "access-token", gomock.Any()).Times(1)
 	mockRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewAuthCookieManager(5, 5, nil, mockLogger)
@@ -370,7 +366,6 @@ func TestAuthCookieManager_GetRefreshTokenCookieFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	mockLogger := NewMockLoggerInterface(ctrl)
-	mockLogger.EXPECT().Errorf("can't get cookie %s, %v", "refresh-token", gomock.Any()).Times(1)
 	mockRequest := httptest.NewRequest(http.MethodGet, "/", nil)
 
 	manager := NewAuthCookieManager(5, 5, nil, mockLogger)

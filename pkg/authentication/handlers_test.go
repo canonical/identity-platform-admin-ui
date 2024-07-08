@@ -244,7 +244,6 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			request: mockRequestNoStateCookie,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier, encrypt *MockEncryptInterface) {
 				logger.EXPECT().Error("state cookie not found")
-				logger.EXPECT().Errorf("can't get cookie %s, %v", "state", gomock.Any())
 			},
 			errorMessage: "state cookie not found",
 		},
@@ -301,7 +300,6 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier, encrypt *MockEncryptInterface) {
 				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				logger.EXPECT().Error("nonce cookie not found")
-				logger.EXPECT().Errorf("can't get cookie %s, %v", "nonce", gomock.Any())
 				mockToken = mockToken.WithExtra(map[string]interface{}{"id_token": "mock-id-token"})
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 

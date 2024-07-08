@@ -86,6 +86,12 @@ type AuthCookieManagerInterface interface {
 	GetRefreshTokenCookie(*http.Request) string
 	// ClearRefreshTokenCookie sets the expiration of the cookie to epoch
 	ClearRefreshTokenCookie(http.ResponseWriter)
+	// SetNextToCookie sets the encrypted nextTo relative url value cookie
+	SetNextToCookie(http.ResponseWriter, string)
+	// GetNextToCookie  returns the string value of the nextTo cookie if present, or empty string otherwise
+	GetNextToCookie(*http.Request) string
+	// ClearNextToCookie sets the expiration of the cookie to epoch
+	ClearNextToCookie(http.ResponseWriter)
 }
 
 type EncryptInterface interface {

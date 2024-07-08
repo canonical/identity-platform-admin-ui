@@ -63,6 +63,7 @@ func TestHandleLogin(t *testing.T) {
 	}
 
 	api := NewAPI(
+		"",
 		NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor),
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -143,6 +144,7 @@ func TestHandleLoginCallback(t *testing.T) {
 	mockResponse := httptest.NewRecorder()
 
 	api := NewAPI(
+		"",
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -349,6 +351,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			mockResponse := httptest.NewRecorder()
 
 			api := NewAPI(
+				"",
 				mockOauth2Ctx,
 				mockHelper,
 				NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -404,6 +407,7 @@ func TestHandleMe(t *testing.T) {
 	mockResponse := httptest.NewRecorder()
 
 	api := NewAPI(
+		"",
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -473,6 +477,7 @@ func TestLogout(t *testing.T) {
 
 				m.EXPECT().ClearNonceCookie(gomock.Any()).Times(1)
 				m.EXPECT().ClearStateCookie(gomock.Any()).Times(1)
+				m.EXPECT().ClearNextToCookie(gomock.Any()).Times(1)
 			},
 		},
 	} {
@@ -499,6 +504,7 @@ func TestLogout(t *testing.T) {
 
 			mockCookieManager := NewMockAuthCookieManagerInterface(ctrl)
 			api := NewAPI(
+				"",
 				mockOauth2Ctx,
 				mockHelper,
 				mockCookieManager,

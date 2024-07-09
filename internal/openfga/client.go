@@ -145,6 +145,9 @@ func (c *Client) WriteTuple(ctx context.Context, user, relation, object string) 
 	ctx, span := c.tracer.Start(ctx, "openfga.Client.WriteTuple")
 	defer span.End()
 
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	r := c.c.Write(ctx)
 	body := client.ClientWriteRequest{
 		Writes: []openfga.TupleKey{

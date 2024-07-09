@@ -33,7 +33,6 @@ type OpenFGAClientInterface interface {
 type AuthorizerClientInterface interface {
 	ListObjects(context.Context, string, string, string) ([]string, error)
 	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
-	WriteTuple(ctx context.Context, user, relation, object string) error
 }
 
 type O11yConfigInterface interface {

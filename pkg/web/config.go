@@ -53,7 +53,7 @@ type ExternalClientsConfig struct {
 	kratosPublic     *ik.Client
 	oathkeeperPublic *io.Client
 	ofga             OpenFGAClientInterface
-	authorizer       OpenFGAClientInterface
+	authorizer       AuthorizerClientInterface
 }
 
 // HydraAdmin returns an hydra client to interact with the admin API
@@ -82,17 +82,17 @@ func (c *ExternalClientsConfig) OpenFGA() OpenFGAClientInterface {
 }
 
 // Authorizer returns an openfga client used for the authorization middleware
-func (c *ExternalClientsConfig) Authorizer() OpenFGAClientInterface {
+func (c *ExternalClientsConfig) Authorizer() AuthorizerClientInterface {
 	return c.authorizer
 }
 
 // SetAuthorizer sets the authorization middleware
-func (c *ExternalClientsConfig) SetAuthorizer(o OpenFGAClientInterface) {
+func (c *ExternalClientsConfig) SetAuthorizer(o AuthorizerClientInterface) {
 	c.authorizer = o
 }
 
 // NewExternalClientsConfig create a third party config object for all the external clients needed
-func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, oathkeeper *io.Client, ofga OpenFGAClientInterface, authorizer OpenFGAClientInterface) *ExternalClientsConfig {
+func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, oathkeeper *io.Client, ofga OpenFGAClientInterface, authorizer AuthorizerClientInterface) *ExternalClientsConfig {
 	c := new(ExternalClientsConfig)
 
 	c.hydraAdmin = hydra

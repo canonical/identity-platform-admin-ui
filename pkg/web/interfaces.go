@@ -30,6 +30,12 @@ type OpenFGAClientInterface interface {
 	ReadTuples(context.Context, string, string, string, string) (*openfga.ReadResponse, error)
 }
 
+type AuthorizerClientInterface interface {
+	ListObjects(context.Context, string, string, string) ([]string, error)
+	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
+	WriteTuple(ctx context.Context, user, relation, object string) error
+}
+
 type O11yConfigInterface interface {
 	Tracer() trace.Tracer
 	Monitor() monitoring.MonitorInterface
@@ -40,5 +46,5 @@ type ExternalClientsConfigInterface interface {
 	HydraAdmin() *ih.Client
 	KratosAdmin() *ik.Client
 	OpenFGA() OpenFGAClientInterface
-	Authorizer() OpenFGAClientInterface
+	Authorizer() AuthorizerClientInterface
 }

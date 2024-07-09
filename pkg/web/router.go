@@ -77,7 +77,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		middlewareCORS([]string{"*"}),
 	)
 	authorizationMiddleware := authorization.NewMiddleware(
-		authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger,
+		authorization.NewAuthorizer(externalConfig.OpenFGA(), tracer, monitor, logger), monitor, logger,
 	).Authorize()
 
 	// TODO @shipperizer add a proper configuration to enable http logger middleware as it's expensive

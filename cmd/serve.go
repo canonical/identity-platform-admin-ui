@@ -90,14 +90,8 @@ func serve() {
 				logger,
 			),
 		),
-		// default to noop client for authorization
-		openfga.NewNoopClient(tracer, monitor, logger),
+		nil,
 	)
-
-	if specs.AuthorizationEnabled {
-		logger.Info("Authorization is enabled")
-		externalConfig.SetAuthorizer(externalConfig.OpenFGA())
-	}
 
 	k8sCoreV1, err := k8s.NewCoreV1Client(specs.KubeconfigFile)
 
@@ -132,10 +126,21 @@ func serve() {
 			monitor,
 			logger,
 		)
+		logger.Info("Authorization is enabled")
+		externalConfig.SetAuthorizer(authorizer)
 
 		if authorizer.ValidateModel(context.Background()) != nil {
 			panic("Invalid authorization model provided")
 		}
+	} else {
+		authorizer := authorization.NewAuthorizer(
+			openfga.NewNoopClient(tracer, monitor, logger),
+			tracer,
+			monitor,
+			logger,
+		)
+		logger.Info("Using noop authorizer")
+		externalConfig.SetAuthorizer(authorizer)
 	}
 
 	oauth2Config := authentication.NewAuthenticationConfig(

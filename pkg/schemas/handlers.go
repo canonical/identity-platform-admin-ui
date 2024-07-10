@@ -361,7 +361,7 @@ func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
 
 	a.apiKey = "schemas"
 	a.service = service
-	a.payloadValidator = NewSchemasPayloadValidator(a.apiKey)
+	a.payloadValidator = NewSchemasPayloadValidator(a.apiKey, logger)
 	a.logger = logger
 
 	return a

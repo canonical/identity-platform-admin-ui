@@ -6,12 +6,14 @@ package schemas
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	kClient "github.com/ory/kratos-client-go"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -24,6 +26,8 @@ var (
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -56,7 +60,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateSchema(method, endpoint) || p.isPartialUpdate(method, endpoint) {
 		schema := new(kClient.IdentitySchemaContainer)
 		if err := json.Unmarshal(body, schema); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(schema)
@@ -66,7 +71,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isUpdateDefaultSchema(method, endpoint) {
 		schema := new(DefaultSchema)
 		if err := json.Unmarshal(body, schema); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(schema)
@@ -84,9 +90,10 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	return ctx, err.(validator.ValidationErrors), nil
 }
 
-func NewSchemasPayloadValidator(apiKey string) *PayloadValidator {
+func NewSchemasPayloadValidator(apiKey string, logger logging.LoggerInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
+	p.logger = logger
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()

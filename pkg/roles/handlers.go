@@ -495,7 +495,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 	a := new(API)
 
 	a.service = service
-	a.payloadValidator = NewRolesPayloadValidator(a.apiKey)
+	a.payloadValidator = NewRolesPayloadValidator(a.apiKey, tracer, monitor, logger)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

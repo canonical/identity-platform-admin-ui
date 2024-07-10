@@ -6,12 +6,14 @@ package rules
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	oathkeeper "github.com/ory/oathkeeper-client-go"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -40,6 +42,8 @@ var (
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -61,7 +65,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateOrUpdateRule(method, endpoint) {
 		ruleRequest := new(oathkeeper.Rule)
 		if err := json.Unmarshal(body, ruleRequest); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(ruleRequest)
@@ -84,9 +89,10 @@ func (p *PayloadValidator) isCreateOrUpdateRule(method string, endpoint string) 
 	return (method == http.MethodPost && endpoint == "") || (method == http.MethodPut && strings.HasPrefix(endpoint, "/"))
 }
 
-func NewRulesPayloadValidator(apiKey string) *PayloadValidator {
+func NewRulesPayloadValidator(apiKey string, logger logging.LoggerInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
+	p.logger = logger
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()

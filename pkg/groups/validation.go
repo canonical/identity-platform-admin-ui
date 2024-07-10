@@ -6,18 +6,24 @@ package groups
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/non-standard/validators"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
+	tracer tracing.TracingInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -35,7 +41,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateGroup(method, endpoint) {
 		group := new(Group)
 		if err := json.Unmarshal(body, group); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(group)
@@ -50,7 +57,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isAssignRoles(method, endpoint) {
 		updateRoles := new(UpdateRolesRequest)
 		if err := json.Unmarshal(body, updateRoles); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(updateRoles)
@@ -60,7 +68,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isAssignPermissions(method, endpoint) {
 		updatePermissions := new(UpdatePermissionsRequest)
 		if err := json.Unmarshal(body, updatePermissions); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(updatePermissions)
@@ -70,7 +79,8 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isAssignIdentities(method, endpoint) {
 		updateIdentities := new(UpdateIdentitiesRequest)
 		if err := json.Unmarshal(body, updateIdentities); err != nil {
-			return ctx, nil, err
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(updateIdentities)
@@ -108,12 +118,14 @@ func (p *PayloadValidator) isAssignIdentities(method, endpoint string) bool {
 	return method == http.MethodPatch && strings.HasSuffix(endpoint, "/identities")
 }
 
-func NewGroupsPayloadValidator(apiKey string) *PayloadValidator {
+func NewGroupsPayloadValidator(apiKey string, logger logging.LoggerInterface, tracer tracing.TracingInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()
 
+	p.logger = logger
+	p.tracer = tracer
 	return p
 }

@@ -6,12 +6,14 @@ package clients
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	client "github.com/ory/hydra-client-go/v2"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -32,6 +34,8 @@ var (
 type PayloadValidator struct {
 	apiKey    string
 	validator *validator.Validate
+
+	logger logging.LoggerInterface
 }
 
 func (p *PayloadValidator) setupValidator() {
@@ -49,7 +53,9 @@ func (p *PayloadValidator) Validate(ctx context.Context, method, endpoint string
 	if p.isCreateClient(method, endpoint) || p.isUpdateClient(method, endpoint) {
 		clientRequest := new(client.OAuth2Client)
 		if err := json.Unmarshal(body, clientRequest); err != nil {
-			return ctx, nil, err
+			// TODO(nsklikas): evaluate usage of logger
+			p.logger.Error("Json parsing error: ", err)
+			return ctx, nil, fmt.Errorf("failed to parse JSON body")
 		}
 
 		err = p.validator.Struct(clientRequest)
@@ -76,9 +82,10 @@ func (p *PayloadValidator) isUpdateClient(method string, endpoint string) bool {
 	return method == http.MethodPut && strings.HasPrefix(endpoint, "/")
 }
 
-func NewClientsPayloadValidator(apiKey string) *PayloadValidator {
+func NewClientsPayloadValidator(apiKey string, logger logging.LoggerInterface) *PayloadValidator {
 	p := new(PayloadValidator)
 	p.apiKey = apiKey
+	p.logger = logger
 	p.validator = validation.NewValidator()
 
 	p.setupValidator()

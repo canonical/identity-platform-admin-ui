@@ -40,15 +40,22 @@ func buildErrorData(errors validator.ValidationErrors) map[string][]string {
 	for _, e := range errors {
 		field := e.Field()
 
+		var errMsg string
+		switch e.Tag() {
+		case "required":
+			errMsg = fmt.Sprintf("Missing required field '%s'", field)
+		case "oneof", "httpmethod":
+			errMsg = fmt.Sprintf("Field '%s' must be one of '%s'", field, e.Param())
+		default:
+			errMsg = e.Error()
+		}
+
 		failures, ok := failedValidations[field]
 		if !ok {
 			failedValidations[field] = make([]string, 0)
 		}
 
-		failures = append(
-			failures,
-			fmt.Sprintf("value '%s' fails validation of type `%s`", e.Value(), e.Tag()),
-		)
+		failures = append(failures, errMsg)
 		failedValidations[field] = failures
 	}
 

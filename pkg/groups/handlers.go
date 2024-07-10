@@ -724,7 +724,7 @@ func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor m
 
 	a.apiKey = "groups"
 	a.service = service
-	a.payloadValidator = NewGroupsPayloadValidator(a.apiKey)
+	a.payloadValidator = NewGroupsPayloadValidator(a.apiKey, logger, tracer)
 	a.logger = logger
 	a.tracer = tracer
 	a.monitor = monitor

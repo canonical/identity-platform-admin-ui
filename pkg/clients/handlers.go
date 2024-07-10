@@ -13,6 +13,8 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -21,7 +23,9 @@ type API struct {
 	service          ServiceInterface
 	payloadValidator validation.PayloadValidatorInterface
 
-	logger logging.LoggerInterface
+	tracer  tracing.TracingInterface
+	monitor monitoring.MonitorInterface
+	logger  logging.LoggerInterface
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -197,12 +201,20 @@ func (a *API) parseListClientsRequest(r *http.Request) (*ListClientsRequest, err
 	return NewListClientsRequest(cn, owner, page_token, size), nil
 }
 
-func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
+func NewAPI(
+	service ServiceInterface,
+	tracer tracing.TracingInterface,
+	monitor monitoring.MonitorInterface,
+	logger logging.LoggerInterface,
+) *API {
 	a := new(API)
 	a.apiKey = "clients"
 
 	a.service = service
 	a.payloadValidator = NewClientsPayloadValidator(a.apiKey, logger)
+
+	a.tracer = tracer
+	a.monitor = monitor
 	a.logger = logger
 
 	return a

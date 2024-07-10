@@ -32,6 +32,8 @@ func TestHandleListSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -90,7 +92,7 @@ func TestHandleListSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?page_token=eyJvZmZzZXQiOjB9&size=100", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -128,6 +130,8 @@ func TestHandleListFailed(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	var offset int64 = 0
@@ -138,7 +142,7 @@ func TestHandleListFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?pageToken=0&offset=100", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -173,6 +177,8 @@ func TestHandleDetailSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -207,7 +213,7 @@ func TestHandleDetailSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules/mocked_rule1:allow", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -245,6 +251,8 @@ func TestHandleDetailFailed(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	mockService.EXPECT().GetRule(gomock.Any(), "mocked_rule1:allow").Return(nil, fmt.Errorf("mock_error"))
@@ -252,7 +260,7 @@ func TestHandleDetailFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules/mocked_rule1:allow", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -287,6 +295,8 @@ func TestHandleUpdateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -321,7 +331,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, "/api/v0/rules/mocked_rule1:allow", bytes.NewReader(payload))
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -353,6 +363,8 @@ func TestHandleUpdateFailed(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -387,7 +399,7 @@ func TestHandleUpdateFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, "/api/v0/rules/mocked_rule1:allow", bytes.NewReader(payload))
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -422,6 +434,8 @@ func TestHandleCreateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -456,7 +470,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/rules", bytes.NewReader(payload))
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -488,6 +502,8 @@ func TestHandleCreateFailed(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	string_athenticator_handler := "cookie_session"
@@ -522,7 +538,7 @@ func TestHandleCreateFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/rules", bytes.NewReader(payload))
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -557,6 +573,8 @@ func TestHandleRemoveSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	mockService.EXPECT().DeleteRule(gomock.Any(), "mocked_rule1:allow").Return(nil)
@@ -564,7 +582,7 @@ func TestHandleRemoveSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodDelete, "/api/v0/rules/mocked_rule1:allow", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -596,6 +614,8 @@ func TestHandleRemoveFailed(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	mockService.EXPECT().DeleteRule(gomock.Any(), "mocked_rule1:allow").Return(fmt.Errorf("mock_error"))
@@ -603,7 +623,7 @@ func TestHandleRemoveFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodDelete, "/api/v0/rules/mocked_rule1:allow", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -638,6 +658,8 @@ func TestRegisterValidation(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
 
@@ -650,10 +672,10 @@ func TestRegisterValidation(t *testing.T) {
 		Return(fmt.Errorf("key is already registered"))
 
 	// first registration of `apiKey` is successful
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 
 	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
 
 	// second registration of `apiKey` causes logger.Fatal invocation
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }

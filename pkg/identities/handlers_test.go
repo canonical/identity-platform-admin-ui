@@ -34,6 +34,8 @@ func TestHandleListSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	identities := make([]kClient.Identity, 0)
@@ -60,7 +62,7 @@ func TestHandleListSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -118,6 +120,8 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/identities", nil)
@@ -134,7 +138,7 @@ func TestHandleListFailAndPropagatesKratosError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -169,6 +173,8 @@ func TestHandleDetailSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -180,7 +186,7 @@ func TestHandleDetailSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -242,6 +248,8 @@ func TestHandleDetailFailAndPropagatesKratosError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -256,7 +264,7 @@ func TestHandleDetailFailAndPropagatesKratosError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -291,6 +299,8 @@ func TestHandleCreateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	identity := kClient.NewIdentity("test", "test.json", "https://test.com/test.json", map[string]string{"name": "name"})
@@ -306,7 +316,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -368,6 +378,8 @@ func TestHandleCreateFailAndPropagatesKratosError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	identityBody := kClient.NewCreateIdentityBodyWithDefaults()
@@ -387,7 +399,7 @@ func TestHandleCreateFailAndPropagatesKratosError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -422,13 +434,15 @@ func TestHandleCreateFailBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/identities", strings.NewReader("test"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -459,6 +473,8 @@ func TestHandleUpdateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -477,7 +493,7 @@ func TestHandleUpdateSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -539,6 +555,8 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	identityBody := kClient.NewUpdateIdentityBodyWithDefaults()
@@ -559,7 +577,7 @@ func TestHandleUpdateFailAndPropagatesKratosError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -594,13 +612,15 @@ func TestHandleUpdateFailBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPut, "/api/v0/identities/test", strings.NewReader("test"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -631,6 +651,8 @@ func TestHandleRemoveSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -641,7 +663,7 @@ func TestHandleRemoveSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -675,6 +697,8 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -689,7 +713,7 @@ func TestHandleRemoveFailAndPropagatesKratosError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -724,6 +748,8 @@ func TestRegisterValidation(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
 
@@ -736,10 +762,10 @@ func TestRegisterValidation(t *testing.T) {
 		Return(fmt.Errorf("key is already registered"))
 
 	// first registration of `apiKey` is successful
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 
 	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
 
 	// second registration of `apiKey` causes logger.Fatal invocation
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }

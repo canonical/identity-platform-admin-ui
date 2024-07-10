@@ -95,26 +95,36 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	identitiesAPI := identities.NewAPI(
 		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	clientsAPI := clients.NewAPI(
 		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	idpAPI := idp.NewAPI(
 		idp.NewService(idpConfig, tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	schemasAPI := schemas.NewAPI(
 		schemas.NewService(schemasConfig, tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	rulesAPI := rules.NewAPI(
 		rules.NewService(rulesConfig, tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 

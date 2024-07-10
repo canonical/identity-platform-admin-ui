@@ -12,6 +12,8 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 
 	"github.com/go-chi/chi/v5"
@@ -25,7 +27,9 @@ type API struct {
 	service          ServiceInterface
 	payloadValidator validation.PayloadValidatorInterface
 
-	logger logging.LoggerInterface
+	tracer  tracing.TracingInterface
+	monitor monitoring.MonitorInterface
+	logger  logging.LoggerInterface
 }
 
 type PageToken struct {
@@ -302,11 +306,14 @@ func (a *API) handleRemove(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
+func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "rules"
 	a.payloadValidator = NewRulesPayloadValidator(a.apiKey, logger)
 	a.service = service
+
+	a.tracer = tracer
+	a.monitor = monitor
 	a.logger = logger
 
 	return a

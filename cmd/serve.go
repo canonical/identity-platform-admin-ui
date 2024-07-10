@@ -122,8 +122,7 @@ func serve() {
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
 	uiConfig := &ui.Config{
-		DistFS:  distFS,
-		BaseURL: specs.BaseURL,
+		DistFS: distFS,
 	}
 
 	if specs.AuthorizationEnabled {
@@ -156,7 +155,7 @@ func serve() {
 
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
+	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
 
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()

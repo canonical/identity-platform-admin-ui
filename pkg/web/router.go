@@ -30,6 +30,7 @@ import (
 )
 
 type RouterConfig struct {
+	contextPath              string
 	payloadValidationEnabled bool
 	idp                      *idp.Config
 	schemas                  *schemas.Config
@@ -40,8 +41,9 @@ type RouterConfig struct {
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, olly O11yConfigInterface) *RouterConfig {
+func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, olly O11yConfigInterface) *RouterConfig {
 	return &RouterConfig{
+		contextPath:              contextPath,
 		payloadValidationEnabled: payloadValidationEnabled,
 		idp:                      idp,
 		schemas:                  schemas,
@@ -188,6 +190,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	if oauth2Config.Enabled {
 
 		login := authentication.NewAPI(
+			config.contextPath,
 			oauth2Context,
 			authentication.NewOAuth2Helper(),
 			cookieManager,

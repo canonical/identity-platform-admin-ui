@@ -15,6 +15,7 @@ const (
 	authCookiePath    = "/api/v0/auth/callback"
 	nonceCookieName   = "nonce"
 	stateCookieName   = "state"
+	nextToCookieName  = "nextTo"
 	itCookieName      = "id-token"
 	atCookieName      = "access-token"
 	rtCookieName      = "refresh-token"
@@ -92,6 +93,18 @@ func (a *AuthCookieManager) ClearStateCookie(w http.ResponseWriter) {
 	a.clearCookie(w, stateCookieName, authCookiePath)
 }
 
+func (a *AuthCookieManager) SetNextToCookie(w http.ResponseWriter, next string) {
+	a.setCookie(w, nextToCookieName, next, authCookiePath, a.authCookiesTTL)
+}
+
+func (a *AuthCookieManager) GetNextToCookie(r *http.Request) string {
+	return a.getCookie(r, nextToCookieName)
+}
+
+func (a *AuthCookieManager) ClearNextToCookie(w http.ResponseWriter) {
+	a.clearCookie(w, nextToCookieName, authCookiePath)
+}
+
 func (a *AuthCookieManager) setCookie(w http.ResponseWriter, name, value string, path string, ttl time.Duration) {
 	if value == "" {
 		return
@@ -135,7 +148,6 @@ func (a *AuthCookieManager) clearCookie(w http.ResponseWriter, name string, path
 func (a *AuthCookieManager) getCookie(r *http.Request, name string) string {
 	cookie, err := r.Cookie(name)
 	if err != nil {
-		a.logger.Errorf("can't get cookie %s, %v", name, err)
 		return ""
 	}
 

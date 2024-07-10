@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/otel/trace"
@@ -67,6 +68,7 @@ func NewAuthenticationConfig(
 
 type API struct {
 	apiKey           string
+	contextPath      string
 	payloadValidator validation.PayloadValidatorInterface
 	oauth2           OAuth2ContextInterface
 	helper           OAuth2HelperInterface
@@ -86,6 +88,10 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 func (a *API) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// add the Otel HTTP Client
 	r = r.WithContext(OtelHTTPClientContext(r.Context()))
+
+	if nextTo := r.URL.Query().Get("next"); nextTo != "" {
+		a.cookieManager.SetNextToCookie(w, nextTo)
+	}
 
 	nonce := a.helper.RandomURLString()
 	state := a.helper.RandomURLString()
@@ -158,7 +164,9 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.SetAccessTokenCookie(w, oauth2Token.AccessToken)
 	a.cookieManager.SetRefreshTokenCookie(w, oauth2Token.RefreshToken)
 
-	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
+	nextTo := a.cookieManager.GetNextToCookie(r)
+	a.cookieManager.ClearNextToCookie(w)
+	a.uiRedirect(w, r, nextTo)
 }
 
 func (a *API) checkNonce(r *http.Request, idToken *Principal) error {
@@ -194,6 +202,7 @@ func (a *API) checkState(r *http.Request, state string) error {
 func (a *API) badRequest(w http.ResponseWriter, err error) {
 	a.cookieManager.ClearNonceCookie(w)
 	a.cookieManager.ClearStateCookie(w)
+	a.cookieManager.ClearNextToCookie(w)
 
 	w.WriteHeader(http.StatusBadRequest)
 	_ = json.NewEncoder(w).Encode(
@@ -244,10 +253,29 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.ClearAccessTokenCookie(w)
 	a.cookieManager.ClearRefreshTokenCookie(w)
 
-	http.Redirect(w, r, ui.UIPrefix, http.StatusFound)
+	nextTo := r.URL.Query().Get("next")
+	a.uiRedirect(w, r, nextTo)
+}
+
+func (a *API) uiRedirect(w http.ResponseWriter, r *http.Request, nextTo string) {
+	redirect := ui.UIPrefix
+
+	if nextTo != "" {
+		redirectURL, _ := url.Parse(redirect)
+		query := redirectURL.Query()
+		query.Set("next", nextTo)
+		redirectURL.RawQuery = query.Encode()
+		redirect = redirectURL.String()
+	}
+
+	// handle context path in redirection response
+	r.URL.Path = a.contextPath
+
+	http.Redirect(w, r, redirect, http.StatusFound)
 }
 
 func NewAPI(
+	contextPath string,
 	oauth2Context OAuth2ContextInterface,
 	helper OAuth2HelperInterface,
 	cookieManager AuthCookieManagerInterface,
@@ -256,6 +284,7 @@ func NewAPI(
 ) *API {
 	a := new(API)
 	a.apiKey = "authentication"
+	a.contextPath = contextPath
 	a.oauth2 = oauth2Context
 	a.helper = helper
 	a.cookieManager = cookieManager

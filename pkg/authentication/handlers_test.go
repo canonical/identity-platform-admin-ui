@@ -63,6 +63,7 @@ func TestHandleLogin(t *testing.T) {
 	}
 
 	api := NewAPI(
+		"",
 		NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor),
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -143,6 +144,7 @@ func TestHandleLoginCallback(t *testing.T) {
 	mockResponse := httptest.NewRecorder()
 
 	api := NewAPI(
+		"",
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -244,7 +246,6 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			request: mockRequestNoStateCookie,
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier, encrypt *MockEncryptInterface) {
 				logger.EXPECT().Error("state cookie not found")
-				logger.EXPECT().Errorf("can't get cookie %s, %v", "state", gomock.Any())
 			},
 			errorMessage: "state cookie not found",
 		},
@@ -301,7 +302,6 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			setupMocks: func(oauth2Ctx *MockOAuth2ContextInterface, logger *MockLoggerInterface, verifier *MockTokenVerifier, encrypt *MockEncryptInterface) {
 				logger.EXPECT().Debugf("user login second leg with code '%s'", "mock-code").Times(1)
 				logger.EXPECT().Error("nonce cookie not found")
-				logger.EXPECT().Errorf("can't get cookie %s, %v", "nonce", gomock.Any())
 				mockToken = mockToken.WithExtra(map[string]interface{}{"id_token": "mock-id-token"})
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 
@@ -351,6 +351,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 			mockResponse := httptest.NewRecorder()
 
 			api := NewAPI(
+				"",
 				mockOauth2Ctx,
 				mockHelper,
 				NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -406,6 +407,7 @@ func TestHandleMe(t *testing.T) {
 	mockResponse := httptest.NewRecorder()
 
 	api := NewAPI(
+		"",
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
@@ -475,6 +477,7 @@ func TestLogout(t *testing.T) {
 
 				m.EXPECT().ClearNonceCookie(gomock.Any()).Times(1)
 				m.EXPECT().ClearStateCookie(gomock.Any()).Times(1)
+				m.EXPECT().ClearNextToCookie(gomock.Any()).Times(1)
 			},
 		},
 	} {
@@ -501,6 +504,7 @@ func TestLogout(t *testing.T) {
 
 			mockCookieManager := NewMockAuthCookieManagerInterface(ctrl)
 			api := NewAPI(
+				"",
 				mockOauth2Ctx,
 				mockHelper,
 				mockCookieManager,

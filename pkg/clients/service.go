@@ -38,6 +38,7 @@ type ServiceResponse struct {
 
 type Service struct {
 	hydra HydraClientInterface
+	authz AuthorizerInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -61,6 +62,7 @@ func (s *Service) GetClient(ctx context.Context, clientID string) (*ServiceRespo
 		}
 		ret.ServiceError = se
 	}
+
 	ret.Resp = c
 	return ret, nil
 }
@@ -81,7 +83,9 @@ func (s *Service) DeleteClient(ctx context.Context, clientID string) (*ServiceRe
 			return nil, err
 		}
 		ret.ServiceError = se
+		return ret, nil
 	}
+	s.authz.SetDeleteClientEntitlements(ctx, clientID)
 	return ret, nil
 }
 
@@ -96,14 +100,17 @@ func (s *Service) CreateClient(ctx context.Context, client *hClient.OAuth2Client
 		OAuth2Client(*client).
 		Execute()
 
+	ret.Resp = c
 	if err != nil {
 		se, err := s.parseServiceError(resp)
 		if err != nil {
 			return nil, err
 		}
 		ret.ServiceError = se
+		return ret, nil
 	}
-	ret.Resp = c
+	s.authz.SetCreateClientEntitlements(ctx, *c.ClientId)
+
 	return ret, nil
 }
 
@@ -199,10 +206,11 @@ func (s *Service) parseServiceError(r *http.Response) (*ErrorOAuth2, error) {
 	return se, nil
 }
 
-func NewService(hydra HydraClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(hydra HydraClientInterface, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.hydra = hydra
+	s.authz = authz
 
 	s.monitor = monitor
 	s.tracer = tracer

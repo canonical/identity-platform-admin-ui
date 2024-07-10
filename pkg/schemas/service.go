@@ -52,6 +52,7 @@ type Service struct {
 
 	k8s    coreV1.CoreV1Interface
 	kratos kClient.IdentityAPI
+	authz  AuthorizerInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -230,6 +231,8 @@ func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchema
 		return nil, err
 	}
 
+	s.authz.SetCreateSchemaEntitlements(ctx, *data.Id)
+
 	i.IdentitySchemas = []kClient.IdentitySchemaContainer{*data}
 
 	return i, nil
@@ -260,6 +263,8 @@ func (s *Service) DeleteSchema(ctx context.Context, ID string) error {
 
 		return err
 	}
+
+	s.authz.SetDeleteSchemaEntitlements(ctx, ID)
 
 	return nil
 
@@ -338,7 +343,7 @@ func (s *Service) schemas(schemas map[string]string) map[string]*kClient.Identit
 }
 
 // TODO @shipperizer analyze if providers IDs need to be what we use for path or if filename is the right one
-func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(config *Config, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	if config == nil {
@@ -349,6 +354,7 @@ func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorI
 	s.k8s = config.K8s
 	s.cmName = config.Name
 	s.cmNamespace = config.Namespace
+	s.authz = authz
 
 	s.monitor = monitor
 	s.tracer = tracer

@@ -33,6 +33,7 @@ func TestListSchemasSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -133,7 +134,7 @@ func TestListSchemasSuccess(t *testing.T) {
 			return schemas, rr, nil
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, schemas) {
 		t.Fatalf("expected schemas to be %v not  %v", schemas, is.IdentitySchemas)
@@ -152,6 +153,7 @@ func TestListSchemasFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -206,7 +208,7 @@ func TestListSchemasFails(t *testing.T) {
 			return schemas, rr.Result(), fmt.Errorf("error")
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if is.Error == nil {
 		t.Fatal("expected ids.Error to be not nil")
@@ -228,6 +230,7 @@ func TestListSchemasSuccessButEmpty(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -261,7 +264,7 @@ func TestListSchemasSuccessButEmpty(t *testing.T) {
 			return schemas, new(http.Response), nil
 		},
 	)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListSchemas(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, schemas) {
 		t.Fatalf("expected schemas to be %v not  %v", schemas, is.IdentitySchemas)
@@ -280,6 +283,7 @@ func TestGetSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -330,7 +334,7 @@ func TestGetSchemaSuccess(t *testing.T) {
 	mockKratosIdentityAPI.EXPECT().GetIdentitySchema(ctx, v0ID).Times(1).Return(identitySchemaRequest)
 	mockKratosIdentityAPI.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(schema.Schema, new(http.Response), nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, v0ID)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, v0ID)
 
 	if !reflect.DeepEqual(is.IdentitySchemas, []kClient.IdentitySchemaContainer{schema}) {
 		t.Fatalf("expected schemas to be %v not  %v", schema, is.IdentitySchemas)
@@ -347,6 +351,7 @@ func TestGetSchemaSuccessButEmpty(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -365,7 +370,7 @@ func TestGetSchemaSuccessButEmpty(t *testing.T) {
 	mockKratosIdentityAPI.EXPECT().GetIdentitySchema(ctx, "test").Times(1).Return(identitySchemaRequest)
 	mockKratosIdentityAPI.EXPECT().GetIdentitySchemaExecute(gomock.Any()).Times(1).Return(nil, new(http.Response), nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, "test")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, "test")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, []kClient.IdentitySchemaContainer{}) {
 		t.Fatalf("expected schemas to be empty not  %v", is.IdentitySchemas)
@@ -382,6 +387,7 @@ func TestGetSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	ctx := context.Background()
@@ -425,7 +431,7 @@ func TestGetSchemaFails(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, "fake")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetSchema(ctx, "fake")
 
 	if !reflect.DeepEqual(is.IdentitySchemas, make([]kClient.IdentitySchemaContainer, 0)) {
 		t.Fatalf("expected schemas to be empty not  %v", is.IdentitySchemas)
@@ -451,6 +457,7 @@ func TestEdiSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -546,7 +553,7 @@ func TestEdiSchemaSuccess(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, v0ID, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, v0ID, c)
 
 	if !reflect.DeepEqual(is.IdentitySchemas[0].Schema, c.Schema) {
 		t.Fatalf("expected schema secret to be %v not  %v", c.Schema, is.IdentitySchemas[0].Schema)
@@ -565,6 +572,7 @@ func TestEditSchemaNotfound(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -661,7 +669,7 @@ func TestEditSchemaNotfound(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, "fake", c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, "fake", c)
 
 	if len(is.IdentitySchemas) != 0 {
 		t.Fatalf("expected schemas to be empty not  %v", is.IdentitySchemas)
@@ -679,6 +687,7 @@ func TestEditSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -734,7 +743,7 @@ func TestEditSchemaFails(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, fmt.Errorf("error"))
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, v0ID, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditSchema(ctx, v0ID, c)
 
 	if is != nil {
 		t.Fatalf("expected schemas to be nil, not %v", is)
@@ -752,6 +761,7 @@ func TestCreateSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -799,6 +809,7 @@ func TestCreateSchemaSuccess(t *testing.T) {
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -821,7 +832,7 @@ func TestCreateSchemaSuccess(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
 
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
@@ -844,6 +855,7 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -890,6 +902,7 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -912,7 +925,7 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
 
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
@@ -935,6 +948,7 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -975,10 +989,14 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
 
+	v0ID := "test_v0"
+
 	c := new(kClient.IdentitySchemaContainer)
+	c.Id = &v0ID
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -1005,7 +1023,7 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
 
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
@@ -1027,6 +1045,7 @@ func TestCreateSchemaFailsConflict(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1079,7 +1098,7 @@ func TestCreateSchemaFailsConflict(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")
@@ -1098,6 +1117,7 @@ func TestCreateSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1167,7 +1187,7 @@ func TestCreateSchemaFails(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateSchema(ctx, c)
 
 	if is != nil {
 		t.Fatalf("expected schema to be empty not %v", is.IdentitySchemas)
@@ -1185,6 +1205,7 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1270,6 +1291,7 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.DeleteSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetDeleteSchemaEntitlements(gomock.Any(), v0ID)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -1282,7 +1304,7 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 		},
 	)
 
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, v0ID)
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, v0ID)
 
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
@@ -1296,6 +1318,7 @@ func TestDeleteSchemaNotFound(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1383,7 +1406,7 @@ func TestDeleteSchemaNotFound(t *testing.T) {
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.DeleteSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, "fake")
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, "fake")
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")
@@ -1397,6 +1420,7 @@ func TestDeleteSchemaFailsIfDefault(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1486,7 +1510,7 @@ func TestDeleteSchemaFailsIfDefault(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, DEFAULT_SCHEMA)
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, DEFAULT_SCHEMA)
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")
@@ -1500,6 +1524,7 @@ func TestDeleteSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1592,7 +1617,7 @@ func TestDeleteSchemaFails(t *testing.T) {
 			return nil, fmt.Errorf("error")
 		},
 	)
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, v0ID)
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteSchema(ctx, v0ID)
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")
@@ -1606,6 +1631,7 @@ func TestGetDefaultSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1629,7 +1655,7 @@ func TestGetDefaultSchemaSuccess(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
 
 	if ds.ID != defaultSchemaID {
 		t.Fatalf("expected default schema id to be %s not %s", defaultSchemaID, ds.ID)
@@ -1647,6 +1673,7 @@ func TestGetDefaultSchemaNoDefaultSchema(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1672,7 +1699,7 @@ func TestGetDefaultSchemaNoDefaultSchema(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
 
 	if ds != nil {
 		t.Fatalf("expected returned value to be nil not %s", ds)
@@ -1690,6 +1717,7 @@ func TestGetDefaultSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1706,7 +1734,7 @@ func TestGetDefaultSchemaFails(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(nil, fmt.Errorf("mock_error"))
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetDefaultSchema(ctx)
 
 	if ds != nil {
 		t.Fatalf("expected returned value to be nil not %s", ds)
@@ -1724,6 +1752,7 @@ func TestUpdateDefaultSchemaSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1782,7 +1811,7 @@ func TestUpdateDefaultSchemaSuccess(t *testing.T) {
 		},
 	)
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
 
 	if ds.ID != defaultSchemaUpdateID {
 		t.Fatalf("expected default schema id to be %s not %s", defaultSchemaID, ds.ID)
@@ -1800,6 +1829,7 @@ func TestUpdateDefaultSchemaIdNotFound(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1824,7 +1854,7 @@ func TestUpdateDefaultSchemaIdNotFound(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
 
 	if ds != nil {
 		t.Fatalf("expected default schema id to be nil not %s", ds.ID)
@@ -1843,6 +1873,7 @@ func TestUpdateDefaultSchemaIdIsDefaultKey(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1867,7 +1898,7 @@ func TestUpdateDefaultSchemaIdIsDefaultKey(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	ds, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+	ds, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
 
 	if ds != nil {
 		t.Fatalf("expected default schema id to be nil not %s", ds.ID)
@@ -1886,6 +1917,7 @@ func TestUpdateDefaultSchemaFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
@@ -1944,7 +1976,7 @@ func TestUpdateDefaultSchemaFails(t *testing.T) {
 		},
 	)
 
-	_, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
+	_, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateDefaultSchema(ctx, defaultSchemaUpdate)
 
 	if err.Error() != "mock_error" {
 		t.Fatalf("expected error message to be mock_error not  %s", err.Error())

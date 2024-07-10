@@ -15,6 +15,11 @@ type HydraClientInterface interface {
 
 type OAuth2Client = hClient.OAuth2Client
 
+type AuthorizerInterface interface {
+	SetCreateClientEntitlements(context.Context, string) error
+	SetDeleteClientEntitlements(context.Context, string) error
+}
+
 type ServiceInterface interface {
 	GetClient(context.Context, string) (*ServiceResponse, error)
 	CreateClient(context.Context, *hClient.OAuth2Client) (*ServiceResponse, error)

@@ -9,6 +9,11 @@ import (
 	kClient "github.com/ory/kratos-client-go"
 )
 
+type AuthorizerInterface interface {
+	SetCreateSchemaEntitlements(context.Context, string) error
+	SetDeleteSchemaEntitlements(context.Context, string) error
+}
+
 type ServiceInterface interface {
 	ListSchemas(context.Context, int64, string) (*IdentitySchemaData, error)
 	GetSchema(context.Context, string) (*IdentitySchemaData, error)

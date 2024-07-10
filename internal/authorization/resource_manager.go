@@ -38,42 +38,42 @@ func (a *Authorizer) getResource(resourceID, resourceType string) string {
 	return resourceType + ":" + resourceID
 }
 
-func (a *Authorizer) CreateClient(ctx context.Context, clientID string) error {
+func (a *Authorizer) SetCreateClientEntitlements(ctx context.Context, clientID string) error {
 	return a.createTuple(ctx, a.getResource(clientID, CLIENT_TYPE))
 }
 
-func (a *Authorizer) DeleteClient(ctx context.Context, clientID string) error {
+func (a *Authorizer) SetDeleteClientEntitlements(ctx context.Context, clientID string) error {
 	return a.deleteTuple(ctx, a.getResource(clientID, CLIENT_TYPE))
 }
 
-func (a *Authorizer) CreateIdentity(ctx context.Context, IdentityID string) error {
+func (a *Authorizer) SetCreateIdentityEntitlements(ctx context.Context, IdentityID string) error {
 	return a.createTuple(ctx, a.getResource(IdentityID, IDENTITY_TYPE))
 }
 
-func (a *Authorizer) DeleteIdentity(ctx context.Context, IdentityID string) error {
+func (a *Authorizer) SetDeleteIdentityEntitlements(ctx context.Context, IdentityID string) error {
 	return a.deleteTuple(ctx, a.getResource(IdentityID, IDENTITY_TYPE))
 }
 
-func (a *Authorizer) CreateProvider(ctx context.Context, providerID string) error {
+func (a *Authorizer) SetCreateProviderEntitlements(ctx context.Context, providerID string) error {
 	return a.createTuple(ctx, a.getResource(providerID, PROVIDER_TYPE))
 }
 
-func (a *Authorizer) DeleteProvider(ctx context.Context, providerID string) error {
+func (a *Authorizer) SetDeleteProviderEntitlements(ctx context.Context, providerID string) error {
 	return a.deleteTuple(ctx, a.getResource(providerID, PROVIDER_TYPE))
 }
 
-func (a *Authorizer) CreateRule(ctx context.Context, ruleID string) error {
+func (a *Authorizer) SetCreateRuleEntitlements(ctx context.Context, ruleID string) error {
 	return a.createTuple(ctx, a.getResource(ruleID, RULE_TYPE))
 }
 
-func (a *Authorizer) DeleteRule(ctx context.Context, ruleID string) error {
+func (a *Authorizer) SetDeleteRuleEntitlements(ctx context.Context, ruleID string) error {
 	return a.deleteTuple(ctx, a.getResource(ruleID, RULE_TYPE))
 }
 
-func (a *Authorizer) CreateSchema(ctx context.Context, schemeID string) error {
+func (a *Authorizer) SetCreateSchemaEntitlements(ctx context.Context, schemeID string) error {
 	return a.createTuple(ctx, a.getResource(schemeID, SCHEME_TYPE))
 }
 
-func (a *Authorizer) DeleteSchema(ctx context.Context, schemeID string) error {
+func (a *Authorizer) SetDeleteSchemaEntitlements(ctx context.Context, schemeID string) error {
 	return a.deleteTuple(ctx, a.getResource(schemeID, SCHEME_TYPE))
 }

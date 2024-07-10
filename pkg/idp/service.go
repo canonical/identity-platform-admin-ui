@@ -30,7 +30,8 @@ type Service struct {
 	cmNamespace string
 	keyName     string
 
-	k8s coreV1.CoreV1Interface
+	k8s   coreV1.CoreV1Interface
+	authz AuthorizerInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -169,6 +170,8 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 		return nil, err
 	}
 
+	s.authz.SetCreateProviderEntitlements(ctx, data.ID)
+
 	return []*Configuration{idp}, nil
 }
 
@@ -218,6 +221,7 @@ func (s *Service) DeleteResource(ctx context.Context, providerID string) error {
 
 		return err
 	}
+	s.authz.SetDeleteProviderEntitlements(ctx, providerID)
 
 	return nil
 
@@ -314,7 +318,7 @@ func (s *Service) keyIDMapper(id, namespace string) string {
 }
 
 // TODO @shipperizer analyze if providers IDs need to be what we use for path or if filename is the right one
-func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(config *Config, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	if config == nil {
@@ -324,6 +328,7 @@ func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorI
 	s.k8s = config.K8s
 	s.cmName = config.Name
 	s.cmNamespace = config.Namespace
+	s.authz = authz
 	// TODO @shipperizer fetch it from the config.KeyName
 	s.keyName = "idps.yaml"
 

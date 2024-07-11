@@ -30,7 +30,10 @@ type API struct {
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
-	mux.Get(UIPrefix, a.uiFiles)
+	mux.Get(UIPrefix, func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+	})
+	mux.Get(UIPrefix+"/", a.uiFiles)
 	mux.Get(UIPrefix+"/*", a.uiFiles)
 }
 

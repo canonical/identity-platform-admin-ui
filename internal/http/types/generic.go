@@ -31,7 +31,6 @@ type NavigationTokens struct {
 type Pagination struct {
 	PageToken string `json:"page_token,omitempty"` // deserialization only
 	Size      int64  `json:"size"`
-	Page      int64  `json:"page"` // to be deprecated
 
 	// serialization only
 	NavigationTokens
@@ -40,7 +39,6 @@ type Pagination struct {
 func NewPaginationWithDefaults() *Pagination {
 	p := new(Pagination)
 
-	p.Page = 1
 	p.PageToken = ""
 	p.Size = 100
 
@@ -50,11 +48,6 @@ func NewPaginationWithDefaults() *Pagination {
 func ParsePagination(q url.Values) *Pagination {
 
 	p := NewPaginationWithDefaults()
-
-	// TODO @barco deprecate `page`
-	if page, err := strconv.ParseInt(q.Get("page"), 10, 64); err == nil && page > 1 {
-		p.Page = page
-	}
 
 	// TODO @shipperizer introduce go-playground/validator
 	if size, err := strconv.ParseInt(q.Get("size"), 10, 64); err == nil && size > 0 {

@@ -119,9 +119,13 @@ func serve() {
 		DistFS: distFS,
 	}
 
+	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
+	defer wpool.Stop()
+
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
 			externalConfig.OpenFGA(),
+			wpool,
 			tracer,
 			monitor,
 			logger,
@@ -135,6 +139,7 @@ func serve() {
 	} else {
 		authorizer := authorization.NewAuthorizer(
 			openfga.NewNoopClient(tracer, monitor, logger),
+			wpool,
 			tracer,
 			monitor,
 			logger,
@@ -161,9 +166,6 @@ func serve() {
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
 	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
-
-	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
-	defer wpool.Stop()
 
 	router := web.NewRouter(routerConfig, wpool)
 

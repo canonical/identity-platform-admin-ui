@@ -2,36 +2,55 @@ package authorization
 
 import (
 	"context"
+	"fmt"
 )
+
+var ErrNoUserInContext = fmt.Errorf("user not authenticated or requests context broken, cannot perform operation")
 
 func (a *Authorizer) createTuple(ctx context.Context, resourceID string) error {
 	user, ok := ctx.Value(USER_CTX).(*User)
 	if !ok {
-		// Should we panic?
-		return nil
+		return ErrNoUserInContext
 	}
-	go func() {
-		err := a.client.WriteTuple(context.Background(), "user:"+user.ID, CAN_VIEW, resourceID)
-		if err != nil {
-			a.logger.Errorf("Failed to create authorization tuple: %s", err)
-		}
-	}()
-	return nil
+
+	_, err := a.wpool.Submit(
+		func() any {
+			if err := a.client.WriteTuple(context.Background(), "user:"+user.ID, CAN_VIEW, resourceID); err != nil {
+				a.logger.Error("Async write failed: ", err.Error())
+				return err
+			}
+			return nil
+		},
+		nil,
+		nil,
+	)
+	if err != nil {
+		a.logger.Errorf("Failed to submit job to worker pool: %s", err)
+	}
+	return err
 }
 
 func (a *Authorizer) deleteTuple(ctx context.Context, resourceID string) error {
 	user, ok := ctx.Value(USER_CTX).(*User)
 	if !ok {
-		// Should we panic?
-		return nil
+		return ErrNoUserInContext
 	}
-	go func() {
-		err := a.client.DeleteTuple(context.Background(), "user:"+user.ID, CAN_VIEW, resourceID)
-		if err != nil {
-			a.logger.Errorf("Failed to create authorization tuple: %s", err)
-		}
-	}()
-	return nil
+
+	_, err := a.wpool.Submit(
+		func() any {
+			if err := a.client.DeleteTuple(context.Background(), "user:"+user.ID, CAN_VIEW, resourceID); err != nil {
+				a.logger.Error("Async delete failed: ", err.Error())
+				return err
+			}
+			return nil
+		},
+		nil,
+		nil,
+	)
+	if err != nil {
+		a.logger.Errorf("Failed to submit job to worker pool: %s", err)
+	}
+	return err
 }
 
 func (a *Authorizer) getResource(resourceID, resourceType string) string {

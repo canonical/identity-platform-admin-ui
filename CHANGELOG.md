@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.13.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.12.0...v1.13.0) (2024-07-11)
+
+
+### Features
+
+* add `HTTPClientFromContext` + improved OtelHTTPClientFromContext func ([fa1b3e8](https://github.com/canonical/identity-platform-admin-ui/commit/fa1b3e875319b4acb6e7359634e610b02708c308))
+* add context path spec to correctly handle redirect ([71aef28](https://github.com/canonical/identity-platform-admin-ui/commit/71aef28352d86504959d1a9fd5e40c803ac80d11))
+* add hydra admin url to config + add comment for env var expectation ([b36e498](https://github.com/canonical/identity-platform-admin-ui/commit/b36e49817e2e38881d9c33b2c6166a9e8b415d6e))
+* add hydra clients to OAuth2Context struct ([0072078](https://github.com/canonical/identity-platform-admin-ui/commit/0072078283797ab407a6d622268431161ae191c1))
+* add Logout function and HTTPClientInterface ([98e4ec3](https://github.com/canonical/identity-platform-admin-ui/commit/98e4ec31e1fc843f84a605a67f197f39eb6bf41a))
+* add logout handler ([5ea5742](https://github.com/canonical/identity-platform-admin-ui/commit/5ea5742da45708db8eab97b3ec370541fc77d869))
+* add logout implementation ([3c435d4](https://github.com/canonical/identity-platform-admin-ui/commit/3c435d4ab0fc4571d11607e3dd86aee2fa771c75))
+* add NextTo cookie handling to cookie manager and interface ([5a5cc30](https://github.com/canonical/identity-platform-admin-ui/commit/5a5cc309fcdaefc15201b23ea7c14976b3b158bf))
+* handle optional `next` parameter for FE use ([1f4ca15](https://github.com/canonical/identity-platform-admin-ui/commit/1f4ca1553c50637cdd6f81b9062fa32c9bff22d7))
+
+
+### Bug Fixes
+
+* add json parsing error ([8713366](https://github.com/canonical/identity-platform-admin-ui/commit/87133662aaa4058fb81c818162914b73c03ecb7e))
+* clear cookie functions ([3a1b2e4](https://github.com/canonical/identity-platform-admin-ui/commit/3a1b2e40c8afbf5f80bed50a010b319fc6a643c3))
+* improve validation error messages ([c20ff4a](https://github.com/canonical/identity-platform-admin-ui/commit/c20ff4a730a74dbfaefe5ec3a059bb27d02fc2dd))
+* temporary fix to allow time for new solution on the frontend ([6ee0ac3](https://github.com/canonical/identity-platform-admin-ui/commit/6ee0ac30bfe2babb2a49ead783e8407e8117dfbd))
+* UI serving handlers ([b4070b1](https://github.com/canonical/identity-platform-admin-ui/commit/b4070b1c244fef40b03388e6df3d069dbcf9b801))
+
 ## [1.12.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.11.0...v1.12.0) (2024-07-02)
 
 

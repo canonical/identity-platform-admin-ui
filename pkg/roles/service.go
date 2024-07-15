@@ -157,7 +157,7 @@ func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions 
 	ps := make([]ofga.Tuple, 0)
 
 	for _, p := range permissions {
-		ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", ID, ASSIGNEE_RELATION), p.Relation, p.Object))
+		ps = append(ps, *ofga.NewTuple(s.getRoleAssigneeUser(ID), p.Relation, p.Object))
 	}
 
 	err := s.ofga.WriteTuples(ctx, ps...)
@@ -182,7 +182,7 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 	ps := make([]ofga.Tuple, 0)
 
 	for _, p := range permissions {
-		ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", ID, ASSIGNEE_RELATION), p.Relation, p.Object))
+		ps = append(ps, *ofga.NewTuple(s.getRoleAssigneeUser(ID), p.Relation, p.Object))
 	}
 
 	err := s.ofga.DeleteTuples(ctx, ps...)
@@ -328,7 +328,7 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	defer span.End()
 
 	cToken := ""
-	assigneeRelation := fmt.Sprintf("role:%s#%s", ID, ASSIGNEE_RELATION)
+	assigneeRelation := s.getRoleAssigneeUser(ID)
 	permissions := make([]ofga.Tuple, 0)
 	for {
 		r, err := s.ofga.ReadTuples(ctx, assigneeRelation, "", fmt.Sprintf("%s:", pType), cToken)
@@ -399,7 +399,7 @@ func (s *Service) listPermissionsFunc(ctx context.Context, roleID, ofgaType, cTo
 	return func() any {
 		p, token, err := s.listPermissionsByType(
 			ctx,
-			fmt.Sprintf("role:%s#%s", roleID, ASSIGNEE_RELATION),
+			s.getRoleAssigneeUser(roleID),
 			ofgaType,
 			cToken,
 		)
@@ -431,6 +431,10 @@ func (s *Service) permissionTypes() []string {
 
 func (s *Service) directRelations() []string {
 	return []string{"privileged", "assignee", "can_create", "can_delete", "can_edit", "can_view"}
+}
+
+func (s *Service) getRoleAssigneeUser(roleID string) string {
+	return fmt.Sprintf("role:%s#%s", roleID, ASSIGNEE_RELATION)
 }
 
 // NewService returns the implementtation of the business logic for the roles API

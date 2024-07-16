@@ -135,7 +135,7 @@ func TestHandleListFailed(t *testing.T) {
 
 	mockService.EXPECT().ListRules(gomock.Any(), offset, size).Return(nil, fmt.Errorf("mock_error"))
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?page=0&offset=100", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v0/rules?pageToken=0&offset=100", nil)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
 	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)

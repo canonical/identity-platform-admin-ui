@@ -361,8 +361,8 @@ func TestListClientSuccess(t *testing.T) {
 		ApiService: mockHydraOAuth2Api,
 	}
 	size := 10
-	page := "10"
-	listReq := NewListClientsRequest("", "", page, size)
+	pageToken := "10"
+	listReq := NewListClientsRequest("", "", pageToken, size)
 
 	ctx := context.Background()
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.ListOAuth2Clients").Times(1).Return(nil, trace.SpanFromContext(ctx))
@@ -373,13 +373,13 @@ func TestListClientSuccess(t *testing.T) {
 			if _size := (*int)(reflect.ValueOf(r).FieldByName("pageSize").UnsafePointer()); *_size != size {
 				t.Fatalf("expected id to be %v, got %v", size, *_size)
 			}
-			if _page := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *_page != page {
-				t.Fatalf("expected id to be %s, got %s", page, *_page)
+			if _page := (*string)(reflect.ValueOf(r).FieldByName("pageToken").UnsafePointer()); *_page != pageToken {
+				t.Fatalf("expected id to be %s, got %s", pageToken, *_page)
 			}
 
 			rr := new(http.Response)
 			rr.Header = make(http.Header)
-			rr.Header.Set("Link", `<http://hydra.default.svc.cluster.local/admin/clients?page=0&page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://hydra.default.svc.cluster.local/admin/clients?page=1&page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://hydra.default.svc.cluster.local/admin/clients?page=-1&page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
+			rr.Header.Set("Link", `<http://hydra.default.svc.cluster.local/admin/clients?page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://hydra.default.svc.cluster.local/admin/clients?page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://hydra.default.svc.cluster.local/admin/clients?page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
 
 			return cs, rr, nil
 		},

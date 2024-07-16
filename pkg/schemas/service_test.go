@@ -128,7 +128,7 @@ func TestListSchemasSuccess(t *testing.T) {
 
 			rr := new(http.Response)
 			rr.Header = make(http.Header)
-			rr.Header.Set("Link", `<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=0&page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=1&page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page=-1&page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
+			rr.Header.Set("Link", `<http://kratos-admin.default.svc.cluster.local/admin/schemas?page_size=250&page_token=eyJvZmZzZXQiOiIwIiwidiI6Mn0&per_page=250>; rel="first",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page_size=250&page_token=eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ&per_page=250>; rel="next",<http://kratos-admin.default.svc.cluster.local/admin/schemas?page_size=250&page_token=eyJvZmZzZXQiOiItMjUwIiwidiI6Mn0&per_page=250>; rel="prev`)
 
 			return schemas, rr, nil
 		},

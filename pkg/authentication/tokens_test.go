@@ -64,7 +64,7 @@ func TestJWKSTokenVerifier_VerifyAccessToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-subject") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})
@@ -118,7 +118,7 @@ func TestJWKSTokenVerifier_VerifyIDToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-subject") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})
@@ -221,7 +221,7 @@ func TestUserinfoTokenVerifier_VerifyIDToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-subject") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})

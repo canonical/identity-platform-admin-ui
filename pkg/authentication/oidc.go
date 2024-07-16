@@ -20,53 +20,9 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 )
 
-type principalContextKey int
-
 var (
-	PrincipalContextKey principalContextKey
-	otelHTTPClient      = http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	otelHTTPClient = http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 )
-
-type Principal struct {
-	Subject   string `json:"sub"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	SessionID string `json:"sid"`
-	Nonce     string `json:"nonce"`
-
-	RawAccessToken  string `json:"-"`
-	RawIdToken      string `json:"-"`
-	RawRefreshToken string `json:"-"`
-}
-
-func NewPrincipalFromClaims(c ReadableClaims) (*Principal, error) {
-	a := new(Principal)
-	if err := c.Claims(a); err != nil {
-		return nil, err
-	}
-	return a, nil
-}
-
-func PrincipalContext(ctx context.Context, principal *Principal) context.Context {
-	parent := ctx
-	if ctx == nil {
-		parent = context.Background()
-	}
-
-	return context.WithValue(parent, PrincipalContextKey, principal)
-}
-
-func PrincipalFromContext(ctx context.Context) *Principal {
-	if ctx == nil {
-		return nil
-	}
-
-	if value, ok := ctx.Value(PrincipalContextKey).(*Principal); ok {
-		return value
-	}
-
-	return nil
-}
 
 func OtelHTTPClientContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, oauth2.HTTPClient, otelHTTPClient)

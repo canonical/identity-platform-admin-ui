@@ -33,18 +33,18 @@ func TestNewPrincipalFromClaims(t *testing.T) {
 
 	mockClaims.EXPECT().Claims(gomock.Any()).Times(1).
 		DoAndReturn(
-			func(p *Principal) error {
+			func(p *UserPrincipal) error {
 				p.Subject = "mock-sub"
 				return nil
 			})
 
-	principal, err := NewPrincipalFromClaims(mockClaims)
+	principal, err := NewUserPrincipalFromClaims(mockClaims)
 
 	if err != nil {
 		t.Fatalf("returned error should be null, but it is not")
 	}
 
-	if principal.Subject != "mock-sub" {
+	if principal.Identifier() != "mock-sub" {
 		t.Fatalf("returned principal subject doesn't match expected")
 	}
 }
@@ -57,7 +57,7 @@ func TestNewPrincipalFromClaimsError(t *testing.T) {
 
 	mockClaims.EXPECT().Claims(gomock.Any()).Times(1).Return(fmt.Errorf("mock-error"))
 
-	principal, err := NewPrincipalFromClaims(mockClaims)
+	principal, err := NewUserPrincipalFromClaims(mockClaims)
 
 	if principal != nil {
 		t.Fatalf("returned principal should be null, but it is not")
@@ -74,11 +74,11 @@ func TestNewPrincipalFromClaimsError(t *testing.T) {
 
 func TestPrincipalContext(t *testing.T) {
 	mockCtx := context.TODO()
-	mockPrincipal := &Principal{Subject: "mock-sub"}
+	mockPrincipal := &UserPrincipal{Subject: "mock-sub"}
 
 	result := PrincipalContext(mockCtx, mockPrincipal)
 
-	returnedPrincipal := result.Value(PrincipalContextKey).(*Principal)
+	returnedPrincipal := result.Value(PrincipalContextKey).(*UserPrincipal)
 
 	if returnedPrincipal.Subject != "mock-sub" {
 		t.Fatalf("returned subject does not match expected")
@@ -86,7 +86,7 @@ func TestPrincipalContext(t *testing.T) {
 
 	result = PrincipalContext(nil, mockPrincipal)
 
-	returnedPrincipal = result.Value(PrincipalContextKey).(*Principal)
+	returnedPrincipal = result.Value(PrincipalContextKey).(*UserPrincipal)
 
 	if returnedPrincipal.Subject != "mock-sub" {
 		t.Fatalf("returned subject does not match expected")
@@ -95,13 +95,13 @@ func TestPrincipalContext(t *testing.T) {
 
 func TestPrincipalFromContext(t *testing.T) {
 	mockCtx := context.TODO()
-	mockPrincipal := &Principal{Subject: "mock-sub"}
+	mockPrincipal := &UserPrincipal{Subject: "mock-sub"}
 
 	ctx := context.WithValue(mockCtx, PrincipalContextKey, mockPrincipal)
 
 	principal := PrincipalFromContext(ctx)
 
-	if principal == nil || principal.Subject != "mock-sub" {
+	if principal == nil || principal.Identifier() != "mock-sub" {
 		t.Fatalf("returned subject does not match expected")
 	}
 }
@@ -219,7 +219,7 @@ func TestOAuth2Context_Logout(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	p := &Principal{
+	p := &UserPrincipal{
 		Subject:         "mock-subject",
 		Name:            "mock-name",
 		Email:           "mock-email",
@@ -233,7 +233,7 @@ func TestOAuth2Context_Logout(t *testing.T) {
 	errorStructString := "{\"error\":\"mock-error\", \"error_description\":\"mock-error-descr\"}"
 	tests := []struct {
 		name          string
-		principal     *Principal
+		principal     *UserPrincipal
 		setupMock     func(*MockOAuth2Api, *MockOAuth2Api)
 		expectedError string
 	}{

@@ -18,9 +18,9 @@ type providerVerifierInterface interface {
 
 type TokenVerifier interface {
 	// VerifyAccessToken verifies a raw string representing a ory Hydra access token (either opaque or jwt)
-	VerifyAccessToken(context.Context, string) (*Principal, error)
+	VerifyAccessToken(context.Context, string) (*ServicePrincipal, error)
 	// VerifyIDToken verifies a raw string representing a ory Hydra JWT ID token
-	VerifyIDToken(context.Context, string) (*Principal, error)
+	VerifyIDToken(context.Context, string) (*UserPrincipal, error)
 }
 
 type ProviderInterface interface {
@@ -42,7 +42,7 @@ type OAuth2ContextInterface interface {
 	// RefreshToken performs the OAuth2 refresh_token grant
 	RefreshToken(context.Context, string) (*oauth2.Token, error)
 	// Logout performs session and tokens revocation against the Hydra Admin APIs
-	Logout(ctx context.Context, principal *Principal) error
+	Logout(ctx context.Context, principal PrincipalInterface) error
 }
 
 type ReadableClaims interface {
@@ -103,4 +103,12 @@ type EncryptInterface interface {
 
 type HTTPClientInterface interface {
 	Do(*http.Request) (*http.Response, error)
+}
+
+type PrincipalInterface interface {
+	Identifier() string
+	Session() string
+	AccessToken() string
+	RefreshToken() string
+	IDToken() string
 }

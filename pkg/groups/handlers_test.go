@@ -23,6 +23,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -109,8 +110,9 @@ func TestHandleList(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodGet, "/api/v0/groups", nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockService.EXPECT().ListGroups(gomock.Any(), "anonymous").Return(test.expected.groups, test.expected.err)
+			mockService.EXPECT().ListGroups(gomock.Any(), gomock.Any()).Return(test.expected.groups, test.expected.err)
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -217,8 +219,9 @@ func TestHandleDetail(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/groups/%s", test.input), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockService.EXPECT().GetGroup(gomock.Any(), "anonymous", test.input).DoAndReturn(
+			mockService.EXPECT().GetGroup(gomock.Any(), gomock.Any(), test.input).DoAndReturn(
 				func(context.Context, string, string) (*Group, error) {
 					if test.expected != nil {
 						return nil, test.expected
@@ -318,6 +321,7 @@ func TestHandleUpdate(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s", test.input), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -432,6 +436,7 @@ func TestHandleListPermissionsSuccess(t *testing.T) {
 
 			groupID := "administrator"
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/groups/%s/entitlements", groupID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.LoadFromRequest").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.PaginationHeader").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -562,6 +567,7 @@ func TestHandleListRolesSuccess(t *testing.T) {
 
 			groupID := "administrator"
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/groups/%s/roles", groupID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().ListRoles(gomock.Any(), groupID).Return(test.expected, nil)
 
@@ -663,6 +669,7 @@ func TestHandleRemovePermissionBadPermissionFormat(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/groups/%s/entitlements/%s", test.input.groupID, test.input.permissionID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -761,6 +768,7 @@ func TestHandleRemovePermission(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/groups/%s/entitlements/%s", test.input.groupID, test.input.permissionID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().RemovePermissions(
 				gomock.Any(),
@@ -910,6 +918,7 @@ func TestHandleAssignPermissions(t *testing.T) {
 			payload, _ := json.Marshal(upr)
 
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s/entitlements", test.input.groupID), bytes.NewReader(payload))
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().AssignPermissions(gomock.Any(), test.input.groupID, test.input.permissions).Return(test.expected)
 
@@ -991,6 +1000,7 @@ func TestHandleAssignPermissionsBadPermissionFormat(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s/entitlements", test.input), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1086,6 +1096,7 @@ func TestHandleRemove(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/groups/%s", test.input), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().DeleteGroup(
 				gomock.Any(),
@@ -1183,12 +1194,13 @@ func TestHandleCreate(t *testing.T) {
 			payload, _ := json.Marshal(upr)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v0/groups", bytes.NewReader(payload))
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			var group *Group = nil
 			if test.expected == nil {
 				group = &Group{ID: test.input, Name: test.input}
 			}
-			mockService.EXPECT().CreateGroup(gomock.Any(), "anonymous", test.input).Return(group, test.expected)
+			mockService.EXPECT().CreateGroup(gomock.Any(), gomock.Any(), test.input).Return(group, test.expected)
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1268,6 +1280,7 @@ func TestHandleCreateBadRoleFormat(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/v0/groups", nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1374,6 +1387,7 @@ func TestHandleRemoveIdentities(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/groups/%s/identities/%s", test.input.groupID, test.input.identityID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().RemoveIdentities(
 				gomock.Any(),
@@ -1498,6 +1512,7 @@ func TestHandleAssignIdentities(t *testing.T) {
 			payload, _ := json.Marshal(upr)
 
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s/identities", test.input.groupID), bytes.NewReader(payload))
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().AssignIdentities(gomock.Any(), test.input.groupID, test.input.identities).Return(test.expected)
 
@@ -1579,6 +1594,7 @@ func TestHandleAssignIdentitiesBadPermissionFormat(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s/identities", test.input), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1693,6 +1709,7 @@ func TestHandleAssignRoles(t *testing.T) {
 			payload, _ := json.Marshal(upr)
 
 			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v0/groups/%s/roles", test.input.groupID), bytes.NewReader(payload))
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().AssignRoles(gomock.Any(), test.input.groupID, test.input.roles).Return(test.expected)
 
@@ -1805,6 +1822,7 @@ func TestHandleRemoveRole(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
 
 			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/groups/%s/roles/%s", test.input.groupID, test.input.roleID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockService.EXPECT().RemoveRoles(
 				gomock.Any(),
@@ -1927,6 +1945,7 @@ func TestHandleListIdentitiesSuccess(t *testing.T) {
 
 			groupID := "administrator"
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/groups/%s/identities", groupID), nil)
+			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
 			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.LoadFromRequest").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.PaginationHeader").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))

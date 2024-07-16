@@ -34,7 +34,7 @@ func TestNewPrincipalFromClaims(t *testing.T) {
 	mockClaims.EXPECT().Claims(gomock.Any()).Times(1).
 		DoAndReturn(
 			func(p *UserPrincipal) error {
-				p.Subject = "mock-sub"
+				p.Email = "mock-sub"
 				return nil
 			})
 
@@ -95,7 +95,7 @@ func TestPrincipalContext(t *testing.T) {
 
 func TestPrincipalFromContext(t *testing.T) {
 	mockCtx := context.TODO()
-	mockPrincipal := &UserPrincipal{Subject: "mock-sub"}
+	mockPrincipal := &UserPrincipal{Email: "mock-sub"}
 
 	ctx := context.WithValue(mockCtx, PrincipalContextKey, mockPrincipal)
 
@@ -233,7 +233,7 @@ func TestOAuth2Context_Logout(t *testing.T) {
 	errorStructString := "{\"error\":\"mock-error\", \"error_description\":\"mock-error-descr\"}"
 	tests := []struct {
 		name          string
-		principal     *UserPrincipal
+		principal     PrincipalInterface
 		setupMock     func(*MockOAuth2Api, *MockOAuth2Api)
 		expectedError string
 	}{

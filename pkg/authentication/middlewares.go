@@ -79,7 +79,10 @@ func (m *Middleware) oAuth2BearerAuthentication(next http.Handler) http.Handler 
 			servicePrincipal.RawAccessToken = rawAccessToken
 		}
 
-		ctx = PrincipalContext(ctx, servicePrincipal)
+		if servicePrincipal != nil {
+			ctx = PrincipalContext(ctx, servicePrincipal)
+		}
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

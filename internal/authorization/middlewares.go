@@ -1,11 +1,10 @@
 // Copyright 2024 Canonical Ltd.
-// SPDX-License-Identifier: AGPL
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,22 +14,12 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 const (
-	// custom header for the time being
-	TOKEN_HEADER                 = "X-Authorization"
-	ADMIN_PRIVILEGE              = "privileged:superuser"
-	ADMIN_CTX       AdminContext = "adminCtx"
-	USER_CTX        UserContext  = "userCtx"
+	ADMIN_PRIVILEGE = "privileged:superuser"
 )
-
-type UserContext string
-type AdminContext string
-
-type User struct {
-	ID string
-}
 
 // Middleware is the monitoring middleware object implementing Prometheus monitoring
 type Middleware struct {
@@ -49,36 +38,11 @@ type Middleware struct {
 	logger  logging.LoggerInterface
 }
 
-func (mdw *Middleware) transformToken(token string) *User {
-	user := new(User)
-	user.ID = "admin"
-
-	// TODO @shipperizer rudimentary base64 username
-	if token != "" {
-		ID, _ := base64.StdEncoding.DecodeString(token)
-		user.ID = string(ID)
-	}
-
-	return user
-
-}
-
 // TODO @shipperizer move this to a separate middleware once implementation of authorization is starting
-func (mdw *Middleware) admin(r *http.Request) bool {
-	// TODO @shipperizer implement how to fetch user from cookie or header
-	user := mdw.transformToken(r.Header.Get(TOKEN_HEADER))
-
-	isAdmin, err := mdw.auth.Check(context.Background(), fmt.Sprintf("user:%s", user.ID), "admin", ADMIN_PRIVILEGE)
+func (mdw *Middleware) isAdmin(principal authentication.PrincipalInterface) bool {
+	isAdmin, err := mdw.auth.Check(context.Background(), fmt.Sprintf("user:%s", principal.Identifier()), "admin", ADMIN_PRIVILEGE)
 
 	return isAdmin && err == nil
-}
-
-// TODO @shipperizer move this to a separate middleware once implementation of authorization is starting
-func (mdw *Middleware) user(r *http.Request) *User {
-	// TODO @shipperizer implement how to fetch user from cookie or header
-	user := mdw.transformToken(r.Header.Get(TOKEN_HEADER))
-
-	return user
 }
 
 func (mdw *Middleware) mapper(r *http.Request) []Permission {
@@ -136,9 +100,9 @@ func (mdw *Middleware) check(ctx context.Context, userID string, r *http.Request
 
 func (mdw *Middleware) skipRoute(r *http.Request) bool {
 	switch r.URL.Path {
-	case "/api/v0/status", "/api/v0/version":
+	case "/api/v0/status", "/api/v0/version", "/api/v0/metrics":
 		return true
-	case "/api/v0/metrics":
+	case "/api/v0/auth", "/api/v0/auth/callback":
 		return true
 	default:
 		return false
@@ -166,10 +130,11 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 					return
 				}
 
-				user := mdw.user(r)
-				isAdmin := mdw.admin(r)
+				// if we got here then `principal` must be != nil
+				principal := authentication.PrincipalFromContext(r.Context())
+				isAdmin := mdw.isAdmin(principal)
 
-				ID := fmt.Sprintf("user:%s", user.ID)
+				ID := fmt.Sprintf("user:%s", principal.Identifier())
 				// TODO @shipperizer add context timeout
 				authorized, err := mdw.check(r.Context(), ID, r)
 
@@ -187,11 +152,9 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 					return
 				}
 
-				// pass on context with user object
-				ctx := context.WithValue(r.Context(), USER_CTX, user)
 				// TOOD @shipperizer evenutally we will want to add the contextual tuple in the context
 				// so it can be used in subsequent calls
-				ctx = context.WithValue(ctx, ADMIN_CTX, isAdmin)
+				ctx := IsAdminContext(r.Context(), isAdmin)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},

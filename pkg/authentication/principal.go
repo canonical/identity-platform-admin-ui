@@ -89,10 +89,6 @@ func PrincipalContext(ctx context.Context, principal PrincipalInterface) context
 		parent = context.Background()
 	}
 
-	if principal == nil {
-		return parent
-	}
-
 	return context.WithValue(parent, PrincipalContextKey, principal)
 }
 

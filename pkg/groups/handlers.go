@@ -4,7 +4,6 @@
 package groups
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +15,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -86,37 +86,14 @@ func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
 	}
 }
 
-func (a *API) userFromContext(ctx context.Context) *authorization.User {
-	// TODO @shipperizer implement the FromContext and NewContext in authorization package
-	// see snippet below copied from https://pkg.go.dev/context#Context
-	// NewContext returns a new Context that carries value u.
-	// func NewContext(ctx context.Context, u *User) context.Context {
-	//     return context.WithValue(ctx, userKey, u)
-	// }
-
-	// // FromContext returns the User value stored in ctx, if any.
-	// func FromContext(ctx context.Context) (*User, bool) {
-	//     u, ok := ctx.Value(userKey).(*User)
-	//     return u, ok
-	// }
-	if user := ctx.Value(authorization.USER_CTX); user != nil {
-		return user.(*authorization.User)
-	}
-
-	user := new(authorization.User)
-	user.ID = "anonymous"
-
-	return user
-}
-
 func (a *API) handleList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	user := a.userFromContext(r.Context())
+	principal := authentication.PrincipalFromContext(r.Context())
 
 	groups, err := a.service.ListGroups(
 		r.Context(),
-		user.ID,
+		principal.Identifier(),
 	)
 
 	if err != nil {
@@ -146,8 +123,8 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ID := chi.URLParam(r, "id")
-	user := a.userFromContext(r.Context())
-	group, err := a.service.GetGroup(r.Context(), user.ID, ID)
+	principal := authentication.PrincipalFromContext(r.Context())
+	group, err := a.service.GetGroup(r.Context(), principal.Identifier(), ID)
 
 	if err != nil {
 
@@ -227,8 +204,8 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := a.userFromContext(r.Context())
-	group, err = a.service.CreateGroup(r.Context(), user.ID, group.Name)
+	principal := authentication.PrincipalFromContext(r.Context())
+	group, err = a.service.CreateGroup(r.Context(), principal.Identifier(), group.Name)
 
 	if err != nil {
 

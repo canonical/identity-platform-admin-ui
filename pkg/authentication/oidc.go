@@ -114,7 +114,7 @@ func (o *OAuth2Context) RefreshToken(ctx context.Context, rawRefreshToken string
 		Token()
 }
 
-func (o *OAuth2Context) Logout(ctx context.Context, principal *Principal) error {
+func (o *OAuth2Context) Logout(ctx context.Context, principal PrincipalInterface) error {
 	_, span := o.tracer.Start(ctx, "authentication.OAuth2Context.Logout")
 	defer span.End()
 
@@ -130,15 +130,15 @@ func (o *OAuth2Context) Logout(ctx context.Context, principal *Principal) error 
 	return o.revokeToken(ctx, principal)
 }
 
-func (o *OAuth2Context) revokeSession(ctx context.Context, principal *Principal) error {
+func (o *OAuth2Context) revokeSession(ctx context.Context, principal PrincipalInterface) error {
 	// in case of a CLI user no SessionID is present
-	if principal.SessionID == "" {
+	if principal.Session() == "" {
 		return nil
 	}
 
 	req := o.hydraAdmin.OAuth2Api().
 		RevokeOAuth2LoginSessions(ctx).
-		Sid(principal.SessionID)
+		Sid(principal.Session())
 
 	response, err := o.hydraAdmin.
 		OAuth2Api().
@@ -155,10 +155,10 @@ func (o *OAuth2Context) revokeSession(ctx context.Context, principal *Principal)
 	return nil
 }
 
-func (o *OAuth2Context) revokeToken(ctx context.Context, principal *Principal) error {
-	token := principal.RawAccessToken
-	if principal.RawRefreshToken != "" {
-		token = principal.RawRefreshToken
+func (o *OAuth2Context) revokeToken(ctx context.Context, principal PrincipalInterface) error {
+	token := principal.AccessToken()
+	if principal.RefreshToken() != "" {
+		token = principal.RefreshToken()
 	}
 
 	ctx = context.WithValue(ctx, client.ContextBasicAuth, client.BasicAuth{

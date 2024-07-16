@@ -76,9 +76,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		monitoring.NewMiddleware(monitor, logger).ResponseTime(),
 		middlewareCORS([]string{"*"}),
 	)
-	authorizationMiddleware := authorization.NewMiddleware(
-		authorization.NewAuthorizer(externalConfig.Authorizer(), tracer, monitor, logger), monitor, logger,
-	).Authorize()
+	authorizationMiddleware := authorization.NewMiddleware(config.external.Authorizer(), monitor, logger).Authorize()
 
 	// TODO @shipperizer add a proper configuration to enable http logger middleware as it's expensive
 	if true {
@@ -94,27 +92,37 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	metricsAPI := metrics.NewAPI(logger)
 
 	identitiesAPI := identities.NewAPI(
-		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), tracer, monitor, logger),
+		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	clientsAPI := clients.NewAPI(
-		clients.NewService(externalConfig.HydraAdmin(), tracer, monitor, logger),
+		clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	idpAPI := idp.NewAPI(
-		idp.NewService(idpConfig, tracer, monitor, logger),
+		idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	schemasAPI := schemas.NewAPI(
-		schemas.NewService(schemasConfig, tracer, monitor, logger),
+		schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 
 	rulesAPI := rules.NewAPI(
-		rules.NewService(rulesConfig, tracer, monitor, logger),
+		rules.NewService(rulesConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		tracer,
+		monitor,
 		logger,
 	)
 

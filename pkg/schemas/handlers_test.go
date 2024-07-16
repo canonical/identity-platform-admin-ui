@@ -36,6 +36,8 @@ func TestHandleListSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -115,7 +117,7 @@ func TestHandleListSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -162,6 +164,8 @@ func TestHandleListFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/schemas", nil)
@@ -175,7 +179,7 @@ func TestHandleListFails(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -203,6 +207,8 @@ func TestHandleDetailSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -249,7 +255,7 @@ func TestHandleDetailSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -289,6 +295,8 @@ func TestHandleDetailEmpty(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/schemas/%s", "random"), nil)
@@ -301,7 +309,7 @@ func TestHandleDetailEmpty(t *testing.T) {
 	)
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -337,6 +345,8 @@ func TestHandleDetailFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	ID := "test-1"
@@ -351,7 +361,7 @@ func TestHandleDetailFails(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -378,6 +388,8 @@ func TestHandleCreateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -431,7 +443,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -471,6 +483,8 @@ func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -510,7 +524,7 @@ func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -547,6 +561,8 @@ func TestHandleCreateFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -598,7 +614,7 @@ func TestHandleCreateFails(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -629,13 +645,15 @@ func TestHandleCreateFailBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/schemas", strings.NewReader("test"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -666,6 +684,8 @@ func TestHandlePartialUpdateSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -723,7 +743,7 @@ func TestHandlePartialUpdateSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -763,6 +783,8 @@ func TestHandlePartialUpdateFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	v0Schema := map[string]interface{}{
@@ -820,7 +842,7 @@ func TestHandlePartialUpdateFails(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -851,13 +873,15 @@ func TestHandlePartialUpdateFailBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPatch, "/api/v0/schemas/fake", strings.NewReader("test"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -888,6 +912,8 @@ func TestHandleRemoveSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -898,7 +924,7 @@ func TestHandleRemoveSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -932,6 +958,8 @@ func TestHandleRemoveFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	credID := "test-1"
@@ -941,7 +969,7 @@ func TestHandleRemoveFails(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -972,6 +1000,8 @@ func TestHandleDetailDefaultSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	defaultSchemaID := "mock_default"
@@ -984,7 +1014,7 @@ func TestHandleDetailDefaultSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -1020,6 +1050,8 @@ func TestHandleDetailDefaultFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v0/schemas/default", nil)
@@ -1028,7 +1060,7 @@ func TestHandleDetailDefaultFail(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -1064,6 +1096,8 @@ func TestHandleUpdateDefaultSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	defaultSchemaID := "mock_default"
@@ -1078,7 +1112,7 @@ func TestHandleUpdateDefaultSuccess(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -1114,13 +1148,15 @@ func TestHandleUpdateDefaultBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPut, "/api/v0/schemas/default", strings.NewReader("test"))
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -1151,6 +1187,8 @@ func TestHandleUpdateDefaultFail(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	defaultSchemaID := "mock_default"
@@ -1174,7 +1212,7 @@ func TestHandleUpdateDefaultFail(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -1205,6 +1243,8 @@ func TestRegisterValidation(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
 
@@ -1217,10 +1257,10 @@ func TestRegisterValidation(t *testing.T) {
 		Return(fmt.Errorf("key is already registered"))
 
 	// first registration of `apiKey` is successful
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 
 	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
 
 	// second registration of `apiKey` causes logger.Fatal invocation
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }

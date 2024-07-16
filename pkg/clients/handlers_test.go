@@ -20,6 +20,8 @@ import (
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_clients.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_validation.go -source=../../internal/validation/registry.go
 
@@ -28,6 +30,8 @@ func TestHandleGetClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -43,7 +47,7 @@ func TestHandleGetClientSuccess(t *testing.T) {
 	mockService.EXPECT().GetClient(gomock.Any(), clientId).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -79,6 +83,8 @@ func TestHandleGetClientServiceError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -95,7 +101,7 @@ func TestHandleGetClientServiceError(t *testing.T) {
 	mockService.EXPECT().GetClient(gomock.Any(), clientId).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -131,6 +137,8 @@ func TestHandleDeleteClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -143,7 +151,7 @@ func TestHandleDeleteClientSuccess(t *testing.T) {
 	mockService.EXPECT().DeleteClient(gomock.Any(), clientId).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -173,6 +181,8 @@ func TestHandleDeleteClientServiceError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -189,7 +199,7 @@ func TestHandleDeleteClientServiceError(t *testing.T) {
 	mockService.EXPECT().DeleteClient(gomock.Any(), clientId).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -225,6 +235,8 @@ func TestHandleCreateClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	c := hClient.NewOAuth2Client()
@@ -238,7 +250,7 @@ func TestHandleCreateClientSuccess(t *testing.T) {
 	mockService.EXPECT().CreateClient(gomock.Any(), c).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -268,6 +280,8 @@ func TestHandleCreateClientServiceError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	c := hClient.NewOAuth2Client()
@@ -284,7 +298,7 @@ func TestHandleCreateClientServiceError(t *testing.T) {
 	mockService.EXPECT().CreateClient(gomock.Any(), c).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -320,6 +334,8 @@ func TestHandleCreateClientBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/clients", nil)
@@ -329,7 +345,7 @@ func TestHandleCreateClientBadRequest(t *testing.T) {
 	mockService.EXPECT().UnmarshalClient(gomock.Any()).Return(nil, fmt.Errorf("error"))
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -344,6 +360,8 @@ func TestHandleUpdateClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -360,7 +378,7 @@ func TestHandleUpdateClientSuccess(t *testing.T) {
 	mockService.EXPECT().UpdateClient(gomock.Any(), c).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -390,6 +408,8 @@ func TestHandleUpdateClientServiceError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -408,7 +428,7 @@ func TestHandleUpdateClientServiceError(t *testing.T) {
 	mockService.EXPECT().UpdateClient(gomock.Any(), c).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -444,6 +464,8 @@ func TestHandleUpdateClientBadRequest(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -454,7 +476,7 @@ func TestHandleUpdateClientBadRequest(t *testing.T) {
 	mockService.EXPECT().UnmarshalClient(gomock.Any()).Return(nil, fmt.Errorf("error"))
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -469,6 +491,8 @@ func TestHandleListClientsSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	const clientId = "client_id"
@@ -492,7 +516,7 @@ func TestHandleListClientsSuccess(t *testing.T) {
 	mockService.EXPECT().ListClients(gomock.Any(), listReq).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -522,6 +546,8 @@ func TestHandleListClientServiceError(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 
 	errResp := new(ErrorOAuth2)
@@ -544,7 +570,7 @@ func TestHandleListClientServiceError(t *testing.T) {
 	mockService.EXPECT().ListClients(gomock.Any(), listReq).Return(resp, nil)
 
 	mux := chi.NewMux()
-	NewAPI(mockService, mockLogger).RegisterEndpoints(mux)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
 
 	mux.ServeHTTP(w, req)
 
@@ -580,6 +606,8 @@ func TestRegisterValidation(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockService := NewMockServiceInterface(ctrl)
 	mockValidationRegistry := NewMockValidationRegistryInterface(ctrl)
 
@@ -592,10 +620,10 @@ func TestRegisterValidation(t *testing.T) {
 		Return(fmt.Errorf("key is already registered"))
 
 	// first registration of `apiKey` is successful
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 
 	mockLogger.EXPECT().Fatalf(gomock.Any(), gomock.Any()).Times(1)
 
 	// second registration of `apiKey` causes logger.Fatal invocation
-	NewAPI(mockService, mockLogger).RegisterValidation(mockValidationRegistry)
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }

@@ -32,7 +32,8 @@ func TestGetClientSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
-	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -49,7 +50,7 @@ func TestGetClientSuccess(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().GetOAuth2ClientExecute(gomock.Any()).Times(1).Return(c, new(http.Response), nil)
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.GetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).GetClient(ctx, clientId)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).GetClient(ctx, clientId)
 
 	if resp.ServiceError != nil {
 		t.Fatal("expected serviceError to be nil, got: ", resp.ServiceError)
@@ -70,6 +71,7 @@ func TestGetClientFails(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -91,7 +93,7 @@ func TestGetClientFails(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().GetOAuth2ClientExecute(gomock.Any()).Times(1).Return(nil, serviceResp, fmt.Errorf("error"))
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.GetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).GetClient(ctx, clientId)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).GetClient(ctx, clientId)
 	expectedError := new(ErrorOAuth2)
 	expectedError.Error = *errResp.Error
 	expectedError.ErrorDescription = *errResp.ErrorDescription
@@ -112,6 +114,7 @@ func TestDeleteClientSuccess(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -123,12 +126,13 @@ func TestDeleteClientSuccess(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	mockAuthz.EXPECT().SetDeleteClientEntitlements(gomock.Any(), clientId)
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().DeleteOAuth2Client(gomock.Any(), clientId).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().DeleteOAuth2ClientExecute(gomock.Any()).Times(1).Return(new(http.Response), nil)
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.DeleteOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).DeleteClient(ctx, clientId)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteClient(ctx, clientId)
 
 	if resp.ServiceError != nil {
 		t.Fatal("expected serviceError to be nil, got: ", resp.ServiceError)
@@ -149,6 +153,7 @@ func TestDeleteClientFails(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -171,7 +176,7 @@ func TestDeleteClientFails(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().DeleteOAuth2ClientExecute(gomock.Any()).Times(1).Return(serviceResp, fmt.Errorf("error"))
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.DeleteOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).DeleteClient(ctx, clientId)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteClient(ctx, clientId)
 	expectedError := new(ErrorOAuth2)
 	expectedError.Error = *errResp.Error
 	expectedError.ErrorDescription = *errResp.ErrorDescription
@@ -193,20 +198,24 @@ func TestCreateClientSuccess(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	c := hClient.NewOAuth2Client()
+	c.SetClientId("client_id")
 	clientReq := hClient.OAuth2ApiCreateOAuth2ClientRequest{
 		ApiService: mockHydraOAuth2Api,
 	}
 
 	ctx := context.Background()
+
+	mockAuthz.EXPECT().SetCreateClientEntitlements(gomock.Any(), "client_id")
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().CreateOAuth2Client(gomock.Any()).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().CreateOAuth2ClientExecute(gomock.Any()).Times(1).Return(c, new(http.Response), nil)
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.CreateOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).CreateClient(ctx, c)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateClient(ctx, c)
 
 	if resp.ServiceError != nil {
 		t.Fatal("expected serviceError to be nil, got: ", resp.ServiceError)
@@ -227,6 +236,7 @@ func TestCreateClientFails(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	c := hClient.NewOAuth2Client()
@@ -248,7 +258,7 @@ func TestCreateClientFails(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().CreateOAuth2ClientExecute(gomock.Any()).Times(1).Return(nil, serviceResp, fmt.Errorf("error"))
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.CreateOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).CreateClient(ctx, c)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateClient(ctx, c)
 	expectedError := new(ErrorOAuth2)
 	expectedError.Error = *errResp.Error
 	expectedError.ErrorDescription = *errResp.ErrorDescription
@@ -270,6 +280,7 @@ func TestUpdateClientSuccess(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -285,7 +296,7 @@ func TestUpdateClientSuccess(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().SetOAuth2ClientExecute(gomock.Any()).Times(1).Return(c, new(http.Response), nil)
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
 
 	if resp.ServiceError != nil {
 		t.Fatal("expected serviceError to be nil, got: ", resp.ServiceError)
@@ -306,6 +317,7 @@ func TestUpdateClientFails(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -329,7 +341,7 @@ func TestUpdateClientFails(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().SetOAuth2ClientExecute(gomock.Any()).Times(1).Return(nil, serviceResp, fmt.Errorf("error"))
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
 	expectedError := new(ErrorOAuth2)
 	expectedError.Error = *errResp.Error
 	expectedError.ErrorDescription = *errResp.ErrorDescription
@@ -351,6 +363,7 @@ func TestListClientSuccess(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	const clientId = "client_id"
@@ -385,7 +398,7 @@ func TestListClientSuccess(t *testing.T) {
 		},
 	)
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).ListClients(ctx, listReq)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).ListClients(ctx, listReq)
 
 	if resp.ServiceError != nil {
 		t.Fatal("expected serviceError to be nil, got: ", resp.ServiceError)
@@ -411,6 +424,7 @@ func TestListClientFails(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockHydraOAuth2Api := NewMockOAuth2Api(ctrl)
 
 	errResp := hClient.NewErrorOAuth2()
@@ -432,7 +446,7 @@ func TestListClientFails(t *testing.T) {
 	mockHydraOAuth2Api.EXPECT().ListOAuth2ClientsExecute(gomock.Any()).Times(1).Return(nil, serviceResp, fmt.Errorf("error"))
 	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.ListOAuth2Clients").Times(1).Return(nil, trace.SpanFromContext(ctx))
 
-	resp, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).ListClients(ctx, listReq)
+	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).ListClients(ctx, listReq)
 	expectedError := new(ErrorOAuth2)
 	expectedError.Error = *errResp.Error
 	expectedError.ErrorDescription = *errResp.ErrorDescription
@@ -454,11 +468,12 @@ func TestUnmarshalClient(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 
 	c := hClient.NewOAuth2Client()
 	jsonBody, _ := c.MarshalJSON()
 
-	cc, err := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).UnmarshalClient(jsonBody)
+	cc, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).UnmarshalClient(jsonBody)
 	if !reflect.DeepEqual(cc, c) {
 		t.Fatalf("expected flow to be %+v not %+v", c, cc)
 	}
@@ -475,6 +490,7 @@ func TestParseServiceError(t *testing.T) {
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 
 	errorMsg := "error"
 	errorDescription := "Some error happened"
@@ -487,7 +503,7 @@ func TestParseServiceError(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBuffer(errJson)),
 		StatusCode: statusCode,
 	}
-	err, _ := NewService(mockHydra, mockTracer, mockMonitor, mockLogger).parseServiceError(serviceResp)
+	err, _ := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).parseServiceError(serviceResp)
 
 	if err.Error != errorMsg {
 		t.Fatalf("expected error to be %+v, got: %+v", errorMsg, err.Error)

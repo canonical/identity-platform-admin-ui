@@ -90,14 +90,8 @@ func serve() {
 				logger,
 			),
 		),
-		// default to noop client for authorization
-		openfga.NewNoopClient(tracer, monitor, logger),
+		nil,
 	)
-
-	if specs.AuthorizationEnabled {
-		logger.Info("Authorization is enabled")
-		externalConfig.SetAuthorizer(externalConfig.OpenFGA())
-	}
 
 	k8sCoreV1, err := k8s.NewCoreV1Client(specs.KubeconfigFile)
 
@@ -125,17 +119,33 @@ func serve() {
 		DistFS: distFS,
 	}
 
+	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
+	defer wpool.Stop()
+
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
 			externalConfig.OpenFGA(),
+			wpool,
 			tracer,
 			monitor,
 			logger,
 		)
+		logger.Info("Authorization is enabled")
+		externalConfig.SetAuthorizer(authorizer)
 
 		if authorizer.ValidateModel(context.Background()) != nil {
 			panic("Invalid authorization model provided")
 		}
+	} else {
+		authorizer := authorization.NewAuthorizer(
+			openfga.NewNoopClient(tracer, monitor, logger),
+			wpool,
+			tracer,
+			monitor,
+			logger,
+		)
+		logger.Info("Using noop authorizer")
+		externalConfig.SetAuthorizer(authorizer)
 	}
 
 	oauth2Config := authentication.NewAuthenticationConfig(
@@ -156,9 +166,6 @@ func serve() {
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
 	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
-
-	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
-	defer wpool.Stop()
 
 	router := web.NewRouter(routerConfig, wpool)
 

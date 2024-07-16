@@ -40,6 +40,7 @@ func NewConfig(cmName, cmFile, cmNamespace string, k8s coreV1.CoreV1Interface, o
 
 type Service struct {
 	oathkeeper oathkeeper.ApiApi
+	authz      AuthorizerInterface
 
 	cmName      string
 	cmFileName  string
@@ -158,6 +159,8 @@ func (s *Service) CreateRule(ctx context.Context, newRule oathkeeper.Rule) error
 		return err
 	}
 
+	s.authz.SetCreateRuleEntitlements(ctx, *newRule.Id)
+
 	return nil
 }
 
@@ -193,6 +196,8 @@ func (s *Service) DeleteRule(ctx context.Context, id string) error {
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return err
 	}
+
+	s.authz.SetDeleteRuleEntitlements(ctx, id)
 
 	return nil
 }
@@ -263,7 +268,7 @@ func (s *Service) marshalRuleMap(rules map[string]*oathkeeper.Rule) (string, err
 	return string(rawRuleList), nil
 }
 
-func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(config *Config, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	if config == nil {
@@ -275,6 +280,7 @@ func NewService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorI
 	s.cmName = config.Name
 	s.cmFileName = config.File
 	s.cmNamespace = config.Namespace
+	s.authz = authz
 
 	s.monitor = monitor
 	s.tracer = tracer

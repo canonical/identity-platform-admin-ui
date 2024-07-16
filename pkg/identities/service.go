@@ -20,6 +20,7 @@ import (
 
 type Service struct {
 	kratos kClient.IdentityAPI
+	authz  AuthorizerInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -139,16 +140,19 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 
 	data := new(IdentityData)
 
-	if err != nil {
-		s.logger.Error(err)
-		data.Error = s.parseError(rr)
-	}
-
 	if identity != nil {
 		data.Identities = []kClient.Identity{*identity}
 	} else {
 		data.Identities = []kClient.Identity{}
 	}
+
+	if err != nil {
+		s.logger.Error(err)
+		data.Error = s.parseError(rr)
+		return data, err
+	}
+
+	s.authz.SetCreateIdentityEntitlements(ctx, identity.Id)
 
 	return data, err
 }
@@ -212,20 +216,23 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 
 	data := new(IdentityData)
 
+	data.Identities = []kClient.Identity{}
 	if err != nil {
 		s.logger.Error(err)
 		data.Error = s.parseError(rr)
+		return data, err
 	}
 
-	data.Identities = []kClient.Identity{}
+	s.authz.SetDeleteIdentityEntitlements(ctx, ID)
 
 	return data, err
 }
 
-func NewService(kratos kClient.IdentityAPI, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.kratos = kratos
+	s.authz = authz
 
 	s.monitor = monitor
 	s.tracer = tracer

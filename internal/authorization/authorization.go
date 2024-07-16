@@ -10,6 +10,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
@@ -17,6 +18,8 @@ var ErrInvalidAuthModel = fmt.Errorf("Invalid authorization model schema")
 
 type Authorizer struct {
 	client AuthzClientInterface
+
+	wpool pool.WorkerPoolInterface
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
@@ -71,9 +74,10 @@ func (a *Authorizer) ValidateModel(ctx context.Context) error {
 	return nil
 }
 
-func NewAuthorizer(client AuthzClientInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Authorizer {
+func NewAuthorizer(client AuthzClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Authorizer {
 	authorizer := new(Authorizer)
 	authorizer.client = client
+	authorizer.wpool = wpool
 	authorizer.tracer = tracer
 	authorizer.monitor = monitor
 	authorizer.logger = logger

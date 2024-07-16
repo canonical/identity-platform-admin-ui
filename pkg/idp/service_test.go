@@ -30,6 +30,7 @@ func TestListResourcesSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -77,7 +78,7 @@ func TestListResourcesSuccess(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
 
 	if !reflect.DeepEqual(is, idps) {
 		t.Fatalf("expected providers to be %v not  %v", idps, is)
@@ -96,6 +97,7 @@ func TestListResourcesSuccessButEmpty(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -114,7 +116,7 @@ func TestListResourcesSuccessButEmpty(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
 
 	if len(is) != 0 {
 		t.Fatalf("expected providers to be empty not  %v", is)
@@ -132,6 +134,7 @@ func TestListResourcesFailsOnConfigMap(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -146,7 +149,7 @@ func TestListResourcesFailsOnConfigMap(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(nil, fmt.Errorf("broken"))
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
 
 	if is != nil {
 		t.Fatalf("expected result to be nil not  %v", is)
@@ -165,6 +168,7 @@ func TestListResourcesFailsOnMissingKey(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -212,7 +216,7 @@ func TestListResourcesFailsOnMissingKey(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any()).Times(1)
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
 
 	if is != nil {
 		t.Fatalf("expected result to be nil not  %v", is)
@@ -231,6 +235,7 @@ func TestGetResourceSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -278,7 +283,7 @@ func TestGetResourceSuccess(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetResource(ctx, idps[0].ID)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetResource(ctx, idps[0].ID)
 
 	if !reflect.DeepEqual(is[0], idps[0]) {
 		t.Fatalf("expected providers to be %v not  %v", idps[0], is)
@@ -296,6 +301,7 @@ func TestGetResourceNotfound(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -343,7 +349,7 @@ func TestGetResourceNotfound(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
 
 	if len(is) != 0 {
 		t.Fatalf("expected providers to be empty not  %v", is)
@@ -361,6 +367,7 @@ func TestGetResourceSuccessButEmpty(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -379,7 +386,7 @@ func TestGetResourceSuccessButEmpty(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
 
 	if len(is) != 0 {
 		t.Fatalf("expected providers to be empty not  %v", is)
@@ -397,6 +404,7 @@ func TestGetResourceFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -415,7 +423,7 @@ func TestGetResourceFails(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
 
 	if len(is) != 0 {
 		t.Fatalf("expected providers to be empty not  %v", is)
@@ -433,6 +441,7 @@ func TestEditResourceSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -484,7 +493,7 @@ func TestEditResourceSuccess(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditResource(ctx, idps[0].ID, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditResource(ctx, idps[0].ID, c)
 
 	if is[0].ClientSecret != c.ClientSecret {
 		t.Fatalf("expected provider secret to be %v not  %v", c.ClientSecret, is[0].ClientSecret)
@@ -503,6 +512,7 @@ func TestEditResourceNotfound(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -553,7 +563,7 @@ func TestEditResourceNotfound(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditResource(ctx, "fake", c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditResource(ctx, "fake", c)
 
 	if len(is) != 0 {
 		t.Fatalf("expected providers to be empty not  %v", is)
@@ -571,6 +581,7 @@ func TestEditResourceFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -622,7 +633,7 @@ func TestEditResourceFails(t *testing.T) {
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, fmt.Errorf("error"))
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).EditResource(ctx, idps[0].ID, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).EditResource(ctx, idps[0].ID, c)
 
 	if is != nil {
 		t.Fatalf("expected providers to be nil, not %v", is)
@@ -640,6 +651,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -692,6 +704,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 	c.Scope = []string{"email"}
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.CreateResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetCreateProviderEntitlements(gomock.Any(), gomock.Any())
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -709,7 +722,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
 
 	if is == nil {
 		t.Fatalf("expected provider to be not nil %v", is)
@@ -727,6 +740,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -749,6 +763,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	c.Scope = []string{"email"}
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.CreateResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetCreateProviderEntitlements(gomock.Any(), gomock.Any())
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -775,7 +790,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
 
 	if is == nil {
 		t.Fatalf("expected provider to be not nil %v", is)
@@ -793,6 +808,7 @@ func TestCreateResourceFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -862,7 +878,7 @@ func TestCreateResourceFails(t *testing.T) {
 		},
 	)
 
-	is, err := NewService(cfg, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
+	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateResource(ctx, c)
 
 	if is != nil {
 		t.Fatalf("expected provider to be nil not %v", is)
@@ -880,6 +896,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -924,6 +941,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 	cm.Data[cfg.KeyName] = string(rawIdps)
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.DeleteResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockAuthz.EXPECT().SetDeleteProviderEntitlements(gomock.Any(), idps[0].ID)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
@@ -941,7 +959,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 		},
 	)
 
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteResource(ctx, idps[0].ID)
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteResource(ctx, idps[0].ID)
 
 	if err != nil {
 		t.Fatalf("expected error to be nil not  %v", err)
@@ -955,6 +973,7 @@ func TestDeleteResourceFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	ctx := context.Background()
@@ -1002,7 +1021,7 @@ func TestDeleteResourceFails(t *testing.T) {
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 
-	err := NewService(cfg, mockTracer, mockMonitor, mockLogger).DeleteResource(ctx, "fake")
+	err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteResource(ctx, "fake")
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")

@@ -12,6 +12,8 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
@@ -22,7 +24,9 @@ type API struct {
 	service          ServiceInterface
 	payloadValidator validation.PayloadValidatorInterface
 
-	logger logging.LoggerInterface
+	logger  logging.LoggerInterface
+	tracer  tracing.TracingInterface
+	monitor monitoring.MonitorInterface
 }
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
@@ -252,13 +256,16 @@ func (a *API) handleRemove(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func NewAPI(service ServiceInterface, logger logging.LoggerInterface) *API {
+func NewAPI(service ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 	a.apiKey = "idps"
 
 	a.payloadValidator = NewIdPPayloadValidator(a.apiKey, logger)
 	a.service = service
+
 	a.logger = logger
+	a.tracer = tracer
+	a.monitor = monitor
 
 	return a
 }

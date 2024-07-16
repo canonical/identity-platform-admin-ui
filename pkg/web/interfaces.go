@@ -10,6 +10,7 @@ import (
 	openfga "github.com/openfga/go-sdk"
 	trace "go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -30,6 +31,8 @@ type OpenFGAClientInterface interface {
 	ReadTuples(context.Context, string, string, string, string) (*openfga.ReadResponse, error)
 }
 
+type AuthorizerClientInterface = *authorization.Authorizer
+
 type O11yConfigInterface interface {
 	Tracer() trace.Tracer
 	Monitor() monitoring.MonitorInterface
@@ -40,5 +43,5 @@ type ExternalClientsConfigInterface interface {
 	HydraAdmin() *ih.Client
 	KratosAdmin() *ik.Client
 	OpenFGA() OpenFGAClientInterface
-	Authorizer() OpenFGAClientInterface
+	Authorizer() AuthorizerClientInterface
 }

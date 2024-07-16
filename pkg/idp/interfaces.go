@@ -7,6 +7,11 @@ import (
 	"context"
 )
 
+type AuthorizerInterface interface {
+	SetCreateProviderEntitlements(context.Context, string) error
+	SetDeleteProviderEntitlements(context.Context, string) error
+}
+
 type ServiceInterface interface {
 	ListResources(context.Context) ([]*Configuration, error)
 	GetResource(context.Context, string) ([]*Configuration, error)

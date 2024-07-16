@@ -14,6 +14,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
@@ -57,7 +58,8 @@ func createAdmin(apiUrl, apiToken, storeId, ModelId, user string) {
 	}
 	cfg := openfga.NewConfig(scheme, host, storeId, apiToken, "", false, tracer, monitor, logger)
 	fgaClient := openfga.NewClient(cfg)
-	auth := authorization.NewAuthorizer(fgaClient, tracer, monitor, logger)
+	wpool := pool.NewWorkerPool(1, tracer, monitor, logger)
+	auth := authorization.NewAuthorizer(fgaClient, wpool, tracer, monitor, logger)
 
 	err = auth.CreateAdmin(context.Background(), user)
 	if err != nil {

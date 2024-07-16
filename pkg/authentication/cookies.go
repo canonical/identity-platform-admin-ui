@@ -12,7 +12,7 @@ import (
 
 const (
 	defaultCookiePath = "/"
-	authCookiePath    = "/api/v0/auth/callback"
+	authCookiePath    = "/"
 	nonceCookieName   = "nonce"
 	stateCookieName   = "state"
 	nextToCookieName  = "nextTo"

@@ -62,23 +62,24 @@ func (m *Middleware) oAuth2BearerAuthentication(next http.Handler) http.Handler 
 		}
 
 		var (
-			principal *Principal
-			err       error
+			servicePrincipal *ServicePrincipal
+			err              error
 		)
 
 		// add the Otel HTTP Client
 		r.WithContext(OtelHTTPClientContext(r.Context()))
 
 		if rawAccessToken, found := m.getBearerToken(r.Header); found {
-			principal, err = m.oauth2.Verifier().VerifyAccessToken(r.Context(), rawAccessToken)
+			servicePrincipal, err = m.oauth2.Verifier().VerifyAccessToken(r.Context(), rawAccessToken)
 			if err != nil {
 				m.unauthorizedResponse(w, err)
 				return
 			}
-			principal.RawAccessToken = rawAccessToken
+
+			servicePrincipal.RawAccessToken = rawAccessToken
 		}
 
-		ctx = PrincipalContext(ctx, principal)
+		ctx = PrincipalContext(ctx, servicePrincipal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -96,22 +97,23 @@ func (m *Middleware) oAuth2CookieAuthentication(next http.Handler) http.Handler 
 		err := fmt.Errorf("no authentication token found")
 
 		// request context also carries over the OTEL http client set previously in the chain
-		principal := PrincipalFromContext(r.Context())
-		if principal != nil {
+		if PrincipalFromContext(r.Context()) != nil {
 			// principal != nil means bearer authentication set the principal and we can move on
 			next.ServeHTTP(w, r)
 			return
 		}
 
+		var userPrincipal *UserPrincipal
+
 		if tokens, foundAny := m.getCookieTokens(r); foundAny &&
 			tokens.accessToken != "" && tokens.idToken != "" {
-			// we first validate accessToken, but rely on ID token validity and info to populate Principal attributes
+			// we first validate accessToken, but rely on ID token validity and info to populate UserPrincipal attributes
 			_, errAccessToken := m.oauth2.Verifier().VerifyAccessToken(r.Context(), tokens.accessToken)
-			principal, err = m.oauth2.Verifier().VerifyIDToken(r.Context(), tokens.idToken)
-			if principal != nil {
-				principal.RawIdToken = tokens.idToken
-				principal.RawAccessToken = tokens.accessToken
-				principal.RawRefreshToken = tokens.refreshToken
+			userPrincipal, err = m.oauth2.Verifier().VerifyIDToken(r.Context(), tokens.idToken)
+			if userPrincipal != nil {
+				userPrincipal.RawIdToken = tokens.idToken
+				userPrincipal.RawAccessToken = tokens.accessToken
+				userPrincipal.RawRefreshToken = tokens.refreshToken
 			}
 
 			// we give precedence to access token errors by overwriting ID token error if any
@@ -121,7 +123,7 @@ func (m *Middleware) oAuth2CookieAuthentication(next http.Handler) http.Handler 
 
 			if err != nil && m.shouldRefresh(err, tokens) {
 				// if the error is a TokenExpiredError and the refresh token is available, we try to refresh it
-				principal, err = m.performRefresh(w, r, tokens, principal)
+				userPrincipal, err = m.performRefresh(w, r, tokens)
 			}
 		}
 
@@ -130,7 +132,7 @@ func (m *Middleware) oAuth2CookieAuthentication(next http.Handler) http.Handler 
 			return
 		}
 
-		ctx = PrincipalContext(ctx, principal)
+		ctx = PrincipalContext(ctx, userPrincipal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -146,7 +148,7 @@ func (m *Middleware) shouldRefresh(err error, tokens *cookieTokens) bool {
 	return errors.As(err, &expiredError) && tokens.refreshToken != ""
 }
 
-func (m *Middleware) performRefresh(w http.ResponseWriter, r *http.Request, cookieTokens *cookieTokens, principal *Principal) (*Principal, error) {
+func (m *Middleware) performRefresh(w http.ResponseWriter, r *http.Request, cookieTokens *cookieTokens) (*UserPrincipal, error) {
 	tokens, err := m.oauth2.RefreshToken(r.Context(), cookieTokens.refreshToken)
 	if err != nil {
 		return nil, err
@@ -159,17 +161,17 @@ func (m *Middleware) performRefresh(w http.ResponseWriter, r *http.Request, cook
 	m.cookieManager.SetAccessTokenCookie(w, tokens.AccessToken)
 	m.cookieManager.SetRefreshTokenCookie(w, tokens.RefreshToken)
 
-	// get a populated Principal object from the ID Token
-	principal, err = m.oauth2.Verifier().VerifyIDToken(r.Context(), rawIdToken)
+	// get a populated UserPrincipal object from the ID Token
+	userPrincipal, err := m.oauth2.Verifier().VerifyIDToken(r.Context(), rawIdToken)
 	if err != nil {
 		return nil, err
 	}
 
-	principal.RawIdToken = rawIdToken
-	principal.RawAccessToken = tokens.AccessToken
-	principal.RawRefreshToken = tokens.RefreshToken
+	userPrincipal.RawIdToken = rawIdToken
+	userPrincipal.RawAccessToken = tokens.AccessToken
+	userPrincipal.RawRefreshToken = tokens.RefreshToken
 
-	return principal, nil
+	return userPrincipal, nil
 }
 
 func (m *Middleware) getCookieTokens(r *http.Request) (*cookieTokens, bool) {

@@ -146,14 +146,14 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idToken, err := a.oauth2.Verifier().VerifyIDToken(ctx, rawIDToken)
+	principal, err := a.oauth2.Verifier().VerifyIDToken(ctx, rawIDToken)
 	if err != nil {
 		a.logger.Errorf("unable to verify ID token, error: %v", err)
 		a.badRequest(w, err)
 		return
 	}
 
-	err = a.checkNonce(r, idToken)
+	err = a.checkNonce(r, principal)
 	a.cookieManager.ClearNonceCookie(w)
 	if err != nil {
 		a.badRequest(w, err)
@@ -169,14 +169,14 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	a.uiRedirect(w, r, nextTo)
 }
 
-func (a *API) checkNonce(r *http.Request, idToken *Principal) error {
+func (a *API) checkNonce(r *http.Request, principal *UserPrincipal) error {
 	nonce := a.cookieManager.GetNonceCookie(r)
 	if nonce == "" {
 		a.logger.Error("nonce cookie not found")
 		return fmt.Errorf("nonce cookie not found")
 	}
 
-	if idToken.Nonce != nonce {
+	if principal.Nonce != nonce {
 		a.logger.Error("id token nonce does not match nonce cookie")
 		return fmt.Errorf("id token nonce does not match nonce cookie")
 	}

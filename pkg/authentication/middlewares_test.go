@@ -32,7 +32,7 @@ func TestMiddleware_OAuth2AuthenticationSuccess(t *testing.T) {
 
 	verifier := NewMockTokenVerifier(ctrl)
 	verifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(nil, errors.New("mock-error"))
-	verifier.EXPECT().VerifyAccessToken(gomock.Any(), gomock.Any()).Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+	verifier.EXPECT().VerifyAccessToken(gomock.Any(), gomock.Any()).Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 	oauth2 := NewMockOAuth2ContextInterface(ctrl)
 	oauth2.EXPECT().Verifier().Times(2).Return(verifier)
@@ -197,7 +197,7 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareFailures(t *testing.T) {
 					Return(nil, errors.New("mock-error"))
 				v.EXPECT().VerifyAccessToken(gomock.Any(), "mock-access-token").
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 				o.EXPECT().Verifier().Times(2).Return(v)
 
@@ -226,7 +226,7 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareFailures(t *testing.T) {
 
 				v.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 				v.EXPECT().VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(nil, errors.New("mock-error"))
@@ -261,7 +261,7 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareFailures(t *testing.T) {
 					Return(nil, &oidc.TokenExpiredError{})
 				v.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 				o.EXPECT().Verifier().Times(2).Return(v)
 
@@ -354,7 +354,7 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareSuccess(t *testing.T) {
 			setupMocks: func(c *MockAuthCookieManagerInterface, v *MockTokenVerifier, o *MockOAuth2ContextInterface, l *MockLoggerInterface, t *MockTracer) {
 				v.EXPECT().VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 				o.EXPECT().Verifier().Times(1).Return(v)
 
@@ -374,10 +374,10 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareSuccess(t *testing.T) {
 			setupMocks: func(c *MockAuthCookieManagerInterface, v *MockTokenVerifier, o *MockOAuth2ContextInterface, l *MockLoggerInterface, t *MockTracer) {
 				v.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 				v.EXPECT().VerifyAccessToken(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 				o.EXPECT().Verifier().Times(2).Return(v)
 
@@ -417,7 +417,7 @@ func TestMiddleware_OAuth2AuthenticationMiddlewareSuccess(t *testing.T) {
 					Return(token, nil)
 
 				v.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).
-					Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+					Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 				c.EXPECT().GetIDTokenCookie(gomock.Any()).Return("mock-id-token")
 				c.EXPECT().GetAccessTokenCookie(gomock.Any()).Return("mock-access-token")

@@ -143,9 +143,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	uiAPI := ui.NewAPI(uiConfig, tracer, monitor, logger)
 
 	// Create a new router for the API so that we can add extra middlewares
-	apiRouter := router.Group(func(r chi.Router) {
-		r.Use(authorizationMiddleware)
-	}).(*chi.Mux)
+	apiRouter := router.Group(nil).(*chi.Mux)
 
 	var oauth2Context authentication.OAuth2ContextInterface
 	var cookieManager authentication.AuthCookieManagerInterface
@@ -169,6 +167,9 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		)
 		apiRouter.Use(authenticationMiddleware.OAuth2AuthenticationChain()...)
 	}
+
+	// register authorizationMiddleware after authentication so Principal is available if necessary
+	apiRouter.Use(authorizationMiddleware)
 
 	if config.payloadValidationEnabled {
 		validationRegistry := validation.NewRegistry(tracer, monitor, logger)

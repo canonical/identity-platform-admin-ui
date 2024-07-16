@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.13.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.13.0...v1.13.1) (2024-07-16)
+
+
+### Bug Fixes
+
+* add helper function for constructing assignee ([cfa1a08](https://github.com/canonical/identity-platform-admin-ui/commit/cfa1a08d175661507a6a3979b5461b96ed19f8d6))
+* add resource creation logic to authz ([c8e3588](https://github.com/canonical/identity-platform-admin-ui/commit/c8e3588fe84e38ed145913cbc370b574e1bd7933))
+* fix authorizer init logic ([a8fb9c3](https://github.com/canonical/identity-platform-admin-ui/commit/a8fb9c34c5eecaca553474155e941958665e26f0))
+* remove page param ([585f713](https://github.com/canonical/identity-platform-admin-ui/commit/585f71374cc1b2cb4af6d21f05daa410f616d502))
+* set cookie path to / ([9c95b0b](https://github.com/canonical/identity-platform-admin-ui/commit/9c95b0bcdd2dd1a63740c065702e66c8cbd5f6a9))
+* sync resource creation/delation with authz ([55d02df](https://github.com/canonical/identity-platform-admin-ui/commit/55d02df2dff9830f9e92db39c4d3fed1ad250aec))
+* use worker pool in authorizer ([67bf82d](https://github.com/canonical/identity-platform-admin-ui/commit/67bf82d693317e425fea90cddc8dd6be18779d9a))
+
 ## [1.13.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.12.0...v1.13.0) (2024-07-11)
 
 

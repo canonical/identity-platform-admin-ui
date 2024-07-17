@@ -24,12 +24,12 @@ data:
   OPENFGA_STORE_ID: "-----to-be-replaced----"
   OPENFGA_AUTHORIZATION_MODEL_ID: "-----to-be-replaced----"
   AUTHORIZATION_ENABLED: "true"
-  AUTHENTICATION_ENABLED: "false"
-  OIDC_ISSUER: "https://random.com"
-  OAUTH2_CLIENT_ID: random
-  OAUTH2_CLIENT_SECRET: random
+  AUTHENTICATION_ENABLED: "true"
+  OIDC_ISSUER: "https://iam.dev.canonical.com/stg-identity-jaas-dev-hydra"
+  OAUTH2_CLIENT_ID: "-----to-be-replaced----"
+  OAUTH2_CLIENT_SECRET: "-----to-be-replaced----"
   OAUTH2_REDIRECT_URI: "http://localhost:8000/api/v0/auth/callback"
-  OAUTH2_CODEGRANT_SCOPES: "openid,offline_access"
+  OAUTH2_CODEGRANT_SCOPES: "openid,offline_access,email,profile"
   OAUTH2_AUTH_COOKIES_ENCRYPTION_KEY: "WrfOcYmVBwyduEbKYTUhO4X7XVaOQ1wF"
   ACCESS_TOKEN_VERIFICATION_STRATEGY: "jwks"
 ---

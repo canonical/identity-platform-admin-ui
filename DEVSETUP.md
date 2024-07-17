@@ -142,3 +142,15 @@ SCHEMAS_CONFIGMAP_NAME=identity-schemas \
 SCHEMAS_CONFIGMAP_NAMESPACE=default \
 TRACING_ENABLED=false \
 ```
+
+
+## OIDC authentication
+
+For development purposes we are going to be targeting `iam.dev.canonical.com` and use it as our OIDC provider
+
+the credentials are available in the team LastPass account and need to be swapped in the [configmap.yaml](https://github.com/canonical/identity-platform-admin-ui/blob/main/deployments/kubectl/configMap.yaml#L29-L30) file
+
+dev setup will rely on the application being exposed on `localhost:8000` without any path rewrite, if that is not the case the OIDC flow won't work due to how the redirect uri don't match with the expectations of the OAUTH2 client created in `iam.dev.canonical.com` (and also the `OAUTH2_REDIRECT_URI` variable in the configmap)
+
+
+in the remote case we need to create a new client the process to issue it will be described in the wiki together with a stop gap solution using other components (namely Dex)

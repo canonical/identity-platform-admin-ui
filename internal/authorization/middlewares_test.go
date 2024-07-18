@@ -171,7 +171,11 @@ func TestMiddlewareAuthorize(t *testing.T) {
 
 			mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).AnyTimes()
 
-			calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
+			adminAuth := NewMockAdminAuthorizerInterface(ctrl)
+			adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)
+
+			calls = append(calls, mockAuthorizer.EXPECT().Admin().Times(1).Return(adminAuth))
+			//calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
 			for _, check := range test.expect {
 				var call *gomock.Call
 				if !test.isGlobal {
@@ -231,9 +235,12 @@ func TestMiddlewareAuthorizeUseTokenHeader(t *testing.T) {
 
 	mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).AnyTimes()
 
+	adminAuth := NewMockAdminAuthorizerInterface(ctrl)
+	adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)
+
 	calls = append(
 		calls,
-		mockAuthorizer.EXPECT().Check(gomock.Any(), fmt.Sprintf("user:%s", testPrincipal.Identifier()), "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil),
+		mockAuthorizer.EXPECT().Admin().Times(1).Return(adminAuth),
 		mockAuthorizer.EXPECT().Check(gomock.Any(), gomock.Any(), CAN_VIEW, fmt.Sprintf("%s:%s", IDENTITY_TYPE, "__system__global"), gomock.Any(), gomock.Any()).Times(1).Return(true, nil),
 	)
 

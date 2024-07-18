@@ -38,13 +38,6 @@ type Middleware struct {
 	logger  logging.LoggerInterface
 }
 
-// TODO @shipperizer move this to a separate middleware once implementation of authorization is starting
-func (mdw *Middleware) isAdmin(principal authentication.PrincipalInterface) bool {
-	isAdmin, err := mdw.auth.Check(context.Background(), fmt.Sprintf("user:%s", principal.Identifier()), "admin", ADMIN_PRIVILEGE)
-
-	return isAdmin && err == nil
-}
-
 func (mdw *Middleware) mapper(r *http.Request) []Permission {
 	// TODO @shipperizer exploit https://pkg.go.dev/github.com/go-chi/chi/v5#URLParam to fetch
 	// resource ids like {id}, {<x>_id}, also parse the path to understand type to check against
@@ -132,7 +125,20 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 
 				// if we got here then `principal` must be != nil
 				principal := authentication.PrincipalFromContext(r.Context())
-				isAdmin := mdw.isAdmin(principal)
+				if principal == nil {
+					// should never happen if authentication is configured correctly
+					mdw.logger.Error("principal not available in context, cannot proceed with authorization")
+					mdw.error("unable to retrieve authenticated user", http.StatusInternalServerError, w)
+					return
+				}
+
+				isAdmin, err := mdw.auth.Admin().CheckAdmin(r.Context(), principal.Identifier())
+				if err != nil {
+					mdw.logger.Errorf("failed %s", err)
+					mdw.error("failed connecting with OpenFGA", http.StatusInternalServerError, w)
+
+					return
+				}
 
 				ID := fmt.Sprintf("user:%s", principal.Identifier())
 				// TODO @shipperizer add context timeout

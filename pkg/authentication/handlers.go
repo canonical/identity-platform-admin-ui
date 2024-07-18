@@ -258,7 +258,18 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) uiRedirect(w http.ResponseWriter, r *http.Request, nextTo string) {
-	redirect := ui.UIPrefix
+	redirect, err := url.JoinPath("/", a.contextPath, ui.UIPrefix)
+	if err != nil {
+		a.logger.Errorf("unable to build ui redirect path, possible misconfiguration, err: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(
+			types.Response{
+				Status:  http.StatusInternalServerError,
+				Message: err.Error(),
+			},
+		)
+		return
+	}
 
 	if nextTo != "" {
 		redirectURL, _ := url.Parse(redirect)
@@ -267,9 +278,6 @@ func (a *API) uiRedirect(w http.ResponseWriter, r *http.Request, nextTo string) 
 		redirectURL.RawQuery = query.Encode()
 		redirect = redirectURL.String()
 	}
-
-	// handle context path in redirection response
-	r.URL.Path = a.contextPath
 
 	http.Redirect(w, r, redirect, http.StatusFound)
 }

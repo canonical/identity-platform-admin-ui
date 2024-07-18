@@ -78,6 +78,10 @@ func (a *Authorizer) ValidateModel(ctx context.Context) error {
 	return nil
 }
 
+func (a *Authorizer) Admin() AdminAuthorizerInterface {
+	return &a.AdminAuthorizer
+}
+
 func NewAuthorizer(client AuthzClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Authorizer {
 	authorizer := new(Authorizer)
 	authorizer.client = client

@@ -67,7 +67,7 @@ func (m *Middleware) oAuth2BearerAuthentication(next http.Handler) http.Handler 
 		)
 
 		// add the Otel HTTP Client
-		r.WithContext(OtelHTTPClientContext(r.Context()))
+		r = r.WithContext(OtelHTTPClientContext(r.Context()))
 
 		if rawAccessToken, found := m.getBearerToken(r.Header); found {
 			servicePrincipal, err = m.oauth2.Verifier().VerifyAccessToken(r.Context(), rawAccessToken)

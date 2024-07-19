@@ -4,12 +4,15 @@
 package ui
 
 import (
+	"encoding/json"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -18,11 +21,13 @@ import (
 const UIPrefix = "/ui"
 
 type Config struct {
-	DistFS fs.FS
+	DistFS      fs.FS
+	ContextPath string
 }
 
 type API struct {
-	fileServer http.Handler
+	fileServer  http.Handler
+	contextPath string
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
@@ -31,7 +36,19 @@ type API struct {
 
 func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Get(UIPrefix, func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+		path, err := url.JoinPath("/", a.contextPath, UIPrefix, "/")
+		if err != nil {
+			a.logger.Error("Failed to construct path: ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(
+				types.Response{
+					Status:  http.StatusInternalServerError,
+					Message: err.Error(),
+				},
+			)
+			return
+		}
+		http.Redirect(w, r, path, http.StatusMovedPermanently)
 	})
 	mux.Get(UIPrefix+"/", a.uiFiles)
 	mux.Get(UIPrefix+"/*", a.uiFiles)
@@ -66,6 +83,7 @@ func NewAPI(config *Config, tracer tracing.TracingInterface, monitor monitoring.
 	a := new(API)
 
 	a.fileServer = http.FileServer(http.FS(config.DistFS))
+	a.contextPath = config.ContextPath
 
 	a.tracer = tracer
 	a.monitor = monitor

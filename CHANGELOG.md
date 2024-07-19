@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.14.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.13.1...v1.14.0) (2024-07-19)
+
+
+### Features
+
+* actual link authentication users to authorization model + tests ([8063b73](https://github.com/canonical/identity-platform-admin-ui/commit/8063b737c085cc3cd50e59231bfc8b5b870958ec))
+* handle case principal is not found in authorizer middleware + switch to `CheckAdmin` method ([182e469](https://github.com/canonical/identity-platform-admin-ui/commit/182e469e3b727685ff5cef585e180a2708a043ca))
+* introduce UserPrincipal and ServicePrincipal + move Principal structs and logic to ad hoc file + tests ([69dbeb9](https://github.com/canonical/identity-platform-admin-ui/commit/69dbeb9bd82fd722980da2405ccca640c5c1235d))
+
+
+### Bug Fixes
+
+* set necessary oauth2 scopes as default ([9c36e95](https://github.com/canonical/identity-platform-admin-ui/commit/9c36e950a137bf3203e3a4af998ac4fad2384be8))
+* set OtelHTTPClient in context correctly ([e514b37](https://github.com/canonical/identity-platform-admin-ui/commit/e514b3747ddcabcc182aa17cc91fe3c99cbf2649))
+* ui redirection with context path ([61451f6](https://github.com/canonical/identity-platform-admin-ui/commit/61451f63700ac3c8b2888448122c70e001110556))
+* use contextPath to redirect to UI ([8a7540d](https://github.com/canonical/identity-platform-admin-ui/commit/8a7540d0775a9db3f19e5288da79db5690319a52))
+
 ## [1.13.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.13.0...v1.13.1) (2024-07-16)
 
 

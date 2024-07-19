@@ -64,7 +64,7 @@ func TestJWKSTokenVerifier_VerifyAccessToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-subject") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})
@@ -92,7 +92,7 @@ func TestJWKSTokenVerifier_VerifyIDToken(t *testing.T) {
 	}{
 		{
 			name:  "Success",
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwiZW1haWwiOiJtb2NrLWVtYWlsIn0.-3clv5YJmk4EGM9l_yIfGQjGhKEjEnHvCjA-kNYUd0Y",
 		},
 		{
 			name:  "Fail",
@@ -118,7 +118,7 @@ func TestJWKSTokenVerifier_VerifyIDToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-email") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})
@@ -186,16 +186,13 @@ func TestUserinfoTokenVerifier_VerifyIDToken(t *testing.T) {
 		Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 	mockMonitor := NewMockMonitorInterface(ctrl)
 
-	mockToken := new(oidc.IDToken)
-	mockToken.Subject = "mock-subject"
-
 	for _, tt := range []struct {
 		name  string
 		token string
 	}{
 		{
 			name:  "Success",
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMiwiZW1haWwiOiJtb2NrLWVtYWlsIn0.-3clv5YJmk4EGM9l_yIfGQjGhKEjEnHvCjA-kNYUd0Y",
 		},
 		{
 			name:  "Fail",
@@ -221,7 +218,7 @@ func TestUserinfoTokenVerifier_VerifyIDToken(t *testing.T) {
 				t.Fatalf("error is nil or error message does not match expected error")
 			}
 
-			if tt.name == "Success" && (err != nil || token.Subject != "mock-subject") {
+			if tt.name == "Success" && (err != nil || token.Identifier() != "mock-email") {
 				t.Fatalf("expected token does not match returned token")
 			}
 		})

@@ -1,19 +1,20 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package authorization -destination ./mock_monitor.go -source=../monitoring/interfaces.go
@@ -170,7 +171,11 @@ func TestMiddlewareAuthorize(t *testing.T) {
 
 			mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).AnyTimes()
 
-			calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
+			adminAuth := NewMockAdminAuthorizerInterface(ctrl)
+			adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)
+
+			calls = append(calls, mockAuthorizer.EXPECT().Admin().Times(1).Return(adminAuth))
+			//calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
 			for _, check := range test.expect {
 				var call *gomock.Call
 				if !test.isGlobal {
@@ -184,6 +189,7 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			gomock.InAnyOrder(calls)
 
 			r := httptest.NewRequest(test.input.method, test.input.endpoint, nil)
+			r = r.WithContext(authentication.PrincipalContext(r.Context(), &authentication.UserPrincipal{Email: "admin"}))
 			r.Header.Set("Content-Type", "application/json")
 
 			rctx := chi.NewRouteContext()
@@ -221,15 +227,20 @@ func TestMiddlewareAuthorizeUseTokenHeader(t *testing.T) {
 
 	new(API).RegisterEndpoints(router)
 
-	testUser := "test-user"
+	testPrincipal := &authentication.UserPrincipal{
+		Subject: "test-user",
+	}
 
 	calls := []*gomock.Call{}
 
 	mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).AnyTimes()
 
+	adminAuth := NewMockAdminAuthorizerInterface(ctrl)
+	adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)
+
 	calls = append(
 		calls,
-		mockAuthorizer.EXPECT().Check(gomock.Any(), fmt.Sprintf("user:%s", testUser), "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil),
+		mockAuthorizer.EXPECT().Admin().Times(1).Return(adminAuth),
 		mockAuthorizer.EXPECT().Check(gomock.Any(), gomock.Any(), CAN_VIEW, fmt.Sprintf("%s:%s", IDENTITY_TYPE, "__system__global"), gomock.Any(), gomock.Any()).Times(1).Return(true, nil),
 	)
 
@@ -237,7 +248,7 @@ func TestMiddlewareAuthorizeUseTokenHeader(t *testing.T) {
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v0/identities", nil)
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set(TOKEN_HEADER, base64.RawStdEncoding.EncodeToString([]byte(testUser)))
+	r = r.WithContext(authentication.PrincipalContext(r.Context(), testPrincipal))
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, r)

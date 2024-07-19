@@ -23,27 +23,37 @@ type JWKSTokenVerifier struct {
 	monitor  monitoring.MonitorInterface
 }
 
-func verifyJWT(ctx context.Context, rawJwt string, verifier providerVerifierInterface) (*Principal, error) {
+func verifyJWT(ctx context.Context, rawJwt string, verifier providerVerifierInterface) (*oidc.IDToken, error) {
 	i, err := verifier.Verify(ctx, rawJwt)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewPrincipalFromClaims(i)
+	return i, nil
 }
 
-func (j *JWKSTokenVerifier) VerifyAccessToken(ctx context.Context, rawAccessToken string) (*Principal, error) {
+func (j *JWKSTokenVerifier) VerifyAccessToken(ctx context.Context, rawAccessToken string) (*ServicePrincipal, error) {
 	_, span := j.tracer.Start(ctx, "authentication.JWKSTokenVerifier.VerifyAccessToken")
 	defer span.End()
 
-	return verifyJWT(ctx, rawAccessToken, j.verifier)
+	t, err := verifyJWT(ctx, rawAccessToken, j.verifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewServicePrincipalFromClaims(t)
 }
 
-func (j *JWKSTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken string) (*Principal, error) {
+func (j *JWKSTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken string) (*UserPrincipal, error) {
 	_, span := j.tracer.Start(ctx, "authentication.JWKSTokenVerifier.VerifyIDToken")
 	defer span.End()
 
-	return verifyJWT(ctx, rawIDToken, j.verifier)
+	t, err := verifyJWT(ctx, rawIDToken, j.verifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewUserPrincipalFromClaims(t)
 }
 
 func NewJWKSTokenVerifier(provider ProviderInterface, clientID string, tracer trace.Tracer, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *JWKSTokenVerifier {
@@ -71,7 +81,7 @@ type claims struct {
 	Audience []string `json:"aud"`
 }
 
-func (u *UserinfoTokenVerifier) VerifyAccessToken(ctx context.Context, rawAccessToken string) (*Principal, error) {
+func (u *UserinfoTokenVerifier) VerifyAccessToken(ctx context.Context, rawAccessToken string) (*ServicePrincipal, error) {
 	_, span := u.tracer.Start(ctx, "authentication.UserinfoTokenVerifier.VerifyAccessToken")
 	defer span.End()
 
@@ -85,7 +95,7 @@ func (u *UserinfoTokenVerifier) VerifyAccessToken(ctx context.Context, rawAccess
 		return nil, err
 	}
 
-	return NewPrincipalFromClaims(info)
+	return NewServicePrincipalFromClaims(info)
 }
 
 func (u *UserinfoTokenVerifier) validateAdditionalClaims(userinfo ReadableClaims) error {
@@ -105,11 +115,16 @@ func (u *UserinfoTokenVerifier) validateAdditionalClaims(userinfo ReadableClaims
 	return fmt.Errorf("access token audiece doesn't match expected value")
 }
 
-func (u *UserinfoTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken string) (*Principal, error) {
+func (u *UserinfoTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken string) (*UserPrincipal, error) {
 	_, span := u.tracer.Start(ctx, "authentication.UserinfoTokenVerifier.VerifyIDToken")
 	defer span.End()
 
-	return verifyJWT(ctx, rawIDToken, u.verifier)
+	t, err := verifyJWT(ctx, rawIDToken, u.verifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewUserPrincipalFromClaims(t)
 }
 
 func NewUserinfoTokenVerifier(provider ProviderInterface, clientID string, tracer trace.Tracer, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *UserinfoTokenVerifier {

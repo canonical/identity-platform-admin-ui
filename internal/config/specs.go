@@ -30,7 +30,7 @@ type EnvSpec struct {
 	OAuth2ClientId              string   `envconfig:"oauth2_client_id" validate:"required"`
 	OAuth2ClientSecret          string   `envconfig:"oauth2_client_secret" validate:"required"`
 	OAuth2RedirectURI           string   `envconfig:"oauth2_redirect_uri" validate:"required"`
-	OAuth2CodeGrantScopes       []string `envconfig:"oauth2_codegrant_scopes" default:"openid,offline_access" validate:"required"`
+	OAuth2CodeGrantScopes       []string `envconfig:"oauth2_codegrant_scopes" default:"openid,offline_access,profile,email" validate:"required"`
 	OAuth2AuthCookiesTTLSeconds int      `envconfig:"oauth2_auth_cookies_ttl_seconds" default:"300" validate:"required"`
 	OAuth2UserSessionTTLSeconds int      `envconfig:"oauth2_user_session_ttl_seconds" default:"21600" validate:"required"`
 

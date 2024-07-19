@@ -117,7 +117,7 @@ func TestHandleLoginCallback(t *testing.T) {
 		DoAndReturn(func(data string) (string, error) { return data, nil })
 
 	mockVerifier := NewMockTokenVerifier(ctrl)
-	mockVerifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(&Principal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
+	mockVerifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
 	mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
 	mockOauth2Ctx.EXPECT().Verifier().Times(1).Return(mockVerifier)
@@ -306,7 +306,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 
 				verifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Times(1).
-					Return(&Principal{
+					Return(&UserPrincipal{
 						Subject: "mock-subject",
 						Nonce:   "mock-nonce",
 					}, nil)
@@ -326,7 +326,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 				oauth2Ctx.EXPECT().RetrieveTokens(gomock.Any(), gomock.Eq("mock-code")).Return(mockToken, nil)
 
 				verifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Times(1).
-					Return(&Principal{
+					Return(&UserPrincipal{
 						Subject: "mock-subject",
 						Nonce:   "mock-nonce",
 					}, nil)
@@ -386,7 +386,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 
 func TestHandleMe(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	p := &Principal{
+	p := &UserPrincipal{
 		Subject:         "mock-subject",
 		Name:            "mock-name",
 		Email:           "mock-email",
@@ -424,10 +424,10 @@ func TestHandleMe(t *testing.T) {
 	response := mockResponse.Result()
 	defer response.Body.Close()
 
-	got := new(Principal)
+	got := new(UserPrincipal)
 	_ = json.NewDecoder(response.Body).Decode(got)
 
-	expectedPrincipal := Principal{
+	expectedPrincipal := UserPrincipal{
 		Subject:         "mock-subject",
 		Name:            "mock-name",
 		Email:           "mock-email",
@@ -483,7 +483,7 @@ func TestLogout(t *testing.T) {
 	} {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			p := &Principal{
+			p := &UserPrincipal{
 				Subject:         "mock-subject",
 				Name:            "mock-name",
 				Email:           "mock-email",

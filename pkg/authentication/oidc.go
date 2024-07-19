@@ -20,53 +20,9 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 )
 
-type principalContextKey int
-
 var (
-	PrincipalContextKey principalContextKey
-	otelHTTPClient      = http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	otelHTTPClient = http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 )
-
-type Principal struct {
-	Subject   string `json:"sub"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	SessionID string `json:"sid"`
-	Nonce     string `json:"nonce"`
-
-	RawAccessToken  string `json:"-"`
-	RawIdToken      string `json:"-"`
-	RawRefreshToken string `json:"-"`
-}
-
-func NewPrincipalFromClaims(c ReadableClaims) (*Principal, error) {
-	a := new(Principal)
-	if err := c.Claims(a); err != nil {
-		return nil, err
-	}
-	return a, nil
-}
-
-func PrincipalContext(ctx context.Context, principal *Principal) context.Context {
-	parent := ctx
-	if ctx == nil {
-		parent = context.Background()
-	}
-
-	return context.WithValue(parent, PrincipalContextKey, principal)
-}
-
-func PrincipalFromContext(ctx context.Context) *Principal {
-	if ctx == nil {
-		return nil
-	}
-
-	if value, ok := ctx.Value(PrincipalContextKey).(*Principal); ok {
-		return value
-	}
-
-	return nil
-}
 
 func OtelHTTPClientContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, oauth2.HTTPClient, otelHTTPClient)
@@ -114,7 +70,7 @@ func (o *OAuth2Context) RefreshToken(ctx context.Context, rawRefreshToken string
 		Token()
 }
 
-func (o *OAuth2Context) Logout(ctx context.Context, principal *Principal) error {
+func (o *OAuth2Context) Logout(ctx context.Context, principal PrincipalInterface) error {
 	_, span := o.tracer.Start(ctx, "authentication.OAuth2Context.Logout")
 	defer span.End()
 
@@ -130,15 +86,15 @@ func (o *OAuth2Context) Logout(ctx context.Context, principal *Principal) error 
 	return o.revokeToken(ctx, principal)
 }
 
-func (o *OAuth2Context) revokeSession(ctx context.Context, principal *Principal) error {
+func (o *OAuth2Context) revokeSession(ctx context.Context, principal PrincipalInterface) error {
 	// in case of a CLI user no SessionID is present
-	if principal.SessionID == "" {
+	if principal.Session() == "" {
 		return nil
 	}
 
 	req := o.hydraAdmin.OAuth2Api().
 		RevokeOAuth2LoginSessions(ctx).
-		Sid(principal.SessionID)
+		Sid(principal.Session())
 
 	response, err := o.hydraAdmin.
 		OAuth2Api().
@@ -155,10 +111,10 @@ func (o *OAuth2Context) revokeSession(ctx context.Context, principal *Principal)
 	return nil
 }
 
-func (o *OAuth2Context) revokeToken(ctx context.Context, principal *Principal) error {
-	token := principal.RawAccessToken
-	if principal.RawRefreshToken != "" {
-		token = principal.RawRefreshToken
+func (o *OAuth2Context) revokeToken(ctx context.Context, principal PrincipalInterface) error {
+	token := principal.AccessToken()
+	if principal.RefreshToken() != "" {
+		token = principal.RefreshToken()
 	}
 
 	ctx = context.WithValue(ctx, client.ContextBasicAuth, client.BasicAuth{

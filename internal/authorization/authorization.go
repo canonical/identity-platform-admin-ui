@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
@@ -13,6 +13,10 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
+
+type AdminContextKey string
+
+var adminContextKey AdminContextKey
 
 var ErrInvalidAuthModel = fmt.Errorf("Invalid authorization model schema")
 
@@ -74,6 +78,10 @@ func (a *Authorizer) ValidateModel(ctx context.Context) error {
 	return nil
 }
 
+func (a *Authorizer) Admin() AdminAuthorizerInterface {
+	return &a.AdminAuthorizer
+}
+
 func NewAuthorizer(client AuthzClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Authorizer {
 	authorizer := new(Authorizer)
 	authorizer.client = client
@@ -92,5 +100,26 @@ func contains(s []string, e string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+func IsAdminContext(ctx context.Context, isAdmin bool) context.Context {
+	parent := ctx
+	if ctx == nil {
+		parent = context.Background()
+	}
+
+	return context.WithValue(parent, adminContextKey, isAdmin)
+}
+
+func IsAdminFromContext(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+
+	if value, ok := ctx.Value(adminContextKey).(bool); ok {
+		return value
+	}
+
 	return false
 }

@@ -14,3 +14,6 @@ hydra:
     enabled: true
 maester:
   enabled: false
+image:
+  repository: "ghcr.io/canonical/hydra"
+  tag: "2.3.0-canonical"

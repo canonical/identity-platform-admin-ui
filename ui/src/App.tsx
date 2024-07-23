@@ -40,12 +40,6 @@ const App: FC = () => {
     >
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <Login isAuthenticated={!!authUser} setAuthUser={setAuthUser} />
-            }
-          >
             <Route
               path="/"
               element={<Navigate to="/provider" replace={true} />}
@@ -65,7 +59,6 @@ const App: FC = () => {
               }
             />
             <Route path="*" element={<NoMatch />} />
-          </Route>
         </Routes>
       </Suspense>
     </ApplicationLayout>

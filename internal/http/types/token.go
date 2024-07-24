@@ -29,18 +29,9 @@ type TokenPaginator struct {
 	logger logging.LoggerInterface
 }
 
-// LoadFromRequest populates the TokenPaginator struct with pagination tokens from the r request
-func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) error {
-	_, span := p.tracer.Start(ctx, "types.TokenPaginator.LoadFromRequest")
-	defer span.End()
-
-	header := r.Header.Get(PAGINATION_HEADER)
-
-	if header == "" {
-		return nil
-	}
-
-	tokenMap, err := base64.StdEncoding.DecodeString(header)
+// LoadFromString populates the TokenPaginator struct with pagination tokens from a string
+func (p *TokenPaginator) LoadFromString(ctx context.Context, s string) error {
+	tokenMap, err := base64.StdEncoding.DecodeString(s)
 
 	if err != nil {
 		p.logger.Errorf("issues decoding header: %s", err)
@@ -59,6 +50,20 @@ func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) e
 	p.SetTokens(context.TODO(), tokens)
 
 	return nil
+}
+
+// LoadFromRequest populates the TokenPaginator struct with pagination tokens from the r request
+func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) error {
+	_, span := p.tracer.Start(ctx, "types.TokenPaginator.LoadFromRequest")
+	defer span.End()
+
+	header := r.Header.Get(PAGINATION_HEADER)
+
+	if header == "" {
+		return nil
+	}
+
+	return p.LoadFromString(ctx, header)
 }
 
 // SetToken sets a pagination token value for the specified type represented by key

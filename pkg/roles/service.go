@@ -594,8 +594,8 @@ func (s *V1Service) GetRoleEntitlements(ctx context.Context, roleId string, para
 		return nil, v1.NewUnknownError(err.Error())
 	}
 
-	paginator.SetTokens(r.Context(), pageTokens)
-	metaParam, err := paginator.PaginationHeader(r.Context())
+	paginator.SetTokens(ctx, pageTokens)
+	metaParam, err := paginator.PaginationHeader(ctx)
 	if err != nil {
 		s.core.logger.Errorf("error producing pagination meta param: %s", err)
 		metaParam = ""

@@ -11,11 +11,16 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 const (
@@ -447,6 +452,218 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 	s.monitor = monitor
 	s.tracer = tracer
 	s.logger = logger
+
+	return s
+}
+
+type V1Service struct {
+	core *Service
+}
+
+// TODO @shipperizer make sure Authenticator is implemented
+// ListRoles returns a page of Role objects of at least `size` elements if available.
+func (s *V1Service) ListRoles(ctx context.Context, params *resources.GetRolesParams) (*resources.PaginatedResponse[resources.Role], error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.ListRoles")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+	roles, err := s.core.ListRoles(ctx, principal.Identifier())
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	r := new(resources.PaginatedResponse[resources.Role])
+	r.Data = make([]resources.Role, 0)
+	r.Meta = resources.ResponseMeta{Size: len(roles)}
+
+	for _, role := range roles {
+		r.Data = append(r.Data, resources.Role{Id: &role, Name: role})
+	}
+
+	return r, nil
+}
+
+// CreateRole creates a single Role.
+func (s *V1Service) CreateRole(ctx context.Context, role *resources.Role) (*resources.Role, error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.CreateRole")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+	r, err := s.core.CreateRole(ctx, principal.Identifier(), role.Name)
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	role.Id = &r.ID
+
+	// TODO @shipperizer this is quite a change from v0, happy to drop it
+	if role.Entitlements == nil || len(*role.Entitlements) == 0 {
+		return role, nil
+	}
+
+	permissions := make([]Permission, 0)
+
+	for _, e := range *role.Entitlements {
+		permissions = append(
+			permissions,
+			Permission{
+				Relation: *e.Entitlement,
+				Object:   *e.Resource,
+			},
+		)
+	}
+
+	if err := s.core.AssignPermissions(ctx, r.ID, permissions...); err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+	// ###################################
+	return role, nil
+}
+
+// GetRole returns a single Role.
+func (s *V1Service) GetRole(ctx context.Context, roleId string) (*resources.Role, error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.GetRole")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+	r, err := s.core.GetRole(ctx, principal.Identifier(), roleId)
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	if r == nil {
+		return nil, v1.NewNotFoundError("role not found")
+	}
+
+	role := new(resources.Role)
+
+	role.Id = &r.ID
+	role.Name = r.Name
+
+	return role, nil
+}
+
+// UpdateRole updates a Role.
+func (s *V1Service) UpdateRole(ctx context.Context, role *resources.Role) (*resources.Role, error) {
+	_, span := s.core.tracer.Start(ctx, "roles.V1Service.UpdateRole")
+	defer span.End()
+
+	return nil, v1.NewNotImplementedError("endpoint not implemented")
+}
+
+func (s *V1Service) DeleteRole(ctx context.Context, roleId string) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.DeleteRole")
+	defer span.End()
+
+	if err := s.core.DeleteRole(ctx, roleId); err != nil {
+		return false, v1.NewUnknownError(err.Error())
+	}
+
+	return true, nil
+}
+
+// GetRoleEntitlements returns a page of Entitlements for Role `roleId`.
+func (s *V1Service) GetRoleEntitlements(ctx context.Context, roleId string, params *resources.GetRolesItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.GetRoleEntitlements")
+	defer span.End()
+
+	paginator := types.NewTokenPaginator(s.core.tracer, s.core.logger)
+
+	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
+		s.core.logger.Error(err)
+	}
+
+	permissions, pageTokens, err := s.core.ListPermissions(ctx, roleId, paginator.GetAllTokens(ctx))
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	paginator.SetTokens(r.Context(), pageTokens)
+	metaParam, err := paginator.PaginationHeader(r.Context())
+	if err != nil {
+		s.core.logger.Errorf("error producing pagination meta param: %s", err)
+		metaParam = ""
+	}
+
+	r := new(resources.PaginatedResponse[resources.EntityEntitlement])
+	r.Meta = resources.ResponseMeta{Size: len(permissions)}
+	r.Data = make([]resources.EntityEntitlement, 0)
+	r.Next.PageToken = &metaParam
+
+	for _, permission := range permissions {
+		p := authorization.NewURNFromURLParam(permission)
+                entity := strings.SplitN(p.Object(), ":", 2)
+		r.Data = append(
+			r.Data,
+			resources.EntityEntitlement{
+				Entitlement: p.Relation(),
+				EntityType:  entity[0],
+				EntityId:       entity[1],
+			},
+		)
+	}
+
+	return r, nil
+}
+
+// PatchRoleEntitlements performs addition or removal of an Entitlement to/from a Role.
+func (s *V1Service) PatchRoleEntitlements(ctx context.Context, roleId string, entitlementPatches []resources.RoleEntitlementsPatchItem) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.PatchRoleEntitlements")
+	defer span.End()
+
+	additions := make([]Permission, 0)
+	removals := make([]Permission, 0)
+	for _, p := range entitlementPatches {
+		permission := Permission{
+			Relation: p.Entitlement.Entitlement,
+			Object:   fmt.Sprintf("%s:%s", p.Entitlement.EntityType, p.Entitlement.EntityId),
+		}
+
+		if p.Op == "add" {
+			additions = append(additions, permission)
+		} else if p.Op == "remove" {
+			removals = append(removals, permission)
+		}
+	}
+
+	if len(additions) > 0 {
+		err := s.core.AssignPermissions(ctx, roleId, additions...)
+
+		if err != nil {
+			return false, v1.NewUnknownError(err.Error())
+		}
+	}
+
+	if len(removals) > 0 {
+		err := s.core.RemovePermissions(ctx, roleId, removals...)
+		if err != nil {
+			return false, v1.NewUnknownError(err.Error())
+		}
+	}
+
+	return true, nil
+}
+
+func NewV1Service(svc *Service) *V1Service {
+	s := new(V1Service)
+
+	s.core = svc
 
 	return s
 }

@@ -18,7 +18,7 @@
     "hooks-remove": "husky uninstall",
     "start": "concurrently --kill-others --raw 'yarn dev-serve' 'yarn proxy-serve'",
     "test-js": "vitest --run",
-    "dev-serve": "vite --host | grep -v localhost",
+    "dev-serve": "vite --host",
     "proxy-serve": "./entrypoint"
   },
   "dependencies": {

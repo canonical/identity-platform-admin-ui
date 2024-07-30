@@ -1,14 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./public/js/dist",
-    "baseUrl": ".",
-    "paths": {
-      "api/*": ["src/api/*"],
-      "components/*": ["src/components/*"],
-      "pages/*": ["src/pages/*"],
-      "types/*": ["src/types/*"],
-      "util/*": ["src/util/*"]
-    },
+    "baseUrl": "src",
     "target": "ES2020",
     "module": "esnext",
     "jsx": "react-jsx",

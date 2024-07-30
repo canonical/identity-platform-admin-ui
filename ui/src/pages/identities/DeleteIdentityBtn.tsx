@@ -46,7 +46,8 @@ const DeleteIdentityBtn: FC<Props> = ({ identity }) => {
         title: "Confirm delete",
         children: (
           <p>
-            This will permanently delete identity <b>{identity.traits?.email}</b>.
+            This will permanently delete identity{" "}
+            <b>{identity.traits?.email}</b>.
           </p>
         ),
         confirmButtonLabel: "Delete identity",

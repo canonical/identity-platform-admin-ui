@@ -1,6 +1,6 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "react"],
+  plugins: ["@typescript-eslint", "react", "prettier"],
   globals: {},
   env: {
     node: true,
@@ -25,6 +25,7 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json",
     sourceType: "module",
+    tsconfigRootDir: __dirname,
     ecmaFeatures: {
       jsx: true,
     },

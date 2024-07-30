@@ -18,5 +18,5 @@ root.render(
         <App />
       </NotificationProvider>
     </QueryClientProvider>
-  </Router>
+  </Router>,
 );

@@ -1,0 +1,77 @@
+name: UI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: ui/yarn.lock
+      - name: Install
+        run: yarn --cwd ui install --immutable
+      - run: yarn --cwd ui lint-js
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: ui/yarn.lock
+      - name: Install
+        run: yarn --cwd ui install --immutable
+      - run: yarn --cwd ui test-js
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+          cache-dependency-path: ui/yarn.lock
+      - name: Install
+        run: yarn --cwd ui install --immutable
+      - run: yarn --cwd ui build
+  dotrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dotrun
+        run: sudo pip3 install dotrun requests==2.31.0 # requests version is pinned to avoid breaking changes, can be removed once issue is resolved: https://github.com/docker/docker-py/issues/3256
+      - name: Install dependencies
+        run: |
+          cd ui
+          sudo chmod -R 777 .
+          dotrun install
+      - name: Build assets
+        run: cd ui && dotrun build
+      - name: Run dotrun
+        run: |
+          cd ui && dotrun &
+          curl --head --fail --retry-delay 1 --retry 30 --retry-connrefused http://localhost:3000

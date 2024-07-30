@@ -601,6 +601,7 @@ func TestServiceDeleteRole(t *testing.T) {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			}
 
+			gomock.InAnyOrder(calls)
 			_ = svc.DeleteRole(context.Background(), test.input)
 
 		})

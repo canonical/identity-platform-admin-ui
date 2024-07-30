@@ -9,7 +9,7 @@ function useLocalStorage<V>(
   const [storedValue, setStoredValue] = useState<V>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      return item ? (JSON.parse(item) as V) : initialValue;
     } catch (error) {
       // Not shown in UI. Logged for debugging purposes.
       console.error("Unable to parse local storage:", error);

@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ApplicationLayout } from "@canonical/react-components";
 import { ReBACAdmin } from "@canonical/rebac-admin";
 import Loader from "components/Loader";
-import Login from "components/Login";
 import Logo from "components/Logo";
 import Navigation from "components/Navigation";
 import ClientList from "pages/clients/ClientList";
@@ -40,25 +39,25 @@ const App: FC = () => {
     >
       <Suspense fallback={<Loader />}>
         <Routes>
-            <Route
-              path="/"
-              element={<Navigate to="/provider" replace={true} />}
-            />
-            <Route path="/provider" element={<ProviderList />} />
-            <Route path="/client" element={<ClientList />} />
-            <Route path="/identity" element={<IdentityList />} />
-            <Route path="/schema" element={<SchemaList />} />
-            <Route
-              path="/*"
-              element={
-                <ReBACAdmin
-                  apiURL={apiBasePath}
-                  asidePanelId="app-layout"
-                  authToken={authUser?.token}
-                />
-              }
-            />
-            <Route path="*" element={<NoMatch />} />
+          <Route
+            path="/"
+            element={<Navigate to="/provider" replace={true} />}
+          />
+          <Route path="/provider" element={<ProviderList />} />
+          <Route path="/client" element={<ClientList />} />
+          <Route path="/identity" element={<IdentityList />} />
+          <Route path="/schema" element={<SchemaList />} />
+          <Route
+            path="/*"
+            element={
+              <ReBACAdmin
+                apiURL={apiBasePath}
+                asidePanelId="app-layout"
+                authToken={authUser?.token}
+              />
+            }
+          />
+          <Route path="*" element={<NoMatch />} />
         </Routes>
       </Suspense>
     </ApplicationLayout>

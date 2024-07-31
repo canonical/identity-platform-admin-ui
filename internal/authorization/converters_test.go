@@ -480,49 +480,91 @@ func TestRoleConverterMapReturnsPermissions(t *testing.T) {
 			name:  "GET /api/v0/roles/id-1234",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/roles/id-1234", ID: "id-1234"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "PATCH /api/v0/roles/id-1234",
 			input: input{method: http.MethodPatch, endpoint: "/api/v0/roles/id-1234", ID: "id-1234"},
 			output: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "DELETE /api/v0/roles/id-1234",
 			input: input{method: http.MethodDelete, endpoint: "/api/v0/roles/id-1234", ID: "id-1234"},
 			output: []Permission{
-				{Relation: CAN_DELETE, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_DELETE,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "GET /api/v0/roles/id-1234/entitlements",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/roles/id-1234/entitlements", ID: "id-1234"},
 			output: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "DELETE /api/v0/roles/id-1234/entitlements/can_view::role:1",
 			input: input{method: http.MethodDelete, endpoint: "/api/v0/roles/id-1234/entitlements", ID: "id-1234", EntitlementID: "can_view::role:1"},
 			output: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/roles/id-1234/entitlements",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/roles/id-1234/entitlements", ID: "id-1234"},
 			output: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 			},
 		},
 		{
 			name:  "POST /api/v0/roles/id-1234/identities/user-1",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/roles/id-1234/identities/user-1", ID: "id-1234", IdentityID: "user-1"},
 			output: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "id-1234"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:id-1234"),
+					},
+				},
 				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "user-1")},
 			},
 		},

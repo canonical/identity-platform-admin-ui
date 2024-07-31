@@ -128,7 +128,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "POST /api/v0/roles/viewer/identities/1",
 			input: input{method: http.MethodPost, endpoint: "/api/v0/roles/viewer/identities/1", ID: "viewer", IdentityID: "1"},
 			expect: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "viewer")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, "viewer"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", "role:viewer"),
+					},
+				},
 				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "1")},
 			},
 			isGlobal: false,
@@ -178,8 +184,12 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			//calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
 			for _, check := range test.expect {
 				var call *gomock.Call
+				r := make([]any, len(check.ContextualTuples))
+				for i, e := range check.ContextualTuples {
+					r[i] = e
+				}
 				if !test.isGlobal {
-					call = mockAuthorizer.EXPECT().Check(gomock.Any(), gomock.Any(), check.Relation, check.ResourceID).Times(1).Return(test.output, nil)
+					call = mockAuthorizer.EXPECT().Check(gomock.Any(), gomock.Any(), check.Relation, check.ResourceID, r...).Times(1).Return(test.output, nil)
 				} else {
 					call = mockAuthorizer.EXPECT().Check(gomock.Any(), gomock.Any(), check.Relation, check.ResourceID, gomock.Any(), gomock.Any()).Times(1).Return(test.output, nil)
 				}

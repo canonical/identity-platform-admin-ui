@@ -413,7 +413,6 @@ func TestServiceCreateRole(t *testing.T) {
 					ps = append(
 						ps,
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
-						*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", test.input.role)),
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
 					)
 

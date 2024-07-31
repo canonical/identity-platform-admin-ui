@@ -135,7 +135,6 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) (*Role, err
 	err := s.ofga.WriteTuples(
 		ctx,
 		*ofga.NewTuple(user, ASSIGNEE_RELATION, role),
-		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", role),
 		*ofga.NewTuple(user, CAN_VIEW_RELATION, role),
 	)
 

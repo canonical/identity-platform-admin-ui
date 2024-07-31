@@ -6,7 +6,16 @@ import "./sass/styles.scss";
 import { NotificationProvider } from "@canonical/react-components";
 import { basePath } from "util/basePaths";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+      // Cache queries for 30 seconds by default.
+      staleTime: 30000,
+    },
+  },
+});
 
 const rootElement = document.getElementById("app");
 if (!rootElement) throw new Error("Failed to find the root element");

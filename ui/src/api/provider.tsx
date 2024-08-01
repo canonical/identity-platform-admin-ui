@@ -1,63 +1,30 @@
-import { ApiResponse } from "types/api";
-import { handleResponse } from "util/api";
+import { handleRequest } from "util/api";
 import { IdentityProvider } from "types/provider";
-import { apiBasePath } from "util/basePaths";
+import axios from "axios";
 
-export const fetchProviders = (): Promise<IdentityProvider[]> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}idps`)
-      .then(handleResponse)
-      .then((result: ApiResponse<IdentityProvider[]>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+export const fetchProviders = (): Promise<IdentityProvider[]> =>
+  handleRequest(() => axios.get<IdentityProvider[]>(`/idps`));
 
 export const fetchProvider = (
   providerId: string,
 ): Promise<IdentityProvider> => {
   return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}idps/${providerId}`)
-      .then(handleResponse)
-      .then((result: ApiResponse<IdentityProvider[]>) =>
-        resolve(result.data[0]),
-      )
-      .catch(reject);
+    handleRequest(() => axios.get<IdentityProvider[]>(`/idps/${providerId}`))
+      .then((data) => resolve(data[0]))
+      .catch((error) => reject(error));
   });
 };
 
-export const createProvider = (body: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}idps`, {
-      method: "POST",
-      body: body,
-    })
-      .then(handleResponse)
-      .then(resolve)
-      .catch(reject);
-  });
-};
+export const createProvider = (body: string): Promise<void> =>
+  handleRequest(() => axios.post("/idps", body));
 
 export const updateProvider = (
   providerId: string,
   values: string,
-): Promise<IdentityProvider> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}idps/${providerId}`, {
-      method: "PATCH",
-      body: values,
-    })
-      .then(handleResponse)
-      .then((result: ApiResponse<IdentityProvider>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+): Promise<IdentityProvider> =>
+  handleRequest(() =>
+    axios.patch<IdentityProvider>(`/idps/${providerId}`, values),
+  );
 
-export const deleteProvider = (providerId: string) => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}idps/${providerId}`, {
-      method: "DELETE",
-    })
-      .then(resolve)
-      .catch(reject);
-  });
-};
+export const deleteProvider = (providerId: string): Promise<void> =>
+  handleRequest(() => axios.delete(`/idps/${providerId}`));

@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./sass/styles.scss";
 import { NotificationProvider } from "@canonical/react-components";
-import { basePath } from "util/basePaths";
+import { apiBasePath, basePath } from "util/basePaths";
+import axios from "axios";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,6 +17,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+axios.defaults.baseURL = apiBasePath;
 
 const rootElement = document.getElementById("app");
 if (!rootElement) throw new Error("Failed to find the root element");

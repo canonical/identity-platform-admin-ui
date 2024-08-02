@@ -1,5 +1,5 @@
 import { Client } from "types/client";
-import { PaginatedResponse } from "types/api";
+import { PaginatedResponse, ApiResponse } from "types/api";
 import { handleRequest, PAGE_SIZE } from "util/api";
 import axios from "axios";
 
@@ -12,21 +12,23 @@ export const fetchClients = (
     ),
   );
 
-export const fetchClient = (clientId: string): Promise<Client> =>
-  handleRequest(() => axios.get<Client>(`/clients/${clientId}`));
+export const fetchClient = (clientId: string): Promise<ApiResponse<Client>> =>
+  handleRequest(() => axios.get<ApiResponse<Client>>(`/clients/${clientId}`));
 
-export const createClient = (values: string): Promise<Client> =>
-  handleRequest(() => axios.post<Client>("/clients", values));
+export const createClient = (values: string): Promise<ApiResponse<Client>> =>
+  handleRequest(() => axios.post<ApiResponse<Client>>("/clients", values));
 
 export const updateClient = (
   clientId: string,
   values: string,
-): Promise<Client> =>
-  handleRequest(() => axios.post<Client>(`/clients/${clientId}`, values));
+): Promise<ApiResponse<Client>> =>
+  handleRequest(() =>
+    axios.post<ApiResponse<Client>>(`/clients/${clientId}`, values),
+  );
 
 export const deleteClient = (client: string) =>
   handleRequest(() =>
-    axios.get<string>(`/clients/${client}`, {
+    axios.get<ApiResponse<string>>(`/clients/${client}`, {
       method: "DELETE",
     }),
   );

@@ -1,4 +1,4 @@
-import { PaginatedResponse } from "types/api";
+import { ApiResponse, PaginatedResponse } from "types/api";
 import { handleRequest, PAGE_SIZE } from "util/api";
 import { Identity } from "types/identity";
 import axios from "axios";
@@ -12,19 +12,23 @@ export const fetchIdentities = (
     ),
   );
 
-export const fetchIdentity = (identityId: string): Promise<Identity> =>
-  handleRequest(() => axios.get<Identity>(`/identities/${identityId}`));
+export const fetchIdentity = (
+  identityId: string,
+): Promise<ApiResponse<Identity>> =>
+  handleRequest(() =>
+    axios.get<ApiResponse<Identity>>(`/identities/${identityId}`),
+  );
 
-export const createIdentity = (body: string): Promise<void> =>
+export const createIdentity = (body: string): Promise<unknown> =>
   handleRequest(() => axios.post("/identities", body));
 
 export const updateIdentity = (
   identityId: string,
   values: string,
-): Promise<Identity> =>
+): Promise<ApiResponse<Identity>> =>
   handleRequest(() =>
-    axios.patch<Identity>(`/identities/${identityId}`, values),
+    axios.patch<ApiResponse<Identity>>(`/identities/${identityId}`, values),
   );
 
-export const deleteIdentity = (identityId: string): Promise<void> =>
+export const deleteIdentity = (identityId: string): Promise<unknown> =>
   handleRequest(() => axios.delete(`/identities/${identityId}`));

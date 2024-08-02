@@ -28,10 +28,11 @@ const ClientEdit: FC = () => {
     return;
   }
 
-  const { data: client } = useQuery({
+  const { data } = useQuery({
     queryKey: [queryKeys.clients, clientId],
     queryFn: () => fetchClient(clientId),
   });
+  const client = data?.data;
 
   const ClientEditSchema = Yup.object().shape({
     client_name: Yup.string().required("This field is required"),

@@ -1,4 +1,4 @@
-import { PaginatedResponse } from "types/api";
+import { PaginatedResponse, ApiResponse } from "types/api";
 import { handleRequest, PAGE_SIZE } from "util/api";
 import { Schema } from "types/schema";
 import axios from "axios";
@@ -14,20 +14,24 @@ export const fetchSchemas = (
 
 export const fetchSchema = (schemaId: string): Promise<Schema> => {
   return new Promise((resolve, reject) => {
-    handleRequest(() => axios.get<Schema[]>(`/schemas/${schemaId}`))
-      .then((data) => resolve(data[0]))
+    handleRequest<Schema[], ApiResponse<Schema[]>>(() =>
+      axios.get<ApiResponse<Schema[]>>(`/schemas/${schemaId}`),
+    )
+      .then(({ data }) => resolve(data[0]))
       .catch((error) => reject(error));
   });
 };
 
-export const createSchema = (body: string): Promise<void> =>
+export const createSchema = (body: string): Promise<unknown> =>
   handleRequest(() => axios.post("/schemas", body));
 
 export const updateSchema = (
   schemaId: string,
   values: string,
-): Promise<Schema> =>
-  handleRequest(() => axios.patch<Schema>(`/schemas/${schemaId}`, values));
+): Promise<ApiResponse<Schema>> =>
+  handleRequest(() =>
+    axios.patch<ApiResponse<Schema>>(`/schemas/${schemaId}`, values),
+  );
 
-export const deleteSchema = (schemaId: string): Promise<void> =>
+export const deleteSchema = (schemaId: string): Promise<unknown> =>
   handleRequest(() => axios.delete(`/schemas/${schemaId}`));

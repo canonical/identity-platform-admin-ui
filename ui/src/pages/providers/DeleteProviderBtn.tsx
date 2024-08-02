@@ -28,6 +28,10 @@ const DeleteProviderBtn: FC<Props> = ({ provider }) => {
 
   const handleDelete = () => {
     setLoading(true);
+    if (!provider.id) {
+      console.error("Cannot delete provider without id", provider);
+      return;
+    }
     deleteProvider(provider.id)
       .then(() => {
         navigate(

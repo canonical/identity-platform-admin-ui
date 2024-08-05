@@ -778,7 +778,6 @@ func TestServiceCreateGroup(t *testing.T) {
 					ps = append(
 						ps,
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)),
-						*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("group:%s", test.input.group)),
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), CAN_VIEW_RELATION, fmt.Sprintf("group:%s", test.input.group)),
 					)
 
@@ -926,8 +925,8 @@ func TestServiceDeleteGroup(t *testing.T) {
 						case 1:
 							tuple := tuples[0]
 
-							if tuple.User != fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION) && tuple.User != authorization.ADMIN_PRIVILEGE {
-								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), authorization.ADMIN_PRIVILEGE}, tuple.User)
+							if tuple.User != fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
+								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
 							}
 
 							if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {

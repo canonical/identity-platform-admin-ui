@@ -67,7 +67,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "GET /api/v0/identities/1",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/identities/1", ID: "1"},
 			expect: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "1")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, "1"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", IDENTITY_TYPE+":1"),
+					},
+				},
 			},
 			isGlobal: false,
 			output:   false,
@@ -92,7 +98,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "GET /api/v0/idps/github",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/idps/github", ID: "github"},
 			expect: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "github")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", PROVIDER_TYPE, "github"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", PROVIDER_TYPE+":github"),
+					},
+				},
 			},
 			isGlobal: false,
 			output:   true,
@@ -101,7 +113,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "GET /api/v0/groups/viewer/roles",
 			input: input{method: http.MethodGet, endpoint: "/api/v0/groups/viewer/roles", ID: "viewer"},
 			expect: []Permission{
-				{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "viewer")},
+				{
+					Relation:   CAN_VIEW,
+					ResourceID: fmt.Sprintf("%s:%s", GROUP_TYPE, "viewer"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", GROUP_TYPE+":viewer"),
+					},
+				},
 			},
 			isGlobal: false,
 			output:   true,
@@ -110,7 +128,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "PATCH /api/v0/schemas/x",
 			input: input{method: http.MethodPatch, endpoint: "/api/v0/schemas/x", ID: "x"},
 			expect: []Permission{
-				{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "x")},
+				{
+					Relation:   CAN_EDIT,
+					ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "x"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", SCHEME_TYPE+":x"),
+					},
+				},
 			},
 			isGlobal: false,
 			output:   true,
@@ -119,7 +143,13 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			name:  "DELETE /api/v0/rules/1",
 			input: input{method: http.MethodDelete, endpoint: "/api/v0/rules/1", ID: "1"},
 			expect: []Permission{
-				{Relation: CAN_DELETE, ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "1")},
+				{
+					Relation:   CAN_DELETE,
+					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "1"),
+					ContextualTuples: []openfga.Tuple{
+						*openfga.NewTuple("privileged:superuser", "privileged", RULE_TYPE+":1"),
+					},
+				},
 			},
 			isGlobal: false,
 			output:   true,
@@ -181,7 +211,7 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)
 
 			calls = append(calls, mockAuthorizer.EXPECT().Admin().Times(1).Return(adminAuth))
-			//calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_PRIVILEGE).Times(1).Return(false, nil))
+			//calls = append(calls, mockAuthorizer.EXPECT().Check(gomock.Any(), "user:admin", "admin", ADMIN_OBJECT).Times(1).Return(false, nil))
 			for _, check := range test.expect {
 				var call *gomock.Call
 				r := make([]any, len(check.ContextualTuples))

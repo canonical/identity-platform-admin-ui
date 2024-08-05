@@ -413,7 +413,6 @@ func TestServiceCreateRole(t *testing.T) {
 					ps = append(
 						ps,
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
-						*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", test.input.role)),
 						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
 					)
 
@@ -562,8 +561,8 @@ func TestServiceDeleteRole(t *testing.T) {
 						case 1:
 							tuple := tuples[0]
 
-							if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_PRIVILEGE {
-								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_PRIVILEGE}, tuple.User)
+							if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
+								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
 							}
 
 							if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
@@ -1102,7 +1101,6 @@ func TestV1ServiceCreateRole(t *testing.T) {
 						ps["create"] = append(
 							ps["create"],
 							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
-							*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", fmt.Sprintf("role:%s", test.input.role)),
 							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
 						)
 
@@ -1385,8 +1383,8 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 					case 1:
 						tuple := tuples[0]
 
-						if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_PRIVILEGE {
-							t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_PRIVILEGE}, tuple.User)
+						if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
+							t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
 						}
 
 						if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {

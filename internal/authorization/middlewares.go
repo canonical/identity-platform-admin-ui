@@ -17,10 +17,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
-const (
-	ADMIN_PRIVILEGE = "privileged:superuser"
-)
-
 // Middleware is the monitoring middleware object implementing Prometheus monitoring
 type Middleware struct {
 	auth AuthorizerInterface

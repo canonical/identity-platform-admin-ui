@@ -1,14 +1,21 @@
-import { renderComponent } from "test/utils";
-import Layout from "./Layout";
 import { screen } from "@testing-library/dom";
+import axios from "axios";
+import MockAdapter from "axios-mock-adapter";
+
+import { authURLs } from "api/auth";
 import { LoginLabel } from "components/Login";
+import { renderComponent } from "test/utils";
+
+import Layout from "./Layout";
+
+const mock = new MockAdapter(axios);
 
 beforeEach(() => {
-  fetchMock.resetMocks();
+  mock.reset();
 });
 
 test("displays the login screen if the user is not authenticated", async () => {
-  fetchMock.mockResponseOnce(JSON.stringify({}), { status: 403 });
+  mock.onGet(authURLs.me).reply(403, {});
   renderComponent(<Layout />);
   expect(
     await screen.findByRole("heading", { name: LoginLabel.TITLE }),
@@ -23,7 +30,7 @@ test("displays the layout and content if the user is authenticated", async () =>
     sid: "sid",
     sub: "sub",
   };
-  fetchMock.mockResponse(JSON.stringify(user), { status: 200 });
+  mock.onGet(authURLs.me).reply(200, { data: user });
   renderComponent(<Layout />, {
     path: "/",
     url: "/",

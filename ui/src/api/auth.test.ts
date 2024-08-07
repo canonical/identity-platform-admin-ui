@@ -1,7 +1,12 @@
-import { fetchMe } from "./auth";
+import axios from "axios";
+import MockAdapter from "axios-mock-adapter";
+
+import { fetchMe, authURLs } from "./auth";
+
+const mock = new MockAdapter(axios);
 
 beforeEach(() => {
-  fetchMock.resetMocks();
+  mock.reset();
 });
 
 test("fetches a user", async () => {
@@ -12,17 +17,17 @@ test("fetches a user", async () => {
     sid: "sid",
     sub: "sub",
   };
-  fetchMock.mockResponse(JSON.stringify(user), { status: 200 });
+  mock.onGet(authURLs.me).reply(200, user);
   await expect(fetchMe()).resolves.toStrictEqual(user);
 });
 
 test("handles a non-authenticated user", async () => {
-  fetchMock.mockResponseOnce(JSON.stringify({}), { status: 401 });
+  mock.onGet(authURLs.me).reply(401, {});
   await expect(fetchMe()).resolves.toBeNull();
 });
 
 test("catches errors", async () => {
   const error = "Uh oh!";
-  fetchMock.mockRejectedValue(error);
+  mock.onGet(authURLs.me).reply(500, { error });
   await expect(fetchMe()).rejects.toBe(error);
 });

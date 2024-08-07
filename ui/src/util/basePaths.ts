@@ -12,3 +12,9 @@ export const calculateBasePath = (): BasePath => {
 
 export const basePath: BasePath = calculateBasePath();
 export const apiBasePath: BasePath = `${basePath}../api/v0/`;
+
+export const appendBasePath = (path: string) =>
+  `${basePath.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+
+export const appendAPIBasePath = (path: string) =>
+  `${apiBasePath.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;

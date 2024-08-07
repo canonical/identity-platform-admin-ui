@@ -9,6 +9,7 @@ import { authURLs } from "api/auth";
 import { FC, ReactNode } from "react";
 import { SITE_NAME } from "consts";
 import { Label } from "./types";
+import { appendAPIBasePath } from "util/basePaths";
 
 type Props = {
   isLoading?: boolean;
@@ -38,7 +39,7 @@ const Login: FC<Props> = ({ error, isLoading }) => {
         }
         disabled={isLoading}
         element="a"
-        href={authURLs.login}
+        href={appendAPIBasePath(authURLs.login)}
       >
         Sign in to {SITE_NAME}
       </Button>

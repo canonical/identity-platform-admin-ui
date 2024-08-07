@@ -184,7 +184,6 @@ func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) (*G
 	err := s.ofga.WriteTuples(
 		ctx,
 		*ofga.NewTuple(user, MEMBER_RELATION, group),
-		*ofga.NewTuple(authorization.ADMIN_PRIVILEGE, "privileged", group),
 		*ofga.NewTuple(user, CAN_VIEW_RELATION, group),
 	)
 

@@ -62,21 +62,27 @@ func (c IdentityConverter) TypeName() string {
 
 func (c IdentityConverter) Map(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
+	var resourceId string
 	var contextualTuples []openfga.Tuple
 
 	if id == "" {
-		id = GLOBAL_ACCESS_OBJECT_NAME
-		// Add contextual tuples to enable all users to list resources and give admins access to all resources
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		contextualTuples = append(
 			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
 		)
+	} else {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
 	}
 
+	// Admins have privileged access to resource
+	contextualTuples = append(
+		contextualTuples,
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	)
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -88,19 +94,27 @@ func (c ClientConverter) TypeName() string {
 
 func (c ClientConverter) Map(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
+	var resourceId string
 	var contextualTuples []openfga.Tuple
 
 	if id == "" {
-		id = GLOBAL_ACCESS_OBJECT_NAME
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		contextualTuples = append(
 			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
 		)
+	} else {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
 	}
+
+	// Admins have privileged access to resource
+	contextualTuples = append(
+		contextualTuples,
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	)
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -112,19 +126,27 @@ func (c ProviderConverter) TypeName() string {
 
 func (c ProviderConverter) Map(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
+	var resourceId string
 	var contextualTuples []openfga.Tuple
 
 	if id == "" {
-		id = GLOBAL_ACCESS_OBJECT_NAME
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		contextualTuples = append(
 			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
 		)
+	} else {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
 	}
+
+	// Admins have privileged access to resource
+	contextualTuples = append(
+		contextualTuples,
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	)
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -136,19 +158,27 @@ func (c RuleConverter) TypeName() string {
 
 func (c RuleConverter) Map(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
+	var resourceId string
 	var contextualTuples []openfga.Tuple
 
 	if id == "" {
-		id = GLOBAL_ACCESS_OBJECT_NAME
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		contextualTuples = append(
 			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
 		)
+	} else {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
 	}
+
+	// Admins have privileged access to resource
+	contextualTuples = append(
+		contextualTuples,
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	)
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -159,31 +189,30 @@ func (c SchemeConverter) TypeName() string {
 }
 
 func (c SchemeConverter) Map(r *http.Request) []Permission {
-	// TODO @shipperizer let's make sure this is a good way to codify the
-	// default schema API
-	if r.URL.Path == "/api/v0/schemas/default" {
-		return []Permission{
-			{
-				Relation:   relation(r),
-				ResourceID: fmt.Sprintf("%s:**DEFAULT**", c.TypeName()),
-			},
-		}
-	}
-
 	id := chi.URLParam(r, "id")
+	var resourceId string
 	var contextualTuples []openfga.Tuple
 
-	if id == "" {
-		id = GLOBAL_ACCESS_OBJECT_NAME
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+	if r.URL.Path == "/api/v0/schemas/default" {
+		resourceId = fmt.Sprintf("%s:**DEFAULT**", c.TypeName())
+	} else if id == "" {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		contextualTuples = append(
 			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
 		)
+	} else {
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
 	}
+
+	// Admins have privileged access to resource
+	contextualTuples = append(
+		contextualTuples,
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	)
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -208,12 +237,17 @@ func (c RoleConverter) Map(r *http.Request) []Permission {
 	role_id := chi.URLParam(r, "id")
 	entitlement_id := chi.URLParam(r, "e_id")
 	identity_id := chi.URLParam(r, "i_id")
+	resourceId := fmt.Sprintf("%s:%s", c.TypeName(), role_id)
+
+	var contextualTuples []openfga.Tuple = []openfga.Tuple{
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	}
 
 	if entitlement_id != "" && r.Method == http.MethodDelete {
 		// DELETE /roles/{id}/entitlements/{e_id} will check for an
 		// edit permission on role {id}
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), role_id)},
+			{Relation: CAN_EDIT, ResourceID: resourceId, ContextualTuples: contextualTuples},
 		}
 	}
 
@@ -221,8 +255,9 @@ func (c RoleConverter) Map(r *http.Request) []Permission {
 	if strings.HasSuffix(r.URL.Path, "entitlements") && r.Method == http.MethodPost {
 		return []Permission{
 			{
-				Relation:   CAN_EDIT,
-				ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), role_id),
+				Relation:         CAN_EDIT,
+				ResourceID:       resourceId,
+				ContextualTuples: contextualTuples,
 			},
 		}
 	}
@@ -231,24 +266,21 @@ func (c RoleConverter) Map(r *http.Request) []Permission {
 	if identity_id != "" && r.Method == http.MethodPost {
 		// POST /roles/{id}/identities/{i_id} will check for an edit on role {id} and view on {i_id}
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), role_id)},
+			{Relation: CAN_EDIT, ResourceID: resourceId, ContextualTuples: contextualTuples},
 			{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", IDENTITY_TYPE, identity_id)},
 		}
 	}
 
-	var contextualTuples []openfga.Tuple
-
 	if role_id == "" {
-		role_id = GLOBAL_ACCESS_OBJECT_NAME
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
 		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
-		contextualTuples = append(
-			contextualTuples,
+		contextualTuples = []openfga.Tuple{
 			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
 			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
-		)
+		}
 	}
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), role_id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }
 
@@ -277,11 +309,16 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 	role_id := chi.URLParam(r, "r_id")
 	identity_id := chi.URLParam(r, "i_id")
 	entitlement_id := chi.URLParam(r, "e_id")
+	resourceId := fmt.Sprintf("%s:%s", c.TypeName(), group_id)
+
+	var contextualTuples []openfga.Tuple = []openfga.Tuple{
+		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+	}
 
 	// DELETE /api/v0/groups/{id}/entitlements/{e_id}
 	if entitlement_id != "" && r.Method == http.MethodDelete {
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{Relation: CAN_EDIT, ResourceID: resourceId, ContextualTuples: contextualTuples},
 		}
 	}
 
@@ -289,7 +326,7 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 		// DELETE /groups/{id}/identities/{i_id} will check for an
 		// edit permission on group {id} and view permissions on identity {i_id}
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{Relation: CAN_EDIT, ResourceID: resourceId, ContextualTuples: contextualTuples},
 			// TODO @shipperizer this checks for an identity being present, even though the relation
 			// is between a user type and the group
 			// we need to work and sync users and identities or drop the check below as this would
@@ -304,8 +341,9 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 	if strings.HasSuffix(r.URL.Path, "identities") && r.Method == http.MethodPatch {
 		return []Permission{
 			{
-				Relation:   CAN_EDIT,
-				ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id),
+				Relation:         CAN_EDIT,
+				ResourceID:       resourceId,
+				ContextualTuples: contextualTuples,
 			},
 		}
 	}
@@ -315,8 +353,9 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 	if strings.HasSuffix(r.URL.Path, "entitlements") && (r.Method == http.MethodDelete || r.Method == http.MethodPost) {
 		return []Permission{
 			{
-				Relation:   CAN_EDIT,
-				ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id),
+				Relation:         CAN_EDIT,
+				ResourceID:       resourceId,
+				ContextualTuples: contextualTuples,
 			},
 		}
 	}
@@ -326,7 +365,11 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 	// roles are viewable
 	if strings.HasSuffix(r.URL.Path, "roles") && r.Method == http.MethodPost {
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{
+				Relation:         CAN_EDIT,
+				ResourceID:       resourceId,
+				ContextualTuples: contextualTuples,
+			},
 		}
 	}
 
@@ -334,23 +377,20 @@ func (c GroupConverter) Map(r *http.Request) []Permission {
 		// DELETE /groups/{id}/roles/{r_id} will check for an
 		// edit permission on group {id} and view permissions on role {r_id}
 		return []Permission{
-			{Relation: CAN_EDIT, ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id)},
+			{Relation: CAN_EDIT, ResourceID: resourceId, ContextualTuples: contextualTuples},
 			{Relation: CAN_VIEW, ResourceID: fmt.Sprintf("%s:%s", ROLE_TYPE, role_id)},
 		}
 	}
 
-	var contextualTuples []openfga.Tuple
-
 	if group_id == "" {
-		group_id = GLOBAL_ACCESS_OBJECT_NAME
-		globalResource := fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
-		contextualTuples = append(
-			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, globalResource),
-			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, globalResource),
-		)
+		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
+		contextualTuples = []openfga.Tuple{
+			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
+			*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
+		}
 	}
+
 	return []Permission{
-		{Relation: relation(r), ResourceID: fmt.Sprintf("%s:%s", c.TypeName(), group_id), ContextualTuples: contextualTuples},
+		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
 	}
 }

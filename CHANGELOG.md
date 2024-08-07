@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.14.0...v1.14.1) (2024-07-30)
+
+
+### Bug Fixes
+
+* allow UI port to be set ([3da1b25](https://github.com/canonical/identity-platform-admin-ui/commit/3da1b2598253d2086f992e4c131e8bf59a29174b))
+* remove login component from ui ([51deb06](https://github.com/canonical/identity-platform-admin-ui/commit/51deb06c231155e39236eda4863b68ef67de648b))
+
 ## [1.14.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.13.1...v1.14.0) (2024-07-19)
 
 

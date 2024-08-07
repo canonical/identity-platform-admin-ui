@@ -6,9 +6,11 @@ export default defineConfig((configEnv) =>
     viteConfig({ ...configEnv, mode: "development" }),
     defineConfig({
       test: {
-        environment: "jsdom",
+        environment: "happy-dom",
         globals: true,
         include: ["./src/**/*.{test,spec}.{ts,tsx}"],
+        mockReset: true,
+        setupFiles: "src/test/setup.ts",
       },
     }),
   ),

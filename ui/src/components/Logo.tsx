@@ -1,3 +1,4 @@
+import { SITE_NAME } from "consts";
 import { FC } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -11,7 +12,7 @@ const Logo: FC = () => {
           alt="Circle of friends"
         />
       </div>
-      <div className="logo-text p-heading--4">Identity platform</div>
+      <div className="logo-text p-heading--4">{SITE_NAME}</div>
     </NavLink>
   );
 };

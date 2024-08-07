@@ -6,7 +6,7 @@ import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
 
 type Props = {
   username?: string;
-  logout: () => void;
+  logout?: () => void;
 };
 
 const Navigation: FC<Props> = ({ username, logout }) => {
@@ -71,7 +71,7 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                 appearance="link"
                 className="p-side-navigation__link"
                 onClick={() => {
-                  logout();
+                  logout?.();
                 }}
                 key="logout"
               >

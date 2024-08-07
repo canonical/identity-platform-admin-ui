@@ -38,7 +38,7 @@ const ClientCreate: FC = () => {
     validationSchema: ClientCreateSchema,
     onSubmit: (values) => {
       createClient(JSON.stringify(values))
-        .then((result) => {
+        .then(({ data: result }) => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.clients],
           });

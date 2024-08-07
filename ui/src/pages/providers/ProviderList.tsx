@@ -16,7 +16,7 @@ import DeleteProviderBtn from "pages/providers/DeleteProviderBtn";
 const ProviderList: FC = () => {
   const panelParams = usePanelParams();
 
-  const { data: providers = [] } = useQuery({
+  const { data: providers } = useQuery({
     queryKey: [queryKeys.providers],
     queryFn: fetchProviders,
   });
@@ -51,7 +51,7 @@ const ProviderList: FC = () => {
                 { content: "Provider", sortKey: "provider" },
                 { content: "Actions" },
               ]}
-              rows={providers.map((provider) => {
+              rows={providers?.data.map((provider) => {
                 return {
                   columns: [
                     {

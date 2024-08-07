@@ -53,6 +53,7 @@
     "@typescript-eslint/parser": "7.3.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "10.4.19",
+    "axios-mock-adapter": "2.0.0",
     "babel-plugin-transform-es2015-modules-commonjs": "6.26.2",
     "concurrently": "8.2.2",
     "eslint": "8.57.0",
@@ -75,8 +76,7 @@
     "typescript": "5.4.3",
     "vite": "5.2.8",
     "vite-tsconfig-paths": "4.3.2",
-    "vitest": "1.2.1",
-    "vitest-fetch-mock": "0.3.0"
+    "vitest": "1.2.1"
   },
   "lint-staged": {
     "src/**/*.{json,jsx,ts,tsx}": [

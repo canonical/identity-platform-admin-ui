@@ -1,61 +1,34 @@
 import { Client } from "types/client";
-import { ApiResponse, PaginatedResponse } from "types/api";
-import { handleResponse, PAGE_SIZE } from "util/api";
-import { apiBasePath } from "util/basePaths";
+import { PaginatedResponse, ApiResponse } from "types/api";
+import { handleRequest, PAGE_SIZE } from "util/api";
+import axios from "axios";
 
 export const fetchClients = (
   pageToken: string,
-): Promise<PaginatedResponse<Client[]>> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}clients?page_token=${pageToken}&size=${PAGE_SIZE}`)
-      .then(handleResponse)
-      .then((result: PaginatedResponse<Client[]>) => resolve(result))
-      .catch(reject);
-  });
-};
+): Promise<PaginatedResponse<Client[]>> =>
+  handleRequest(() =>
+    axios.get<PaginatedResponse<Client[]>>(
+      `/clients?page_token=${pageToken}&size=${PAGE_SIZE}`,
+    ),
+  );
 
-export const fetchClient = (clientId: string): Promise<Client> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}clients/${clientId}`)
-      .then(handleResponse)
-      .then((result: ApiResponse<Client>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+export const fetchClient = (clientId: string): Promise<ApiResponse<Client>> =>
+  handleRequest(() => axios.get<ApiResponse<Client>>(`/clients/${clientId}`));
 
-export const createClient = (values: string): Promise<Client> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}clients`, {
-      method: "POST",
-      body: values,
-    })
-      .then(handleResponse)
-      .then((result: ApiResponse<Client>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+export const createClient = (values: string): Promise<ApiResponse<Client>> =>
+  handleRequest(() => axios.post<ApiResponse<Client>>("/clients", values));
 
 export const updateClient = (
   clientId: string,
   values: string,
-): Promise<Client> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}clients/${clientId}`, {
-      method: "PUT",
-      body: values,
-    })
-      .then(handleResponse)
-      .then((result: ApiResponse<Client>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+): Promise<ApiResponse<Client>> =>
+  handleRequest(() =>
+    axios.post<ApiResponse<Client>>(`/clients/${clientId}`, values),
+  );
 
-export const deleteClient = (client: string) => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}clients/${client}`, {
+export const deleteClient = (client: string) =>
+  handleRequest(() =>
+    axios.get<ApiResponse<string>>(`/clients/${client}`, {
       method: "DELETE",
-    })
-      .then(resolve)
-      .catch(reject);
-  });
-};
+    }),
+  );

@@ -1,24 +1,29 @@
-import { apiBasePath } from "util/basePaths";
-import type { UserPrincipal } from "types/auth";
-import { handleResponse } from "util/api";
+import axios from "axios";
 
-const BASE = `${apiBasePath}auth`;
+import type { UserPrincipal } from "types/auth";
+import { ErrorResponse } from "types/api";
+import { AxiosError } from "axios";
+
+const BASE = "auth";
 
 export const authURLs = {
   login: BASE,
   me: `${BASE}/me`,
 };
 
-export const fetchMe = (): Promise<UserPrincipal> => {
+export const fetchMe = (): Promise<UserPrincipal | null> => {
   return new Promise((resolve, reject) => {
-    fetch(authURLs.me)
-      .then((response: Response) =>
+    axios
+      .get<UserPrincipal>(authURLs.me)
+      .then(({ data }) => resolve(data))
+      .catch(({ response }: AxiosError<ErrorResponse>) => {
         // If the user is not authenticated then return null instead of throwing an
         // error. This is necessary so that a login screen can be displayed instead of displaying
         // the error.
-        [401, 403].includes(response.status) ? null : handleResponse(response),
-      )
-      .then((result: UserPrincipal) => resolve(result))
-      .catch(reject);
+        if (response?.status && [401, 403].includes(response.status)) {
+          resolve(null);
+        }
+        return reject(response?.data?.error ?? response?.data?.message);
+      });
   });
 };

@@ -1,61 +1,34 @@
 import { ApiResponse, PaginatedResponse } from "types/api";
-import { handleResponse, PAGE_SIZE } from "util/api";
+import { handleRequest, PAGE_SIZE } from "util/api";
 import { Identity } from "types/identity";
-import { apiBasePath } from "util/basePaths";
+import axios from "axios";
 
 export const fetchIdentities = (
   pageToken: string,
-): Promise<PaginatedResponse<Identity[]>> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}identities?page_token=${pageToken}&size=${PAGE_SIZE}`)
-      .then(handleResponse)
-      .then((result: PaginatedResponse<Identity[]>) => resolve(result))
-      .catch(reject);
-  });
-};
+): Promise<PaginatedResponse<Identity[]>> =>
+  handleRequest(() =>
+    axios.get<PaginatedResponse<Identity[]>>(
+      `/identities?page_token=${pageToken}&size=${PAGE_SIZE}`,
+    ),
+  );
 
-export const fetchIdentity = (identityId: string): Promise<Identity> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}identities/${identityId}`)
-      .then(handleResponse)
-      .then((result: ApiResponse<Identity[]>) => resolve(result.data[0]))
-      .catch(reject);
-  });
-};
+export const fetchIdentity = (
+  identityId: string,
+): Promise<ApiResponse<Identity>> =>
+  handleRequest(() =>
+    axios.get<ApiResponse<Identity>>(`/identities/${identityId}`),
+  );
 
-export const createIdentity = (body: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}identities`, {
-      method: "POST",
-      body: body,
-    })
-      .then(handleResponse)
-      .then(resolve)
-      .catch(reject);
-  });
-};
+export const createIdentity = (body: string): Promise<unknown> =>
+  handleRequest(() => axios.post("/identities", body));
 
 export const updateIdentity = (
   identityId: string,
   values: string,
-): Promise<Identity> => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}identities/${identityId}`, {
-      method: "PATCH",
-      body: values,
-    })
-      .then(handleResponse)
-      .then((result: ApiResponse<Identity>) => resolve(result.data))
-      .catch(reject);
-  });
-};
+): Promise<ApiResponse<Identity>> =>
+  handleRequest(() =>
+    axios.patch<ApiResponse<Identity>>(`/identities/${identityId}`, values),
+  );
 
-export const deleteIdentity = (identityId: string) => {
-  return new Promise((resolve, reject) => {
-    fetch(`${apiBasePath}identities/${identityId}`, {
-      method: "DELETE",
-    })
-      .then(resolve)
-      .catch(reject);
-  });
-};
+export const deleteIdentity = (identityId: string): Promise<unknown> =>
+  handleRequest(() => axios.delete(`/identities/${identityId}`));

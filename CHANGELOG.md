@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.15.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.14.1...v1.15.0) (2024-08-08)
+
+
+### Features
+
+* add custom axios instance ([722a331](https://github.com/canonical/identity-platform-admin-ui/commit/722a3310058be87184a155538b6ef1a1b23a82fc))
+* implement RolesService for the rebac module ([8835e29](https://github.com/canonical/identity-platform-admin-ui/commit/8835e29d5a1206e9408d6fc406ee47e88c69663d))
+
+
+### Bug Fixes
+
+* add check for mock calls in DeleteRole ([e9e3d54](https://github.com/canonical/identity-platform-admin-ui/commit/e9e3d54e685cc7235a15de7a243654fc45454ab3))
+* adjust logic for pagination ([e852914](https://github.com/canonical/identity-platform-admin-ui/commit/e852914114414ee0eb3b78c36ca8df8fad5ad49d))
+* annotate responses with the full type ([1cd4b98](https://github.com/canonical/identity-platform-admin-ui/commit/1cd4b98efe2262958155a186b7ac59431875aaa8))
+* use contextual tuples for admin role ([37efc1e](https://github.com/canonical/identity-platform-admin-ui/commit/37efc1e62ae157253382a8e9dfe5eef31d0fbfaf))
+* use contextual tuples to give admin access to all APIs ([0e27337](https://github.com/canonical/identity-platform-admin-ui/commit/0e2733726d83fa7a07de47f680eeadf8668a3b8e))
+
 ## [1.14.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.14.0...v1.14.1) (2024-07-30)
 
 

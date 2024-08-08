@@ -1,5 +1,4 @@
 import { screen } from "@testing-library/dom";
-import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
 import { authURLs } from "api/auth";
@@ -7,8 +6,9 @@ import { LoginLabel } from "components/Login";
 import { renderComponent } from "test/utils";
 
 import Layout from "./Layout";
+import { axiosInstance } from "api/axios";
 
-const mock = new MockAdapter(axios);
+const mock = new MockAdapter(axiosInstance);
 
 beforeEach(() => {
   mock.reset();

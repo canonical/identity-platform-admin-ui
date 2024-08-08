@@ -1,8 +1,7 @@
-import axios from "axios";
-
 import type { UserPrincipal } from "types/auth";
 import { ErrorResponse } from "types/api";
 import { AxiosError } from "axios";
+import { axiosInstance } from "./axios";
 
 const BASE = "auth";
 
@@ -13,7 +12,7 @@ export const authURLs = {
 
 export const fetchMe = (): Promise<UserPrincipal | null> => {
   return new Promise((resolve, reject) => {
-    axios
+    axiosInstance
       .get<UserPrincipal>(authURLs.me)
       .then(({ data }) => resolve(data))
       .catch(({ response }: AxiosError<ErrorResponse>) => {

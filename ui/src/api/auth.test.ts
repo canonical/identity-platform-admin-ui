@@ -1,9 +1,9 @@
-import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
 
 import { fetchMe, authURLs } from "./auth";
+import { axiosInstance } from "./axios";
 
-const mock = new MockAdapter(axios);
+const mock = new MockAdapter(axiosInstance);
 
 beforeEach(() => {
   mock.reset();

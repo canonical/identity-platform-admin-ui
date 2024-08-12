@@ -10,6 +10,7 @@ import { FC, ReactNode } from "react";
 import { SITE_NAME } from "consts";
 import { Label } from "./types";
 import { appendAPIBasePath } from "util/basePaths";
+import { getFullPath } from "util/getFullPath";
 
 type Props = {
   isLoading?: boolean;
@@ -32,6 +33,7 @@ const Login: FC<Props> = ({ error, isLoading }) => {
       />
     );
   } else {
+    const path = getFullPath();
     loginContent = (
       <Button
         appearance={
@@ -39,7 +41,12 @@ const Login: FC<Props> = ({ error, isLoading }) => {
         }
         disabled={isLoading}
         element="a"
-        href={appendAPIBasePath(authURLs.login)}
+        href={[
+          appendAPIBasePath(authURLs.login),
+          path ? `next=${encodeURIComponent(path)}` : null,
+        ]
+          .filter(Boolean)
+          .join("?")}
       >
         Sign in to {SITE_NAME}
       </Button>

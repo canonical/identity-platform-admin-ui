@@ -3,13 +3,14 @@ import { FC } from "react";
 import { NavLink, NavLinkProps } from "react-router-dom";
 import { Button } from "@canonical/react-components";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
+import { authURLs } from "api/auth";
+import { appendAPIBasePath } from "util/basePaths";
 
 type Props = {
   username?: string;
-  logout?: () => void;
 };
 
-const Navigation: FC<Props> = ({ username, logout }) => {
+const Navigation: FC<Props> = ({ username }) => {
   return (
     <>
       <SideNavigation<NavLinkProps>
@@ -68,11 +69,10 @@ const Navigation: FC<Props> = ({ username, logout }) => {
                 nonInteractive: true,
               },
               <Button
+                element="a"
                 appearance="link"
+                href={appendAPIBasePath(authURLs.logout)}
                 className="p-side-navigation__link"
-                onClick={() => {
-                  logout?.();
-                }}
                 key="logout"
               >
                 Logout

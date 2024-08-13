@@ -33,7 +33,7 @@ const Login: FC<Props> = ({ error, isLoading }) => {
       />
     );
   } else {
-    const path = getFullPath();
+    const path = getFullPath(window.location.href);
     loginContent = (
       <Button
         appearance={

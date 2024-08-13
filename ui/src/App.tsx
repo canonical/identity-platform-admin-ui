@@ -10,7 +10,6 @@ import NoMatch from "components/NoMatch";
 import ProviderList from "pages/providers/ProviderList";
 import IdentityList from "pages/identities/IdentityList";
 import SchemaList from "pages/schemas/SchemaList";
-import { apiBasePath } from "util/basePaths";
 import Layout from "components/Layout/Layout";
 import { queryKeys } from "util/queryKeys";
 import { axiosInstance } from "./api/axios";
@@ -35,7 +34,7 @@ const App: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.auth],
           });
-          return;
+          return null;
         }
         return Promise.reject(error);
       },
@@ -54,7 +53,6 @@ const App: FC = () => {
           path="/*"
           element={
             <ReBACAdmin
-              apiURL={apiBasePath}
               asidePanelId="app-layout"
               axiosInstance={axiosInstance}
             />

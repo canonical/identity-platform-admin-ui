@@ -63,7 +63,7 @@ func (s *Service) parseError(r *http.Response) *kClient.GenericError {
 }
 
 func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.ListIdentities")
+	ctx, span := s.tracer.Start(ctx, "identities.Service.ListIdentities")
 	defer span.End()
 
 	identities, rr, err := s.kratos.ListIdentitiesExecute(
@@ -94,7 +94,7 @@ func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID 
 }
 
 func (s *Service) GetIdentity(ctx context.Context, ID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.GetIdentity")
+	ctx, span := s.tracer.Start(ctx, "identities.Service.GetIdentity")
 	defer span.End()
 
 	identity, rr, err := s.kratos.GetIdentityExecute(
@@ -118,7 +118,7 @@ func (s *Service) GetIdentity(ctx context.Context, ID string) (*IdentityData, er
 }
 
 func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIdentityBody) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.CreateIdentity")
+	ctx, span := s.tracer.Start(ctx, "identities.Service.CreateIdentity")
 	defer span.End()
 
 	if bodyID == nil {
@@ -158,7 +158,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 }
 
 func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient.UpdateIdentityBody) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.UpdateIdentity")
+	ctx, span := s.tracer.Start(ctx, "identities.Service.UpdateIdentity")
 	defer span.End()
 	if ID == "" {
 		err := fmt.Errorf("no identity ID passed")
@@ -207,7 +207,7 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 }
 
 func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData, error) {
-	ctx, span := s.tracer.Start(ctx, "kratos.IdentityAPI.DeleteIdentity")
+	ctx, span := s.tracer.Start(ctx, "identities.Service.DeleteIdentity")
 	defer span.End()
 
 	rr, err := s.kratos.DeleteIdentityExecute(

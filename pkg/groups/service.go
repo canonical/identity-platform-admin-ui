@@ -6,6 +6,10 @@ package groups
 import (
 	"context"
 	"fmt"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"strings"
 	"sync"
 
@@ -547,7 +551,7 @@ func (s *Service) directRelations() []string {
 	return []string{"privileged", "member", "can_create", "can_delete", "can_edit", "can_view"}
 }
 
-// NewService returns the implementtation of the business logic for the groups API
+// NewService returns the implementation of the business logic for the groups API
 func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
@@ -560,4 +564,333 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 	s.logger = logger
 
 	return s
+}
+
+type V1Service struct {
+	core *Service
+}
+
+// ListGroups returns a page of resources.Group objects of at least `size` elements if available.
+func (s *V1Service) ListGroups(ctx context.Context, params *resources.GetGroupsParams) (*resources.PaginatedResponse[resources.Group], error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.ListGroups")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	groups, err := s.core.ListGroups(ctx, principal.Identifier())
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list groups for user %s: %v", principal.Identifier(), err))
+	}
+
+	r := &resources.PaginatedResponse[resources.Group]{
+		Data: make([]resources.Group, 0, len(groups)),
+		Meta: resources.ResponseMeta{Size: len(groups)},
+	}
+
+	for _, group := range groups {
+		r.Data = append(r.Data, resources.Group{Id: &group, Name: group})
+	}
+
+	return r, nil
+}
+
+func (s *V1Service) CreateGroup(ctx context.Context, group *resources.Group) (*resources.Group, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.CreateGroup")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	createdGroup, err := s.core.CreateGroup(ctx, principal.Identifier(), group.Name)
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to create group %s for user %s: %v", group.Name, principal.Identifier(), err))
+	}
+
+	return &resources.Group{
+		Id:   &createdGroup.ID,
+		Name: createdGroup.Name,
+	}, nil
+}
+
+func (s *V1Service) GetGroup(ctx context.Context, groupId string) (*resources.Group, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroup")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+	if principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	group, err := s.core.GetGroup(ctx, principal.Identifier(), groupId)
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to get group %s for user %s: %v", groupId, principal.Identifier(), err))
+	}
+
+	if group == nil {
+		return nil, v1.NewNotFoundError(fmt.Sprintf("group %s not found", groupId))
+	}
+
+	return &resources.Group{
+		Id:   &group.ID,
+		Name: group.Name,
+	}, nil
+}
+
+func (s *V1Service) UpdateGroup(ctx context.Context, group *resources.Group) (*resources.Group, error) {
+	_, span := s.core.tracer.Start(ctx, "groups.V1Service.UpdateGroup")
+	defer span.End()
+
+	return nil, v1.NewNotImplementedError("endpoint not implemented")
+}
+
+func (s *V1Service) DeleteGroup(ctx context.Context, groupId string) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.DeleteGroup")
+	defer span.End()
+
+	principal := authentication.PrincipalFromContext(ctx)
+	if principal == nil {
+		return false, v1.NewAuthorizationError("unauthorized")
+	}
+
+	if err := s.core.DeleteGroup(ctx, groupId); err != nil {
+		return false, v1.NewUnknownError(fmt.Sprintf("failed to delete group %s for principal %s: %v", groupId, principal.Identifier(), err))
+	}
+
+	return true, nil
+}
+
+func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupIdentities")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	paginator := types.NewTokenPaginator(s.core.tracer, s.core.logger)
+	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
+		s.core.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
+	}
+
+	identities, pageToken, err := s.core.ListIdentities(ctx, groupId, *params.NextToken)
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list identities for group %s: %v", groupId, err))
+	}
+
+	paginator.SetToken(ctx, GROUP_TOKEN_KEY, pageToken)
+	metaParam, err := paginator.PaginationHeader(ctx)
+	if err != nil {
+		s.core.logger.Errorf("failed to create the pagination meta param: %v", err)
+		metaParam = ""
+	}
+
+	r := &resources.PaginatedResponse[resources.Identity]{
+		Meta: resources.ResponseMeta{Size: len(identities)},
+		Data: make([]resources.Identity, 0, len(identities)),
+		Next: resources.Next{PageToken: &metaParam},
+	}
+
+	for _, identity := range identities {
+		r.Data = append(r.Data, resources.Identity{Id: &identity})
+	}
+
+	return r, nil
+}
+
+func (s *V1Service) PatchGroupIdentities(ctx context.Context, groupId string, identityPatches []resources.GroupIdentitiesPatchItem) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupIdentities")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return false, v1.NewAuthorizationError("unauthorized")
+	}
+
+	var additions, removals []string
+	for _, identity := range identityPatches {
+		if identity.Op == "add" {
+			additions = append(additions, identity.Identity)
+		}
+
+		if identity.Op == "remove" {
+			removals = append(removals, identity.Identity)
+		}
+	}
+
+	for _, identityPatch := range identityPatches {
+		switch identityPatch.Op {
+		case "add":
+			additions = append(additions, identityPatch.Identity)
+		case "remove":
+			removals = append(removals, identityPatch.Identity)
+		default:
+			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for identity: %s in group: %s", identityPatch.Op, identityPatch.Identity, groupId))
+		}
+	}
+
+	if len(additions) > 0 {
+		if err := s.core.AssignIdentities(ctx, groupId, additions...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to assign identities to group %s: %v", groupId, err))
+		}
+	}
+
+	if len(removals) > 0 {
+		if err := s.core.RemoveIdentities(ctx, groupId, removals...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to remove identities from group %s: %v", groupId, err))
+		}
+	}
+
+	return true, nil
+}
+
+func (s *V1Service) GetGroupRoles(ctx context.Context, groupId string, params *resources.GetGroupsItemRolesParams) (*resources.PaginatedResponse[resources.Role], error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupRoles")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	roles, err := s.core.ListRoles(ctx, groupId)
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list roles for group %s: %v", groupId, err))
+	}
+
+	r := &resources.PaginatedResponse[resources.Role]{
+		Data: make([]resources.Role, 0, len(roles)),
+		Meta: resources.ResponseMeta{Size: len(roles)},
+	}
+
+	for _, role := range roles {
+		r.Data = append(r.Data, resources.Role{Id: &role, Name: role})
+	}
+
+	return r, nil
+}
+
+func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePatches []resources.GroupRolesPatchItem) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupRoles")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return false, v1.NewAuthorizationError("unauthorized")
+	}
+
+	var additions, removals []string
+	for _, rolePatch := range rolePatches {
+		switch rolePatch.Op {
+		case "add":
+			additions = append(additions, rolePatch.Role)
+		case "remove":
+			removals = append(removals, rolePatch.Role)
+		default:
+			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for role: %s in group: %s", rolePatch.Op, rolePatch.Role, groupId))
+		}
+	}
+
+	if len(additions) > 0 {
+		if err := s.core.AssignRoles(ctx, groupId, additions...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to assign roles to group %s: %v", groupId, err))
+		}
+	}
+
+	if len(removals) > 0 {
+		if err := s.core.RemoveRoles(ctx, groupId, removals...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to remove roles from group %s: %v", groupId, err))
+		}
+	}
+
+	return true, nil
+}
+
+func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupEntitlements")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return nil, v1.NewAuthorizationError("unauthorized")
+	}
+
+	paginator := types.NewTokenPaginator(s.core.tracer, s.core.logger)
+	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
+		s.core.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
+	}
+
+	permissions, pageTokens, err := s.core.ListPermissions(ctx, groupId, paginator.GetAllTokens(ctx))
+	if err != nil {
+		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list permissions for group %s: %v", groupId, err))
+	}
+
+	paginator.SetTokens(ctx, pageTokens)
+	metaParam, err := paginator.PaginationHeader(ctx)
+	if err != nil {
+		s.core.logger.Errorf("failed to create the pagination meta param: %v", err)
+		metaParam = ""
+	}
+
+	r := &resources.PaginatedResponse[resources.EntityEntitlement]{
+		Meta: resources.ResponseMeta{Size: len(permissions)},
+		Data: make([]resources.EntityEntitlement, 0, len(permissions)),
+		Next: resources.Next{PageToken: &metaParam},
+	}
+
+	for _, permission := range permissions {
+		p := authorization.NewURNFromURLParam(permission)
+		entity := strings.SplitN(p.Object(), ":", 2)
+		r.Data = append(
+			r.Data,
+			resources.EntityEntitlement{
+				Entitlement: p.Relation(),
+				EntityType:  entity[0],
+				EntityId:    entity[1],
+			},
+		)
+	}
+
+	return r, nil
+}
+
+func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupEntitlements")
+	defer span.End()
+
+	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
+		return false, v1.NewAuthorizationError("unauthorized")
+	}
+
+	var additions, removals []Permission
+	for _, entitlementPatch := range entitlementPatches {
+		entitlement := entitlementPatch.Entitlement
+		permission := Permission{
+			Relation: entitlement.Entitlement,
+			Object:   fmt.Sprintf("%s:%s", entitlement.EntityType, entitlement.EntityId),
+		}
+
+		switch entitlementPatch.Op {
+		case "add":
+			additions = append(additions, permission)
+		case "remove":
+			removals = append(removals, permission)
+		default:
+			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for entitlement: %s in group: %s", entitlementPatch.Op, entitlement.Entitlement, groupId))
+		}
+	}
+
+	if len(additions) > 0 {
+		if err := s.core.AssignPermissions(ctx, groupId, additions...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to assign permissions to group %s: %v", groupId, err))
+		}
+	}
+
+	if len(removals) > 0 {
+		if err := s.core.RemovePermissions(ctx, groupId, removals...); err != nil {
+			return false, v1.NewUnknownError(fmt.Sprintf("failed to remove permissions from group %s: %v", groupId, err))
+		}
+	}
+
+	return true, nil
 }

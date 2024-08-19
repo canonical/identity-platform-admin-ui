@@ -567,12 +567,16 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 }
 
 type V1Service struct {
-	core *Service
+	core ServiceInterface
+
+	tracer  trace.Tracer
+	monitor monitoring.MonitorInterface
+	logger  logging.LoggerInterface
 }
 
-// ListGroups returns a page of resources.Group objects of at least `size` elements if available.
+// ListGroups returns a page of resources.Group.
 func (s *V1Service) ListGroups(ctx context.Context, params *resources.GetGroupsParams) (*resources.PaginatedResponse[resources.Group], error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.ListGroups")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.ListGroups")
 	defer span.End()
 
 	principal := authentication.PrincipalFromContext(ctx)
@@ -597,8 +601,9 @@ func (s *V1Service) ListGroups(ctx context.Context, params *resources.GetGroupsP
 	return r, nil
 }
 
+// CreateGroup creates and returns a single resources.Group.
 func (s *V1Service) CreateGroup(ctx context.Context, group *resources.Group) (*resources.Group, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.CreateGroup")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.CreateGroup")
 	defer span.End()
 
 	principal := authentication.PrincipalFromContext(ctx)
@@ -617,8 +622,9 @@ func (s *V1Service) CreateGroup(ctx context.Context, group *resources.Group) (*r
 	}, nil
 }
 
+// GetGroup retrieves and returns a single resources.Group by its ID.
 func (s *V1Service) GetGroup(ctx context.Context, groupId string) (*resources.Group, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroup")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroup")
 	defer span.End()
 
 	principal := authentication.PrincipalFromContext(ctx)
@@ -641,15 +647,19 @@ func (s *V1Service) GetGroup(ctx context.Context, groupId string) (*resources.Gr
 	}, nil
 }
 
+// UpdateGroup updates the given resources.Group.
+//
+// Note: this is not implemented yet.
 func (s *V1Service) UpdateGroup(ctx context.Context, group *resources.Group) (*resources.Group, error) {
-	_, span := s.core.tracer.Start(ctx, "groups.V1Service.UpdateGroup")
+	_, span := s.tracer.Start(ctx, "groups.V1Service.UpdateGroup")
 	defer span.End()
 
-	return nil, v1.NewNotImplementedError("endpoint not implemented")
+	return nil, v1.NewNotImplementedError("service not implemented")
 }
 
+// DeleteGroup deletes a single group by its ID.
 func (s *V1Service) DeleteGroup(ctx context.Context, groupId string) (bool, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.DeleteGroup")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.DeleteGroup")
 	defer span.End()
 
 	principal := authentication.PrincipalFromContext(ctx)
@@ -664,17 +674,18 @@ func (s *V1Service) DeleteGroup(ctx context.Context, groupId string) (bool, erro
 	return true, nil
 }
 
+// GetGroupIdentities returns a page of resources.Identity associated with the given group.
 func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupIdentities")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupIdentities")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
 		return nil, v1.NewAuthorizationError("unauthorized")
 	}
 
-	paginator := types.NewTokenPaginator(s.core.tracer, s.core.logger)
+	paginator := types.NewTokenPaginator(s.tracer, s.logger)
 	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
-		s.core.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
+		s.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
 	}
 
 	identities, pageToken, err := s.core.ListIdentities(ctx, groupId, *params.NextToken)
@@ -685,7 +696,7 @@ func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, para
 	paginator.SetToken(ctx, GROUP_TOKEN_KEY, pageToken)
 	metaParam, err := paginator.PaginationHeader(ctx)
 	if err != nil {
-		s.core.logger.Errorf("failed to create the pagination meta param: %v", err)
+		s.logger.Errorf("failed to create the pagination meta param: %v", err)
 		metaParam = ""
 	}
 
@@ -702,8 +713,9 @@ func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, para
 	return r, nil
 }
 
+// PatchGroupIdentities assigns and removes the given resources.GroupIdentitiesPatchItem associated with the given group.
 func (s *V1Service) PatchGroupIdentities(ctx context.Context, groupId string, identityPatches []resources.GroupIdentitiesPatchItem) (bool, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupIdentities")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupIdentities")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
@@ -728,7 +740,7 @@ func (s *V1Service) PatchGroupIdentities(ctx context.Context, groupId string, id
 		case "remove":
 			removals = append(removals, identityPatch.Identity)
 		default:
-			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for identity: %s in group: %s", identityPatch.Op, identityPatch.Identity, groupId))
+			s.logger.Warn(fmt.Sprintf("unsupported operation: %s for identity: %s in group: %s", identityPatch.Op, identityPatch.Identity, groupId))
 		}
 	}
 
@@ -747,8 +759,9 @@ func (s *V1Service) PatchGroupIdentities(ctx context.Context, groupId string, id
 	return true, nil
 }
 
+// GetGroupRoles returns a page of resources.Role associated with the given group.
 func (s *V1Service) GetGroupRoles(ctx context.Context, groupId string, params *resources.GetGroupsItemRolesParams) (*resources.PaginatedResponse[resources.Role], error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupRoles")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupRoles")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
@@ -772,8 +785,9 @@ func (s *V1Service) GetGroupRoles(ctx context.Context, groupId string, params *r
 	return r, nil
 }
 
+// PatchGroupRoles assigns and removes the given resources.GroupRolesPatchItem associated with the given group.
 func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePatches []resources.GroupRolesPatchItem) (bool, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupRoles")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupRoles")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
@@ -788,7 +802,7 @@ func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePat
 		case "remove":
 			removals = append(removals, rolePatch.Role)
 		default:
-			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for role: %s in group: %s", rolePatch.Op, rolePatch.Role, groupId))
+			s.logger.Warn(fmt.Sprintf("unsupported operation: %s for role: %s in group: %s", rolePatch.Op, rolePatch.Role, groupId))
 		}
 	}
 
@@ -807,17 +821,18 @@ func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePat
 	return true, nil
 }
 
+// GetGroupEntitlements returns a page of resources.EntityEntitlement associated with the given group.
 func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.GetGroupEntitlements")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupEntitlements")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
 		return nil, v1.NewAuthorizationError("unauthorized")
 	}
 
-	paginator := types.NewTokenPaginator(s.core.tracer, s.core.logger)
+	paginator := types.NewTokenPaginator(s.tracer, s.logger)
 	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
-		s.core.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
+		s.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
 	}
 
 	permissions, pageTokens, err := s.core.ListPermissions(ctx, groupId, paginator.GetAllTokens(ctx))
@@ -828,7 +843,7 @@ func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, pa
 	paginator.SetTokens(ctx, pageTokens)
 	metaParam, err := paginator.PaginationHeader(ctx)
 	if err != nil {
-		s.core.logger.Errorf("failed to create the pagination meta param: %v", err)
+		s.logger.Errorf("failed to create the pagination meta param: %v", err)
 		metaParam = ""
 	}
 
@@ -854,8 +869,9 @@ func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, pa
 	return r, nil
 }
 
+// PatchGroupEntitlements assigns and removes the given resources.GroupEntitlementsPatchItem associated with the given group.
 func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error) {
-	ctx, span := s.core.tracer.Start(ctx, "groups.V1Service.PatchGroupEntitlements")
+	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupEntitlements")
 	defer span.End()
 
 	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
@@ -876,7 +892,7 @@ func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, 
 		case "remove":
 			removals = append(removals, permission)
 		default:
-			s.core.logger.Warn(fmt.Sprintf("unsupported operation: %s for entitlement: %s in group: %s", entitlementPatch.Op, entitlement.Entitlement, groupId))
+			s.logger.Warn(fmt.Sprintf("unsupported operation: %s for entitlement: %s in group: %s", entitlementPatch.Op, entitlement.Entitlement, groupId))
 		}
 	}
 
@@ -893,4 +909,15 @@ func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, 
 	}
 
 	return true, nil
+}
+
+func NewV1Service(svc ServiceInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+	s := new(V1Service)
+
+	s.core = svc
+	s.tracer = tracer
+	s.monitor = monitor
+	s.logger = logger
+
+	return s
 }

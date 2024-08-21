@@ -1281,29 +1281,8 @@ func TestServiceRemovePermissions(t *testing.T) {
 }
 
 func TestV1Service_ListGroups(t *testing.T) {
-	ctrl := gomock.NewController(t)
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
 	defer ctrl.Finish()
-
-	mockService := NewMockServiceInterface(ctrl)
-	mockLogger := NewMockLoggerInterface(ctrl)
-	mockTracer := NewMockTracer(ctrl)
-	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockProvider := NewMockProviderInterface(ctrl)
-
-	mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
-		func(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-			return ctx, trace.SpanFromContext(ctx)
-		},
-	)
-	mockProvider.EXPECT().Verifier(&oidc.Config{ClientID: "mock-client-id"}).Return(oidc.NewVerifier("", nil, &oidc.Config{
-		ClientID:                   "mock-client-id",
-		SkipExpiryCheck:            true,
-		SkipIssuerCheck:            true,
-		InsecureSkipSignatureCheck: true,
-	}))
-
-	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
-	principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
 
 	type testCase struct {
 		name           string
@@ -1661,7 +1640,7 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 			setupMocks: func(pageToken string) {
 				mockService.EXPECT().
 					ListIdentities(gomock.Any(), "mock-group-id", pageToken).
-					Return(identities, nextPageToken, nil)
+					Return([]string{"user:identity1", "user:identity2"}, nextPageToken, nil)
 			},
 			contextSetup: func() context.Context {
 				ctx := context.Background()
@@ -1675,15 +1654,6 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 				},
 			},
 			expectedError: nil,
-		},
-		{
-			name:       "Unauthorized request",
-			setupMocks: func(_ string) {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			expectedResult: nil,
-			expectedError:  v1.NewAuthorizationError("unauthorized"),
 		},
 		{
 			name: "Error while retrieving group identities",
@@ -1758,18 +1728,6 @@ func TestV1Service_PatchGroupIdentities(t *testing.T) {
 			},
 			expectedResult: true,
 			expectedError:  nil,
-		},
-		{
-			name:       "Unauthorized request",
-			setupMocks: func() {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			identityPatches: []resources.GroupIdentitiesPatchItem{
-				{Op: "add", Identity: "identity1"},
-			},
-			expectedResult: false,
-			expectedError:  v1.NewAuthorizationError("unauthorized"),
 		},
 		{
 			name: "Error while assigning identities",
@@ -1854,16 +1812,6 @@ func TestV1Service_GetGroupRoles(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name:       "Unauthorized request",
-			setupMocks: func() {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			params:         &resources.GetGroupsItemRolesParams{},
-			expectedResult: nil,
-			expectedError:  v1.NewAuthorizationError("unauthorized"),
-		},
-		{
 			name: "Error while retrieving roles",
 			setupMocks: func() {
 				mockService.EXPECT().
@@ -1936,16 +1884,6 @@ func TestV1Service_PatchGroupRoles(t *testing.T) {
 			},
 			expectedResult: true,
 			expectedError:  nil,
-		},
-		{
-			name:       "Unauthorized request",
-			setupMocks: func() {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			rolePatches:    []resources.GroupRolesPatchItem{},
-			expectedResult: false,
-			expectedError:  v1.NewAuthorizationError("unauthorized"),
 		},
 		{
 			name: "Error while assigning roles",
@@ -2047,15 +1985,6 @@ func TestV1Service_GetGroupEntitlements(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:       "Unauthorized request",
-			setupMocks: func() {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			expectedResult: nil,
-			expectedError:  v1.NewAuthorizationError("unauthorized"),
-		},
-		{
 			name: "Error while retrieving permissions",
 			setupMocks: func() {
 				mockService.EXPECT().
@@ -2130,16 +2059,6 @@ func TestV1Service_PatchGroupEntitlements(t *testing.T) {
 			},
 			expectedResult: true,
 			expectedError:  nil,
-		},
-		{
-			name:       "Unauthorized request",
-			setupMocks: func() {},
-			contextSetup: func() context.Context {
-				return context.Background()
-			},
-			entitlementPatches: []resources.GroupEntitlementsPatchItem{},
-			expectedResult:     false,
-			expectedError:      v1.NewAuthorizationError("unauthorized"),
 		},
 		{
 			name: "Error while assigning permissions",

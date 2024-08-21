@@ -679,10 +679,6 @@ func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, para
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupIdentities")
 	defer span.End()
 
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return nil, v1.NewAuthorizationError("unauthorized")
-	}
-
 	paginator := types.NewTokenPaginator(s.tracer, s.logger)
 	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
@@ -707,7 +703,9 @@ func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, para
 	}
 
 	for _, identity := range identities {
-		r.Data = append(r.Data, resources.Identity{Id: &identity})
+		identityParts := strings.SplitN(identity, ":", 2)
+		identityID := identityParts[1]
+		r.Data = append(r.Data, resources.Identity{Id: &identityID})
 	}
 
 	return r, nil
@@ -717,10 +715,6 @@ func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, para
 func (s *V1Service) PatchGroupIdentities(ctx context.Context, groupId string, identityPatches []resources.GroupIdentitiesPatchItem) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupIdentities")
 	defer span.End()
-
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return false, v1.NewAuthorizationError("unauthorized")
-	}
 
 	var additions, removals []string
 	for _, identity := range identityPatches {
@@ -764,10 +758,6 @@ func (s *V1Service) GetGroupRoles(ctx context.Context, groupId string, params *r
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupRoles")
 	defer span.End()
 
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return nil, v1.NewAuthorizationError("unauthorized")
-	}
-
 	roles, err := s.core.ListRoles(ctx, groupId)
 	if err != nil {
 		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list roles for group %s: %v", groupId, err))
@@ -789,10 +779,6 @@ func (s *V1Service) GetGroupRoles(ctx context.Context, groupId string, params *r
 func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePatches []resources.GroupRolesPatchItem) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupRoles")
 	defer span.End()
-
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return false, v1.NewAuthorizationError("unauthorized")
-	}
 
 	var additions, removals []string
 	for _, rolePatch := range rolePatches {
@@ -825,10 +811,6 @@ func (s *V1Service) PatchGroupRoles(ctx context.Context, groupId string, rolePat
 func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, params *resources.GetGroupsItemEntitlementsParams) (*resources.PaginatedResponse[resources.EntityEntitlement], error) {
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupEntitlements")
 	defer span.End()
-
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return nil, v1.NewAuthorizationError("unauthorized")
-	}
 
 	paginator := types.NewTokenPaginator(s.tracer, s.logger)
 	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
@@ -873,10 +855,6 @@ func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, pa
 func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, entitlementPatches []resources.GroupEntitlementsPatchItem) (bool, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.PatchGroupEntitlements")
 	defer span.End()
-
-	if principal := authentication.PrincipalFromContext(ctx); principal == nil {
-		return false, v1.NewAuthorizationError("unauthorized")
-	}
 
 	var additions, removals []Permission
 	for _, entitlementPatch := range entitlementPatches {

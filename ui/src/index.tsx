@@ -5,11 +5,7 @@ import App from "./App";
 import "./sass/styles.scss";
 import { NotificationProvider } from "@canonical/react-components";
 import { basePath } from "util/basePaths";
-import { handleNext } from "util/handleNext";
 import { removeTrailingSlash } from "util/removeTrailingSlash";
-
-// Redirect to the ?next=/... URL returned by the authentication step.
-handleNext();
 
 const queryClient = new QueryClient({
   defaultOptions: {

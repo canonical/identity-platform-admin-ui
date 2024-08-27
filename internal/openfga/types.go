@@ -3,6 +3,18 @@
 
 package openfga
 
+type listPermissionsResult struct {
+	permissions []Permission
+	token       string
+	ofgaType    string
+	err         error
+}
+
+type Permission struct {
+	Relation string `json:"relation" validate:"required"`
+	Object   string `json:"object" validate:"required"`
+}
+
 // Tuple is simply a wrapper around openfga TupleKey
 // reason to have it is to hide underlying library complexity
 // in case we want to swap it

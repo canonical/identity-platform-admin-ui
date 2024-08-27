@@ -9,7 +9,7 @@ import (
 	"github.com/openfga/go-sdk/client"
 )
 
-type OpenFGAClientInterface interface {
+type OpenFGACoreClientInterface interface {
 	GetAuthorizationModelId() (string, error)
 	CreateStore(context.Context) client.SdkClientCreateStoreRequestInterface
 	CreateStoreExecute(client.SdkClientCreateStoreRequestInterface) (*client.ClientCreateStoreResponse, error)
@@ -29,4 +29,13 @@ type OpenFGAClientInterface interface {
 	WriteExecute(client.SdkClientWriteRequestInterface) (*client.ClientWriteResponse, error)
 	ListObjects(context.Context) client.SdkClientListObjectsRequestInterface
 	ListObjectsExecute(client.SdkClientListObjectsRequestInterface) (*client.ClientListObjectsResponse, error)
+}
+
+// OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation
+type OpenFGAClientInterface interface {
+	ListObjects(context.Context, string, string, string) ([]string, error)
+	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
+	WriteTuples(context.Context, ...Tuple) error
+	DeleteTuples(context.Context, ...Tuple) error
+	Check(context.Context, string, string, string, ...Tuple) (bool, error)
 }

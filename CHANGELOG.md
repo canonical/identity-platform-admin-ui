@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.16.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.15.0...v1.16.0) (2024-08-28)
+
+
+### Features
+
+* display login on 401 responses ([5031b32](https://github.com/canonical/identity-platform-admin-ui/commit/5031b323bea49141bc8c7237c526a9ae099777c1))
+* identities service implementation ([b840cf4](https://github.com/canonical/identity-platform-admin-ui/commit/b840cf4c97aa2e6754825a90e4a2ca4747a7897b))
+* log out with OIDC ([4b268aa](https://github.com/canonical/identity-platform-admin-ui/commit/4b268aac9ab337a982daa06dce0cab2e0fcbb9d2))
+* return to URL that initiated login ([99da50a](https://github.com/canonical/identity-platform-admin-ui/commit/99da50a0803b16b9a0075f37879297bd0a931b72))
+
+
+### Bug Fixes
+
+* create openfga store to enhance basic client and offload core application logic ([3f0465b](https://github.com/canonical/identity-platform-admin-ui/commit/3f0465bd42d5d40cbc4ef4aee13c933b9e25de2c))
+* fix wrong title displayed once logged in ([5ef6371](https://github.com/canonical/identity-platform-admin-ui/commit/5ef63710875c2644f40ee0abee80cd4a006c4232))
+* update tracing signature ([d22fad9](https://github.com/canonical/identity-platform-admin-ui/commit/d22fad9414c214e7699ca585a277a39b43e6d345))
+
 ## [1.15.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.14.1...v1.15.0) (2024-08-08)
 
 

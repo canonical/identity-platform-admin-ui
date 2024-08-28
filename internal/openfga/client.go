@@ -22,14 +22,14 @@ import (
 )
 
 type Client struct {
-	c OpenFGAClientInterface
+	c OpenFGACoreClientInterface
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
 
-func (c *Client) APIClient() OpenFGAClientInterface {
+func (c *Client) APIClient() OpenFGACoreClientInterface {
 	return c.c
 }
 

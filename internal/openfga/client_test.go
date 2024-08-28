@@ -39,7 +39,7 @@ func TestNewClientAPIClientImplementsInterface(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+	mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 
 	specs := new(EnvSpec)
 
@@ -63,9 +63,9 @@ func TestNewClientAPIClientImplementsInterface(t *testing.T) {
 	c.c = mockOpenFGAClient
 
 	if !reflect.TypeOf(c.APIClient()).Implements(
-		reflect.TypeOf((*OpenFGAClientInterface)(nil)).Elem(),
+		reflect.TypeOf((*OpenFGACoreClientInterface)(nil)).Elem(),
 	) {
-		t.Fatal("APIClient doesn't implement interface OpenFGAClientInterface")
+		t.Fatal("APIClient doesn't implement interface OpenFGACoreClientInterface")
 	}
 }
 
@@ -105,7 +105,7 @@ func TestClientListObjectsSuccess(t *testing.T) {
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-			mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+			mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 			mockRequest := NewMockSdkClientListObjectsRequestInterface(ctrl)
 
 			c := Client{
@@ -149,7 +149,7 @@ func TestClientListObjectsFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+	mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 	mockRequest := NewMockSdkClientListObjectsRequestInterface(ctrl)
 
 	c := Client{
@@ -230,7 +230,7 @@ func TestClientReadTuplesSuccess(t *testing.T) {
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-			mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+			mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 			mockRequest := NewMockSdkClientReadRequestInterface(ctrl)
 
 			c := Client{
@@ -275,7 +275,7 @@ func TestClientReadTuplesFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+	mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 	mockRequest := NewMockSdkClientReadRequestInterface(ctrl)
 
 	c := Client{
@@ -343,7 +343,7 @@ func TestClientWriteTuplesSuccess(t *testing.T) {
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-			mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+			mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 			mockRequest := NewMockSdkClientWriteRequestInterface(ctrl)
 
 			c := Client{
@@ -384,7 +384,7 @@ func TestClientWriteTuplesFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+	mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 	mockRequest := NewMockSdkClientWriteRequestInterface(ctrl)
 
 	c := Client{
@@ -440,7 +440,7 @@ func TestClientDeleteTuplesSuccess(t *testing.T) {
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-			mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+			mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 			mockRequest := NewMockSdkClientWriteRequestInterface(ctrl)
 
 			c := Client{
@@ -481,7 +481,7 @@ func TestClientDeleteTuplesFails(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-	mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+	mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 	mockRequest := NewMockSdkClientWriteRequestInterface(ctrl)
 
 	c := Client{
@@ -565,7 +565,7 @@ func TestClientWriteBatchCheckSuccess(t *testing.T) {
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
-			mockOpenFGAClient := NewMockOpenFGAClientInterface(ctrl)
+			mockOpenFGAClient := NewMockOpenFGACoreClientInterface(ctrl)
 			mockRequest := NewMockSdkClientBatchCheckRequestInterface(ctrl)
 
 			c := Client{

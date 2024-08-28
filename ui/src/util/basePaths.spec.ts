@@ -21,6 +21,12 @@ describe("calculateBasePath", () => {
     expect(result).toBe("/ui/");
   });
 
+  it("resolves with ui path without trailing slash", () => {
+    vi.stubGlobal("location", { pathname: "/ui" });
+    const result = calculateBasePath();
+    expect(result).toBe("/ui/");
+  });
+
   it("resolves with ui path and discards detail page location", () => {
     vi.stubGlobal("location", { pathname: "/ui/foo/bar" });
     const result = calculateBasePath();
@@ -41,6 +47,12 @@ describe("calculateBasePath", () => {
 
   it("resolves with root path if /ui/ is not part of the pathname", () => {
     vi.stubGlobal("location", { pathname: "/foo/bar/baz" });
+    const result = calculateBasePath();
+    expect(result).toBe("/");
+  });
+
+  it("resolves with root path for partial ui substrings", () => {
+    vi.stubGlobal("location", { pathname: "/prefix/uipartial" });
     const result = calculateBasePath();
     expect(result).toBe("/");
   });

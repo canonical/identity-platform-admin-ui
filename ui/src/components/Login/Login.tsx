@@ -10,6 +10,8 @@ import { FC, ReactNode } from "react";
 import { SITE_NAME } from "consts";
 import { Label } from "./types";
 import { appendAPIBasePath } from "util/basePaths";
+import { useLocation } from "react-router-dom";
+import { getURLKey } from "util/getURLKey";
 
 type Props = {
   isLoading?: boolean;
@@ -17,6 +19,7 @@ type Props = {
 };
 
 const Login: FC<Props> = ({ error, isLoading }) => {
+  const location = useLocation();
   let loginContent: ReactNode;
   if (isLoading) {
     loginContent = <Spinner />;
@@ -32,6 +35,7 @@ const Login: FC<Props> = ({ error, isLoading }) => {
       />
     );
   } else {
+    const path = getURLKey(location.pathname);
     loginContent = (
       <Button
         appearance={
@@ -39,7 +43,9 @@ const Login: FC<Props> = ({ error, isLoading }) => {
         }
         disabled={isLoading}
         element="a"
-        href={appendAPIBasePath(authURLs.login)}
+        href={[appendAPIBasePath(authURLs.login), path ? `next=${path}` : null]
+          .filter(Boolean)
+          .join("?")}
       >
         Sign in to {SITE_NAME}
       </Button>

@@ -13,9 +13,13 @@ import SchemaList from "pages/schemas/SchemaList";
 import Layout from "components/Layout/Layout";
 import { queryKeys } from "util/queryKeys";
 import { axiosInstance } from "./api/axios";
+import { urls } from "urls";
+import { useNext } from "util/useNext";
 
 const App: FC = () => {
   const queryClient = useQueryClient();
+  // Redirect to the ?next=/... URL returned by the authentication step.
+  useNext();
 
   useRef(
     axiosInstance.interceptors.response.use(
@@ -43,14 +47,17 @@ const App: FC = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route path="/" element={<Navigate to="/provider" replace={true} />} />
-        <Route path="/provider" element={<ProviderList />} />
-        <Route path="/client" element={<ClientList />} />
-        <Route path="/identity" element={<IdentityList />} />
-        <Route path="/schema" element={<SchemaList />} />
+      <Route path={urls.index} element={<Layout />}>
         <Route
-          path="/*"
+          path={urls.index}
+          element={<Navigate to={urls.providers.index} replace={true} />}
+        />
+        <Route path={urls.providers.index} element={<ProviderList />} />
+        <Route path={urls.clients.index} element={<ClientList />} />
+        <Route path={urls.identities.index} element={<IdentityList />} />
+        <Route path={urls.schemas.index} element={<SchemaList />} />
+        <Route
+          path={`${urls.index}*`}
           element={
             <ReBACAdmin
               asidePanelId="app-layout"

@@ -7,6 +7,7 @@ const BASE = "auth";
 
 export const authURLs = {
   login: BASE,
+  logout: `${BASE}/logout`,
   me: `${BASE}/me`,
 };
 

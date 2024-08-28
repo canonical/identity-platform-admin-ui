@@ -29,9 +29,9 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_interfaces.go -source=./interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
-//go:generate mockgen -build_flags=--mod=mod -package pool -destination ../../internal/pool/mock_pool.go -source=../../internal/pool/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_pool.go -source=../../internal/pool/interfaces.go
 
-func setupMockSubmit(wp *pool.MockWorkerPoolInterface, resultsChan chan *pool.Result[any]) (*gomock.Call, chan *pool.Result[any]) {
+func setupMockSubmit(wp *MockWorkerPoolInterface, resultsChan chan *pool.Result[any]) (*gomock.Call, chan *pool.Result[any]) {
 	key := uuid.New()
 	var internalResultsChannel chan *pool.Result[any]
 
@@ -107,7 +107,7 @@ func TestServiceListGroups(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -178,7 +178,7 @@ func TestServiceListRoles(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -297,7 +297,7 @@ func TestServiceListIdentities(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			r := new(client.ClientReadResponse)
 
@@ -382,7 +382,7 @@ func TestServiceAssignRoles(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -456,7 +456,7 @@ func TestServiceRemoveRoles(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -530,7 +530,7 @@ func TestServiceAssignIdentities(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -604,7 +604,7 @@ func TestServiceRemoveIdentities(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -700,7 +700,7 @@ func TestServiceGetGroup(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -764,7 +764,7 @@ func TestServiceCreateGroup(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -834,7 +834,7 @@ func TestServiceDeleteGroup(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 7; i++ {
 				setupMockSubmit(workerPool, nil)
 			}
@@ -1008,7 +1008,7 @@ func TestServiceListPermissions(t *testing.T) {
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
 			mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 6; i++ {
 				setupMockSubmit(workerPool, nil)
 			}
@@ -1157,7 +1157,7 @@ func TestServiceAssignPermissions(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
@@ -1237,7 +1237,7 @@ func TestServiceRemovePermissions(t *testing.T) {
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 
-			workerPool := pool.NewMockWorkerPoolInterface(ctrl)
+			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 

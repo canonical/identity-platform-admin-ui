@@ -21,3 +21,13 @@ test("displays the login button", () => {
     screen.getByRole("link", { name: "Sign in to Identity platform" }),
   ).toBeInTheDocument();
 });
+
+test("passes the current path to the 'next' param", () => {
+  renderComponent(<Login />, { url: "/test" });
+  expect(
+    screen
+      .getByRole("link", { name: "Sign in to Identity platform" })
+      .getAttribute("href")
+      ?.endsWith("?next=%2ftest"),
+  );
+});

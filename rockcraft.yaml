@@ -2,7 +2,7 @@ name: identity-platform-admin-ui
 
 base: bare
 build-base: ubuntu@22.04
-version: '1.15.0' # x-release-please-version
+version: '1.16.0' # x-release-please-version
 summary: Canonical Identity platform Admin UI
 description: |
   This is the Canonical Identity platform admin UI used for connecting

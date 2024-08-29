@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.0...v1.16.1) (2024-08-29)
+
+
+### Bug Fixes
+
+* return empty slice when no idps found ([429591a](https://github.com/canonical/identity-platform-admin-ui/commit/429591a9ec014b283cdb866b0b36f84886f7b039)), closes [#388](https://github.com/canonical/identity-platform-admin-ui/issues/388)
+
 ## [1.16.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.15.0...v1.16.0) (2024-08-28)
 
 

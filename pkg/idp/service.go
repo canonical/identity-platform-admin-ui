@@ -49,7 +49,7 @@ func (s *Service) ListResources(ctx context.Context) ([]*Configuration, error) {
 		return nil, err
 	}
 
-	return s.idpConfiguration(cm.Data), nil
+	return s.idpConfiguration(cm.Data)
 
 }
 
@@ -64,7 +64,11 @@ func (s *Service) GetResource(ctx context.Context, providerID string) ([]*Config
 		return nil, err
 	}
 
-	idps := s.idpConfiguration(cm.Data)
+	idps, err := s.idpConfiguration(cm.Data)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if idps == nil {
 		return nil, nil
@@ -90,7 +94,11 @@ func (s *Service) EditResource(ctx context.Context, providerID string, data *Con
 		return nil, err
 	}
 
-	idps := s.idpConfiguration(cm.Data)
+	idps, err := s.idpConfiguration(cm.Data)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if idps == nil {
 		return nil, nil
@@ -137,8 +145,11 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 		return nil, err
 	}
 
-	idps := s.idpConfiguration(cm.Data)
+	idps, err := s.idpConfiguration(cm.Data)
 
+	if err != nil {
+		return nil, err
+	}
 	if idps == nil {
 		return nil, nil
 	}
@@ -187,7 +198,11 @@ func (s *Service) DeleteResource(ctx context.Context, providerID string) error {
 	}
 
 	var found bool
-	idps := s.idpConfiguration(cm.Data)
+	idps, err := s.idpConfiguration(cm.Data)
+
+	if err != nil {
+		return err
+	}
 
 	if idps == nil {
 		return nil
@@ -292,7 +307,7 @@ func (s *Service) mergeConfiguration(base, update *Configuration) *Configuration
 	return base
 }
 
-func (s *Service) idpConfiguration(idps map[string]string) []*Configuration {
+func (s *Service) idpConfiguration(idps map[string]string) ([]*Configuration, error) {
 
 	idpConfig := make([]*Configuration, 0)
 
@@ -300,17 +315,17 @@ func (s *Service) idpConfiguration(idps map[string]string) []*Configuration {
 
 	if !ok {
 		s.logger.Errorf("failed to find key %s in configMap %v", s.keyName, idps)
-		return nil
+		return idpConfig, nil
 	}
 
 	err := yaml.Unmarshal([]byte(rawIdps), &idpConfig)
 
 	if err != nil {
 		s.logger.Errorf("failed unmarshalling %s - %v", rawIdps, err)
-		return nil
+		return nil, fmt.Errorf("failed unmarshalling %s - %v", rawIdps, err)
 	}
 
-	return idpConfig
+	return idpConfig, nil
 }
 
 func (s *Service) keyIDMapper(id, namespace string) string {

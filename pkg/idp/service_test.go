@@ -218,8 +218,8 @@ func TestListResourcesFailsOnMissingKey(t *testing.T) {
 	mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any()).Times(1)
 	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).ListResources(ctx)
 
-	if is != nil {
-		t.Fatalf("expected result to be nil not  %v", is)
+	if is != nil && len(is) > 0 {
+		t.Fatalf("expected result to be an empty slice not  %v", is)
 
 	}
 

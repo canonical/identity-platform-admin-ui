@@ -447,54 +447,6 @@ func TestHandleCreateFails(t *testing.T) {
 	}
 }
 
-func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockLogger := NewMockLoggerInterface(ctrl)
-	mockTracer := NewMockTracer(ctrl)
-	mockMonitor := NewMockMonitorInterface(ctrl)
-	mockService := NewMockServiceInterface(ctrl)
-
-	c := new(Configuration)
-	c.ClientSecret = "secret-9"
-	c.ID = "okta_347646e49b484037b83690b020f9f629"
-	c.ClientID = "347646e4-9b48-4037-b836-90b020f9f629"
-	c.Provider = "okta"
-	c.Mapper = "file:///etc/config/kratos/okta_schema.jsonnet"
-	c.Scope = []string{"email"}
-
-	payload, _ := json.Marshal(c)
-	req := httptest.NewRequest(http.MethodPost, "/api/v0/idps", bytes.NewReader(payload))
-
-	w := httptest.NewRecorder()
-	mux := chi.NewMux()
-	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
-
-	mux.ServeHTTP(w, req)
-
-	res := w.Result()
-	defer res.Body.Close()
-	data, err := io.ReadAll(res.Body)
-
-	if err != nil {
-		t.Errorf("expected error to be nil got %v", err)
-	}
-
-	if res.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
-	}
-
-	rr := new(types.Response)
-	if err := json.Unmarshal(data, rr); err != nil {
-		t.Errorf("expected error to be nil got %v", err)
-	}
-
-	if rr.Status != http.StatusBadRequest {
-		t.Errorf("expected code to be %v got %v", http.StatusBadRequest, rr.Status)
-	}
-}
-
 func TestHandleCreateFailBadRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

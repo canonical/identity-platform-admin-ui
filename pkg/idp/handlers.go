@@ -134,6 +134,18 @@ func (a *API) handlePartialUpdate(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	if idp.ID != ID {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: "IDP ID in url is not matching the one in the payload",
+				Status:  http.StatusBadRequest,
+			},
+		)
+
+		return
+	}
+
 	idps, err := a.service.EditResource(r.Context(), ID, idp)
 
 	if err != nil {
@@ -188,18 +200,6 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 		return
 
-	}
-
-	if idp.ID != "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(
-			types.Response{
-				Message: "IDP ID field is not allowed to be passed in",
-				Status:  http.StatusBadRequest,
-			},
-		)
-
-		return
 	}
 
 	idps, err := a.service.CreateResource(r.Context(), idp)

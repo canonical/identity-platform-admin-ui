@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.16.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.1...v1.16.2) (2024-08-30)
+
+
+### Bug Fixes
+
+* address empty schema id but enforce passing of the field ([fa915f2](https://github.com/canonical/identity-platform-admin-ui/commit/fa915f2211fd9056ff7872e3026cb03217acd1af))
+* enforce id on idp creation, moving validation to validator object ([9633937](https://github.com/canonical/identity-platform-admin-ui/commit/963393755c2c403fb2aee7db7c49faeb3964549a)), closes [#391](https://github.com/canonical/identity-platform-admin-ui/issues/391)
+* initialize idps configmap.Data field if empty ([fba4479](https://github.com/canonical/identity-platform-admin-ui/commit/fba4479e3446270ad72873f4f7c826314da83736)), closes [#392](https://github.com/canonical/identity-platform-admin-ui/issues/392)
+
 ## [1.16.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.0...v1.16.1) (2024-08-29)
 
 

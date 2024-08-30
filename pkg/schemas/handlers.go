@@ -192,11 +192,11 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	if schema.Id != nil && *schema.Id != "" {
+	if schema.Id != nil && *schema.Id == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(
 			types.Response{
-				Message: "Schema ID field is not allowed to be passed in",
+				Message: "Schema ID field is not allowed to be empty",
 				Status:  http.StatusBadRequest,
 			},
 		)

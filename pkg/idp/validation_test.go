@@ -104,6 +104,7 @@ func TestValidate(t *testing.T) {
 			endpoint: "",
 			body: func() []byte {
 				conf := new(Configuration)
+				conf.ID = "google_generic"
 				conf.Provider = "generic"
 				conf.IssuerURL = "mock-url"
 				conf.AuthURL = "mock-url"
@@ -124,6 +125,7 @@ func TestValidate(t *testing.T) {
 			endpoint: "/",
 			body: func() []byte {
 				conf := new(Configuration)
+				conf.ID = "microsoft_1"
 				conf.Provider = "microsoft"
 				conf.Tenant = "mock-tenant"
 				conf.SubjectSource = "me"

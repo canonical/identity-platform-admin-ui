@@ -10,7 +10,7 @@ import "encoding/json"
 // importing the library github.com/ory/kratos fails due to compilations on their side
 type Configuration struct {
 	// ID is the provider's ID
-	ID string `json:"id" yaml:"id"`
+	ID string `json:"id" yaml:"id" validate:"required"`
 
 	// Provider is either "generic" for a generic OAuth 2.0 / OpenID Connect Provider or one of:
 	// - generic

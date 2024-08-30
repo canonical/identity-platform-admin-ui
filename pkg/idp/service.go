@@ -174,6 +174,11 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 		return nil, err
 	}
 
+	// catch if configmap is empty and initialize
+	if cm.Data == nil {
+		cm.Data = make(map[string]string)
+	}
+
 	cm.Data[s.keyName] = string(rawIdps)
 
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {

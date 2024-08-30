@@ -478,7 +478,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 	}
 }
 
-func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
+func TestHandleCreateFailsIfIDempty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -513,10 +513,9 @@ func TestHandleCreateFailsIfIDPassedIn(t *testing.T) {
 		"additionalProperties": true,
 	}
 
-	v0ID := "test_v0"
-
+	emptyID := ""
 	c := new(kClient.IdentitySchemaContainer)
-	c.Id = &v0ID
+	c.Id = &emptyID
 	c.Schema = v0Schema
 
 	payload, _ := json.Marshal(c)

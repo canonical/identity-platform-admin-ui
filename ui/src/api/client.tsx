@@ -27,12 +27,10 @@ export const updateClient = (
   values: string,
 ): Promise<ApiResponse<Client>> =>
   handleRequest(() =>
-    axiosInstance.post<ApiResponse<Client>>(`/clients/${clientId}`, values),
+    axiosInstance.put<ApiResponse<Client>>(`/clients/${clientId}`, values),
   );
 
 export const deleteClient = (client: string) =>
   handleRequest(() =>
-    axiosInstance.get<ApiResponse<string>>(`/clients/${client}`, {
-      method: "DELETE",
-    }),
+    axiosInstance.delete<ApiResponse<string>>(`/clients/${client}`),
   );

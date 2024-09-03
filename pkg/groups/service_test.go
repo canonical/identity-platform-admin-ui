@@ -5,7 +5,14 @@ package groups
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"sort"
 	"strings"
@@ -30,6 +37,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_pool.go -source=../../internal/pool/interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_authentication.go -source=../authentication/interfaces.go
 
 func setupMockSubmit(wp *MockWorkerPoolInterface, resultsChan chan *pool.Result[any]) (*gomock.Call, chan *pool.Result[any]) {
 	key := uuid.New()
@@ -1270,4 +1278,874 @@ func TestServiceRemovePermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestV1Service_ListGroups(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		expectedResult []string
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "List groups successfully",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListGroups(gomock.Any(), principal.Identifier()).
+					Return([]string{"group1", "group2"}, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			expectedResult: []string{"group1", "group2"},
+			expectedError:  nil,
+		},
+		{
+			name:       "Unauthorized request",
+			setupMocks: func() {},
+			contextSetup: func() context.Context {
+				return context.Background()
+			},
+			expectedResult: nil,
+			expectedError:  v1.NewAuthorizationError("unauthorized"),
+		},
+		{
+			name: "Error while listing groups",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListGroups(gomock.Any(), principal.Identifier()).
+					Return(nil, errors.New("some error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			expectedResult: nil,
+			expectedError:  v1.NewUnknownError(fmt.Sprintf("failed to list groups for user %s: some error", principal.Identifier())),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.ListGroups(ctx, &resources.GetGroupsParams{})
+
+			var groups []string
+			if tc.expectedResult != nil {
+				for _, group := range result.Data {
+					groups = append(groups, group.Name)
+				}
+			}
+			assert.Equal(t, tc.expectedResult, groups)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_CreateGroup(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		group          *resources.Group
+		expectedResult string
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Create group successfully",
+			setupMocks: func() {
+				mockService.EXPECT().
+					CreateGroup(gomock.Any(), principal.Identifier(), "group1").
+					Return(&Group{ID: "1", Name: "group1"}, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			group:          &resources.Group{Name: "group1"},
+			expectedResult: "group1",
+			expectedError:  nil,
+		},
+		{
+			name:       "Unauthorized request",
+			setupMocks: func() {},
+			contextSetup: func() context.Context {
+				return context.Background()
+			},
+			group:         &resources.Group{Name: "group1"},
+			expectedError: v1.NewAuthorizationError("unauthorized"),
+		},
+		{
+			name: "Error while creating group",
+			setupMocks: func() {
+				mockService.EXPECT().
+					CreateGroup(gomock.Any(), principal.Identifier(), "group1").
+					Return(nil, errors.New("some error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			group:         &resources.Group{Name: "group1"},
+			expectedError: v1.NewUnknownError(fmt.Sprintf("failed to create group group1 for user %s: some error", principal.Identifier())),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.CreateGroup(ctx, tc.group)
+
+			if tc.expectedError == nil {
+				assert.Equal(t, tc.expectedResult, result.Name)
+			}
+
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_GetGroup(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		expectedResult string
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Get group successfully",
+			setupMocks: func() {
+				mockService.EXPECT().
+					GetGroup(gomock.Any(), principal.Identifier(), "group1").
+					Return(&Group{ID: "1", Name: "group1"}, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			expectedResult: "group1",
+			expectedError:  nil,
+		},
+		{
+			name:       "Unauthorized request",
+			setupMocks: func() {},
+			contextSetup: func() context.Context {
+				return context.Background()
+			},
+			expectedError: v1.NewAuthorizationError("unauthorized"),
+		},
+		{
+			name: "Group not found",
+			setupMocks: func() {
+				mockService.EXPECT().
+					GetGroup(gomock.Any(), principal.Identifier(), "group1").
+					Return(nil, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			expectedError: v1.NewNotFoundError("group group1 not found"),
+		},
+		{
+			name: "Error while getting group",
+			setupMocks: func() {
+				mockService.EXPECT().
+					GetGroup(gomock.Any(), principal.Identifier(), "group1").
+					Return(nil, errors.New("some error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			expectedError: v1.NewUnknownError(fmt.Sprintf("failed to get group group1 for user %s: some error", principal.Identifier())),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.GetGroup(ctx, "group1")
+
+			if tc.expectedError == nil {
+				assert.Equal(t, tc.expectedResult, result.Name)
+			}
+
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_UpdateGroup(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, _ := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		group          *resources.Group
+		expectedResult *resources.Group
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name:           "Not implemented",
+			group:          &resources.Group{Name: "mock-group-name"},
+			expectedResult: nil,
+			expectedError:  v1.NewNotImplementedError("service not implemented"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.UpdateGroup(context.Background(), tc.group)
+
+			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_DeleteGroup(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		groupId        string
+		expectedResult bool
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully deletes group",
+			setupMocks: func() {
+				mockService.EXPECT().DeleteGroup(gomock.Any(), "mock-group-id").Return(nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			groupId:        "mock-group-id",
+			expectedResult: true,
+			expectedError:  nil,
+		},
+		{
+			name:       "Unauthorized request",
+			setupMocks: func() {},
+			contextSetup: func() context.Context {
+				return context.Background()
+			},
+			groupId:        "mock-group-id",
+			expectedResult: false,
+			expectedError:  v1.NewAuthorizationError("unauthorized"),
+		},
+		{
+			name: "Error while deleting group",
+			setupMocks: func() {
+				mockService.EXPECT().DeleteGroup(gomock.Any(), "mock-group-id").Return(errors.New("some error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				ctx = authentication.PrincipalContext(ctx, principal)
+				return ctx
+			},
+			groupId:        "mock-group-id",
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError(fmt.Sprintf("failed to delete group mock-group-id for principal %s: some error", principal.Identifier())),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.DeleteGroup(ctx, tc.groupId)
+
+			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_GetGroupIdentities(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	identities := []string{"identity1", "identity2"}
+	currPageToken := map[string]string{
+		"groups": "page-token",
+	}
+	nextPageToken := "new-page-token"
+
+	paginator := types.NewTokenPaginator(mockTracer, mockLogger)
+
+	type testCase struct {
+		name           string
+		setupMocks     func(string)
+		contextSetup   func() context.Context
+		expectedResult *resources.PaginatedResponse[resources.Identity]
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully retrieves group identities",
+			setupMocks: func(pageToken string) {
+				mockService.EXPECT().
+					ListIdentities(gomock.Any(), "mock-group-id", pageToken).
+					Return([]string{"user:identity1", "user:identity2"}, nextPageToken, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			expectedResult: &resources.PaginatedResponse[resources.Identity]{
+				Meta: resources.ResponseMeta{Size: 2},
+				Data: []resources.Identity{
+					{Id: &identities[0]},
+					{Id: &identities[1]},
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Error while retrieving group identities",
+			setupMocks: func(pageToken string) {
+				mockService.EXPECT().
+					ListIdentities(gomock.Any(), "mock-group-id", pageToken).
+					Return(nil, "", errors.New("some error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			expectedResult: nil,
+			expectedError:  v1.NewUnknownError("failed to list identities for group mock-group-id: some error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := tc.contextSetup()
+			paginator.SetTokens(ctx, currPageToken)
+			pageToken, _ := paginator.PaginationHeader(ctx)
+			tc.setupMocks(pageToken)
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.GetGroupIdentities(ctx, "mock-group-id", &resources.GetGroupsItemIdentitiesParams{NextToken: &pageToken})
+
+			if tc.expectedError == nil {
+				paginator.SetToken(ctx, GROUP_TOKEN_KEY, nextPageToken)
+				expectedToken, _ := paginator.PaginationHeader(ctx)
+				assert.Equal(t, tc.expectedResult.Meta.Size, len(identities))
+				assert.Equal(t, expectedToken, *result.Next.PageToken)
+			}
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_PatchGroupIdentities(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name            string
+		setupMocks      func()
+		contextSetup    func() context.Context
+		identityPatches []resources.GroupIdentitiesPatchItem
+		expectedResult  bool
+		expectedError   error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully patches identities (add and remove)",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignIdentities(gomock.Any(), "mock-group-id", "identity1").
+					Return(nil)
+
+				mockService.EXPECT().
+					RemoveIdentities(gomock.Any(), "mock-group-id", "identity2").
+					Return(nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			identityPatches: []resources.GroupIdentitiesPatchItem{
+				{Op: "add", Identity: "identity1"},
+				{Op: "remove", Identity: "identity2"},
+			},
+			expectedResult: true,
+			expectedError:  nil,
+		},
+		{
+			name: "Error while assigning identities",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignIdentities(gomock.Any(), "mock-group-id", "identity1").
+					Return(errors.New("assign error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			identityPatches: []resources.GroupIdentitiesPatchItem{
+				{Op: "add", Identity: "identity1"},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to assign identities to group mock-group-id: assign error"),
+		},
+		{
+			name: "Error while removing identities",
+			setupMocks: func() {
+				mockService.EXPECT().
+					RemoveIdentities(gomock.Any(), "mock-group-id", "identity2").
+					Return(errors.New("remove error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			identityPatches: []resources.GroupIdentitiesPatchItem{
+				{Op: "remove", Identity: "identity2"},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to remove identities from group mock-group-id: remove error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.PatchGroupIdentities(ctx, "mock-group-id", tc.identityPatches)
+
+			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_GetGroupRoles(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	roles := []string{"role1", "role2"}
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		params         *resources.GetGroupsItemRolesParams
+		expectedResult []string
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully retrieves roles",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListRoles(gomock.Any(), "mock-group-id").
+					Return(roles, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			params:         &resources.GetGroupsItemRolesParams{},
+			expectedResult: roles,
+			expectedError:  nil,
+		},
+		{
+			name: "Error while retrieving roles",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListRoles(gomock.Any(), "mock-group-id").
+					Return(nil, errors.New("list roles error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			params:         &resources.GetGroupsItemRolesParams{},
+			expectedResult: nil,
+			expectedError:  v1.NewUnknownError("failed to list roles for group mock-group-id: list roles error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.GetGroupRoles(ctx, "mock-group-id", tc.params)
+
+			var actualRoles []string
+			if tc.expectedError == nil {
+				for _, role := range result.Data {
+					actualRoles = append(actualRoles, role.Name)
+				}
+			}
+
+			assert.Equal(t, tc.expectedResult, actualRoles)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_PatchGroupRoles(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		rolePatches    []resources.GroupRolesPatchItem
+		expectedResult bool
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully patches roles (add and remove)",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignRoles(gomock.Any(), "mock-group-id", "role1").
+					Return(nil)
+				mockService.EXPECT().
+					RemoveRoles(gomock.Any(), "mock-group-id", "role2").
+					Return(nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			rolePatches: []resources.GroupRolesPatchItem{
+				{Op: "add", Role: "role1"},
+				{Op: "remove", Role: "role2"},
+			},
+			expectedResult: true,
+			expectedError:  nil,
+		},
+		{
+			name: "Error while assigning roles",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignRoles(gomock.Any(), "mock-group-id", "role1").
+					Return(errors.New("assign roles error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			rolePatches: []resources.GroupRolesPatchItem{
+				{Op: "add", Role: "role1"},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to assign roles to group mock-group-id: assign roles error"),
+		},
+		{
+			name: "Error while removing roles",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignRoles(gomock.Any(), "mock-group-id", "role1").
+					Return(nil)
+				mockService.EXPECT().
+					RemoveRoles(gomock.Any(), "mock-group-id", "role2").
+					Return(errors.New("remove roles error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			rolePatches: []resources.GroupRolesPatchItem{
+				{Op: "add", Role: "role1"},
+				{Op: "remove", Role: "role2"},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to remove roles from group mock-group-id: remove roles error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.PatchGroupRoles(ctx, "mock-group-id", tc.rolePatches)
+
+			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_GetGroupEntitlements(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	permissions := []string{"can_view::client:okta", "can_view::group:admin"}
+	currPageToken := map[string]string{
+		"groups": "page-token",
+	}
+	nextPageToken := map[string]string{
+		"groups": "new-page-token",
+	}
+
+	paginator := types.NewTokenPaginator(mockTracer, mockLogger)
+
+	type testCase struct {
+		name           string
+		setupMocks     func()
+		contextSetup   func() context.Context
+		groupId        string
+		expectedResult *resources.PaginatedResponse[resources.EntityEntitlement]
+		expectedError  error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully retrieves group entitlements",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListPermissions(gomock.Any(), "mock-group-id", currPageToken).
+					Return(permissions, nextPageToken, nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			expectedResult: &resources.PaginatedResponse[resources.EntityEntitlement]{
+				Meta: resources.ResponseMeta{Size: 2},
+				Data: []resources.EntityEntitlement{
+					{Entitlement: "can_view", EntityType: "client", EntityId: "okta"},
+					{Entitlement: "can_view", EntityType: "group", EntityId: "admin"},
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Error while retrieving permissions",
+			setupMocks: func() {
+				mockService.EXPECT().
+					ListPermissions(gomock.Any(), "mock-group-id", currPageToken).
+					Return(nil, nil, errors.New("permissions error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			expectedResult: nil,
+			expectedError:  v1.NewUnknownError("failed to list permissions for group mock-group-id: permissions error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+			paginator.SetTokens(ctx, currPageToken)
+			pageToken, _ := paginator.PaginationHeader(ctx)
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.GetGroupEntitlements(ctx, "mock-group-id", &resources.GetGroupsItemEntitlementsParams{NextToken: &pageToken})
+
+			if tc.expectedError == nil {
+				assert.Equal(t, tc.expectedResult.Meta, result.Meta)
+				assert.Equal(t, tc.expectedResult.Data, result.Data)
+
+				paginator.SetTokens(ctx, nextPageToken)
+				expectedToken, _ := paginator.PaginationHeader(ctx)
+				assert.Equal(t, expectedToken, *result.Next.PageToken)
+
+			}
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func TestV1Service_PatchGroupEntitlements(t *testing.T) {
+	ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal := setupTest(t)
+	defer ctrl.Finish()
+
+	type testCase struct {
+		name               string
+		setupMocks         func()
+		contextSetup       func() context.Context
+		entitlementPatches []resources.GroupEntitlementsPatchItem
+		expectedResult     bool
+		expectedError      error
+	}
+
+	testCases := []testCase{
+		{
+			name: "Successfully patches entitlements - add and remove",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignPermissions(gomock.Any(), "mock-group-id", gomock.Any()).
+					Return(nil)
+				mockService.EXPECT().
+					RemovePermissions(gomock.Any(), "mock-group-id", gomock.Any()).
+					Return(nil)
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			entitlementPatches: []resources.GroupEntitlementsPatchItem{
+				{Op: "add", Entitlement: resources.EntityEntitlement{Entitlement: "can_view", EntityType: "client", EntityId: "okta"}},
+				{Op: "remove", Entitlement: resources.EntityEntitlement{Entitlement: "can_view", EntityType: "group", EntityId: "admin"}},
+			},
+			expectedResult: true,
+			expectedError:  nil,
+		},
+		{
+			name: "Error while assigning permissions",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignPermissions(gomock.Any(), "mock-group-id", gomock.Any()).
+					Return(errors.New("assignment error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			entitlementPatches: []resources.GroupEntitlementsPatchItem{
+				{Op: "add", Entitlement: resources.EntityEntitlement{Entitlement: "can_view", EntityType: "client", EntityId: "okta"}},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to assign permissions to group mock-group-id: assignment error"),
+		},
+		{
+			name: "Error while removing permissions",
+			setupMocks: func() {
+				mockService.EXPECT().
+					AssignPermissions(gomock.Any(), "mock-group-id", gomock.Any()).
+					Return(nil)
+				mockService.EXPECT().
+					RemovePermissions(gomock.Any(), "mock-group-id", gomock.Any()).
+					Return(errors.New("removal error"))
+			},
+			contextSetup: func() context.Context {
+				ctx := context.Background()
+				return authentication.PrincipalContext(ctx, principal)
+			},
+			entitlementPatches: []resources.GroupEntitlementsPatchItem{
+				{Op: "add", Entitlement: resources.EntityEntitlement{Entitlement: "can_view", EntityType: "client", EntityId: "okta"}},
+				{Op: "remove", Entitlement: resources.EntityEntitlement{Entitlement: "can_view", EntityType: "group", EntityId: "admin"}},
+			},
+			expectedResult: false,
+			expectedError:  v1.NewUnknownError("failed to remove permissions from group mock-group-id: removal error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setupMocks()
+			ctx := tc.contextSetup()
+
+			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
+
+			result, err := s.PatchGroupEntitlements(ctx, "mock-group-id", tc.entitlementPatches)
+
+			assert.Equal(t, tc.expectedResult, result)
+			assert.Equal(t, tc.expectedError, err)
+		})
+	}
+}
+
+func setupTest(t *testing.T) (
+	*gomock.Controller,
+	*MockServiceInterface,
+	*MockLoggerInterface,
+	*MockTracer,
+	*monitoring.MockMonitorInterface,
+	*authentication.ServicePrincipal,
+) {
+	ctrl := gomock.NewController(t)
+	mockService := NewMockServiceInterface(ctrl)
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+	mockProvider := NewMockProviderInterface(ctrl)
+
+	mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
+		func(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+			return ctx, trace.SpanFromContext(ctx)
+		},
+	)
+	mockProvider.EXPECT().Verifier(gomock.Any()).Return(
+		oidc.NewVerifier("", nil, &oidc.Config{
+			ClientID:                   "mock-client-id",
+			SkipExpiryCheck:            true,
+			SkipIssuerCheck:            true,
+			InsecureSkipSignatureCheck: true,
+		}),
+	)
+
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
+	principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
+
+	return ctrl, mockService, mockLogger, mockTracer, mockMonitor, principal
 }

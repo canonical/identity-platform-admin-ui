@@ -27,7 +27,7 @@ export const updateIdentity = (
   values: string,
 ): Promise<ApiResponse<Identity>> =>
   handleRequest(() =>
-    axiosInstance.patch<ApiResponse<Identity>>(
+    axiosInstance.put<ApiResponse<Identity>>(
       `/identities/${identityId}`,
       values,
     ),

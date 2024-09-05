@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	reflect "reflect"
+	"strings"
 	"testing"
 
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +16,10 @@ import (
 	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/canonical/rebac-admin-ui-handlers/v1/interfaces"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
+	"github.com/google/uuid"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package idp -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -711,7 +716,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
 			i := make([]*Configuration, 0)
 
-			rawIdps, _ := configMap.Data[cfg.KeyName]
+			rawIdps := configMap.Data[cfg.KeyName]
 
 			_ = yaml.Unmarshal([]byte(rawIdps), &i)
 
@@ -867,7 +872,7 @@ func TestCreateResourceFails(t *testing.T) {
 		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
 			i := make([]*Configuration, 0)
 
-			rawIdps, _ := configMap.Data[cfg.KeyName]
+			rawIdps := configMap.Data[cfg.KeyName]
 
 			_ = yaml.Unmarshal([]byte(rawIdps), &i)
 
@@ -948,7 +953,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 		func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
 			i := make([]*Configuration, 0)
 
-			rawIdps, _ := configMap.Data[cfg.KeyName]
+			rawIdps := configMap.Data[cfg.KeyName]
 
 			_ = yaml.Unmarshal([]byte(rawIdps), &i)
 
@@ -1025,5 +1030,657 @@ func TestDeleteResourceFails(t *testing.T) {
 
 	if err == nil {
 		t.Fatalf("expected error not to be nil")
+	}
+}
+
+func TestV1ServiceImplementsRebacServiceInterface(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	var svc interface{} = new(V1Service)
+
+	if _, ok := svc.(interfaces.IdentityProvidersService); !ok {
+		t.Fatalf("V1Service doesnt implement interfaces.IdentityProvidersService")
+	}
+}
+
+func TestV1ServiceListIdentityProviders(t *testing.T) {
+	type expected struct {
+		err  error
+		idps []resources.IdentityProvider
+	}
+
+	k8sIdps := []*Configuration{
+		{
+			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:     "microsoft",
+			ClientSecret: "secret-1",
+			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:        []string{"email"},
+		},
+		{
+			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:     "google",
+			ClientSecret: "secret-2",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"email", "profile"},
+		},
+		{
+			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:     "aws",
+			ClientSecret: "secret-3",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"address", "profile"},
+		},
+	}
+
+	idps := make([]resources.IdentityProvider, 0)
+	enabled := true
+
+	for _, idp := range k8sIdps {
+		idps = append(idps,
+			resources.IdentityProvider{
+				Id:           &idp.ID,
+				ClientID:     &idp.ClientID,
+				ClientSecret: &idp.ClientSecret,
+				Name:         &idp.Label,
+				Enabled:      &enabled,
+			},
+		)
+	}
+
+	tests := []struct {
+		name     string
+		expected expected
+	}{
+		{
+			name: "empty result",
+			expected: expected{
+				idps: []resources.IdentityProvider{},
+				err:  nil,
+			},
+		},
+		{
+			name: "error",
+			expected: expected{
+				idps: nil,
+				err:  fmt.Errorf("Internal Server Error: error"),
+			},
+		},
+		{
+			name: "full result",
+			expected: expected{
+				idps: idps,
+				err:  nil,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := context.Background()
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := NewMockMonitorInterface(ctrl)
+			mockAuthz := NewMockAuthorizerInterface(ctrl)
+			mockCoreV1 := NewMockCoreV1Interface(ctrl)
+			mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+
+			cfg := new(Config)
+			cfg.K8s = mockCoreV1
+			cfg.KeyName = "idps.yaml"
+			cfg.Name = "idps"
+			cfg.Namespace = "default"
+
+			svc := NewV1Service(
+				NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+			)
+
+			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+			mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, name string, opts metaV1.GetOptions) (*v1.ConfigMap, error) {
+					if test.expected.err != nil {
+						return nil, test.expected.err
+					}
+
+					cm := new(v1.ConfigMap)
+					cm.Data = make(map[string]string)
+
+					rawIdps := make([]*Configuration, 0)
+					for _, i := range test.expected.idps {
+						rawIdps = append(rawIdps, svc.castProvider(ctx, &i))
+					}
+
+					rawIdpsJson, _ := json.Marshal(rawIdps)
+					cm.Data[cfg.KeyName] = string(rawIdpsJson)
+
+					return cm, nil
+				},
+			)
+
+			r, err := svc.ListIdentityProviders(
+				ctx,
+				&resources.GetIdentityProvidersParams{},
+			)
+
+			if test.expected.err != nil && err == nil {
+				t.Errorf("expected error to be %v not %v", test.expected.err, err)
+			}
+
+			if test.expected.err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(r.Data, test.expected.idps) {
+				t.Errorf("expected idps to be %v not %v", test.expected.idps, r.Data)
+			}
+		})
+	}
+}
+
+func TestV1ServiceListAvailableIdentityProviders(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+
+	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.KeyName = "idps.yaml"
+	cfg.Name = "idps"
+	cfg.Namespace = "default"
+
+	svc := NewV1Service(
+		NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+	)
+
+	r, err := svc.ListAvailableIdentityProviders(
+		ctx,
+		&resources.GetAvailableIdentityProvidersParams{},
+	)
+
+	idps := make([]string, 0)
+
+	for _, i := range r.Data {
+		idps = append(idps, i.Id)
+	}
+
+	if err != nil {
+		t.Fatalf("expected error to be nil not  %v", err)
+	}
+
+	if strings.Join(idps, " ") != SUPPORTED_PROVIDERS {
+		t.Fatalf("expected providers to be %s not  %v", SUPPORTED_PROVIDERS, idps)
+	}
+}
+
+func TestV1ServiceRegisterConfiguration(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockCoreV1 := NewMockCoreV1Interface(ctrl)
+
+	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+
+	cfg := new(Config)
+	cfg.K8s = mockCoreV1
+	cfg.KeyName = "idps.yaml"
+	cfg.Name = "idps"
+	cfg.Namespace = "default"
+
+	svc := NewV1Service(
+		NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+	)
+
+	r, err := svc.RegisterConfiguration(
+		ctx,
+		&resources.IdentityProvider{},
+	)
+
+	if err == nil {
+		t.Fatalf("expected error not to be nil %v", err)
+	}
+
+	if r != nil {
+		t.Fatalf("expected result to be nil not %v", r)
+	}
+}
+
+func TestV1ServiceDeleteConfiguration(t *testing.T) {
+	type expected struct {
+		err error
+		ok  bool
+	}
+
+	idps := []*Configuration{
+		{
+			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:     "microsoft",
+			ClientSecret: "secret-1",
+			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:        []string{"email"},
+		},
+		{
+			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:     "google",
+			ClientSecret: "secret-2",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"email", "profile"},
+		},
+		{
+			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:     "aws",
+			ClientSecret: "secret-3",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"address", "profile"},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		expected expected
+	}{
+		{
+			name: "success",
+			expected: expected{
+				ok:  true,
+				err: nil,
+			},
+		},
+		{
+			name: "error",
+			expected: expected{
+				ok:  false,
+				err: fmt.Errorf("Internal Server Error: error"),
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := context.Background()
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := NewMockMonitorInterface(ctrl)
+			mockAuthz := NewMockAuthorizerInterface(ctrl)
+			mockCoreV1 := NewMockCoreV1Interface(ctrl)
+			mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+
+			cfg := new(Config)
+			cfg.K8s = mockCoreV1
+			cfg.KeyName = "idps.yaml"
+			cfg.Name = "idps"
+			cfg.Namespace = "default"
+
+			svc := NewV1Service(
+				NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+			)
+
+			rawIdps, _ := json.Marshal(idps)
+			cm := new(v1.ConfigMap)
+			cm.Data = make(map[string]string)
+			cm.Data[cfg.KeyName] = string(rawIdps)
+
+			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+			mockAuthz.EXPECT().SetDeleteProviderEntitlements(gomock.Any(), idps[0].ID).MinTimes(0).MaxTimes(1)
+			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
+			mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+			mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
+					i := make([]*Configuration, 0)
+
+					rawIdps := configMap.Data[cfg.KeyName]
+
+					_ = yaml.Unmarshal([]byte(rawIdps), &i)
+
+					if test.expected.err != nil {
+						return cm, test.expected.err
+					}
+
+					if len(i) != len(idps)-1 {
+						t.Fatalf("expected providers to be %v not %v", len(idps)+1, len(i))
+					}
+
+					return cm, nil
+				},
+			)
+
+			ok, err := svc.DeleteConfiguration(
+				ctx,
+				idps[0].ID,
+			)
+
+			if test.expected.err != nil && err == nil {
+				t.Errorf("expected error to be %v not %v", test.expected.err, err)
+			}
+
+			if test.expected.ok != ok {
+				t.Errorf("expected result to be %v not %v", test.expected.ok, ok)
+			}
+		})
+	}
+}
+
+func TestV1ServiceGetConfiguration(t *testing.T) {
+	type expected struct {
+		err error
+		idp *resources.IdentityProvider
+	}
+
+	idps := []*Configuration{
+		{
+			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:     "microsoft",
+			ClientSecret: "secret-1",
+			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:        []string{"email"},
+		},
+		{
+			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:     "google",
+			ClientSecret: "secret-2",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"email", "profile"},
+		},
+		{
+			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:     "aws",
+			ClientSecret: "secret-3",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"address", "profile"},
+		},
+	}
+
+	enabled := true
+
+	tests := []struct {
+		name     string
+		input    string
+		expected expected
+	}{
+		{
+			name:  "empty result",
+			input: uuid.NewString(),
+			expected: expected{
+				idp: nil,
+				err: fmt.Errorf("Internal Server Error: error"),
+			},
+		},
+		{
+			name:  "success",
+			input: idps[0].ID,
+			expected: expected{
+				idp: &resources.IdentityProvider{
+					Id:           &idps[0].ID,
+					ClientID:     &idps[0].ClientID,
+					ClientSecret: &idps[0].ClientSecret,
+					Name:         &idps[0].Label,
+					Enabled:      &enabled,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := context.Background()
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := NewMockMonitorInterface(ctrl)
+			mockAuthz := NewMockAuthorizerInterface(ctrl)
+			mockCoreV1 := NewMockCoreV1Interface(ctrl)
+			mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+
+			cfg := new(Config)
+			cfg.K8s = mockCoreV1
+			cfg.KeyName = "idps.yaml"
+			cfg.Name = "idps"
+			cfg.Namespace = "default"
+
+			svc := NewV1Service(
+				NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+			)
+
+			rawIdps, _ := json.Marshal(idps)
+			cm := new(v1.ConfigMap)
+			cm.Data = make(map[string]string)
+			cm.Data[cfg.KeyName] = string(rawIdps)
+
+			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
+			mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, name string, opts metaV1.GetOptions) (*v1.ConfigMap, error) {
+					cm := new(v1.ConfigMap)
+					cm.Data = make(map[string]string)
+					rawIdpsJson, _ := json.Marshal(idps)
+					cm.Data[cfg.KeyName] = string(rawIdpsJson)
+
+					return cm, nil
+				},
+			)
+
+			r, err := svc.GetConfiguration(
+				ctx,
+				test.input,
+			)
+
+			if test.expected.err != nil && err == nil {
+				t.Errorf("expected error to be %v not %v", test.expected.err, err)
+			}
+
+			if test.expected.err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(r, test.expected.idp) {
+				t.Errorf("expected idp to be %v not %v", test.expected.idp, r)
+			}
+		})
+	}
+}
+
+func TestV1ServiceUpdateConfiguration(t *testing.T) {
+	type expected struct {
+		err error
+		idp *resources.IdentityProvider
+	}
+
+	idps := []*Configuration{
+		{
+			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:     "microsoft",
+			ClientSecret: "secret-1",
+			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:        []string{"email"},
+		},
+		{
+			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:     "google",
+			ClientSecret: "secret-2",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"email", "profile"},
+		},
+		{
+			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:     "aws",
+			ClientSecret: "secret-3",
+			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:        []string{"address", "profile"},
+		},
+	}
+
+	enabled := true
+	newSecret := "new-secret-1"
+	randomUUID := uuid.NewString()
+
+	tests := []struct {
+		name     string
+		input    *resources.IdentityProvider
+		expected expected
+	}{
+		{
+			name: "empty result",
+			input: &resources.IdentityProvider{
+				Id:           &randomUUID,
+				ClientID:     &idps[0].ClientID,
+				ClientSecret: &idps[0].ClientSecret,
+			},
+			expected: expected{
+				idp: nil,
+				err: fmt.Errorf("Internal Server Error: error"),
+			},
+		},
+		{
+			name: "success",
+			input: &resources.IdentityProvider{
+				Id:           &idps[0].ID,
+				ClientID:     &idps[0].ClientID,
+				ClientSecret: &newSecret,
+			},
+			expected: expected{
+				idp: &resources.IdentityProvider{
+					Id:           &idps[0].ID,
+					ClientID:     &idps[0].ClientID,
+					ClientSecret: &newSecret,
+					Name:         &idps[0].Label,
+					Enabled:      &enabled,
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := context.Background()
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := NewMockMonitorInterface(ctrl)
+			mockAuthz := NewMockAuthorizerInterface(ctrl)
+			mockCoreV1 := NewMockCoreV1Interface(ctrl)
+			mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
+
+			cfg := new(Config)
+			cfg.K8s = mockCoreV1
+			cfg.KeyName = "idps.yaml"
+			cfg.Name = "idps"
+			cfg.Namespace = "default"
+
+			svc := NewV1Service(
+				NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger),
+			)
+
+			rawIdps, _ := json.Marshal(idps)
+			cm := new(v1.ConfigMap)
+			cm.Data = make(map[string]string)
+			cm.Data[cfg.KeyName] = string(rawIdps)
+
+			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).MinTimes(1).MaxTimes(2).Return(mockConfigMapV1)
+
+			mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, name string, opts metaV1.GetOptions) (*v1.ConfigMap, error) {
+					cm := new(v1.ConfigMap)
+					cm.Data = make(map[string]string)
+					rawIdpsJson, _ := json.Marshal(idps)
+					cm.Data[cfg.KeyName] = string(rawIdpsJson)
+
+					return cm, nil
+				},
+			)
+			mockConfigMapV1.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).MinTimes(0).MaxTimes(1).DoAndReturn(
+				func(ctx context.Context, configMap *v1.ConfigMap, opts metaV1.UpdateOptions) (*v1.ConfigMap, error) {
+
+					idpConfig := make([]*Configuration, 0)
+					_ = json.Unmarshal([]byte(configMap.Data[cfg.KeyName]), &idpConfig)
+
+					if idpConfig[0].ClientSecret != newSecret {
+						t.Errorf("expected client secret to have change")
+					}
+
+					idps[0].ClientSecret = newSecret
+					cm := new(v1.ConfigMap)
+					cm.Data = make(map[string]string)
+					rawIdpsJson, _ := json.Marshal(idps)
+					cm.Data[cfg.KeyName] = string(rawIdpsJson)
+
+					return cm, nil
+				},
+			)
+
+			r, err := svc.UpdateConfiguration(
+				ctx,
+				test.input,
+			)
+
+			if test.expected.err != nil && err == nil {
+				t.Errorf("expected error to be %v not %v", test.expected.err, err)
+			}
+
+			if test.expected.err != nil {
+				return
+			}
+
+			if !reflect.DeepEqual(r, test.expected.idp) {
+				t.Errorf("expected idp to be %v not %v", test.expected.idp, r)
+			}
+		})
 	}
 }

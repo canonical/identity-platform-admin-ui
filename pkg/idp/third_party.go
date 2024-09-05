@@ -5,6 +5,10 @@ package idp
 
 import "encoding/json"
 
+const (
+	SUPPORTED_PROVIDERS = "generic google github githubapp gitlab microsoft discord slack facebook auth0 vk yandex apple spotify netid dingtalk linkedin patreon"
+)
+
 // TODO @shipperizer once import of library is fixed find a way to use this schema with extra yaml annotations
 // coming from https://pkg.go.dev/github.com/ory/kratos@v1.0.0/selfservice/strategy/oidc#Configuration
 // importing the library github.com/ory/kratos fails due to compilations on their side

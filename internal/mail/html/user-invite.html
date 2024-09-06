@@ -1,0 +1,85 @@
+<!-- Copyright 2024 Canonical Ltd. -->
+<!-- SPDX-License-Identifier: AGPL-3.0 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Verify Your Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .header h1 {
+            color: #007BFF;
+            margin: 0;
+        }
+
+        .content {
+            text-align: center;
+        }
+
+        .content p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+
+        .verify-button {
+            display: inline-block;
+            background-color: #007BFF;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Verify Your Account</h1>
+    </div>
+    <div class="content">
+        <p>Hello,</p>
+        <p>Your account with the email address <strong>{{ .Email }}</strong> was recently created. To complete your
+            registration, click the button below:</p>
+        <p>Verification code <span><strong>{{ .RecoveryCode }}</strong></span></p>
+        <a class="verify-button" href="{{ .InviteUrl }}">Verify Account</a>
+    </div>
+    <div class="footer">
+        <p>&copy;Copyright 2024 Canonical Ltd.</p>
+    </div>
+</div>
+</body>
+</html>

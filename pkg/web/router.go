@@ -12,6 +12,7 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -38,10 +39,11 @@ type RouterConfig struct {
 	ui                       *ui.Config
 	external                 ExternalClientsConfigInterface
 	oauth2                   *authentication.Config
+	mail                     *mail.Config
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, olly O11yConfigInterface) *RouterConfig {
+func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, mail *mail.Config, olly O11yConfigInterface) *RouterConfig {
 	return &RouterConfig{
 		contextPath:              contextPath,
 		payloadValidationEnabled: payloadValidationEnabled,
@@ -51,6 +53,7 @@ func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp
 		ui:                       ui,
 		external:                 external,
 		oauth2:                   oauth2,
+		mail:                     mail,
 		olly:                     olly,
 	}
 }
@@ -64,6 +67,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	uiConfig := config.ui
 	externalConfig := config.external
 	oauth2Config := config.oauth2
+	mailConfig := config.mail
 
 	logger := config.olly.Logger()
 	monitor := config.olly.Monitor()
@@ -91,8 +95,10 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	statusAPI := status.NewAPI(tracer, monitor, logger)
 	metricsAPI := metrics.NewAPI(logger)
 
+	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
+
 	identitiesAPI := identities.NewAPI(
-		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), tracer, monitor, logger),
+		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,

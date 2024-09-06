@@ -23,6 +23,7 @@ import (
 	k8s "github.com/canonical/identity-platform-admin-ui/internal/k8s"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
 	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
@@ -164,9 +165,11 @@ func serve() {
 		hydraAdminClient,
 	)
 
+	mailConfig := mail.NewConfig(specs.MailHost, specs.MailPort, specs.MailUsername, specs.MailPassword, specs.MailFromAddress, specs.MailSendTimeoutSeconds)
+
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, ollyConfig)
+	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, mailConfig, ollyConfig)
 
 	router := web.NewRouter(routerConfig, wpool)
 

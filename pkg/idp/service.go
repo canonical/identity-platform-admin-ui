@@ -7,7 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/yaml.v3"
@@ -357,6 +360,190 @@ func NewService(config *Config, authz AuthorizerInterface, tracer trace.Tracer, 
 	s.monitor = monitor
 	s.tracer = tracer
 	s.logger = logger
+
+	return s
+}
+
+type V1Service struct {
+	core *Service
+}
+
+// ListAvailableIdentityProviders returns the static list of supported identity providers.
+func (s *V1Service) ListAvailableIdentityProviders(ctx context.Context, params *resources.GetAvailableIdentityProvidersParams) (*resources.PaginatedResponse[resources.AvailableIdentityProvider], error) {
+	_, span := s.core.tracer.Start(ctx, "idp.V1Service.ListAvailableIdentityProviders")
+	defer span.End()
+
+	idps := make([]resources.AvailableIdentityProvider, 0)
+
+	for _, i := range strings.Split(SUPPORTED_PROVIDERS, " ") {
+		idps = append(
+			idps,
+			resources.AvailableIdentityProvider{Id: i, Name: &i},
+		)
+	}
+
+	r := new(resources.PaginatedResponse[resources.AvailableIdentityProvider])
+	r.Meta = resources.ResponseMeta{Size: len(idps)}
+	r.Data = idps
+
+	return r, nil
+}
+
+// ListIdentityProviders returns a list of registered identity providers configurations.
+func (s *V1Service) ListIdentityProviders(ctx context.Context, params *resources.GetIdentityProvidersParams) (*resources.PaginatedResponse[resources.IdentityProvider], error) {
+	ctx, span := s.core.tracer.Start(ctx, "idp.V1Service.ListIdentityProviders")
+	defer span.End()
+
+	idps, err := s.core.ListResources(ctx)
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	r := new(resources.PaginatedResponse[resources.IdentityProvider])
+	r.Data = make([]resources.IdentityProvider, 0)
+	r.Meta = resources.ResponseMeta{Size: len(idps)}
+
+	// this caters for nil slice and empty slice
+	if len(idps) == 0 {
+		return r, nil
+	}
+
+	for _, idp := range idps {
+		if idp == nil {
+			continue
+		}
+
+		r.Data = append(
+			r.Data,
+			// TODO @shipperizer see f any other field can match
+			*s.castConfiguration(ctx, idp),
+		)
+	}
+
+	return r, nil
+}
+
+// RegisterConfiguration register a new authentication provider configuration.
+func (s *V1Service) RegisterConfiguration(ctx context.Context, provider *resources.IdentityProvider) (*resources.IdentityProvider, error) {
+	_, span := s.core.tracer.Start(ctx, "idp.V1Service.ListIdentityProviders")
+	defer span.End()
+
+	// TODO @shipperizer mismatch between required information from kratos and what is available on payload
+	// cannot be filled, need to rework v1 api
+	return nil, v1.NewNotImplementedError("use /api/v0/idps endpoint")
+}
+
+// DeleteConfiguration removes an authentication provider configuration identified by `id`.
+func (s *V1Service) DeleteConfiguration(ctx context.Context, id string) (bool, error) {
+	ctx, span := s.core.tracer.Start(ctx, "idp.V1Service.DeleteConfiguration")
+	defer span.End()
+
+	err := s.core.DeleteResource(ctx, id)
+
+	return err == nil, err
+}
+
+// GetConfiguration returns the authentication provider configuration identified by `id`.
+func (s *V1Service) GetConfiguration(ctx context.Context, id string) (*resources.IdentityProvider, error) {
+	ctx, span := s.core.tracer.Start(ctx, "idp.V1Service.GetConfiguration")
+	defer span.End()
+
+	idps, err := s.core.GetResource(ctx, id)
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	// this caters for nil slice and empty slice
+	if len(idps) == 0 {
+		return nil, v1.NewNotFoundError(fmt.Sprintf("provider %s not found", id))
+	}
+
+	if len(idps) != 1 {
+		return nil, v1.NewUnknownError("multiple providers with the same id found")
+	}
+
+	return s.castConfiguration(ctx, idps[0]), nil
+}
+
+// UpdateConfiguration update the authentication provider configuration identified by `id`.
+func (s *V1Service) UpdateConfiguration(ctx context.Context, provider *resources.IdentityProvider) (*resources.IdentityProvider, error) {
+	ctx, span := s.core.tracer.Start(ctx, "idp.V1Service.UpdateConfiguration")
+	defer span.End()
+
+	if provider == nil {
+		return nil, v1.NewMissingRequestBodyError("missing provider payload")
+	}
+
+	idps, err := s.core.EditResource(
+		ctx,
+		*provider.Id,
+		s.castProvider(ctx, provider),
+	)
+
+	if err != nil {
+		return nil, v1.NewUnknownError(err.Error())
+	}
+
+	// this caters for nil slice and empty slice
+	if len(idps) == 0 {
+		return nil, v1.NewNotFoundError(fmt.Sprintf("provider %s not found", *provider.Id))
+	}
+
+	if len(idps) != 1 {
+		return nil, v1.NewUnknownError("multiple providers with the same id found")
+	}
+
+	return s.castConfiguration(ctx, idps[0]), nil
+}
+
+func (s *V1Service) castProvider(_ context.Context, provider *resources.IdentityProvider) *Configuration {
+	if provider == nil {
+		return nil
+	}
+
+	cfg := new(Configuration)
+
+	if provider.Id != nil {
+		cfg.ID = *provider.Id
+	}
+
+	if provider.ClientID != nil {
+		cfg.ClientID = *provider.ClientID
+	}
+
+	if provider.ClientSecret != nil {
+		cfg.ClientSecret = *provider.ClientSecret
+	}
+
+	if provider.Name != nil {
+		cfg.Label = *provider.Name
+	}
+
+	return cfg
+}
+
+func (s *V1Service) castConfiguration(_ context.Context, provider *Configuration) *resources.IdentityProvider {
+	if provider == nil {
+		return nil
+	}
+
+	enabled := true
+
+	return &resources.IdentityProvider{
+		Id:           &provider.ID,
+		ClientID:     &provider.ClientID,
+		ClientSecret: &provider.ClientSecret,
+		Name:         &provider.Label,
+		Enabled:      &enabled,
+	}
+}
+
+func NewV1Service(svc *Service) *V1Service {
+	s := new(V1Service)
+
+	s.core = svc
 
 	return s
 }

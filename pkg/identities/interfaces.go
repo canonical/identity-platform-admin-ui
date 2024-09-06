@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package identities
@@ -22,6 +22,7 @@ type ServiceInterface interface {
 	CreateIdentity(context.Context, *kClient.CreateIdentityBody) (*IdentityData, error)
 	UpdateIdentity(context.Context, string, *kClient.UpdateIdentityBody) (*IdentityData, error)
 	DeleteIdentity(context.Context, string) (*IdentityData, error)
+	SendUserCreationEmail(context.Context, *kClient.Identity) error
 }
 
 type OpenFGAStoreInterface interface {

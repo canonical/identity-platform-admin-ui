@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.17.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.2...v1.17.0) (2024-09-06)
+
+
+### Features
+
+* implement GroupService based on the rebac lib ([709906b](https://github.com/canonical/identity-platform-admin-ui/commit/709906b1bed8d2cb3c546849a1927db2c130e44c))
+* introduce IdentityProviders v1 api ([7a2719d](https://github.com/canonical/identity-platform-admin-ui/commit/7a2719d00e6e7e44c28c7db84084452b05bd40bb))
+
+
+### Bug Fixes
+
+* offload idp types to constant ([d15ecf2](https://github.com/canonical/identity-platform-admin-ui/commit/d15ecf206f6b67307674cca99b5c3865b33cbdcc))
+* use correct method to invoke backend ([64f68a6](https://github.com/canonical/identity-platform-admin-ui/commit/64f68a64896d0966340f6338a6837f942d776bc5))
+* use idp ID if passed in ([023c8e3](https://github.com/canonical/identity-platform-admin-ui/commit/023c8e3a0642ec27c90c40eaa55eef02ce7660f4))
+
 ## [1.16.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.1...v1.16.2) (2024-08-30)
 
 

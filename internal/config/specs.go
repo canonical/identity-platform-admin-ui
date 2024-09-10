@@ -57,4 +57,11 @@ type EnvSpec struct {
 	PayloadValidationEnabled bool `envconfig:"payload_validation_enabled" default:"true"`
 
 	OpenFGAWorkersTotal int `envconfig:"openfga_workers_total" default:"150"`
+
+	MailHost               string `envconfig:"MAIL_HOST" required:"true"`
+	MailPort               int    `envconfig:"MAIL_PORT" required:"true"`
+	MailUsername           string `envconfig:"MAIL_USERNAME"`
+	MailPassword           string `envconfig:"MAIL_PASSWORD"`
+	MailFromAddress        string `envconfig:"MAIL_FROM_ADDRESS" required:"true"`
+	MailSendTimeoutSeconds int    `envconfig:"MAIL_SEND_TIMEOUT_SECONDS" default:"15"`
 }

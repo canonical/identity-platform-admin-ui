@@ -313,6 +313,7 @@ func TestHandleCreateSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/v0/identities", bytes.NewReader(payload))
 
 	mockService.EXPECT().CreateIdentity(gomock.Any(), identityBody).Return(&IdentityData{Identities: []kClient.Identity{*identity}}, nil)
+	mockService.EXPECT().SendUserCreationEmail(gomock.Any(), identity).Return(nil)
 
 	w := httptest.NewRecorder()
 	mux := chi.NewMux()

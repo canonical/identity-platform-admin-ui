@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2024 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package identities
@@ -20,16 +20,21 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 // TODO @shipperizer unify this value with schemas/service.go
-const DEFAULT_SCHEMA = "default.schema"
+const (
+	DEFAULT_SCHEMA           = "default.schema"
+	userCreationEmailSubject = "Complete your registration"
+)
 
 type Service struct {
 	kratos kClient.IdentityAPI
 	authz  AuthorizerInterface
+	email  mail.EmailServiceInterface
 
 	tracer  trace.Tracer
 	monitor monitoring.MonitorInterface
@@ -166,6 +171,57 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 	return data, err
 }
 
+func (s *Service) SendUserCreationEmail(ctx context.Context, identity *kClient.Identity) error {
+	ctx, span := s.tracer.Start(ctx, "identities.Service.SendUserCreationEmail")
+	defer span.End()
+
+	template, err := mail.LoadTemplate(mail.UserCreationInvite)
+	if err != nil {
+		return err
+	}
+
+	code, link, err := s.generateRecoveryInfo(ctx, identity.Id)
+	if err != nil {
+		return err
+	}
+
+	emailAddress := ""
+	if e, ok := identity.Traits.(map[string]interface{})["email"]; ok {
+		emailAddress = e.(string)
+	}
+
+	if emailAddress == "" {
+		return fmt.Errorf("\"email\" address not found in identity traits")
+	}
+
+	userCreationInviteArgs := mail.UserCreationInviteArgs{
+		Email:        emailAddress,
+		InviteUrl:    link,
+		RecoveryCode: code,
+	}
+
+	err = s.email.Send(ctx, emailAddress, userCreationEmailSubject, template, userCreationInviteArgs)
+
+	return err
+}
+
+func (s *Service) generateRecoveryInfo(ctx context.Context, identityId string) (string, string, error) {
+	request := kClient.CreateRecoveryCodeForIdentityBody{IdentityId: identityId}
+	recoveryInfo, response, err := s.kratos.CreateRecoveryCodeForIdentity(ctx).
+		CreateRecoveryCodeForIdentityBody(request).
+		Execute()
+
+	if err != nil {
+		return "", "", err
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return "", "", fmt.Errorf("unable to create recovery code for Identity %v, status code %d", identityId, response.StatusCode)
+	}
+
+	return recoveryInfo.RecoveryCode, recoveryInfo.RecoveryLink, nil
+}
+
 func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient.UpdateIdentityBody) (*IdentityData, error) {
 	ctx, span := s.tracer.Start(ctx, "identities.Service.UpdateIdentity")
 	defer span.End()
@@ -237,11 +293,12 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	return data, err
 }
 
-func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, email mail.EmailServiceInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.kratos = kratos
 	s.authz = authz
+	s.email = email
 
 	s.monitor = monitor
 	s.tracer = tracer

@@ -160,6 +160,20 @@ func (a *API) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	createdIdentity := &ids.Identities[0]
+	err = a.service.SendUserCreationEmail(r.Context(), createdIdentity)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			types.Response{
+				Message: err.Error(),
+				Status:  http.StatusInternalServerError,
+			},
+		)
+
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(
 		types.Response{

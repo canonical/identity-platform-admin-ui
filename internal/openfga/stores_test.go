@@ -875,12 +875,12 @@ func TestStoreListPermissions(t *testing.T) {
 			}
 
 			expPermissions := []Permission{
-				Permission{Relation: "can_edit", Object: "role:test"},
-				Permission{Relation: "can_edit", Object: "group:test"},
-				Permission{Relation: "can_edit", Object: "identity:test"},
-				Permission{Relation: "can_edit", Object: "scheme:test"},
-				Permission{Relation: "can_edit", Object: "provider:test"},
-				Permission{Relation: "can_edit", Object: "client:test"},
+				{Relation: "can_edit", Object: "role:test"},
+				{Relation: "can_edit", Object: "group:test"},
+				{Relation: "can_edit", Object: "identity:test"},
+				{Relation: "can_edit", Object: "scheme:test"},
+				{Relation: "can_edit", Object: "provider:test"},
+				{Relation: "can_edit", Object: "client:test"},
 			}
 
 			calls := []*gomock.Call{}
@@ -935,6 +935,177 @@ func TestStoreListPermissions(t *testing.T) {
 
 			gomock.InAnyOrder(calls)
 			permissions, cTokens, err := store.ListPermissions(context.Background(), test.input.ID, test.input.cTokens)
+
+			if err != nil && test.expected == nil {
+				t.Fatalf("expected error to be silenced and return nil got %v instead", err)
+			}
+
+			sortFx := func(a, b Permission) int {
+				if n := strings.Compare(a.Relation, b.Relation); n != 0 {
+					return n
+				}
+				// If relations are equal, order by object
+				return cmp.Compare(a.Object, b.Object)
+			}
+
+			slices.SortFunc(permissions, sortFx)
+			slices.SortFunc(expPermissions, sortFx)
+
+			if err == nil && test.expected == nil && !reflect.DeepEqual(permissions, expPermissions) {
+				t.Fatalf("expected permissions to be %v got %v", expPermissions, permissions)
+			}
+
+			if err == nil && test.expected == nil && !reflect.DeepEqual(cTokens, expCTokens) {
+				t.Fatalf("expected continuation tokens to be %v got %v", expCTokens, cTokens)
+			}
+		})
+	}
+}
+
+func TestStoreListPermissionsWithPermissions(t *testing.T) {
+	type input struct {
+		ID             string
+		relationFilter *RelationFilter
+		typesFilter    *TypesFilter
+		tokenMapFilter *TokenMapFilter
+	}
+
+	tests := []struct {
+		name     string
+		input    input
+		expected error
+	}{
+		{
+			name: "error",
+			input: input{
+				ID: "role:administrator#assignee",
+			},
+			expected: fmt.Errorf("error"),
+		},
+		{
+			name: "role found",
+			input: input{
+				ID:             "role:administrator#assignee",
+				relationFilter: NewRelationFilter("can_edit"),
+				tokenMapFilter: NewTokenMapFilter(
+					map[string]string{"role": "test"},
+				),
+			},
+			expected: nil,
+		},
+		{
+			name: "group found",
+			input: input{
+				ID:          "group:administrator#member",
+				typesFilter: NewTypesFilter("identity", "client"),
+				tokenMapFilter: NewTokenMapFilter(
+					map[string]string{"role": "test"},
+				),
+			},
+			expected: nil,
+		},
+		{
+			name: "user found",
+			input: input{
+				ID: "use:joe",
+				tokenMapFilter: NewTokenMapFilter(
+					map[string]string{"role": "test"},
+				),
+			},
+			expected: nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockWorkerPool := NewMockWorkerPoolInterface(ctrl)
+
+			store := NewOpenFGAStore(mockOpenFGA, mockWorkerPool, mockTracer, mockMonitor, mockLogger)
+
+			types := store.permissionTypes()
+
+			if test.input.typesFilter != nil {
+				types = test.input.typesFilter.WithFilter().([]string)
+			}
+
+			for i := 0; i < len(types); i++ {
+				setupMockSubmit(mockWorkerPool, nil)
+			}
+
+			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockLogger.EXPECT().Errorf(gomock.Any()).AnyTimes()
+
+			expCTokens := make(map[string]string)
+			expPermissions := make([]Permission, 0)
+
+			for _, t := range types {
+				expPermissions = append(
+					expPermissions,
+					Permission{Relation: "can_edit", Object: t + ":test"},
+				)
+				expCTokens[t] = ""
+			}
+
+			calls := []*gomock.Call{}
+
+			for _, _ = range types {
+				calls = append(
+					calls,
+					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+						func(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
+							if test.expected != nil {
+								return nil, test.expected
+							}
+
+							if user != test.input.ID {
+								t.Errorf("wrong user parameter expected %s got %s", test.input.ID, user)
+							}
+
+							if object == "role:" && continuationToken != "test" {
+								tokenM, ok := test.input.tokenMapFilter.WithFilter().(map[string]string)
+
+								if !ok {
+									t.Fatal("failed parsing token map")
+								}
+
+								t.Errorf("missing continuation token %s", tokenM["roles"])
+							}
+
+							tuples := []openfga.Tuple{
+								*openfga.NewTuple(
+									*openfga.NewTupleKey(
+										user, "can_edit", fmt.Sprintf("%stest", object),
+									),
+									time.Now(),
+								),
+								*openfga.NewTuple(
+									*openfga.NewTupleKey(
+										user, "assignee", "role:test",
+									),
+									time.Now(),
+								),
+							}
+
+							r := new(client.ClientReadResponse)
+							r.SetContinuationToken("")
+							r.SetTuples(tuples)
+
+							return r, nil
+						},
+					),
+				)
+			}
+
+			gomock.InAnyOrder(calls)
+			permissions, cTokens, err := store.ListPermissionsWithFilters(context.Background(), test.input.ID, test.input.typesFilter, test.input.tokenMapFilter, test.input.relationFilter)
 
 			if err != nil && test.expected == nil {
 				t.Fatalf("expected error to be silenced and return nil got %v instead", err)

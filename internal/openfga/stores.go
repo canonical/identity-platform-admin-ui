@@ -242,7 +242,7 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 
 	for _, t := range s.permissionTypes() {
 		s.wpool.Submit(
-			s.listPermissionsFunc(ctx, ID, t, continuationTokens[t]),
+			s.listPermissionsFunc(ctx, ID, "", t, continuationTokens[t]),
 			results,
 			&wg,
 		)
@@ -282,11 +282,92 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 	return permissions, tMap, fmt.Errorf(eMsg)
 }
 
-func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, ofgaType, cToken string) func() any {
+// ListPermissionsWithFilters returns all the permissions associated to a specific entity
+func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string, opts ...ListPermissionsFiltersInterface) ([]Permission, map[string]string, error) {
+	ctx, span := s.tracer.Start(ctx, "openfga.OpenFGAStore.ListPermissionsWithFilters")
+	defer span.End()
+
+	// keep it a buffered channel, if set to unbuffered we would need a goroutine
+	// to consume from it before pushing to it
+	// https://go.dev/ref/spec#Send_statements
+	// A send on an unbuffered channel can proceed if a receiver is ready.
+	// A send on a buffered channel can proceed if there is room in the buffer
+	results := make(chan *pool.Result[any], len(s.permissionTypes()))
+
+	ff := new(listPermissionsOpts)
+
+	if len(opts) != 0 {
+		ff = s.parseFilters(opts...)
+	}
+
+	types := s.permissionTypes()
+	tokenMap := make(map[string]string)
+
+	if tm := ff.TokenMap; tm != nil {
+		tokenMap = tm
+	}
+
+	if tf := ff.TypesFilter; len(tf) > 0 {
+		types = tf
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(types))
+
+	for _, t := range types {
+		token, ok := tokenMap[t]
+
+		if !ok {
+			token = ""
+		}
+
+		s.wpool.Submit(
+			s.listPermissionsFunc(ctx, ID, ff.RelationFilter, t, token),
+			results,
+			&wg,
+		)
+	}
+
+	// wait for tasks to finish
+	wg.Wait()
+
+	// close result channel
+	close(results)
+
+	permissions := make([]Permission, 0)
+	tMap := make(map[string]string)
+	errors := make([]error, 0)
+
+	for r := range results {
+		v := r.Value.(listPermissionsResult)
+		permissions = append(permissions, v.permissions...)
+		tMap[v.ofgaType] = v.token
+
+		if v.err != nil {
+			errors = append(errors, v.err)
+		}
+	}
+
+	if len(errors) == 0 {
+		return permissions, tMap, nil
+	}
+
+	eMsg := ""
+
+	for n, e := range errors {
+		s.logger.Errorf(e.Error())
+		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
+	}
+
+	return permissions, tMap, fmt.Errorf(eMsg)
+}
+
+func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, relation, ofgaType, cToken string) func() any {
 	return func() any {
 		p, token, err := s.listPermissionsByType(
 			ctx,
 			ID,
+			relation,
 			ofgaType,
 			cToken,
 		)
@@ -300,11 +381,11 @@ func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, ofgaType, cT
 	}
 }
 
-func (s *OpenFGAStore) listPermissionsByType(ctx context.Context, ID, pType, continuationToken string) ([]Permission, string, error) {
+func (s *OpenFGAStore) listPermissionsByType(ctx context.Context, ID, relation, pType, continuationToken string) ([]Permission, string, error) {
 	ctx, span := s.tracer.Start(ctx, "openfga.OpenFGAStore.listPermissionsByType")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, ID, "", fmt.Sprintf("%s:", pType), continuationToken)
+	r, err := s.ofga.ReadTuples(ctx, ID, relation, fmt.Sprintf("%s:", pType), continuationToken)
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -323,6 +404,52 @@ func (s *OpenFGAStore) listPermissionsByType(ctx context.Context, ID, pType, con
 	}
 
 	return permissions, r.GetContinuationToken(), nil
+}
+
+func (s *OpenFGAStore) parseFilters(filters ...ListPermissionsFiltersInterface) *listPermissionsOpts {
+	opts := new(listPermissionsOpts)
+	opts.TokenMap = make(map[string]string)
+	opts.TypesFilter = make([]string, 0)
+
+	// this will keep only the latest filter passed in, if 2 type filters are passed, last one is kept
+	for _, filter := range filters {
+		switch f := filter.(type) {
+		case *TypesFilter:
+			if f == nil {
+				continue
+			}
+
+			if v, ok := f.WithFilter().([]string); ok {
+				opts.TypesFilter = v
+			} else {
+				s.logger.Errorf("wrong types filter, casting failed: %v", f)
+			}
+		case *RelationFilter:
+			if f == nil {
+				continue
+			}
+
+			if v, ok := f.WithFilter().(string); ok {
+				opts.RelationFilter = v
+			} else {
+				s.logger.Errorf("wrong relation filter, casting failed: %s", f)
+			}
+		case *TokenMapFilter:
+			if f == nil {
+				continue
+			}
+
+			if v, ok := f.WithFilter().(map[string]string); ok {
+				opts.TokenMap = v
+			} else {
+				s.logger.Errorf("wrong token map, casting failed: %v", f)
+			}
+		default:
+			continue
+		}
+	}
+
+	return opts
 }
 
 func (s *OpenFGAStore) permissionTypes() []string {

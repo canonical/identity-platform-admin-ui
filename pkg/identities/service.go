@@ -311,8 +311,8 @@ type V1Service struct {
 	cmName      string
 	cmNamespace string
 
-	k8s          coreV1.CoreV1Interface
-	openfgaStore OpenFGAStoreInterface
+	k8s   coreV1.CoreV1Interface
+	store OpenFGAStoreInterface
 
 	core *Service
 }
@@ -603,7 +603,7 @@ func (s *V1Service) GetIdentityGroups(ctx context.Context, identityId string, pa
 	ctx, span := s.core.tracer.Start(ctx, "identities.V1Service.GetIdentityGroups")
 	defer span.End()
 
-	groups, err := s.openfgaStore.ListAssignedGroups(ctx, fmt.Sprintf("user:%s", identityId))
+	groups, err := s.store.ListAssignedGroups(ctx, fmt.Sprintf("user:%s", identityId))
 	if err != nil {
 		return nil, v1.NewUnknownError(err.Error())
 	}
@@ -624,7 +624,7 @@ func (s *V1Service) GetIdentityRoles(ctx context.Context, identityId string, par
 	ctx, span := s.core.tracer.Start(ctx, "identities.V1Service.GetIdentityRoles")
 	defer span.End()
 
-	roles, err := s.openfgaStore.ListAssignedRoles(ctx, fmt.Sprintf("user:%s", identityId))
+	roles, err := s.store.ListAssignedRoles(ctx, fmt.Sprintf("user:%s", identityId))
 	if err != nil {
 		return nil, v1.NewUnknownError(err.Error())
 	}
@@ -658,7 +658,7 @@ func (s *V1Service) PatchIdentityGroups(ctx context.Context, identityId string, 
 	}
 
 	if len(additions) > 0 {
-		err := s.openfgaStore.AssignGroups(ctx, fmt.Sprintf("user:%s", identityId), additions...)
+		err := s.store.AssignGroups(ctx, fmt.Sprintf("user:%s", identityId), additions...)
 
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
@@ -666,7 +666,7 @@ func (s *V1Service) PatchIdentityGroups(ctx context.Context, identityId string, 
 	}
 
 	if len(removals) > 0 {
-		err := s.openfgaStore.UnassignGroups(ctx, fmt.Sprintf("user:%s", identityId), removals...)
+		err := s.store.UnassignGroups(ctx, fmt.Sprintf("user:%s", identityId), removals...)
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
 		}
@@ -693,7 +693,7 @@ func (s *V1Service) PatchIdentityRoles(ctx context.Context, identityId string, r
 	}
 
 	if len(additions) > 0 {
-		err := s.openfgaStore.AssignRoles(ctx, fmt.Sprintf("user:%s", identityId), additions...)
+		err := s.store.AssignRoles(ctx, fmt.Sprintf("user:%s", identityId), additions...)
 
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
@@ -701,7 +701,7 @@ func (s *V1Service) PatchIdentityRoles(ctx context.Context, identityId string, r
 	}
 
 	if len(removals) > 0 {
-		err := s.openfgaStore.UnassignRoles(ctx, fmt.Sprintf("user:%s", identityId), removals...)
+		err := s.store.UnassignRoles(ctx, fmt.Sprintf("user:%s", identityId), removals...)
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
 		}
@@ -727,7 +727,7 @@ func (s *V1Service) GetIdentityEntitlements(ctx context.Context, identityId stri
 		s.core.logger.Error(err)
 	}
 
-	permissions, pageTokens, err := s.openfgaStore.ListPermissions(ctx, fmt.Sprintf("user:%s", identityId), paginator.GetAllTokens(ctx))
+	permissions, pageTokens, err := s.store.ListPermissions(ctx, fmt.Sprintf("user:%s", identityId), paginator.GetAllTokens(ctx))
 
 	if err != nil {
 		return nil, v1.NewUnknownError(err.Error())
@@ -782,7 +782,7 @@ func (s *V1Service) PatchIdentityEntitlements(ctx context.Context, identityId st
 	}
 
 	if len(additions) > 0 {
-		err := s.openfgaStore.AssignPermissions(ctx, fmt.Sprintf("user:%s", identityId), additions...)
+		err := s.store.AssignPermissions(ctx, fmt.Sprintf("user:%s", identityId), additions...)
 
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
@@ -790,7 +790,7 @@ func (s *V1Service) PatchIdentityEntitlements(ctx context.Context, identityId st
 	}
 
 	if len(removals) > 0 {
-		err := s.openfgaStore.UnassignPermissions(ctx, fmt.Sprintf("user:%s", identityId), removals...)
+		err := s.store.UnassignPermissions(ctx, fmt.Sprintf("user:%s", identityId), removals...)
 		if err != nil {
 			return false, v1.NewUnknownError(err.Error())
 		}
@@ -813,7 +813,7 @@ func NewV1Service(config *Config, svc *Service) *V1Service {
 	s.k8s = config.K8s
 	s.cmName = config.Name
 	s.cmNamespace = config.Namespace
-	s.openfgaStore = config.OpenFGAStore
+	s.store = config.OpenFGAStore
 
 	return s
 }

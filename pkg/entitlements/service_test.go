@@ -1,8 +1,11 @@
 package entitlements
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
@@ -18,7 +21,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
-func TestV1Service_ListEntitlements(t *testing.T) {
+func TestV1ServiceListEntitlements(t *testing.T) {
 	ctrl, mockOpenFGA, mockLogger, mockTracer, mockMonitor, authModel := setupTest(t)
 	defer ctrl.Finish()
 
@@ -60,9 +63,25 @@ func TestV1Service_ListEntitlements(t *testing.T) {
 			tc.setupMocks()
 			ctx := tc.contextSetup()
 
-			s := NewV1Service(ctx, mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			s := NewV1Service(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
 
 			entitlements, err := s.ListEntitlements(ctx, &resources.GetEntitlementsParams{Filter: openfga.PtrString("role")})
+
+			sortFx := func(a, b resources.EntitlementSchema) int {
+				if n := strings.Compare(a.Entitlement, b.Entitlement); n != 0 {
+					return n
+				}
+
+				if n := strings.Compare(a.EntityType, b.EntityType); n != 0 {
+					return n
+				}
+
+				// If relations are equal, order by object
+				return cmp.Compare(a.ReceiverType, b.ReceiverType)
+			}
+
+			slices.SortFunc(entitlements, sortFx)
+			slices.SortFunc(tc.expectedResult, sortFx)
 
 			assert.Equal(t, tc.expectedResult, entitlements)
 			assert.Equal(t, tc.expectedError, err)
@@ -70,7 +89,7 @@ func TestV1Service_ListEntitlements(t *testing.T) {
 	}
 }
 
-func TestV1Service_RawEntitlements(t *testing.T) {
+func TestV1ServiceRawEntitlements(t *testing.T) {
 	ctrl, mockOpenFGA, mockLogger, mockTracer, mockMonitor, authModel := setupTest(t)
 	defer ctrl.Finish()
 
@@ -103,7 +122,7 @@ func TestV1Service_RawEntitlements(t *testing.T) {
 			tc.setupMocks()
 			ctx := tc.contextSetup()
 
-			s := NewV1Service(ctx, mockOpenFGA, mockTracer, mockMonitor, mockLogger)
+			s := NewV1Service(mockOpenFGA, mockTracer, mockMonitor, mockLogger)
 
 			rawEntitlements, err := s.RawEntitlements(ctx)
 

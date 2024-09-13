@@ -8,7 +8,7 @@ data:
   LOG_LEVEL: DEBUG
   TRACING_ENABLED: "false"
   KRATOS_PUBLIC_URL: http://kratos-public.default.svc.cluster.local
-  KRATOS_ADMIN_URL: http://kratos-public.default.svc.cluster.local
+  KRATOS_ADMIN_URL: http://kratos-admin.default.svc.cluster.local
   HYDRA_ADMIN_URL: http://hydra-admin.default.svc.cluster.local:4445
   OATHKEEPER_PUBLIC_URL: http://oathkeeper-api.default.svc.cluster.local:4456
   IDP_CONFIGMAP_NAME: idps

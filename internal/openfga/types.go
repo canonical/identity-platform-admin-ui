@@ -37,3 +37,60 @@ func NewTuple(user, relation, object string) *Tuple {
 
 	return t
 }
+
+type TokenMapFilter struct {
+	tokens map[string]string
+}
+
+func (f *TokenMapFilter) WithFilter() any {
+	return f.tokens
+}
+
+func NewTokenMapFilter(tokens map[string]string) *TokenMapFilter {
+	f := new(TokenMapFilter)
+	f.tokens = tokens
+
+	return f
+}
+
+type TypesFilter struct {
+	resourceTypes []string
+}
+
+func (f *TypesFilter) WithFilter() any {
+	return f.resourceTypes
+}
+
+func NewTypesFilter(resourceTypes ...string) *TypesFilter {
+	f := new(TypesFilter)
+
+	f.resourceTypes = make([]string, 0)
+
+	for _, r := range resourceTypes {
+		f.resourceTypes = append(f.resourceTypes, r)
+	}
+
+	return f
+}
+
+type RelationFilter struct {
+	relation string
+}
+
+func (f *RelationFilter) WithFilter() any {
+	return f.relation
+}
+
+func NewRelationFilter(relation string) *RelationFilter {
+	f := new(RelationFilter)
+
+	f.relation = relation
+
+	return f
+}
+
+type listPermissionsOpts struct {
+	TokenMap       map[string]string
+	TypesFilter    []string
+	RelationFilter string
+}

@@ -39,3 +39,7 @@ type OpenFGAClientInterface interface {
 	DeleteTuples(context.Context, ...Tuple) error
 	Check(context.Context, string, string, string, ...Tuple) (bool, error)
 }
+
+type ListPermissionsFiltersInterface interface {
+	WithFilter() any
+}

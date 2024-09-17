@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.18.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.17.0...v1.18.0) (2024-09-16)
+
+
+### Features
+
+* add `github.com/wneessen/go-mail v0.4.4` dependency ([5182270](https://github.com/canonical/identity-platform-admin-ui/commit/5182270dd83e5126a0caa9e2a182d328e350830f))
+* add entitlements service by Rebac ([64b8326](https://github.com/canonical/identity-platform-admin-ui/commit/64b83262dde21da721dba203855ad57c4b251b74))
+* add env vars for mail client ([3ab1acb](https://github.com/canonical/identity-platform-admin-ui/commit/3ab1acbc15de44843632a918856526066a6777e9))
+* add interfaces + implement emailservice ([b2f0ae9](https://github.com/canonical/identity-platform-admin-ui/commit/b2f0ae920fdec2630446090748ce2c4d40568059))
+* add ResourcesService ([f5a2008](https://github.com/canonical/identity-platform-admin-ui/commit/f5a20086f204291dd3c4436f326535c460c8ee2e))
+* add SendUserCreationEmail method ([0cc1d3f](https://github.com/canonical/identity-platform-admin-ui/commit/0cc1d3f64997a8cdbda6f14fabe767c1914849b6))
+* add template loading + test + TEMPORARY mail template ([6c95a25](https://github.com/canonical/identity-platform-admin-ui/commit/6c95a259bf25ff3e21b2767f985c5c045d29dd67))
+* add the create-identity CLI ([464c697](https://github.com/canonical/identity-platform-admin-ui/commit/464c697f512f8b6d54fa5df3f3360b3b37485cef))
+
+
+### Bug Fixes
+
+* add filters to listPermissions store method ([84b531a](https://github.com/canonical/identity-platform-admin-ui/commit/84b531a8d73172e0157a400476cd65766f0f5d79))
+* fix the kratos admin url ([4846fad](https://github.com/canonical/identity-platform-admin-ui/commit/4846fad41c8e37e7ad7450a303564b70ab31845f))
+
 ## [1.17.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.16.2...v1.17.0) (2024-09-06)
 
 

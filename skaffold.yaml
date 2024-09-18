@@ -59,6 +59,10 @@ deploy:
         repo: https://openfga.github.io/helm-charts
         valuesFiles: ["deployments/helm/openfga/values.yaml"]
         wait: false
+      - name: mailhog
+        remoteChart: mailhog
+        repo: https://codecentric.github.io/helm-charts
+        valuesFiles: ["deployments/helm/mailhog/values.yaml"]
 
 portForward:
 - resourceType: service
@@ -96,3 +100,8 @@ portForward:
   namespace: default
   port: 8080
   localPort: 14457
+- resourceType: service
+  resourceName: mailhog
+  namespace: default
+  port: 8025
+  localPort: 18025

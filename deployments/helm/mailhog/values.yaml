@@ -1,0 +1,7 @@
+containerPort:
+  http:
+    name: http
+    port: 8025
+  smtp:
+    name: tcp-smtp
+    port: 1025

@@ -89,8 +89,8 @@ func buildReceivers(relationReferences []openfga.RelationReference) string {
 	return builder.String()
 }
 
-func NewV1Service(ctx context.Context, ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
-	authModel, err := ofga.ReadModel(ctx)
+func NewV1Service(ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+	authModel, err := ofga.ReadModel(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to read the authorization model: %v", err))
 	}

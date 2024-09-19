@@ -38,26 +38,58 @@ func (mdw *Middleware) mapper(r *http.Request) []Permission {
 	// TODO @shipperizer exploit https://pkg.go.dev/github.com/go-chi/chi/v5#URLParam to fetch
 	// resource ids like {id}, {<x>_id}, also parse the path to understand type to check against
 
+	if strings.HasPrefix(r.URL.Path, "/api/v0") {
+		return mdw.v0mapper(r)
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/api/v1") {
+		return mdw.v1mapper(r)
+	}
+
+	return []Permission{}
+}
+
+func (mdw *Middleware) v0mapper(r *http.Request) []Permission {
 	if strings.HasPrefix(r.URL.Path, "/api/v0/identities") {
-		return mdw.IdentityConverter.Map(r)
+		return mdw.IdentityConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/clients") {
-		return mdw.ClientConverter.Map(r)
+		return mdw.ClientConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/idps") {
-		return mdw.ProviderConverter.Map(r)
+		return mdw.ProviderConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/rules") {
-		return mdw.RuleConverter.Map(r)
+		return mdw.RuleConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/schemas") {
-		return mdw.SchemeConverter.Map(r)
+		return mdw.SchemeConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/roles") {
-		return mdw.RoleConverter.Map(r)
+		return mdw.RoleConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/groups") {
-		return mdw.GroupConverter.Map(r)
+		return mdw.GroupConverter.MapV0(r)
+	}
+
+	return []Permission{}
+}
+
+func (mdw *Middleware) v1mapper(r *http.Request) []Permission {
+	if strings.HasPrefix(r.URL.Path, "/api/v1/identities") {
+		return mdw.IdentityConverter.MapV1(r)
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/api/v1/authentication") {
+		return mdw.ProviderConverter.MapV1(r)
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/api/v1/roles") {
+		return mdw.RoleConverter.MapV1(r)
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/api/v1/groups") {
+		return mdw.GroupConverter.MapV1(r)
 	}
 
 	return []Permission{}

@@ -14,20 +14,24 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
+	"github.com/canonical/identity-platform-admin-ui/pkg/entitlements"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
+	"github.com/canonical/identity-platform-admin-ui/pkg/resources"
 	"github.com/canonical/identity-platform-admin-ui/pkg/roles"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 )
 
 type RouterConfig struct {
@@ -72,6 +76,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	logger := config.olly.Logger()
 	monitor := config.olly.Monitor()
 	tracer := config.olly.Tracer()
+	store := ofga.NewOpenFGAStore(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 
 	middlewares := make(chi.Middlewares, 0)
 	middlewares = append(
@@ -90,15 +95,20 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		)
 	}
 
+	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
+
+	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
+	idpSvc := idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger)
+	rolesSvc := roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
+	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
+
 	router.Use(middlewares...)
 
 	statusAPI := status.NewAPI(tracer, monitor, logger)
 	metricsAPI := metrics.NewAPI(logger)
 
-	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
-
 	identitiesAPI := identities.NewAPI(
-		identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger),
+		identitiesSvc,
 		tracer,
 		monitor,
 		logger,
@@ -112,7 +122,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	)
 
 	idpAPI := idp.NewAPI(
-		idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		idpSvc,
 		tracer,
 		monitor,
 		logger,
@@ -133,14 +143,14 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	)
 
 	rolesAPI := roles.NewAPI(
-		roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
+		rolesSvc,
 		tracer,
 		monitor,
 		logger,
 	)
 
 	groupsAPI := groups.NewAPI(
-		groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger),
+		groupsSvc,
 		tracer,
 		monitor,
 		logger,
@@ -214,6 +224,31 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		)
 		login.RegisterEndpoints(apiRouter)
 	}
+
+	rebacAPI, err := v1.NewReBACAdminBackend(
+		v1.ReBACAdminBackendParams{
+			Resources: resources.NewV1Service(store, tracer, monitor, logger),
+			Roles:     roles.NewV1Service(rolesSvc),
+			Groups:    groups.NewV1Service(groupsSvc, tracer, monitor, logger),
+			Identities: identities.NewV1Service(
+				&identities.Config{
+					Name:         idpConfig.Name,
+					Namespace:    idpConfig.Namespace,
+					K8s:          idpConfig.K8s,
+					OpenFGAStore: store,
+				},
+				identitiesSvc,
+			),
+			Entitlements:      entitlements.NewV1Service(externalConfig.OpenFGA(), tracer, monitor, logger),
+			IdentityProviders: idp.NewV1Service(idpSvc),
+		},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	apiRouter.Mount("/api/", rebacAPI.Handler(""))
 
 	uiAPI.RegisterEndpoints(router)
 

@@ -60,7 +60,24 @@ func (c IdentityConverter) TypeName() string {
 	return IDENTITY_TYPE
 }
 
-func (c IdentityConverter) Map(r *http.Request) []Permission {
+func (c IdentityConverter) MapV1(r *http.Request) []Permission {
+	// TODO @shipperizer @mrbarco
+	// the following endpoints will need permissions inspection on the payload
+	// on top of uri permission validation, operator needs to have those permissions
+	// Add or remove entitlement to/from an identity. (CAN_VIEW on entitlements)
+	// (PATCH /identities/{id}/entitlements)
+	// PatchIdentitiesItemEntitlements(w http.ResponseWriter, r *http.Request, id string)
+	// Add or remove the identity to/from groups. (CAN_EDIT on groups)
+	// (PATCH /identities/{id}/groups)
+	// PatchIdentitiesItemGroups(w http.ResponseWriter, r *http.Request, id string)
+	// Add or remove the identity to/from roles. (CAN_EDIT on groups)
+	// (PATCH /identities/{id}/roles)
+	// PatchIdentitiesItemRoles(w http.ResponseWriter, r *http.Request, id string)
+
+	return c.MapV0(r)
+}
+
+func (c IdentityConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple
@@ -92,7 +109,7 @@ func (c ClientConverter) TypeName() string {
 	return CLIENT_TYPE
 }
 
-func (c ClientConverter) Map(r *http.Request) []Permission {
+func (c ClientConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple
@@ -124,7 +141,15 @@ func (c ProviderConverter) TypeName() string {
 	return PROVIDER_TYPE
 }
 
-func (c ProviderConverter) Map(r *http.Request) []Permission {
+func (c ProviderConverter) MapV1(r *http.Request) []Permission {
+	if strings.HasPrefix(r.URL.Path, "/api/v1/authentication/providers") {
+		return []Permission{}
+	}
+
+	return c.MapV0(r)
+}
+
+func (c ProviderConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple
@@ -156,7 +181,7 @@ func (c RuleConverter) TypeName() string {
 	return RULE_TYPE
 }
 
-func (c RuleConverter) Map(r *http.Request) []Permission {
+func (c RuleConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple
@@ -188,7 +213,7 @@ func (c SchemeConverter) TypeName() string {
 	return SCHEME_TYPE
 }
 
-func (c SchemeConverter) Map(r *http.Request) []Permission {
+func (c SchemeConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple
@@ -233,7 +258,17 @@ func (c RoleConverter) TypeName() string {
 	return ROLE_TYPE
 }
 
-func (c RoleConverter) Map(r *http.Request) []Permission {
+func (c RoleConverter) MapV1(r *http.Request) []Permission {
+	// TODO @shipperizer @mrbarco
+	// the following endpoints will need permissions inspection on the payload
+	// on top of uri permission validation, operator needs to have those permissions
+	// // Add or remove a direct entitlements to/from a role. (CAN_VIEW on entitlements)
+	// // (PATCH /roles/{id}/entitlements)
+	// PatchRolesItemEntitlements(w http.ResponseWriter, r *http.Request, id string)
+	return c.MapV0(r)
+}
+
+func (c RoleConverter) MapV0(r *http.Request) []Permission {
 	role_id := chi.URLParam(r, "id")
 	entitlement_id := chi.URLParam(r, "e_id")
 	identity_id := chi.URLParam(r, "i_id")
@@ -304,7 +339,23 @@ func (c GroupConverter) TypeName() string {
 	return GROUP_TYPE
 }
 
-func (c GroupConverter) Map(r *http.Request) []Permission {
+func (c GroupConverter) MapV1(r *http.Request) []Permission {
+	// TODO @shipperizer @mrbarco
+	// the following endpoints will need permissions inspection on the payload
+	// on top of uri permission validation, operator needs to have those permissions
+	// Add or remove a direct entitlements to/from a group. (CAN_VIEW on entitlements)
+	// (PATCH /groups/{id}/entitlements)
+	// PatchGroupsItemEntitlements(w http.ResponseWriter, r *http.Request, id string)
+	// Add or remove identities to/from a group. (CAN_EDIT on identitites)
+	// (PATCH /groups/{id}/identities)
+	// PatchGroupsItemIdentities(w http.ResponseWriter, r *http.Request, id string)
+	// Add or remove a role to/from the group. (CAN_EDIT on roles)
+	// (PATCH /groups/{id}/roles)
+	// PatchGroupsItemRoles(w http.ResponseWriter, r *http.Request, id string)
+	return c.MapV0(r)
+}
+
+func (c GroupConverter) MapV0(r *http.Request) []Permission {
 	group_id := chi.URLParam(r, "id")
 	role_id := chi.URLParam(r, "r_id")
 	identity_id := chi.URLParam(r, "i_id")

@@ -32,6 +32,9 @@ data:
   OAUTH2_CODEGRANT_SCOPES: "openid,offline_access,email,profile"
   OAUTH2_AUTH_COOKIES_ENCRYPTION_KEY: "WrfOcYmVBwyduEbKYTUhO4X7XVaOQ1wF"
   ACCESS_TOKEN_VERIFICATION_STRATEGY: "jwks"
+  MAIL_HOST: "mailhog.default.svc.cluster.local"
+  MAIL_PORT: "1025"
+  MAIL_FROM_ADDRESS: "identity-team@canonical.com"
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.19.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.18.0...v1.19.0) (2024-09-20)
+
+
+### Features
+
+* introduce hierarchy for can_relations ([596b448](https://github.com/canonical/identity-platform-admin-ui/commit/596b448a3e8ccada33f9d6d1d50e0fd0259b3cd6))
+* wire up all the rebac handlers ([f23cc1f](https://github.com/canonical/identity-platform-admin-ui/commit/f23cc1f538262cea7dfe2bc8f642aefc7661b794))
+
+
+### Bug Fixes
+
+* add uri permissions converters for v1 ([9e59915](https://github.com/canonical/identity-platform-admin-ui/commit/9e5991526dfc125c3c8641aa6104659079ec612a))
+* drop ctx param from NewV1Service creation ([972bef4](https://github.com/canonical/identity-platform-admin-ui/commit/972bef432dc98d0356694b7430641e8bd43ac156))
+
 ## [1.18.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.17.0...v1.18.0) (2024-09-16)
 
 

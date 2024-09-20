@@ -1,0 +1,8 @@
+{
+  "options": {
+    "minifyOptions": {
+      "minifyCSS": true
+    }
+  },
+  "packages": []
+}

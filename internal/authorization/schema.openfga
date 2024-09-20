@@ -14,9 +14,9 @@ type role
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged
-    
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
+
 type group
  relations
     define privileged: [privileged]
@@ -24,61 +24,61 @@ type group
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type identity
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged
-  
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
+
 type scheme
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged
-    
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
+
 type client
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged 
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type provider
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged 
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type rule
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged 
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 # need to model how to assign applications for the login UI, if copying current model or adjusting it
 type application
  relations
     define privileged: [privileged]
-    
+
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or admin from privileged 
+    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
+    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 

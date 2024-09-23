@@ -11,3 +11,6 @@ All templates in the `mjml` directory can be built by running the following comm
 ```
 make build
 ```
+
+This will build all templates to the `internal/mail/html` directory and sync the
+images.

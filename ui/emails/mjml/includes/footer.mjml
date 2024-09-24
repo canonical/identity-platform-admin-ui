@@ -1,0 +1,8 @@
+<mj-section background-color="#F7F7F7" padding="32px 24px">
+  <mj-column>
+    <mj-text font-size="14px" color="#666666">You are receiving this email because you are a user of Canonical
+      Identity Platform.</mj-text>
+    <mj-text font-size="14px" color="#666666">If you're not sure why you're receiving this please contact
+      support.</mj-text>
+  </mj-column>
+</mj-section>

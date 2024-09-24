@@ -1,0 +1,6 @@
+<mj-attributes>
+  <mj-text padding="0" />
+  <mj-all font-family="'Ubuntu variable', Ubuntu, Arial, 'libra sans', sans-serif" font-size="16px" color="#000" font-weight="300" line-height="24px" />
+  <mj-button border-radius="0" background-color="#0C8420" color="#fff" inner-padding="6.4px 16px" />
+  <mj-section padding="32px" />
+</mj-attributes>

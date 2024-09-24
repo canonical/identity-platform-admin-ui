@@ -1,0 +1,59 @@
+<mjml>
+  <mj-head>
+    <mj-include path="./includes/defaults.mjml" />
+    <mj-style>
+      @font-face {
+        font-family: 'Ubuntu variable';
+        font-stretch: 100%;
+        font-style: normal;
+        font-weight: 100 800;
+        src: url('https://assets.ubuntu.com/v1/f1ea362b-Ubuntu%5Bwdth,wght%5D-latin-v0.896a.woff2') format('woff2-variations');
+      }
+
+      a,
+      a:hover,
+      a:visited,
+      a:focus {
+        color: #0066cc;
+        text-decoration: none;
+      }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#F3F4F8">
+    <mj-wrapper padding="32px">
+      <mj-include path="./includes/header.mjml" />
+      <mj-section padding-bottom="8px" background-color="#fff">
+        <mj-column>
+          <mj-text font-size="24px" font-weight="275">Verify your account</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section background-color="#fff" padding-bottom="24px">
+        <mj-column width="30%" padding-bottom="8px">
+          <mj-text font-weight="400">Account</mj-text>
+        </mj-column>
+        <mj-column width="70%" padding-bottom="8px">
+          <mj-text>{{ .Email }}</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding-top="0" background-color="#fff" padding-bottom="12px">
+        <mj-column width="30%">
+          <mj-text font-weight="400" padding-bottom="8px">Verification code</mj-text>
+        </mj-column>
+        <mj-column width="70%">
+          <mj-text font-size="24px" padding-bottom="8px" font-weight="275" line-height="32px">{{slice .RecoveryCode 0 3}} {{slice .RecoveryCode 3 6}}</mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding-top="0" background-color="#fff">
+        <mj-column>
+          <mj-divider padding-left="0" padding-right="0" border-color="#e6e6e6" border-width="1px" padding-top="0"></mj-divider>
+          <mj-button align="left" href="{{ .InviteUrl }}" padding-left="0" padding-right="0">
+            Verify your account
+          </mj-button>
+          <mj-text>or visit this link</mj-text>
+          <mj-text><a href="{{ .InviteUrl }}">{{ .InviteUrl }}</a></mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-include path="./includes/footer.mjml" />
+    </mj-wrapper>
+  </mj-body>
+</mjml>

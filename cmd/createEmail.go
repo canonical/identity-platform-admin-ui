@@ -19,22 +19,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var createEmailCmd = &cobra.Command{
-	Use:   "create-email [identity-id]",
+var sendInvitationCmd = &cobra.Command{
+	Use:   "send-invite [identity-id]",
 	Short: "Send an invitation email for an identity",
 	Example: `Send an invitation email:
 
-identity-platform-admin-ui create-email d0bebe60-f4fa-4bdc-b6d6-dff9eb42d287`,
+identity-platform-admin-ui send-invite d0bebe60-f4fa-4bdc-b6d6-dff9eb42d287`,
 	Long: `Send an invitation email for an identity if previous email sending efforts failed.`,
 	Args: cobra.ExactArgs(1),
-	Run:  createEmailHandler,
+	Run:  sendInvitationHandler,
 }
 
 func init() {
-	rootCmd.AddCommand(createEmailCmd)
+	rootCmd.AddCommand(sendInvitationCmd)
 }
 
-func createEmailHandler(cmd *cobra.Command, args []string) {
+func sendInvitationHandler(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
 
 	logger := logging.NewNoopLogger()
@@ -67,10 +67,10 @@ func createEmailHandler(cmd *cobra.Command, args []string) {
 
 	identity := &ids[0]
 
-	// Send identity creation email
+	// Send invitation email
 	err = service.SendUserCreationEmail(ctx, identity)
 	if err != nil {
-		panic(fmt.Errorf("failed to send the identity creation email: %v", err))
+		panic(fmt.Errorf("failed to send the invitation email: %v", err))
 	}
 
 	cmd.Printf("Invitation email sent for identity: %s\n", identity.GetId())

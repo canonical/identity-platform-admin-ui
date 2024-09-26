@@ -40,7 +40,7 @@
           <mj-text font-weight="400" padding-bottom="8px">Verification code</mj-text>
         </mj-column>
         <mj-column width="70%">
-          <mj-text font-size="24px" padding-bottom="8px" font-weight="275" line-height="32px">{{ if .RecoveryCode }}{{ if eq (len .RecoveryCode) 6 }}{{slice .RecoveryCode 0 3}} {{slice .RecoveryCode 3 6}}{{ else }}{{ .RecoveryCode }}{{ end }}{{ end }}</mj-text>
+          <mj-text font-size="24px" padding-bottom="8px" font-weight="275" line-height="32px">{{ .RecoveryCode }}</mj-text>
         </mj-column>
       </mj-section>
       <mj-section padding-top="0" background-color="#fff">

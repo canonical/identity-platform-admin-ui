@@ -140,7 +140,7 @@ func TestOAuth2Context_LoginRedirect(t *testing.T) {
 
 	location := oauth2Context.LoginRedirect(mockRequest.Context(), "mock-nonce", "mock-state")
 
-	expectedLocation := "?audience=mock-client-id&client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fapi%2Fv0%2Fauth%2Fcallback&response_type=code&scope=openid+offline_access&state=mock-state"
+	expectedLocation := "?client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fapi%2Fv0%2Fauth%2Fcallback&response_type=code&scope=openid+offline_access&state=mock-state"
 
 	if location != expectedLocation {
 		t.Fatalf("location header error, expected %s, got %s", expectedLocation, location)

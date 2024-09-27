@@ -7,17 +7,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
-	"github.com/canonical/identity-platform-admin-ui/internal/config"
-	"github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
-	"github.com/kelseyhightower/envconfig"
 	kClient "github.com/ory/kratos-client-go"
 	"github.com/spf13/cobra"
 )
@@ -91,42 +84,14 @@ func createIdentity(identity kClient.CreateIdentityBody) (*kClient.Identity, err
 	wpool := pool.NewWorkerPool(1, tracer, monitor, logger)
 	defer wpool.Stop()
 
-	specs := new(config.EnvSpec)
-	if err := envconfig.Process("", specs); err != nil {
-		return nil, fmt.Errorf("failed to populate environment variables: %v", err)
+	// Initialize environment variables
+	specs, err := initializeEnv()
+	if err != nil {
+		panic(err)
 	}
 
-	// Set up Kratos client
-	kratosClient := kratos.NewClient(specs.KratosAdminURL, specs.Debug)
-
-	// Set up authorization service
-	openfgaConfig := openfga.NewConfig(
-		specs.ApiScheme,
-		specs.ApiHost,
-		specs.StoreId,
-		specs.ApiToken,
-		specs.ModelId,
-		specs.Debug,
-		tracer,
-		monitor,
-		logger,
-	)
-	openfgaClient := openfga.NewClient(openfgaConfig)
-	authorizer := authorization.NewAuthorizer(openfgaClient, wpool, tracer, monitor, logger)
-
-	// Set up email service
-	mailConfig := mail.NewConfig(
-		specs.MailHost,
-		specs.MailPort,
-		specs.MailUsername,
-		specs.MailPassword,
-		specs.MailFromAddress,
-		specs.MailSendTimeoutSeconds,
-	)
-	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
-
-	// Set up identity service
-	service := identities.NewService(kratosClient.IdentityAPI(), authorizer, mailService, tracer, monitor, logger)
+	// Initialize identity service
+	service := initializeIdentityService(specs, logger, tracer, monitor, wpool)
 
 	// Create the identity
 	identityData, err := service.CreateIdentity(ctx, &identity)

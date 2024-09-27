@@ -77,7 +77,7 @@ func TestHandleLogin(t *testing.T) {
 		t.Fatalf("response code error, expected %d, got %d", http.StatusFound, mockResponse.Code)
 	}
 
-	expectedLocation := "/api/v0/?audience=mock-client-id&client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect&response_type=code&scope=openid+offline_access&state=mock-state"
+	expectedLocation := "/api/v0/?client_id=mock-client-id&nonce=mock-nonce&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect&response_type=code&scope=openid+offline_access&state=mock-state"
 	location := mockResponse.Header().Get("Location")
 	if !strings.HasPrefix(location, expectedLocation) {
 		t.Fatalf("location header error, expected %s, got %s", expectedLocation, location)

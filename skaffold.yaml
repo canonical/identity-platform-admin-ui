@@ -89,7 +89,7 @@ portForward:
   resourceName: hydra-public
   namespace: default
   port: 4444
-  localPort: 14444
+  localPort: 4444
 - resourceType: service
   resourceName: oathkeeper-api
   namespace: default

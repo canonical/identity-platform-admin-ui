@@ -50,8 +50,7 @@ func (o *OAuth2Context) LoginRedirect(ctx context.Context, nonce, state string) 
 	_, span := o.tracer.Start(ctx, "authentication.OAuth2Context.LoginRedirect")
 	defer span.End()
 
-	// TODO: remove `audience` parameter when https://github.com/canonical/identity-platform-login-ui/issues/244 is addressed
-	return o.client.AuthCodeURL(state, oidc.Nonce(nonce), oauth2.SetAuthURLParam("audience", o.client.ClientID))
+	return o.client.AuthCodeURL(state, oidc.Nonce(nonce))
 }
 
 func (o *OAuth2Context) RetrieveTokens(ctx context.Context, code string) (*oauth2.Token, error) {

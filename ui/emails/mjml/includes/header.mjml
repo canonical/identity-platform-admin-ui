@@ -1,5 +1,5 @@
 <mj-section background-color="#242424" padding="0 0 18px 32px">
   <mj-column>
-    <mj-image padding="0" align="left" width="130px" src="./images/canonical.jpg" alt="Canonical"></mj-image>
+    <mj-image padding="0" align="left" width="130px" src="https://assets.ubuntu.com/v1/cbe904ec-canonical.jpg" alt="Canonical"></mj-image>
   </mj-column>
 </mj-section>

@@ -5,6 +5,7 @@ package ui
 
 import (
 	"encoding/json"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -18,7 +19,10 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
-const UIPrefix = "/ui"
+const (
+	UIPrefix      = "/ui"
+	indexTemplate = "index.html"
+)
 
 type Config struct {
 	DistFS      fs.FS
@@ -26,8 +30,9 @@ type Config struct {
 }
 
 type API struct {
-	fileServer  http.Handler
 	contextPath string
+	fileServer  http.Handler
+	distFS      fs.FS
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
@@ -39,19 +44,23 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 		path, err := url.JoinPath("/", a.contextPath, UIPrefix, "/")
 		if err != nil {
 			a.logger.Error("Failed to construct path: ", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(
-				types.Response{
-					Status:  http.StatusInternalServerError,
-					Message: err.Error(),
-				},
-			)
+			a.internalServerErrorResponse(w, err)
 			return
 		}
 		http.Redirect(w, r, path, http.StatusMovedPermanently)
 	})
 	mux.Get(UIPrefix+"/", a.uiFiles)
 	mux.Get(UIPrefix+"/*", a.uiFiles)
+}
+
+func (a *API) internalServerErrorResponse(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(
+		types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		},
+	)
 }
 
 func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
@@ -76,12 +85,46 @@ func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
 	// The policy allows loading resources (scripts, styles, images, etc.) only from the same origin ('self'), data URLs, and all subdomains of ubuntu.com.
 	w.Header().Set("Content-Security-Policy", "default-src 'self' data: https://*.ubuntu.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
 
+	// return html with processed template
+	if r.URL.Path == "/" {
+		t, err := template.New(indexTemplate).ParseFS(a.distFS, indexTemplate)
+		if err != nil {
+			a.logger.Error("Failed to load %s template: ", indexTemplate, err)
+			a.internalServerErrorResponse(w, err)
+			return
+		}
+
+		// disable cache only for index.html response, with no issues if we return an error
+		// `no-store`: This will tell any cache system not to cache the index.html file
+		// `no-cache`: This will tell any cache system to check if there is a newer version in the server
+		// `must-revalidate`: This will tell any cache system to check for newer version of the file
+		// this is considered best practice with SPAs
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.WriteHeader(http.StatusOK)
+
+		normContextPath := a.contextPath
+		if !strings.HasSuffix(normContextPath, "/") {
+			normContextPath += "/"
+		}
+
+		err = t.Execute(w, normContextPath)
+		if err != nil {
+			a.logger.Error("Failed to process %s template: ", indexTemplate, err)
+			a.internalServerErrorResponse(w, err)
+			return
+		}
+
+		return
+	}
+
+	// return requested assets
 	a.fileServer.ServeHTTP(w, r)
 }
 
 func NewAPI(config *Config, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
+	a.distFS = config.DistFS
 	a.fileServer = http.FileServer(http.FS(config.DistFS))
 	a.contextPath = config.ContextPath
 

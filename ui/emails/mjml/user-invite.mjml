@@ -1,23 +1,7 @@
 <mjml>
   <mj-head>
     <mj-include path="./includes/defaults.mjml" />
-    <mj-style>
-      @font-face {
-        font-family: 'Ubuntu variable';
-        font-stretch: 100%;
-        font-style: normal;
-        font-weight: 100 800;
-        src: url('https://assets.ubuntu.com/v1/f1ea362b-Ubuntu%5Bwdth,wght%5D-latin-v0.896a.woff2') format('woff2-variations');
-      }
-
-      a,
-      a:hover,
-      a:visited,
-      a:focus {
-        color: #0066cc;
-        text-decoration: none;
-      }
-    </mj-style>
+    <mj-preview>Verify your account</mj-preview>
   </mj-head>
   <mj-body background-color="#F3F4F8">
     <mj-wrapper padding="32px">
@@ -32,7 +16,11 @@
           <mj-text font-weight="400">Account</mj-text>
         </mj-column>
         <mj-column width="70%" padding-bottom="8px">
-          <mj-text>{{ .Email }}</mj-text>
+          <mj-text>
+            <div style="display:inline-block; word-break:break-all;">
+              {{ .Email }}
+            </div>
+          </mj-text>
         </mj-column>
       </mj-section>
       <mj-section padding-top="0" background-color="#fff" padding-bottom="12px">
@@ -50,7 +38,9 @@
             Verify your account
           </mj-button>
           <mj-text>or visit this link</mj-text>
-          <mj-text><a href="{{ .InviteUrl }}">{{ .InviteUrl }}</a></mj-text>
+          <mj-text>
+            <div style="display:inline-block; word-break:break-all;"><a href="{{ .InviteUrl }}">{{ .InviteUrl }}</a></div>
+          </mj-text>
         </mj-column>
       </mj-section>
       <mj-include path="./includes/footer.mjml" />

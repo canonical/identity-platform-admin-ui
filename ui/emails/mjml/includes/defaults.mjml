@@ -4,3 +4,20 @@
   <mj-button border-radius="0" background-color="#0C8420" color="#fff" inner-padding="6.4px 16px" />
   <mj-section padding="32px" />
 </mj-attributes>
+<mj-style>
+  @font-face {
+    font-family: 'Ubuntu variable';
+    font-stretch: 100%;
+    font-style: normal;
+    font-weight: 100 800;
+    src: url('https://assets.ubuntu.com/v1/f1ea362b-Ubuntu%5Bwdth,wght%5D-latin-v0.896a.woff2') format('woff2-variations');
+  }
+
+  a,
+  a:hover,
+  a:visited,
+  a:focus {
+    color: #0066cc;
+    text-decoration: none;
+  }
+</mj-style>

@@ -49,11 +49,11 @@ describe("calculateBasePath", () => {
     expect(result).toBe("/test/");
   });
 
-  //   it("handles full URL", () => {
-  //     setBase("http://example.com/test/");
-  //     const result = calculateBasePath();
-  //     expect(result).toBe("/test/");
-  //   });
+  it("handles full URL", () => {
+    setBase("http://example.com/test/");
+    const result = calculateBasePath();
+    expect(result).toBe("/test/");
+  });
 
   it("resolves if the base is not provided", () => {
     const result = calculateBasePath();

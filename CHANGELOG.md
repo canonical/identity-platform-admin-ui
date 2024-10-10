@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.20.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.19.0...v1.20.0) (2024-10-09)
+
+
+### Features
+
+* add built verification email ([5a43aef](https://github.com/canonical/identity-platform-admin-ui/commit/5a43aef097284068e51d4c14fc1f5758b0130397))
+* add the cli command for compensating user invitation email failure ([55f557e](https://github.com/canonical/identity-platform-admin-ui/commit/55f557e816ef1cb3f436f7b612d9511fd50e059d))
+* add user invite email template ([64743cf](https://github.com/canonical/identity-platform-admin-ui/commit/64743cf67a97ed90f6a6b7663a2eadfa3e350590))
+* switch to html/template for rendering context path dynamically for index.html ([81f8a9c](https://github.com/canonical/identity-platform-admin-ui/commit/81f8a9c559b541028c49b1fabf705f0b4c3cadcf))
+
+
+### Bug Fixes
+
+* local dev env for OIDC provider discovery ([03f5499](https://github.com/canonical/identity-platform-admin-ui/commit/03f549962fb8ea128c595582ca02f280d03bb788))
+* update email template to fix issues in email clients ([3f9726b](https://github.com/canonical/identity-platform-admin-ui/commit/3f9726baa071b99ebed5bd7cca2f0906f612d998))
+
 ## [1.19.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.18.0...v1.19.0) (2024-09-20)
 
 

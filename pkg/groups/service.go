@@ -212,6 +212,31 @@ func (s *Service) AssignRoles(ctx context.Context, ID string, roles ...string) e
 	return nil
 }
 
+func (s *Service) CanAssignRoles(ctx context.Context, userID string, roles ...string) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "groups.Service.CanAssignRoles")
+	defer span.End()
+
+	cardinality := len(roles)
+	if cardinality == 0 {
+		return true, nil
+	}
+
+	rs := make([]ofga.Tuple, 0, cardinality)
+
+	for _, role := range roles {
+		rs = append(rs, *ofga.NewTuple(authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.RoleForTuple(role)))
+	}
+
+	check, err := s.ofga.BatchCheck(ctx, rs...)
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return false, err
+	}
+
+	return check, nil
+}
+
 // RemoveRoles drops roles from a group
 func (s *Service) RemoveRoles(ctx context.Context, ID string, roles ...string) error {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.RemoveRoles")
@@ -378,6 +403,31 @@ func (s *Service) AssignIdentities(ctx context.Context, ID string, identities ..
 	}
 
 	return nil
+}
+
+func (s *Service) CanAssignIdentities(ctx context.Context, userID string, identities ...string) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "groups.Service.CanAssignIdentities")
+	defer span.End()
+
+	cardinality := len(identities)
+	if cardinality == 0 {
+		return true, nil
+	}
+
+	rs := make([]ofga.Tuple, 0, cardinality)
+
+	for _, identity := range identities {
+		rs = append(rs, *ofga.NewTuple(authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.IdentityForTuple(identity)))
+	}
+
+	check, err := s.ofga.BatchCheck(ctx, rs...)
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return false, err
+	}
+
+	return check, nil
 }
 
 // RemoveIdentities removes identities from a group

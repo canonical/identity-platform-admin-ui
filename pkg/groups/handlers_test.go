@@ -12,13 +12,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	reflect "reflect"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	trace "go.opentelemetry.io/otel/trace"
-	gomock "go.uber.org/mock/gomock"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
@@ -1462,14 +1462,18 @@ func TestHandleAssignIdentities(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    input
-		expected error
-		output   *types.Response
+		name             string
+		input            input
+		expectedCheck    bool
+		expectedCheckErr error
+		expected         error
+		output           *types.Response
 	}{
 		{
-			name:     "multiple identities",
-			expected: nil,
+			name:             "multiple identities",
+			expectedCheck:    true,
+			expectedCheckErr: nil,
+			expected:         nil,
 			input: input{
 				groupID: "administrator",
 				identities: []string{
@@ -1482,8 +1486,26 @@ func TestHandleAssignIdentities(t *testing.T) {
 			},
 		},
 		{
-			name:     "multiple identities with error",
-			expected: fmt.Errorf("error"),
+			name:             "multiple identities cannot be assigned error",
+			expectedCheck:    false,
+			expectedCheckErr: nil,
+			expected:         nil,
+			input: input{
+				groupID: "administrator",
+				identities: []string{
+					"joe", "susan", "dummy",
+				},
+			},
+			output: &types.Response{
+				Message: "user test-user is not allowed to assign specified identities",
+				Status:  http.StatusForbidden,
+			},
+		},
+		{
+			name:             "multiple identities can be assigned then error",
+			expectedCheck:    true,
+			expectedCheckErr: nil,
+			expected:         fmt.Errorf("error"),
 			input: input{
 				groupID: "administrator",
 				identities: []string{
@@ -1514,7 +1536,10 @@ func TestHandleAssignIdentities(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPatch, fmt.Sprintf("/api/v0/groups/%s/identities", test.input.groupID), bytes.NewReader(payload))
 			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockService.EXPECT().AssignIdentities(gomock.Any(), test.input.groupID, test.input.identities).Return(test.expected)
+			mockService.EXPECT().CanAssignIdentities(gomock.Any(), "test-user", test.input.identities).Return(test.expectedCheck, test.expectedCheckErr)
+			if test.expectedCheck {
+				mockService.EXPECT().AssignIdentities(gomock.Any(), test.input.groupID, test.input.identities).Return(test.expected)
+			}
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -1659,14 +1684,18 @@ func TestHandleAssignRoles(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		input    input
-		expected error
-		output   *types.Response
+		name             string
+		input            input
+		expectedCheck    bool
+		expectedCheckErr error
+		expected         error
+		output           *types.Response
 	}{
 		{
-			name:     "multiple roles",
-			expected: nil,
+			name:             "multiple roles",
+			expectedCheck:    true,
+			expectedCheckErr: nil,
+			expected:         nil,
 			input: input{
 				groupID: "administrator",
 				roles: []string{
@@ -1679,8 +1708,26 @@ func TestHandleAssignRoles(t *testing.T) {
 			},
 		},
 		{
-			name:     "multiple roles with error",
-			expected: fmt.Errorf("error"),
+			name:             "multiple roles cannot be assigned error",
+			expectedCheck:    false,
+			expectedCheckErr: nil,
+			expected:         nil,
+			input: input{
+				groupID: "administrator",
+				roles: []string{
+					"viewer", "writer",
+				},
+			},
+			output: &types.Response{
+				Message: "user test-user is not allowed to assign specified roles",
+				Status:  http.StatusForbidden,
+			},
+		},
+		{
+			name:             "multiple roles can be assigned then error",
+			expectedCheck:    true,
+			expectedCheckErr: nil,
+			expected:         fmt.Errorf("error"),
 			input: input{
 				groupID: "administrator",
 				roles: []string{
@@ -1711,7 +1758,10 @@ func TestHandleAssignRoles(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v0/groups/%s/roles", test.input.groupID), bytes.NewReader(payload))
 			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockService.EXPECT().AssignRoles(gomock.Any(), test.input.groupID, test.input.roles).Return(test.expected)
+			mockService.EXPECT().CanAssignRoles(gomock.Any(), "test-user", test.input.roles).Return(test.expectedCheck, test.expectedCheckErr)
+			if test.expectedCheck {
+				mockService.EXPECT().AssignRoles(gomock.Any(), test.input.groupID, test.input.roles).Return(test.expected)
+			}
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()

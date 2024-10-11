@@ -425,6 +425,86 @@ func TestServiceAssignRoles(t *testing.T) {
 	}
 }
 
+func TestServiceCanAssignRoles(t *testing.T) {
+	type input struct {
+		roles []string
+	}
+
+	tests := []struct {
+		name          string
+		input         input
+		expectedCheck bool
+		expectedErr   error
+	}{
+		{
+			name: "error",
+			input: input{
+				roles: []string{"joe"},
+			},
+			expectedCheck: false,
+			expectedErr:   fmt.Errorf("error"),
+		},
+		{
+			name: "multiple roles",
+			input: input{
+				roles: []string{"joe", "james", "ubork"},
+			},
+			expectedCheck: true,
+			expectedErr:   nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			principalContext := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "mock-principal@email.com"})
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+
+			workerPool := NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+
+			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.CanAssignRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockOpenFGA.EXPECT().BatchCheck(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, tuples ...ofga.Tuple) (bool, error) {
+					ids := make([]ofga.Tuple, 0)
+
+					for _, r := range test.input.roles {
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:mock-principal@email.com"), authz.CAN_VIEW_RELATION, fmt.Sprintf("role:%s", r)))
+					}
+
+					if !reflect.DeepEqual(ids, tuples) {
+						t.Errorf("expected tuples to be %v got %v", ids, tuples)
+					}
+
+					return test.expectedCheck, test.expectedErr
+				},
+			)
+
+			if test.expectedErr != nil {
+				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+			}
+
+			check, err := svc.CanAssignRoles(principalContext, "mock-principal@email.com", test.input.roles...)
+
+			if err != test.expectedErr {
+				t.Errorf("expected error to be %v got %v", test.expectedErr, err)
+			}
+
+			if check != test.expectedCheck {
+				t.Errorf("expected check to be %v got %v", test.expectedCheck, err)
+			}
+
+		})
+	}
+}
+
 func TestServiceRemoveRoles(t *testing.T) {
 	type input struct {
 		group string
@@ -567,6 +647,86 @@ func TestServiceAssignIdentities(t *testing.T) {
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
 			}
+		})
+	}
+}
+
+func TestServiceCanAssignIdentities(t *testing.T) {
+	type input struct {
+		identities []string
+	}
+
+	tests := []struct {
+		name          string
+		input         input
+		expectedCheck bool
+		expectedErr   error
+	}{
+		{
+			name: "error",
+			input: input{
+				identities: []string{"joe"},
+			},
+			expectedCheck: false,
+			expectedErr:   fmt.Errorf("error"),
+		},
+		{
+			name: "multiple identities",
+			input: input{
+				identities: []string{"joe", "james", "ubork"},
+			},
+			expectedCheck: true,
+			expectedErr:   nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			principalContext := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "mock-principal@email.com"})
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+
+			workerPool := NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+
+			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.CanAssignIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockOpenFGA.EXPECT().BatchCheck(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, tuples ...ofga.Tuple) (bool, error) {
+					ids := make([]ofga.Tuple, 0)
+
+					for _, i := range test.input.identities {
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:mock-principal@email.com"), authz.CAN_VIEW_RELATION, fmt.Sprintf("identity:%s", i)))
+					}
+
+					if !reflect.DeepEqual(ids, tuples) {
+						t.Errorf("expected tuples to be %v got %v", ids, tuples)
+					}
+
+					return test.expectedCheck, test.expectedErr
+				},
+			)
+
+			if test.expectedErr != nil {
+				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+			}
+
+			check, err := svc.CanAssignIdentities(principalContext, "mock-principal@email.com", test.input.identities...)
+
+			if err != test.expectedErr {
+				t.Errorf("expected error to be %v got %v", test.expectedErr, err)
+			}
+
+			if check != test.expectedCheck {
+				t.Errorf("expected check to be %v got %v", test.expectedCheck, err)
+			}
+
 		})
 	}
 }

@@ -4,7 +4,9 @@
 package authorization
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -335,6 +337,71 @@ func (c RoleConverter) MapV0(r *http.Request) []Permission {
 // DELETE /api/v0/groups/{id}/identities/{i_id}
 type GroupConverter struct{}
 
+func (c GroupConverter) rolesAssignementCheck(r *http.Request) ([]Permission, error) {
+	// TODO @shipperizer payloads should be centralized in a separate package to avoid circular
+	// imports and duplications
+	type UpdateRolesRequest struct {
+		// validate slice is not nil, and each item is not nil
+		Roles []string `json:"roles" validate:"required,dive,required"`
+	}
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rData := new(UpdateRolesRequest)
+	if err := json.Unmarshal(body, rData); err != nil {
+		return nil, err
+	}
+
+	permissions := make([]Permission, 0)
+
+	for _, role := range rData.Roles {
+		permissions = append(permissions, Permission{
+			Relation:   CAN_VIEW_RELATION,
+			ResourceID: RoleForTuple(role),
+		},
+		)
+	}
+
+	return permissions, nil
+}
+
+func (c GroupConverter) identitiesAssignementCheck(r *http.Request) ([]Permission, error) {
+	// TODO @shipperizer payloads should be centralized in a separate package to avoid circular
+	// imports and duplications
+	type UpdateIdentitiesRequest struct {
+		Identities []string `json:"identities" validate:"required,dive,required"`
+	}
+
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rData := new(UpdateIdentitiesRequest)
+	if err := json.Unmarshal(body, rData); err != nil {
+		return nil, err
+	}
+
+	permissions := make([]Permission, 0)
+
+	for _, identity := range rData.Identities {
+		permissions = append(permissions, Permission{
+			Relation:   CAN_VIEW_RELATION,
+			ResourceID: IdentityForTuple(identity),
+		},
+		)
+	}
+
+	return permissions, nil
+}
+
 func (c GroupConverter) TypeName() string {
 	return GROUP_TYPE
 }
@@ -390,13 +457,18 @@ func (c GroupConverter) MapV0(r *http.Request) []Permission {
 	// TODO @shipperizer payload inspection needs to be dealt with in the handler to make sure
 	// identities are viewable
 	if strings.HasSuffix(r.URL.Path, "identities") && r.Method == http.MethodPatch {
-		return []Permission{
-			{
+		// TODO @shipperizer need to break the chain if error is != nil
+		ps, _ := c.identitiesAssignementCheck(r)
+
+		ps = append(
+			ps,
+			Permission{
 				Relation:         CAN_EDIT,
 				ResourceID:       resourceId,
 				ContextualTuples: contextualTuples,
 			},
-		}
+		)
+		return ps
 	}
 
 	// DELETE /api/v0/groups/{id}/entitlements
@@ -415,13 +487,19 @@ func (c GroupConverter) MapV0(r *http.Request) []Permission {
 	// TODO @shipperizer payload inspection needs to be dealt with in the handler to make sure
 	// roles are viewable
 	if strings.HasSuffix(r.URL.Path, "roles") && r.Method == http.MethodPost {
-		return []Permission{
-			{
+		// TODO @shipperizer need to break the chain if error is != nil
+		ps, _ := c.rolesAssignementCheck(r)
+
+		ps = append(
+			ps,
+			Permission{
 				Relation:         CAN_EDIT,
 				ResourceID:       resourceId,
 				ContextualTuples: contextualTuples,
 			},
-		}
+		)
+
+		return ps
 	}
 
 	if role_id != "" && r.Method == http.MethodDelete {

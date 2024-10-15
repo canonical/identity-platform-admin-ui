@@ -7,12 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
-	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
-	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
-	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"sort"
 	"strings"
@@ -20,13 +14,21 @@ import (
 	"testing"
 	"time"
 
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+
 	"github.com/google/uuid"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	authz "github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
@@ -191,8 +193,7 @@ func TestServiceListRoles(t *testing.T) {
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.ListRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockOpenFGA.EXPECT().ListObjects(gomock.Any(), fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), ASSIGNEE_RELATION, "role").Return(test.expected.roles, test.expected.err)
+			mockOpenFGA.EXPECT().ListObjects(gomock.Any(), fmt.Sprintf("group:%s#%s", test.input, authz.MEMBER_RELATION), authz.ASSIGNEE_RELATION, "role").Return(test.expected.roles, test.expected.err)
 
 			if test.expected.err != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
@@ -315,7 +316,7 @@ func TestServiceListIdentities(t *testing.T) {
 					tuples,
 					*openfga.NewTuple(
 						*openfga.NewTupleKey(
-							t, ASSIGNEE_RELATION, fmt.Sprintf("group:%s", test.input.group),
+							t, authz.ASSIGNEE_RELATION, fmt.Sprintf("group:%s", test.input.group),
 						),
 						time.Now(),
 					),
@@ -328,7 +329,7 @@ func TestServiceListIdentities(t *testing.T) {
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.ListIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group), test.input.token).Return(r, test.expected.err)
+			mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group), test.input.token).Return(r, test.expected.err)
 
 			if test.expected.err != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
@@ -394,14 +395,13 @@ func TestServiceAssignRoles(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.AssignRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					roles := make([]ofga.Tuple, 0)
 
 					for _, role := range test.input.roles {
-						roles = append(roles, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
+						roles = append(roles, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION), authz.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
 					}
 
 					if !reflect.DeepEqual(roles, tuples) {
@@ -421,6 +421,86 @@ func TestServiceAssignRoles(t *testing.T) {
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
 			}
+		})
+	}
+}
+
+func TestServiceCanAssignRoles(t *testing.T) {
+	type input struct {
+		roles []string
+	}
+
+	tests := []struct {
+		name          string
+		input         input
+		expectedCheck bool
+		expectedErr   error
+	}{
+		{
+			name: "error",
+			input: input{
+				roles: []string{"joe"},
+			},
+			expectedCheck: false,
+			expectedErr:   fmt.Errorf("error"),
+		},
+		{
+			name: "multiple roles",
+			input: input{
+				roles: []string{"joe", "james", "ubork"},
+			},
+			expectedCheck: true,
+			expectedErr:   nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			principalContext := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "mock-principal@email.com"})
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+
+			workerPool := NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+
+			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.CanAssignRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockOpenFGA.EXPECT().BatchCheck(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, tuples ...ofga.Tuple) (bool, error) {
+					ids := make([]ofga.Tuple, 0)
+
+					for _, r := range test.input.roles {
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:mock-principal@email.com"), authz.CAN_VIEW_RELATION, fmt.Sprintf("role:%s", r)))
+					}
+
+					if !reflect.DeepEqual(ids, tuples) {
+						t.Errorf("expected tuples to be %v got %v", ids, tuples)
+					}
+
+					return test.expectedCheck, test.expectedErr
+				},
+			)
+
+			if test.expectedErr != nil {
+				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+			}
+
+			check, err := svc.CanAssignRoles(principalContext, "mock-principal@email.com", test.input.roles...)
+
+			if err != test.expectedErr {
+				t.Errorf("expected error to be %v got %v", test.expectedErr, err)
+			}
+
+			if check != test.expectedCheck {
+				t.Errorf("expected check to be %v got %v", test.expectedCheck, err)
+			}
+
 		})
 	}
 }
@@ -468,14 +548,13 @@ func TestServiceRemoveRoles(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.RemoveRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					roles := make([]ofga.Tuple, 0)
 
 					for _, role := range test.input.roles {
-						roles = append(roles, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
+						roles = append(roles, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION), authz.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
 					}
 
 					if !reflect.DeepEqual(roles, tuples) {
@@ -542,14 +621,13 @@ func TestServiceAssignIdentities(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.AssignIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ids := make([]ofga.Tuple, 0)
 
 					for _, i := range test.input.identities {
-						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)))
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)))
 					}
 
 					if !reflect.DeepEqual(ids, tuples) {
@@ -569,6 +647,86 @@ func TestServiceAssignIdentities(t *testing.T) {
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
 			}
+		})
+	}
+}
+
+func TestServiceCanAssignIdentities(t *testing.T) {
+	type input struct {
+		identities []string
+	}
+
+	tests := []struct {
+		name          string
+		input         input
+		expectedCheck bool
+		expectedErr   error
+	}{
+		{
+			name: "error",
+			input: input{
+				identities: []string{"joe"},
+			},
+			expectedCheck: false,
+			expectedErr:   fmt.Errorf("error"),
+		},
+		{
+			name: "multiple identities",
+			input: input{
+				identities: []string{"joe", "james", "ubork"},
+			},
+			expectedCheck: true,
+			expectedErr:   nil,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			principalContext := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "mock-principal@email.com"})
+
+			mockLogger := NewMockLoggerInterface(ctrl)
+			mockTracer := NewMockTracer(ctrl)
+			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
+			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+
+			workerPool := NewMockWorkerPoolInterface(ctrl)
+
+			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+
+			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.CanAssignIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockOpenFGA.EXPECT().BatchCheck(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
+				func(ctx context.Context, tuples ...ofga.Tuple) (bool, error) {
+					ids := make([]ofga.Tuple, 0)
+
+					for _, i := range test.input.identities {
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:mock-principal@email.com"), authz.CAN_VIEW_RELATION, fmt.Sprintf("identity:%s", i)))
+					}
+
+					if !reflect.DeepEqual(ids, tuples) {
+						t.Errorf("expected tuples to be %v got %v", ids, tuples)
+					}
+
+					return test.expectedCheck, test.expectedErr
+				},
+			)
+
+			if test.expectedErr != nil {
+				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+			}
+
+			check, err := svc.CanAssignIdentities(principalContext, "mock-principal@email.com", test.input.identities...)
+
+			if err != test.expectedErr {
+				t.Errorf("expected error to be %v got %v", test.expectedErr, err)
+			}
+
+			if check != test.expectedCheck {
+				t.Errorf("expected check to be %v got %v", test.expectedCheck, err)
+			}
+
 		})
 	}
 }
@@ -616,14 +774,13 @@ func TestServiceRemoveIdentities(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.RemoveIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ids := make([]ofga.Tuple, 0)
 
 					for _, i := range test.input.identities {
-						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)))
+						ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", i), authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)))
 					}
 
 					if !reflect.DeepEqual(ids, tuples) {
@@ -712,7 +869,6 @@ func TestServiceGetGroup(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.GetGroup").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().Check(gomock.Any(), fmt.Sprintf("user:%s", test.input.user), "can_view", fmt.Sprintf("group:%s", test.input.group)).Return(test.expected.check, test.expected.err)
 
@@ -776,7 +932,6 @@ func TestServiceCreateGroup(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.CreateGroup").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
@@ -785,8 +940,8 @@ func TestServiceCreateGroup(t *testing.T) {
 
 					ps = append(
 						ps,
-						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)),
-						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), CAN_VIEW_RELATION, fmt.Sprintf("group:%s", test.input.group)),
+						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group)),
+						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), authz.CAN_VIEW_RELATION, fmt.Sprintf("group:%s", test.input.group)),
 					)
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -849,7 +1004,6 @@ func TestServiceDeleteGroup(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.DeleteGroup").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.removePermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.removeDirectAssociations").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -863,7 +1017,7 @@ func TestServiceDeleteGroup(t *testing.T) {
 
 				calls = append(
 					calls,
-					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
+					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("group:%s#%s", test.input, authz.MEMBER_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
 						func(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
 							if test.expected != nil {
 								return nil, test.expected
@@ -901,13 +1055,13 @@ func TestServiceDeleteGroup(t *testing.T) {
 							tuples := []openfga.Tuple{
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"user:test", MEMBER_RELATION, object,
+										"user:test", authz.MEMBER_RELATION, object,
 									),
 									time.Now(),
 								),
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"group:test#member", MEMBER_RELATION, object,
+										"group:test#member", authz.MEMBER_RELATION, object,
 									),
 									time.Now(),
 								),
@@ -933,8 +1087,8 @@ func TestServiceDeleteGroup(t *testing.T) {
 						case 1:
 							tuple := tuples[0]
 
-							if tuple.User != fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
-								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, MEMBER_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
+							if tuple.User != fmt.Sprintf("group:%s#%s", test.input, authz.MEMBER_RELATION) && tuple.User != authz.ADMIN_OBJECT {
+								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("group:%s#%s", test.input, authz.MEMBER_RELATION), authz.ADMIN_OBJECT}, tuple.User)
 							}
 
 							if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
@@ -950,8 +1104,8 @@ func TestServiceDeleteGroup(t *testing.T) {
 									t.Errorf("expected user to be one of %v got %v", []string{"user:test", "group:test#member"}, tuple.User)
 								}
 
-								if tuple.Relation != MEMBER_RELATION {
-									t.Errorf("expected relation to be of %v got %v", MEMBER_RELATION, tuple.Relation)
+								if tuple.Relation != authz.MEMBER_RELATION {
+									t.Errorf("expected relation to be of %v got %v", authz.MEMBER_RELATION, tuple.Relation)
 								}
 
 								if tuple.Object != fmt.Sprintf("group:%s", test.input) {
@@ -1022,7 +1176,6 @@ func TestServiceListPermissions(t *testing.T) {
 			}
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.ListPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.listPermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
@@ -1056,8 +1209,8 @@ func TestServiceListPermissions(t *testing.T) {
 								return nil, test.expected
 							}
 
-							if user != fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION) {
-								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION), user)
+							if user != fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION) {
+								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION), user)
 							}
 
 							if object == "group:" && continuationToken != "test" {
@@ -1077,7 +1230,7 @@ func TestServiceListPermissions(t *testing.T) {
 								tuples = append(tuples,
 									*openfga.NewTuple(
 										*openfga.NewTupleKey(
-											fmt.Sprintf("group:%s#%s", user, MEMBER_RELATION), "assignee", fmt.Sprintf("%stest", object),
+											fmt.Sprintf("group:%s#%s", user, authz.MEMBER_RELATION), "assignee", fmt.Sprintf("%stest", object),
 										),
 										time.Now(),
 									),
@@ -1169,14 +1322,13 @@ func TestServiceAssignPermissions(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.AssignPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -1249,14 +1401,13 @@ func TestServiceRemovePermissions(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.buildGroupMember").AnyTimes().Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.RemovePermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, MEMBER_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("group:%s#%s", test.input.group, authz.MEMBER_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {

@@ -26,6 +26,8 @@ type ServiceInterface interface {
 	ListIdentities(context.Context, string, string) ([]string, string, error)
 	AssignIdentities(context.Context, string, ...string) error
 	RemoveIdentities(context.Context, string, ...string) error
+	CanAssignRoles(context.Context, string, ...string) (bool, error)
+	CanAssignIdentities(context.Context, string, ...string) (bool, error)
 }
 
 // OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation
@@ -35,4 +37,5 @@ type OpenFGAClientInterface interface {
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
+	BatchCheck(context.Context, ...ofga.Tuple) (bool, error)
 }

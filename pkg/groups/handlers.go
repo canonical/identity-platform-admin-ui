@@ -469,6 +469,7 @@ func (a *API) handleAssignRoles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ID := chi.URLParam(r, "id")
+	principal := authentication.PrincipalFromContext(r.Context())
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -497,6 +498,29 @@ func (a *API) handleAssignRoles(w http.ResponseWriter, r *http.Request) {
 
 		return
 
+	}
+
+	canAssign, err := a.service.CanAssignRoles(r.Context(), principal.Identifier(), roles.Roles...)
+	if err != nil {
+		rr := types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(rr)
+		return
+	}
+
+	if !canAssign {
+		rr := types.Response{
+			Status:  http.StatusForbidden,
+			Message: fmt.Sprintf("user %s is not allowed to assign specified roles", principal.Identifier()),
+		}
+
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(rr)
+		return
 	}
 
 	err = a.service.AssignRoles(r.Context(), ID, roles.Roles...)
@@ -607,6 +631,7 @@ func (a *API) handleAssignIdentities(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ID := chi.URLParam(r, "id")
+	principal := authentication.PrincipalFromContext(r.Context())
 
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
@@ -635,6 +660,29 @@ func (a *API) handleAssignIdentities(w http.ResponseWriter, r *http.Request) {
 
 		return
 
+	}
+
+	canAssign, err := a.service.CanAssignIdentities(r.Context(), principal.Identifier(), identities.Identities...)
+	if err != nil {
+		rr := types.Response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(rr)
+		return
+	}
+
+	if !canAssign {
+		rr := types.Response{
+			Status:  http.StatusForbidden,
+			Message: fmt.Sprintf("user %s is not allowed to assign specified identities", principal.Identifier()),
+		}
+
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(rr)
+		return
 	}
 
 	err = a.service.AssignIdentities(r.Context(), ID, identities.Identities...)

@@ -6,27 +6,22 @@ package groups
 import (
 	"context"
 	"fmt"
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
-	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
-	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"strings"
 	"sync"
 
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	authz "github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
-)
-
-const (
-	MEMBER_RELATION   = "member"
-	ASSIGNEE_RELATION = "assignee"
-	// TODO: @barco centralize common relation name definitions
-	CAN_VIEW_RELATION = "can_view"
 )
 
 type listPermissionsResult struct {
@@ -47,20 +42,12 @@ type Service struct {
 	logger  logging.LoggerInterface
 }
 
-func (s *Service) buildGroupMember(ctx context.Context, ID string) string {
-	_, span := s.tracer.Start(ctx, "groups.Service.buildGroupMember")
-	defer span.End()
-
-	return fmt.Sprintf("group:%s#%s", ID, MEMBER_RELATION)
-
-}
-
 // ListGroups returns all the groups a specific user can see (using "can_view" OpenFGA relation)
 func (s *Service) ListGroups(ctx context.Context, userID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListGroups")
 	defer span.End()
 
-	groups, err := s.ofga.ListObjects(ctx, fmt.Sprintf("user:%s", userID), "can_view", "group")
+	groups, err := s.ofga.ListObjects(ctx, authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, "group")
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -75,7 +62,7 @@ func (s *Service) ListRoles(ctx context.Context, ID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListRoles")
 	defer span.End()
 
-	roles, err := s.ofga.ListObjects(ctx, s.buildGroupMember(ctx, ID), ASSIGNEE_RELATION, "role")
+	roles, err := s.ofga.ListObjects(ctx, authz.GroupMemberForTuple(ID), authz.ASSIGNEE_RELATION, "role")
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -150,7 +137,7 @@ func (s *Service) GetGroup(ctx context.Context, userID, ID string) (*Group, erro
 	ctx, span := s.tracer.Start(ctx, "groups.Service.GetGroup")
 	defer span.End()
 
-	exists, err := s.ofga.Check(ctx, fmt.Sprintf("user:%s", userID), "can_view", fmt.Sprintf("group:%s", ID))
+	exists, err := s.ofga.Check(ctx, authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.GroupForTuple(ID))
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -181,14 +168,13 @@ func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) (*G
 	// `define can_view: [user, user:*, group#assignee, group#member] or assignee or admin from privileged`
 	// might sort the problem
 
-	// TODO @shipperizer offload to privileged creator object
-	group := fmt.Sprintf("group:%s", groupName)
-	user := fmt.Sprintf("user:%s", userID)
+	group := authz.GroupForTuple(groupName)
+	user := authz.UserForTuple(userID)
 
 	err := s.ofga.WriteTuples(
 		ctx,
-		*ofga.NewTuple(user, MEMBER_RELATION, group),
-		*ofga.NewTuple(user, CAN_VIEW_RELATION, group),
+		*ofga.NewTuple(user, authz.MEMBER_RELATION, group),
+		*ofga.NewTuple(user, authz.CAN_VIEW_RELATION, group),
 	)
 
 	if err != nil {
@@ -213,7 +199,7 @@ func (s *Service) AssignRoles(ctx context.Context, ID string, roles ...string) e
 	rs := make([]ofga.Tuple, 0)
 
 	for _, role := range roles {
-		rs = append(rs, *ofga.NewTuple(s.buildGroupMember(ctx, ID), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
+		rs = append(rs, *ofga.NewTuple(authz.GroupMemberForTuple(ID), authz.ASSIGNEE_RELATION, authz.RoleForTuple(role)))
 	}
 
 	err := s.ofga.WriteTuples(ctx, rs...)
@@ -224,6 +210,31 @@ func (s *Service) AssignRoles(ctx context.Context, ID string, roles ...string) e
 	}
 
 	return nil
+}
+
+func (s *Service) CanAssignRoles(ctx context.Context, userID string, roles ...string) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "groups.Service.CanAssignRoles")
+	defer span.End()
+
+	cardinality := len(roles)
+	if cardinality == 0 {
+		return true, nil
+	}
+
+	rs := make([]ofga.Tuple, 0, cardinality)
+
+	for _, role := range roles {
+		rs = append(rs, *ofga.NewTuple(authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.RoleForTuple(role)))
+	}
+
+	check, err := s.ofga.BatchCheck(ctx, rs...)
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return false, err
+	}
+
+	return check, nil
 }
 
 // RemoveRoles drops roles from a group
@@ -237,7 +248,7 @@ func (s *Service) RemoveRoles(ctx context.Context, ID string, roles ...string) e
 	rs := make([]ofga.Tuple, 0)
 
 	for _, role := range roles {
-		rs = append(rs, *ofga.NewTuple(s.buildGroupMember(ctx, ID), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", role)))
+		rs = append(rs, *ofga.NewTuple(authz.GroupMemberForTuple(ID), authz.ASSIGNEE_RELATION, authz.RoleForTuple(role)))
 	}
 
 	err := s.ofga.DeleteTuples(ctx, rs...)
@@ -262,7 +273,7 @@ func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions 
 	ps := make([]ofga.Tuple, 0)
 
 	for _, p := range permissions {
-		ps = append(ps, *ofga.NewTuple(s.buildGroupMember(ctx, ID), p.Relation, p.Object))
+		ps = append(ps, *ofga.NewTuple(authz.GroupMemberForTuple(ID), p.Relation, p.Object))
 	}
 
 	err := s.ofga.WriteTuples(ctx, ps...)
@@ -287,7 +298,7 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 	ps := make([]ofga.Tuple, 0)
 
 	for _, p := range permissions {
-		ps = append(ps, *ofga.NewTuple(s.buildGroupMember(ctx, ID), p.Relation, p.Object))
+		ps = append(ps, *ofga.NewTuple(authz.GroupMemberForTuple(ID), p.Relation, p.Object))
 	}
 
 	err := s.ofga.DeleteTuples(ctx, ps...)
@@ -351,7 +362,7 @@ func (s *Service) ListIdentities(ctx context.Context, ID, continuationToken stri
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListIdentities")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, "", MEMBER_RELATION, fmt.Sprintf("group:%s", ID), continuationToken)
+	r, err := s.ofga.ReadTuples(ctx, "", authz.MEMBER_RELATION, authz.GroupForTuple(ID), continuationToken)
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -380,9 +391,8 @@ func (s *Service) AssignIdentities(ctx context.Context, ID string, identities ..
 
 	ids := make([]ofga.Tuple, 0)
 
-	for _, identity := range identities {
-		// TODO @shipperizer swap user for identity if/when model changes
-		ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", identity), MEMBER_RELATION, fmt.Sprintf("group:%s", ID)))
+	for _, user := range identities {
+		ids = append(ids, *ofga.NewTuple(authz.UserForTuple(user), authz.MEMBER_RELATION, authz.GroupForTuple(ID)))
 	}
 
 	err := s.ofga.WriteTuples(ctx, ids...)
@@ -395,6 +405,31 @@ func (s *Service) AssignIdentities(ctx context.Context, ID string, identities ..
 	return nil
 }
 
+func (s *Service) CanAssignIdentities(ctx context.Context, userID string, identities ...string) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "groups.Service.CanAssignIdentities")
+	defer span.End()
+
+	cardinality := len(identities)
+	if cardinality == 0 {
+		return true, nil
+	}
+
+	rs := make([]ofga.Tuple, 0, cardinality)
+
+	for _, identity := range identities {
+		rs = append(rs, *ofga.NewTuple(authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.IdentityForTuple(identity)))
+	}
+
+	check, err := s.ofga.BatchCheck(ctx, rs...)
+
+	if err != nil {
+		s.logger.Error(err.Error())
+		return false, err
+	}
+
+	return check, nil
+}
+
 // RemoveIdentities removes identities from a group
 func (s *Service) RemoveIdentities(ctx context.Context, ID string, identities ...string) error {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.RemoveIdentities")
@@ -402,9 +437,8 @@ func (s *Service) RemoveIdentities(ctx context.Context, ID string, identities ..
 
 	ids := make([]ofga.Tuple, 0)
 
-	for _, identity := range identities {
-		// TODO @shipperizer swap user for identity if/when model changes
-		ids = append(ids, *ofga.NewTuple(fmt.Sprintf("user:%s", identity), MEMBER_RELATION, fmt.Sprintf("group:%s", ID)))
+	for _, user := range identities {
+		ids = append(ids, *ofga.NewTuple(authz.UserForTuple(user), authz.MEMBER_RELATION, authz.GroupForTuple(ID)))
 	}
 
 	err := s.ofga.DeleteTuples(ctx, ids...)
@@ -424,7 +458,7 @@ func (s *Service) listPermissionsByType(ctx context.Context, ID, pType, continua
 	ctx, span := s.tracer.Start(ctx, "groups.Service.listPermissionsByType")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, s.buildGroupMember(ctx, ID), "", fmt.Sprintf("%s:", pType), continuationToken)
+	r, err := s.ofga.ReadTuples(ctx, authz.GroupMemberForTuple(ID), "", fmt.Sprintf("%s:", pType), continuationToken)
 
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -439,7 +473,7 @@ func (s *Service) listPermissionsByType(ctx context.Context, ID, pType, continua
 			continue
 		}
 
-		permissions = append(permissions, authorization.NewURN(t.Key.Relation, t.Key.Object).ID())
+		permissions = append(permissions, authz.NewURN(t.Key.Relation, t.Key.Object).ID())
 	}
 
 	return permissions, r.GetContinuationToken(), nil
@@ -450,7 +484,7 @@ func (s *Service) removePermissionsByType(ctx context.Context, ID, pType string)
 	defer span.End()
 
 	cToken := ""
-	memberRelation := s.buildGroupMember(ctx, ID)
+	memberRelation := authz.GroupMemberForTuple(ID)
 	permissions := make([]ofga.Tuple, 0)
 	for {
 		r, err := s.ofga.ReadTuples(ctx, memberRelation, "", fmt.Sprintf("%s:", pType), cToken)
@@ -485,7 +519,7 @@ func (s *Service) removeDirectAssociations(ctx context.Context, ID, relation str
 	cToken := ""
 	directs := make([]ofga.Tuple, 0)
 	for {
-		r, err := s.ofga.ReadTuples(ctx, "", relation, fmt.Sprintf("group:%s", ID), cToken)
+		r, err := s.ofga.ReadTuples(ctx, "", relation, authz.GroupForTuple(ID), cToken)
 
 		if err != nil {
 			s.logger.Errorf("error when retrieving tuples for %s group, %s relation", relation, ID)
@@ -836,7 +870,7 @@ func (s *V1Service) GetGroupEntitlements(ctx context.Context, groupId string, pa
 	}
 
 	for _, permission := range permissions {
-		p := authorization.NewURNFromURLParam(permission)
+		p := authz.NewURNFromURLParam(permission)
 		entity := strings.SplitN(p.Object(), ":", 2)
 		r.Data = append(
 			r.Data,

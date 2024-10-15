@@ -232,3 +232,15 @@ func NewAuthenticationMiddleware(oauth2 OAuth2ContextInterface, cookieManager Au
 	m.logger = logger
 	return m
 }
+
+func AuthenticationDisabledMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		noAuthPrincipal := UserPrincipal{
+			Subject: "0000000000000000",
+			Name:    "User",
+			Email:   "user@email.com",
+		}
+
+		next.ServeHTTP(w, r.WithContext(PrincipalContext(r.Context(), &noAuthPrincipal)))
+	})
+}

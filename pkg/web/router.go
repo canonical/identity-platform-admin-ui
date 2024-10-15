@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
@@ -31,7 +33,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
-	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 )
 
 type RouterConfig struct {
@@ -182,6 +183,8 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 			"/api/v0/metrics",
 		)
 		apiRouter.Use(authenticationMiddleware.OAuth2AuthenticationChain()...)
+	} else {
+		apiRouter.Use(authentication.AuthenticationDisabledMiddleware)
 	}
 
 	// register authorizationMiddleware after authentication so Principal is available if necessary

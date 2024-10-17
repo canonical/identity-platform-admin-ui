@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 import {
   appendBasePath,
   calculateBasePath,
@@ -63,6 +66,7 @@ describe("calculateBasePath", () => {
 
 describe("appendBasePath", () => {
   it("handles paths with a leading slash", () => {
+    setBase("/test/");
     expect(appendBasePath("/test")).toBe("/example/ui/test");
   });
 
@@ -73,10 +77,10 @@ describe("appendBasePath", () => {
 
 describe("appendAPIBasePath", () => {
   it("handles paths with a leading slash", () => {
-    expect(appendAPIBasePath("/test")).toBe("/api/v0/test");
+    expect(appendAPIBasePath("/test")).toBe("/example/api/v0/test");
   });
 
   it("handles paths without a leading slash", () => {
-    expect(appendAPIBasePath("test")).toBe("/api/v0/test");
+    expect(appendAPIBasePath("test")).toBe("/example/api/v0/test");
   });
 });

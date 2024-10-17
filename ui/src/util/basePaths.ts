@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 import { removeTrailingSlash } from "util/removeTrailingSlash";
 import { getFullPath } from "./getFullPath";
 type BasePath = `/${string}`;
@@ -12,7 +15,8 @@ export const calculateBasePath = (): BasePath => {
 };
 
 export const basePath: BasePath = calculateBasePath();
-export const apiBasePath: BasePath = "/api/v0/";
+export const apiBasePath =
+  `${basePath.replace(/ui\/$/, "")}api/v0/` as BasePath;
 
 export const appendBasePath = (path: string) =>
   `${removeTrailingSlash(basePath)}/${path.replace(/^\//, "")}`;

@@ -107,7 +107,7 @@ func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
 			normContextPath += "/"
 		}
 
-		err = t.Execute(w, normContextPath)
+		err = t.Execute(w, template.URL(normContextPath))
 		if err != nil {
 			a.logger.Error("Failed to process %s template: ", indexTemplate, err)
 			a.internalServerErrorResponse(w, err)

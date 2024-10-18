@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.21.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.20.0...v1.21.0) (2024-10-18)
+
+
+### Features
+
+* add authn middleware for disabled authentication ([c232cfe](https://github.com/canonical/identity-platform-admin-ui/commit/c232cfe53dcbbd5189ba8840d02b78accb941c34))
+* add granular checks method to interface + expose BatchCheck from client ([645a9fd](https://github.com/canonical/identity-platform-admin-ui/commit/645a9fd2a0c208cb307f43c1417e233a1e0a48e9))
+* **groups:** add CanAssignRoles and CanAssignIdentities implementation ([b5e551a](https://github.com/canonical/identity-platform-admin-ui/commit/b5e551a6d726f1858b547941e48507cf786bba13))
+* **groups:** add granular CanAssign{Identities,Roles} checks in handlers ([d25b430](https://github.com/canonical/identity-platform-admin-ui/commit/d25b430363ddffac04e82ebda0f9ba702afe8452))
+
+
+### Bug Fixes
+
+* adopt disabledAuthnMiddleware to not break app when authentication disabled ([963f07a](https://github.com/canonical/identity-platform-admin-ui/commit/963f07a77e1a8a1e8addb8c23f841b8e3ed9a219))
+* api base path ([d83e0ab](https://github.com/canonical/identity-platform-admin-ui/commit/d83e0ab69e97323dfac45bdacfbc8e958473d502))
+* avoid escaping when passing URL to template ([0702053](https://github.com/canonical/identity-platform-admin-ui/commit/0702053e869366ae634920111ed08f65eafb3717))
+
 ## [1.20.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.19.0...v1.20.0) (2024-10-09)
 
 

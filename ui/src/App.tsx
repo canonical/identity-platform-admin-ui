@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { FC, useRef } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { ReBACAdmin } from "@canonical/rebac-admin";
+import { ReBACAdmin } from "@canonical/rebac-admin-admin-ui";
 import { AxiosError } from "axios";
 
 import { authURLs } from "api/auth";

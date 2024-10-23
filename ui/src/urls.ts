@@ -1,4 +1,4 @@
-import { urls as rebacURLs } from "@canonical/rebac-admin";
+import { urls as rebacURLs } from "@canonical/rebac-admin-admin-ui";
 
 const rebacAdminURLS = rebacURLs("/");
 

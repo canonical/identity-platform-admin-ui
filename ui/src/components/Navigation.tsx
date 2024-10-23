@@ -2,7 +2,7 @@ import { SideNavigation } from "@canonical/react-components";
 import { FC } from "react";
 import { NavLink, NavLinkProps } from "react-router-dom";
 import { Button } from "@canonical/react-components";
-import { GroupsLink, RolesLink } from "@canonical/rebac-admin";
+import { GroupsLink, RolesLink } from "@canonical/rebac-admin-admin-ui";
 import { authURLs } from "api/auth";
 import { appendAPIBasePath } from "util/basePaths";
 

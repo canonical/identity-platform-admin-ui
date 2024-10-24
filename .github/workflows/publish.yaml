@@ -3,6 +3,9 @@ run-name: Publish container from ${{ inputs.rock }} to ghcr.io/canonical/identit
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
     inputs:
       rock:
         type: string
@@ -16,7 +19,6 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    secrets: inherit
     outputs:
       image: ${{ steps.set.outputs.image }}
     steps:
@@ -67,7 +69,6 @@ jobs:
 
   oci-factory:
     runs-on: ubuntu-latest
-    secrets: inherit
     steps:
       - name: Checkout repository
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
@@ -96,4 +97,4 @@ jobs:
           $OCI_FACTORY upload -y --release track=$IMAGE_VERSION_STABLE-22.04,risks=stable,eol=$EOL_STABLE
           $OCI_FACTORY upload -y --release track=$IMAGE_VERSION_CANDIDATE-22.04,risks=candidate,edge,eol=$EOL_CANDIDATE
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}            
+          GITHUB_TOKEN: ${{ secrets.token }}            

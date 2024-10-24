@@ -69,10 +69,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
+      - name: Golang setup
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.22.0'
       # install oci-factory via golang and set path in environment
       - name: Install oci-factory
         run: |
-          sudo apt update && sudo apt install -y golang-go git
+          sudo apt update && sudo apt install -y git
           go install github.com/canonical/oci-factory/tools/cli-client/cmd/oci-factory@latest
           go install github.com/mikefarah/yq/v4@v4.44.3
           echo "OCI_FACTORY=$(go env GOPATH)/bin/oci-factory" >> $GITHUB_ENV

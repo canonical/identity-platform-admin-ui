@@ -94,4 +94,4 @@ jobs:
           $OCI_FACTORY upload -y --release track=$IMAGE_VERSION_STABLE-22.04,risks=stable,eol=$EOL_STABLE
           $OCI_FACTORY upload -y --release track=$IMAGE_VERSION_CANDIDATE-22.04,risks=candidate,edge,eol=$EOL_CANDIDATE
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}            
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}            

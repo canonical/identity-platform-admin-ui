@@ -85,8 +85,8 @@ jobs:
           GO111MODULE: "on"
       - name: Set EOLs and version
         run: |
-          echo EOL_STABLE=$(date -d "$(date +'%Y-%m-%d') +6 month" +%Y-%m-%d") >> $GITHUB_ENV
-          echo EOL_CANDIDATE=$(date -d "$(date +'%Y-%m-%d') +14 day" +%Y-%m-%d") >> $GITHUB_ENV
+          echo EOL_STABLE=$(date -d "$(date +'%Y-%m-%d') +6 month" "+%Y-%m-%d") >> $GITHUB_ENV
+          echo EOL_CANDIDATE=$(date -d "$(date +'%Y-%m-%d') +14 day" "+%Y-%m-%d") >> $GITHUB_ENV
           echo IMAGE_VERSION_STABLE=$($YQ '.version | split(".").0' rockcraft.yaml) >> $GITHUB_ENV
           echo IMAGE_VERSION_CANDIDATE=$($YQ '.version' rockcraft.yaml) >> $GITHUB_ENV
       - name: Release

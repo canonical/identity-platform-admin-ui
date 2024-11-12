@@ -120,6 +120,45 @@ func TestValidate(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
+			name:     "CreateIdPSuccessWithOIDCDiscovery",
+			method:   http.MethodPost,
+			endpoint: "",
+			body: func() []byte {
+				conf := new(Configuration)
+				conf.ID = "google_generic"
+				conf.Provider = "generic"
+				conf.IssuerURL = "mock-url"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{}
+				conf.Mapper = "mock-url"
+
+				marshal, _ := json.Marshal(conf)
+				return marshal
+			},
+			expectedResult: nil,
+			expectedError:  nil,
+		},
+		{
+			name:     "CreateIdPSuccessWithoutOIDCDiscovery",
+			method:   http.MethodPost,
+			endpoint: "",
+			body: func() []byte {
+				conf := new(Configuration)
+				conf.ID = "google_generic"
+				conf.Provider = "generic"
+				conf.AuthURL = "mock-url"
+				conf.TokenURL = "mock-url"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{}
+				conf.Mapper = "mock-url"
+
+				marshal, _ := json.Marshal(conf)
+				return marshal
+			},
+			expectedResult: nil,
+			expectedError:  nil,
+		},
+		{
 			name:     "PartialUpdateIdPSuccess",
 			method:   http.MethodPatch,
 			endpoint: "/",
@@ -155,6 +194,23 @@ func TestValidate(t *testing.T) {
 			body: func() []byte {
 				conf := new(Configuration)
 				conf.Provider = "microsoft"
+				conf.SubjectSource = "me"
+				conf.Scope = []string{"profile"}
+				conf.Mapper = "mock-url"
+
+				marshal, _ := json.Marshal(conf)
+				return marshal
+			},
+			expectedResult: validator.ValidationErrors{},
+			expectedError:  nil,
+		},
+		{
+			name:     "CreateIdPEmptyURLsAndIssuerValidationError",
+			method:   http.MethodPost,
+			endpoint: "",
+			body: func() []byte {
+				conf := new(Configuration)
+				conf.Provider = "generic"
 				conf.SubjectSource = "me"
 				conf.Scope = []string{"profile"}
 				conf.Mapper = "mock-url"

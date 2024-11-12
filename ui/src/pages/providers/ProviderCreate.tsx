@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 import { FC } from "react";
 import {
   ActionButton,
@@ -31,7 +34,7 @@ const ProviderCreate: FC = () => {
       id: "",
       client_id: "",
       client_secret: "",
-      mapper_url: "file:///etc/config/kratos/okta_schema.jsonnet",
+      mapper_url: "",
       scope: "email",
       subject_source: "userinfo",
     },

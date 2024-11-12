@@ -50,19 +50,19 @@ type Configuration struct {
 	// IssuerURL is the OpenID Connect Server URL. You can leave this empty if `provider` is not set to `generic`.
 	// If set, neither `auth_url` nor `token_url` are required.
 	// validate that this field is required only when Provider field == "generic"
-	IssuerURL string `json:"issuer_url" yaml:"issuer_url" validate:"required_if=Provider generic"`
+	IssuerURL string `json:"issuer_url" yaml:"issuer_url"`
 
 	// AuthURL is the authorize url, typically something like: https://example.org/oauth2/auth
 	// Should only be used when the OAuth2 / OpenID Connect server is not supporting OpenID Connect Discovery and when
 	// `provider` is set to `generic`.
-	// validate that this field is required only when Provider field == "generic"
-	AuthURL string `json:"auth_url" yaml:"auth_url" validate:"required_if=Provider generic"`
+	// validate that this field is required only when Provider field == "generic" and IssuerURL is empty
+	AuthURL string `json:"auth_url" yaml:"auth_url"`
 
 	// TokenURL is the token url, typically something like: https://example.org/oauth2/token
 	// Should only be used when the OAuth2 / OpenID Connect server is not supporting OpenID Connect Discovery and when
 	// `provider` is set to `generic`.
-	// validate that this field is required only when Provider field == "generic"
-	TokenURL string `json:"token_url" yaml:"token_url" validate:"required_if=Provider generic"`
+	// validate that this field is required only when Provider field == "generic" and IssuerURL is empty
+	TokenURL string `json:"token_url" yaml:"token_url"`
 
 	// Tenant is the Azure AD Tenant to use for authentication, and must be set when `provider` is set to `microsoft`.
 	// Can be either `common`, `organizations`, `consumers` for a multitenant application or a specific tenant like
@@ -103,7 +103,7 @@ type Configuration struct {
 	// profile information) to hydrate the identity's data.
 	//
 	// It can be either a URL (file://, http(s)://, base64://) or an inline JSONNet code snippet.
-	Mapper string `json:"mapper_url" yaml:"mapper_url" validate:"required"`
+	Mapper string `json:"mapper_url" yaml:"mapper_url"`
 
 	// RequestedClaims string encoded json object that specifies claims and optionally their properties which should be
 	// included in the id_token or returned from the UserInfo Endpoint.

@@ -23,9 +23,24 @@ type PayloadValidator struct {
 	logger logging.LoggerInterface
 }
 
+func genericIssuerOAuth2URLsValidation(sl validator.StructLevel) {
+	configuration := sl.Current().Interface().(Configuration)
+
+	if configuration.Provider != "generic" {
+		return
+	}
+
+	// Kratos will try OIDC discovery, so if IssuerURL is not empty, AuthURL and TokenURL could be empty
+	// if IssuerURL is empty, then we need both AuthURL and TokenURL
+	if configuration.IssuerURL == "" && (configuration.AuthURL == "" || configuration.TokenURL == "") {
+		sl.ReportError(configuration.IssuerURL, "issuer_url", "IssuerURL", "issuer_urls", "")
+	}
+}
+
 func (p *PayloadValidator) setupValidator() {
 	// validate Provider to be one of the supported ones
 	p.validator.RegisterAlias("supported_provider", fmt.Sprintf("oneof=%s", SUPPORTED_PROVIDERS))
+	p.validator.RegisterStructValidation(genericIssuerOAuth2URLsValidation, Configuration{})
 }
 
 func (p *PayloadValidator) NeedsValidation(r *http.Request) bool {

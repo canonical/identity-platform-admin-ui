@@ -3,9 +3,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'ui/**'
   pull_request:
     branches:
       - main
+    paths:
+      - 'ui/**'
 jobs:
   lint:
     name: Lint
@@ -27,6 +31,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         node-version: [20.x]
@@ -40,7 +46,12 @@ jobs:
           cache-dependency-path: ui/yarn.lock
       - name: Install
         run: yarn --cwd ui install --immutable
-      - run: yarn --cwd ui test-js
+      - run: yarn --cwd ui test-js --coverage.enabled true
+      - name: "Upload Coverage"
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
   build:
     name: Build
     runs-on: ubuntu-latest

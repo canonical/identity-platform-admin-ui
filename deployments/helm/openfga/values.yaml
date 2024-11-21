@@ -1,8 +1,9 @@
 datastore:
   engine: postgres
   uri: "postgres://iam:iam@postgresql.default.svc.cluster.local/openfga?sslmode=disable"
+  migrationType: "job"
 authn:
   preshared:
     keys:
       - "42"
-replicaCount: 1      
+replicaCount: 1

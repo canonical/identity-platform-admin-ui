@@ -1,9 +1,7 @@
 import React, { FC } from "react";
 import { PaginatedResponse } from "types/api";
-import { Button } from "@canonical/react-components";
+import { Button, Icon } from "@canonical/react-components";
 import { usePagination } from "util/usePagination";
-import IconLeft from "components/IconLeft";
-import IconRight from "components/IconRight";
 
 interface Props {
   response?: PaginatedResponse<unknown[]>;
@@ -26,18 +24,18 @@ const Pagination: FC<Props> = ({ response }) => {
     <>
       {showFirstLink && (
         <Button onClick={() => setPageToken("")} title="First page">
-          <IconLeft />
-          <IconLeft />
+          <Icon name="chevron-left" />
+          <Icon name="chevron-left" />
         </Button>
       )}
       {prev && (
         <Button onClick={() => setPageToken(prev)} title="Previous page">
-          <IconLeft />
+          <Icon name="chevron-left" />
         </Button>
       )}
       {next && (
         <Button onClick={() => setPageToken(next)} title="Next page">
-          <IconRight />
+          <Icon name="chevron-right" />
         </Button>
       )}
     </>

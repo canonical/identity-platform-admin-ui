@@ -1,9 +1,8 @@
 name: Report UI Coverage
 on:
-  workflow_run:
-    workflows: ["UI"]
-    types:
-      - completed
+  pull_request:
+    branches:
+      - main
 jobs:
   report:
     runs-on: ubuntu-latest
@@ -17,7 +16,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           name: coverage
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: 12026430494
           path: "./ui"
       - name: "Report Coverage"
         uses: davelosert/vitest-coverage-report-action@v2

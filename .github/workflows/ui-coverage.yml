@@ -18,6 +18,9 @@ jobs:
           name: coverage
           run-id: 12026430494
           path: "./ui"
+      - run: ls
+      - run: ls ui
+      - run: ls ui/coverage
       - name: "Report Coverage"
         uses: davelosert/vitest-coverage-report-action@v2
         with:

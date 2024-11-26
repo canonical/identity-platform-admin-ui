@@ -17,7 +17,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           name: coverage
           run-id: 12026430494
-          path: "./ui"
+          path: "./ui/coverage"
       - run: ls
       - run: ls ui
       - run: ls ui/coverage

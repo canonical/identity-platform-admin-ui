@@ -16,7 +16,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: coverage
           run-id: ${{ github.event.workflow_run.id }}
+          path: "./ui"
       - name: "Report Coverage"
         uses: davelosert/vitest-coverage-report-action@v2
         with:

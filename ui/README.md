@@ -4,7 +4,7 @@ This is the Admin UI for the Canonical identity platform.
 
 ## Development server
 
-Haproxy needs to be installed:
+HAProxy needs to be installed:
 
 ```shell
 apt install haproxy

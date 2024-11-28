@@ -1,5 +1,6 @@
 import { urls } from "urls";
 import { getURLKey } from "./getURLKey";
+
 test("handles indexes", () => {
   expect(getURLKey(urls.clients.index)).toBe("clients");
 });

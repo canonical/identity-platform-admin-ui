@@ -15,6 +15,7 @@ import IdentityForm, { IdentityFormTypes } from "pages/identities/IdentityForm";
 import { createIdentity } from "api/identities";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
+import { TestId } from "./types";
 
 const IdentityCreate: FC = () => {
   const navigate = useNavigate();
@@ -58,7 +59,12 @@ const IdentityCreate: FC = () => {
   };
 
   return (
-    <SidePanel hasError={false} loading={false} className="p-panel">
+    <SidePanel
+      hasError={false}
+      loading={false}
+      className="p-panel"
+      data-testid={TestId.COMPONENT}
+    >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>
           <SidePanel.HeaderTitle>Add identity</SidePanel.HeaderTitle>

@@ -18,6 +18,7 @@ import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { createProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
+import { TestId } from "./types";
 
 const ProviderCreate: FC = () => {
   const navigate = useNavigate();
@@ -62,7 +63,12 @@ const ProviderCreate: FC = () => {
   };
 
   return (
-    <SidePanel hasError={false} loading={false} className="p-panel">
+    <SidePanel
+      hasError={false}
+      loading={false}
+      className="p-panel"
+      data-testid={TestId.COMPONENT}
+    >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>
           <SidePanel.HeaderTitle>Add ID provider</SidePanel.HeaderTitle>

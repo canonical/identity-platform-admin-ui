@@ -5,6 +5,8 @@ import { Button } from "@canonical/react-components";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin-admin-ui";
 import { authURLs } from "api/auth";
 import { appendAPIBasePath } from "util/basePaths";
+import { urls } from "urls";
+import { Label } from "./types";
 
 type Props = {
   username?: string;
@@ -20,23 +22,23 @@ const Navigation: FC<Props> = ({ username }) => {
             items: [
               {
                 icon: "plans",
-                label: "Identity providers",
-                to: "/provider",
+                label: Label.IDENTITY_PROVIDERS,
+                to: urls.providers.index,
               },
               {
                 icon: "applications",
-                label: "Clients",
-                to: "/client",
+                label: Label.CLIENTS,
+                to: urls.clients.index,
               },
               {
                 icon: "user",
-                label: "Identities",
-                to: "/identity",
+                label: Label.IDENTITIES,
+                to: urls.identities.index,
               },
               {
                 icon: "profile",
-                label: "Schemas",
-                to: "/schema",
+                label: Label.SCHEMAS,
+                to: urls.schemas.index,
               },
               <GroupsLink
                 className="p-side-navigation__link"
@@ -75,7 +77,7 @@ const Navigation: FC<Props> = ({ username }) => {
                 className="p-side-navigation__link"
                 key="logout"
               >
-                Logout
+                {Label.LOGOUT}
               </Button>,
             ],
           },

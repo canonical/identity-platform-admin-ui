@@ -3,8 +3,8 @@ export const getParentsBottomSpacing = (element: Element): number => {
   while (element.parentElement) {
     element = element.parentElement;
     const style = window.getComputedStyle(element);
-    const margin = parseInt(style.marginBottom);
-    const padding = parseInt(style.paddingBottom);
+    const margin = parseInt(style.marginBottom) || 0;
+    const padding = parseInt(style.paddingBottom) || 0;
     sum += margin + padding;
   }
   return sum;
@@ -16,8 +16,9 @@ export const getAbsoluteHeightBelow = (belowId: string): number => {
     return 0;
   }
   const style = window.getComputedStyle(element);
-  const margin = parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+  const margin =
+    parseFloat(style.marginTop) + parseFloat(style.marginBottom) || 0;
   const padding =
-    parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) || 0;
   return element.offsetHeight + margin + padding + 1;
 };

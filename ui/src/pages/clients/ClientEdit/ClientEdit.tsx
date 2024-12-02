@@ -16,7 +16,7 @@ import { fetchClient, updateClient } from "api/client";
 import usePanelParams from "util/usePanelParams";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { TestId } from "./types";
+import { TestId } from "./test-types";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();

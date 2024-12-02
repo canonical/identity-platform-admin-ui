@@ -18,7 +18,7 @@ import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { createProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { TestId } from "./types";
+import { TestId } from "./test-types";
 
 const ProviderCreate: FC = () => {
   const navigate = useNavigate();

@@ -15,7 +15,8 @@ import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { createClient } from "api/client";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { TestId } from "./types";
+import { TestId } from "./test-types";
+import { testId } from "test/utils";
 
 const ClientCreate: FC = () => {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const ClientCreate: FC = () => {
       hasError={false}
       loading={false}
       className="p-panel"
-      data-testid={TestId.COMPONENT}
+      {...testId(TestId.COMPONENT)}
     >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>

@@ -15,7 +15,7 @@ import IdentityForm, { IdentityFormTypes } from "pages/identities/IdentityForm";
 import { createIdentity } from "api/identities";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
-import { TestId } from "./types";
+import { TestId } from "./test-types";
 
 const IdentityCreate: FC = () => {
   const navigate = useNavigate();

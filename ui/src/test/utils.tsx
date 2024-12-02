@@ -64,3 +64,6 @@ export const renderWrappedHook = <Result, Props>(
   });
   return { changeURL, result, queryClient };
 };
+
+export const testId = (testId: string) =>
+  import.meta.env.PROD ? undefined : { "data-testid": testId };

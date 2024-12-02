@@ -15,7 +15,7 @@ import { fetchProvider, updateProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import usePanelParams from "util/usePanelParams";
 import ScrollableContainer from "components/ScrollableContainer";
-import { TestId } from "./types";
+import { TestId } from "./test-types";
 
 const ProviderEdit: FC = () => {
   const notify = useNotify();

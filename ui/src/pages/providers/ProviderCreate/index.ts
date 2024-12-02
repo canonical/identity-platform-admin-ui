@@ -1,2 +1,2 @@
 export { default } from "./ProviderCreate";
-export { TestId as ProviderCreateTestId } from "./types";
+export { TestId as ProviderCreateTestId } from "./test-types";

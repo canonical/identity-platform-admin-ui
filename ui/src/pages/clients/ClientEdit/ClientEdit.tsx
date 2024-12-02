@@ -17,6 +17,7 @@ import usePanelParams from "util/usePanelParams";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
+import { testId } from "test/utils";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ const ClientEdit: FC = () => {
       hasError={false}
       loading={false}
       className="p-panel"
-      data-testid={TestId.COMPONENT}
+      {...testId(TestId.COMPONENT)}
     >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>

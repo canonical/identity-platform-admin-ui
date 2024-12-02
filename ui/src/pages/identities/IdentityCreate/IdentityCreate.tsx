@@ -16,6 +16,7 @@ import { createIdentity } from "api/identities";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
+import { testId } from "test/utils";
 
 const IdentityCreate: FC = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ const IdentityCreate: FC = () => {
       hasError={false}
       loading={false}
       className="p-panel"
-      data-testid={TestId.COMPONENT}
+      {...testId(TestId.COMPONENT)}
     >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>

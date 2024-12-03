@@ -16,6 +16,8 @@ import { fetchClient, updateClient } from "api/client";
 import usePanelParams from "util/usePanelParams";
 import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
+import { TestId } from "./test-types";
+import { testId } from "test/utils";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();
@@ -70,7 +72,12 @@ const ClientEdit: FC = () => {
   };
 
   return (
-    <SidePanel hasError={false} loading={false} className="p-panel">
+    <SidePanel
+      hasError={false}
+      loading={false}
+      className="p-panel"
+      {...testId(TestId.COMPONENT)}
+    >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>
           <SidePanel.HeaderTitle>Edit client</SidePanel.HeaderTitle>

@@ -95,6 +95,7 @@ const SidePanelComponent: FC<SidePanelProps> = ({
   className,
   width,
   pinned,
+  ...props
 }) => {
   let content: ReactNode = null;
   if (loading) {
@@ -114,6 +115,7 @@ const SidePanelComponent: FC<SidePanelProps> = ({
       })}
       aria-label={Label.SIDE_PANEL}
       pinned={pinned}
+      {...props}
     >
       {content}
     </AppAside>

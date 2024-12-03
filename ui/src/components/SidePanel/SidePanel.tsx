@@ -1,7 +1,8 @@
 import { FC, PropsWithChildren, ReactNode } from "react";
 import Loader from "components/Loader";
 import classnames from "classnames";
-import { AppAside, Panel, Spinner } from "@canonical/react-components";
+import { AppAside, Panel } from "@canonical/react-components";
+import { Label } from "./types";
 
 interface CommonProps {
   className?: string;
@@ -78,8 +79,8 @@ interface SidePanelProps {
   isOverlay?: boolean;
   isSplit?: boolean;
   children: ReactNode;
-  loading: boolean;
-  hasError: boolean;
+  loading?: boolean;
+  hasError?: boolean;
   className?: string;
   width?: "narrow" | "wide";
   pinned?: boolean;
@@ -90,12 +91,20 @@ const SidePanelComponent: FC<SidePanelProps> = ({
   isOverlay,
   isSplit = false,
   loading = false,
-  hasError,
+  hasError = false,
   className,
   width,
   pinned,
   ...props
 }) => {
+  let content: ReactNode = null;
+  if (loading) {
+    content = <Loader />;
+  } else if (hasError) {
+    content = Label.ERROR_LOADING;
+  } else {
+    content = children;
+  }
   return (
     <AppAside
       className={classnames(className, {
@@ -104,21 +113,11 @@ const SidePanelComponent: FC<SidePanelProps> = ({
         "is-split": isSplit,
         "is-overlay": isOverlay,
       })}
-      aria-label="Side panel"
+      aria-label={Label.SIDE_PANEL}
       pinned={pinned}
       {...props}
     >
-      {loading ? (
-        <div className="loading">
-          <Spinner />
-        </div>
-      ) : (
-        <>
-          {loading && <Loader />}
-          {!loading && hasError && <>Loading failed</>}
-          {!hasError && children}
-        </>
-      )}
+      {content}
     </AppAside>
   );
 };

@@ -15,6 +15,8 @@ import { fetchProvider, updateProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
 import usePanelParams from "util/usePanelParams";
 import ScrollableContainer from "components/ScrollableContainer";
+import { TestId } from "./test-types";
+import { testId } from "test/utils";
 
 const ProviderEdit: FC = () => {
   const notify = useNotify();
@@ -75,7 +77,12 @@ const ProviderEdit: FC = () => {
   });
 
   return (
-    <SidePanel hasError={false} loading={false} className="p-panel">
+    <SidePanel
+      hasError={false}
+      loading={false}
+      className="p-panel"
+      {...testId(TestId.COMPONENT)}
+    >
       <ScrollableContainer dependencies={[]} belowId="panel-footer">
         <SidePanel.Header>
           <SidePanel.HeaderTitle>Edit provider</SidePanel.HeaderTitle>

@@ -94,6 +94,7 @@ const SidePanelComponent: FC<SidePanelProps> = ({
   className,
   width,
   pinned,
+  ...props
 }) => {
   return (
     <AppAside
@@ -105,6 +106,7 @@ const SidePanelComponent: FC<SidePanelProps> = ({
       })}
       aria-label="Side panel"
       pinned={pinned}
+      {...props}
     >
       {loading ? (
         <div className="loading">

@@ -165,6 +165,32 @@ test("notifies on error", async () => {
       .getByText("Nebulous deletion failed")
       .closest(".p-notification--negative"),
   ).toBeInTheDocument();
+  expect(screen.getByText("Oops")).toHaveClass("p-notification__message");
+});
+
+test("notifies on error object", async () => {
+  renderComponent(
+    <NotificationProvider>
+      <NotificationConsumer />
+      <DeletePanelButton
+        confirmButtonLabel="Confirm"
+        confirmContent="Content"
+        entityName="Nebulous"
+        invalidateQuery="nebulous"
+        onDelete={() => Promise.reject(new Error("Oops"))}
+        successPath="/nebulous"
+        successMessage="successfully formed"
+      />
+    </NotificationProvider>,
+  );
+  await userEvent.click(screen.getByRole("button", { name: Label.DELETE }));
+  await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
+  expect(
+    screen
+      .getByText("Nebulous deletion failed")
+      .closest(".p-notification--negative"),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Oops")).toHaveClass("p-notification__message");
 });
 
 test("invlidates queries and hides the spinner on success", async () => {

@@ -26,8 +26,12 @@ const DeletePanelButton: FC<Props> = ({
       .then(() => {
         navigate(successPath, notify.queue(notify.success(successMessage)));
       })
-      .catch((e) => {
-        notify.failure(`${entityName} deletion failed`, e);
+      .catch((error: unknown) => {
+        notify.failure(
+          `${entityName} deletion failed`,
+          error instanceof Error ? error : null,
+          typeof error === "string" ? error : null,
+        );
       })
       .finally(() => {
         setLoading(false);

@@ -2,6 +2,7 @@ import { FC } from "react";
 import { Form, Input } from "@canonical/react-components";
 import { FormikProps } from "formik";
 import CheckboxList from "components/CheckboxList";
+import { Label } from "./types";
 
 export interface ClientFormTypes {
   client_uri?: string;
@@ -32,7 +33,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         id="client_name"
         name="client_name"
         type="text"
-        label="Name"
+        label={Label.NAME}
         onBlur={formik.handleBlur}
         onChange={formik.handleChange}
         value={formik.values.client_name}
@@ -43,7 +44,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         id="scope"
         name="scope"
         type="text"
-        label="Scope"
+        label={Label.SCOPE}
         onBlur={formik.handleBlur}
         onChange={formik.handleChange}
         value={formik.values.scope}
@@ -54,7 +55,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         id="redirect_uris"
         name="redirect_uris"
         type="text"
-        label="Redirect uri"
+        label={Label.REDIRECT_URI}
         onBlur={formik.handleBlur}
         onChange={(e) =>
           void formik.setFieldValue("redirect_uris", [e.target.value])
@@ -69,7 +70,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         id="client_uri"
         name="client_uri"
         type="text"
-        label="Client uri"
+        label={Label.CLIENT_URI}
         onBlur={formik.handleBlur}
         onChange={formik.handleChange}
         value={formik.values.client_uri}
@@ -80,7 +81,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         id="request_object_signing_alg"
         name="request_object_signing_alg"
         type="text"
-        label="Signing algorithm"
+        label={Label.SIGNING_ALGORITHM}
         onBlur={formik.handleBlur}
         onChange={formik.handleChange}
         value={formik.values.request_object_signing_alg}
@@ -92,7 +93,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         required
       />
       <CheckboxList
-        label="Grant types"
+        label={Label.GRANT_TYPES}
         values={["authorization_code", "refresh_token"]}
         checkedValues={formik.values.grant_types ?? []}
         toggleValue={(value: string) =>
@@ -100,7 +101,7 @@ const ClientForm: FC<Props> = ({ formik }) => {
         }
       />
       <CheckboxList
-        label="Response types"
+        label={Label.RESPONSE_TYPES}
         values={["code", "id_token"]}
         checkedValues={formik.values.response_types ?? []}
         toggleValue={(value: string) =>

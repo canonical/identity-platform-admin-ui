@@ -4,6 +4,7 @@ import { FormikProps } from "formik";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "util/queryKeys";
 import { fetchSchemas } from "api/schema";
+import { Label } from "./types";
 
 export interface IdentityFormTypes {
   schemaId: string;
@@ -31,7 +32,7 @@ const IdentityForm: FC<Props> = ({ formik }) => {
       <Input
         {...formik.getFieldProps("email")}
         type="text"
-        label="Email"
+        label={Label.EMAIL}
         error={formik.touched.email ? formik.errors.email : null}
       />
       <Select
@@ -44,7 +45,7 @@ const IdentityForm: FC<Props> = ({ formik }) => {
           },
           ...schemaOptions,
         ]}
-        label="Schema"
+        label={Label.SCHEMA}
         error={formik.touched.schemaId ? formik.errors.schemaId : null}
       />
     </Form>

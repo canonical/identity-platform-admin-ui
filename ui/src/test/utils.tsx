@@ -3,6 +3,7 @@ import { render, renderHook } from "@testing-library/react";
 
 import ComponentProviders from "./ComponentProviders";
 import type { ComponentProps } from "./ComponentProviders";
+import queries from "./queries";
 
 type Options = {
   url?: string;
@@ -32,6 +33,7 @@ export const renderComponent = (
   const queryClient = getQueryClient(options);
   changeURL(options?.url ?? "/");
   const result = render(component, {
+    queries,
     wrapper: (props) => (
       <ComponentProviders
         {...props}
@@ -52,6 +54,7 @@ export const renderWrappedHook = <Result, Props>(
   const queryClient = getQueryClient(options);
   changeURL(options?.url ?? "/");
   const { result } = renderHook(hook, {
+    queries,
     wrapper: (props) => (
       <ComponentProviders
         {...props}

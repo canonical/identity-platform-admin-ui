@@ -63,7 +63,7 @@ func serve() {
 		panic(fmt.Errorf("issues with environment sourcing: %s", err))
 	}
 
-	logger := logging.NewLogger(specs.LogLevel, specs.LogFile)
+	logger := logging.NewLogger(specs.LogLevel)
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 

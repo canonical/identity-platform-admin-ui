@@ -1,6 +1,7 @@
 import { FC, useState } from "react";
 import { Form, Input, Select, Textarea } from "@canonical/react-components";
 import { FormikProps } from "formik";
+import { Label } from "./types";
 
 const providerOptions = [
   {
@@ -120,14 +121,14 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         {...formik.getFieldProps("provider")}
         id="provider"
         options={providerOptions}
-        label="Provider"
+        label={Label.PROVIDER}
         error={formik.touched.provider ? formik.errors.provider : null}
       />
       <Input
         {...formik.getFieldProps("id")}
         id="id"
         type="text"
-        label="Name"
+        label={Label.NAME}
         error={formik.touched.id ? formik.errors.id : null}
         disabled={isEdit}
       />
@@ -135,7 +136,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         {...formik.getFieldProps("client_id")}
         id="client_id"
         type="text"
-        label="Client ID"
+        label={Label.CLIENT_ID}
         error={formik.touched.client_id ? formik.errors.client_id : null}
         disabled={isEdit}
       />
@@ -144,7 +145,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           {...formik.getFieldProps("client_secret")}
           id="client_secret"
           type="text"
-          label="Client secret"
+          label={Label.CLIENT_SECRET}
           error={
             formik.touched.client_secret ? formik.errors.client_secret : null
           }
@@ -159,7 +160,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
             {...formik.getFieldProps("microsoft_tenant")}
             id="microsoft_tenant"
             type="text"
-            label="Tenant"
+            label={Label.TENANT}
             help={
               <>
                 The Azure AD Tenant to use for authentication. Can either be{" "}
@@ -178,7 +179,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           <Input
             name="subject_source"
             type="radio"
-            label="Userinfo"
+            label={Label.USERINFO}
             help="The subject identifier is taken from sub field of userifo standard endpoint response"
             checked={formik.values.subject_source === "userinfo"}
             onChange={() =>
@@ -188,7 +189,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           <Input
             name="subject_source"
             type="radio"
-            label="Me"
+            label={Label.ME}
             help={
               <>
                 The <code>id</code> field of https://graph.microsoft.com/v1.0/me
@@ -208,7 +209,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           <Textarea
             {...formik.getFieldProps("apple_private_key")}
             id="apple_private_key"
-            label="Private Key"
+            label={Label.PRIVATE_KEY}
             error={
               formik.touched.apple_private_key
                 ? formik.errors.apple_private_key
@@ -219,7 +220,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
             {...formik.getFieldProps("apple_team_id")}
             id="apple_team_id"
             type="text"
-            label="Developer Team ID"
+            label={Label.DEVELOPER_TEAM_ID}
             help={
               <>
                 The Apple Developer Team ID can be found at{" "}
@@ -240,7 +241,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
             {...formik.getFieldProps("apple_private_key_id")}
             id="apple_private_key_id"
             type="text"
-            label="Private Key ID"
+            label={Label.PRIVATE_KEY_ID}
             error={
               formik.touched.apple_private_key_id
                 ? formik.errors.apple_private_key_id
@@ -269,7 +270,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           <Input
             type="radio"
             id="discovery_on"
-            label="Yes"
+            label={Label.YES}
             name="oidc_discovery"
             checked={hasAutoDiscovery}
             onChange={() => setAutoDiscovery(true)}
@@ -280,7 +281,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
                 {...formik.getFieldProps("issuer_url")}
                 id="issuer_url"
                 type="text"
-                label="OIDC server URL"
+                label={Label.OIDC_SERVER_URL}
                 error={
                   formik.touched.issuer_url ? formik.errors.issuer_url : null
                 }
@@ -290,7 +291,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
           <Input
             type="radio"
             id="discovery_off"
-            label="No"
+            label={Label.NO}
             name="oidc_discovery"
             checked={!hasAutoDiscovery}
             onChange={() => setAutoDiscovery(false)}
@@ -301,7 +302,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
                 {...formik.getFieldProps("auth_url")}
                 id="auth_url"
                 type="text"
-                label="Auth URL"
+                label={Label.AUTH_URL}
                 help="I.e. https://example.org/oauth2/auth"
                 error={formik.touched.auth_url ? formik.errors.auth_url : null}
               />
@@ -309,7 +310,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
                 {...formik.getFieldProps("token_url")}
                 id="token_url"
                 type="text"
-                label="Token URL"
+                label={Label.TOKEN_URL}
                 help="I.e. https://example.org/oauth2/token"
                 error={
                   formik.touched.token_url ? formik.errors.token_url : null
@@ -326,7 +327,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         {...formik.getFieldProps("scope")}
         id="scope"
         type="text"
-        label="Scopes"
+        label={Label.SCOPES}
         help={
           <>
             Comma seperated list of optional requested permissions. Common
@@ -341,7 +342,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         {...formik.getFieldProps("requested_claims")}
         id="requested_claims"
         type="text"
-        label="Requested claims"
+        label={Label.REQUESTED_CLAIMS}
         error={
           formik.touched.requested_claims
             ? formik.errors.requested_claims
@@ -352,7 +353,7 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         {...formik.getFieldProps("mapper_url")}
         id="mapper_url"
         type="text"
-        label="Mapper"
+        label={Label.MAPPER}
         help="Mapper specifies the JSONNet code snippet which uses the OpenID Connect Provider's data to hydrate the identity's data. Supported file types are .jsonnet"
         error={formik.touched.mapper_url ? formik.errors.mapper_url : null}
         disabled={isEdit}

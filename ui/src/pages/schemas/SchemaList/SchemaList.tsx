@@ -11,6 +11,7 @@ import { fetchSchemas } from "api/schema";
 import Loader from "components/Loader";
 import Pagination from "components/Pagination";
 import { usePagination } from "util/usePagination";
+import { Label } from "./types";
 
 const SchemaList: FC = () => {
   const { pageToken } = usePagination();
@@ -34,29 +35,25 @@ const SchemaList: FC = () => {
             <MainTable
               className="u-table-layout--auto"
               responsive
-              headers={[{ content: "Id" }, { content: "Schema" }]}
+              headers={[
+                { content: Label.HEADER_ID },
+                { content: Label.HEADER_SCHEMA },
+              ]}
               rows={response?.data.map((schema) => {
                 return {
                   columns: [
                     {
                       content: schema.id,
                       role: "rowheader",
-                      "aria-label": "Id",
                     },
                     {
                       content: JSON.stringify(schema.schema),
-                      role: "rowheader",
-                      "aria-label": "Name",
                     },
                   ],
                 };
               })}
               emptyStateMsg={
-                isLoading ? (
-                  <Loader text="Loading schemas..." />
-                ) : (
-                  "No data to display"
-                )
+                isLoading ? <Loader text="Loading schemas..." /> : Label.NO_DATA
               }
             />
             <Pagination response={response} />

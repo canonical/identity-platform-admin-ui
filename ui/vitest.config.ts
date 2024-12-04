@@ -12,6 +12,9 @@ export default defineConfig((configEnv) =>
           reporter: ["text", "json-summary", "json", "cobertura"],
           reportOnFailure: true,
         },
+        env: {
+          TZ: "UTC",
+        },
         environment: "happy-dom",
         globals: true,
         include: ["./src/**/*.{test,spec}.{ts,tsx}"],

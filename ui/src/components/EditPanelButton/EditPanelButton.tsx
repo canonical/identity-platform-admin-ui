@@ -5,7 +5,7 @@ import usePanelParams from "util/usePanelParams";
 
 import { Label, Props } from "./types";
 
-const EditPanelButton: FC<Props> = ({ openPanel }: Props) => {
+const EditPanelButton: FC<Props> = ({ openPanel, ...props }: Props) => {
   const panelParams = usePanelParams();
 
   return (
@@ -13,6 +13,7 @@ const EditPanelButton: FC<Props> = ({ openPanel }: Props) => {
       className="u-no-margin--bottom"
       hasIcon
       onClick={() => openPanel(panelParams)}
+      {...props}
     >
       <Icon name="edit" />
       <span>{Label.EDIT}</span>

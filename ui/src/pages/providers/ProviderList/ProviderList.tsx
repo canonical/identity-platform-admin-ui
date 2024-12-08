@@ -12,6 +12,7 @@ import { fetchProviders } from "api/provider";
 import usePanelParams from "util/usePanelParams";
 import EditProviderBtn from "pages/providers/EditProviderBtn";
 import DeleteProviderBtn from "pages/providers/DeleteProviderBtn";
+import { Label } from "./types";
 
 const ProviderList: FC = () => {
   const panelParams = usePanelParams();
@@ -34,7 +35,7 @@ const ProviderList: FC = () => {
             appearance="positive"
             onClick={panelParams.openProviderCreate}
           >
-            Add ID provider
+            {Label.ADD}
           </Button>
         </div>
       </div>
@@ -47,9 +48,9 @@ const ProviderList: FC = () => {
               sortable
               responsive
               headers={[
-                { content: "Name", sortKey: "id" },
-                { content: "Provider", sortKey: "provider" },
-                { content: "Actions" },
+                { content: Label.HEADER_NAME, sortKey: "id" },
+                { content: Label.HEADER_PROVIDER, sortKey: "provider" },
+                { content: Label.HEADER_ACTIONS },
               ]}
               rows={providers?.data.map((provider) => {
                 return {
@@ -57,12 +58,9 @@ const ProviderList: FC = () => {
                     {
                       content: provider.id,
                       role: "rowheader",
-                      "aria-label": "Name",
                     },
                     {
                       content: provider.provider,
-                      role: "rowheader",
-                      "aria-label": "Provider",
                     },
                     {
                       content: (
@@ -71,8 +69,6 @@ const ProviderList: FC = () => {
                           <DeleteProviderBtn provider={provider} />
                         </>
                       ),
-                      role: "rowheader",
-                      "aria-label": "Actions",
                     },
                   ],
                   sortData: {

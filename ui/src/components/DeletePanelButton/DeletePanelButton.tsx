@@ -14,6 +14,7 @@ const DeletePanelButton: FC<Props> = ({
   onDelete,
   successMessage,
   successPath,
+  ...props
 }) => {
   const notify = useNotify();
   const queryClient = useQueryClient();
@@ -53,6 +54,7 @@ const DeletePanelButton: FC<Props> = ({
         title: confirmTitle,
       }}
       title={confirmTitle}
+      {...props}
     >
       {Label.DELETE}
     </ConfirmationButton>

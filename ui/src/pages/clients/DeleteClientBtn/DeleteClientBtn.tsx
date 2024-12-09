@@ -5,6 +5,8 @@ import { Client } from "types/client";
 import DeletePanelButton from "components/DeletePanelButton";
 import { urls } from "urls";
 import { Label } from "./types";
+import { testId } from "test/utils";
+import { TestId } from "./test-types";
 
 interface Props {
   client: Client;
@@ -24,6 +26,7 @@ const DeleteClientBtn: FC<Props> = ({ client }) => {
       onDelete={() => deleteClient(client.client_id)}
       successPath={urls.clients.index}
       successMessage={`Client ${client.client_name} deleted.`}
+      {...testId(TestId.COMPONENT)}
     />
   );
 };

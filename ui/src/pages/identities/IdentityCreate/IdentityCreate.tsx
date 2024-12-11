@@ -17,6 +17,7 @@ import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
 import { testId } from "test/utils";
+import { Label } from "./types";
 
 const IdentityCreate: FC = () => {
   const navigate = useNavigate();
@@ -45,12 +46,15 @@ const IdentityCreate: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.identities],
           });
-          const msg = `Identity created.`;
-          navigate("/identity", notify.queue(notify.success(msg)));
+          navigate("/identity", notify.queue(notify.success(Label.SUCCESS)));
         })
-        .catch((e) => {
+        .catch((error: unknown) => {
           formik.setSubmitting(false);
-          notify.failure("Identity creation failed", e);
+          notify.failure(
+            Label.ERROR,
+            error instanceof Error ? error : null,
+            typeof error === "string" ? error : null,
+          );
         });
     },
   });
@@ -81,7 +85,7 @@ const IdentityCreate: FC = () => {
           <Row className="u-align-text--right">
             <Col size={12}>
               <Button appearance="base" onClick={() => navigate("/identity")}>
-                Cancel
+                {Label.CANCEL}
               </Button>
               <ActionButton
                 appearance="positive"
@@ -89,7 +93,7 @@ const IdentityCreate: FC = () => {
                 disabled={!formik.isValid}
                 onClick={submitForm}
               >
-                Save
+                {Label.SUBMIT}
               </ActionButton>
             </Col>
           </Row>

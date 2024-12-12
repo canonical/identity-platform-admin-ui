@@ -17,6 +17,17 @@ import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
 import { testId } from "test/utils";
+import { Label } from "./types";
+
+export const initialValues = {
+  client_uri: "",
+  client_name: "grafana",
+  grant_types: ["authorization_code", "refresh_token"],
+  response_types: ["code", "id_token"],
+  scope: "openid offline_access email",
+  redirect_uris: ["http://localhost:2345/login/generic_oauth"],
+  request_object_signing_alg: "RS256",
+};
 
 const ClientCreate: FC = () => {
   const navigate = useNavigate();
@@ -28,15 +39,7 @@ const ClientCreate: FC = () => {
   });
 
   const formik = useFormik<ClientFormTypes>({
-    initialValues: {
-      client_uri: "",
-      client_name: "grafana",
-      grant_types: ["authorization_code", "refresh_token"],
-      response_types: ["code", "id_token"],
-      scope: "openid offline_access email",
-      redirect_uris: ["http://localhost:2345/login/generic_oauth"],
-      request_object_signing_alg: "RS256",
-    },
+    initialValues,
     validationSchema: ClientCreateSchema,
     onSubmit: (values) => {
       createClient(JSON.stringify(values))
@@ -47,9 +50,13 @@ const ClientCreate: FC = () => {
           const msg = `Client created. Id: ${result.client_id} Secret: ${result.client_secret}`;
           navigate("/client", notify.queue(notify.success(msg)));
         })
-        .catch((e) => {
+        .catch((error: unknown) => {
           formik.setSubmitting(false);
-          notify.failure("Client creation failed", e);
+          notify.failure(
+            Label.ERROR,
+            error instanceof Error ? error : null,
+            typeof error === "string" ? error : null,
+          );
         });
     },
   });
@@ -80,7 +87,7 @@ const ClientCreate: FC = () => {
           <Row className="u-align-text--right">
             <Col size={12}>
               <Button appearance="base" onClick={() => navigate("/client")}>
-                Cancel
+                {Label.CANCEL}
               </Button>
               <ActionButton
                 appearance="positive"
@@ -88,7 +95,7 @@ const ClientCreate: FC = () => {
                 disabled={!formik.isValid}
                 onClick={submitForm}
               >
-                Save
+                {Label.SUBMIT}
               </ActionButton>
             </Col>
           </Row>

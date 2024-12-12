@@ -17,6 +17,7 @@ import usePanelParams from "util/usePanelParams";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
 import { testId } from "test/utils";
+import { Label } from "./types";
 
 const ProviderEdit: FC = () => {
   const notify = useNotify();
@@ -24,13 +25,9 @@ const ProviderEdit: FC = () => {
   const panelParams = usePanelParams();
   const providerId = panelParams.id;
 
-  if (!providerId) {
-    return;
-  }
-
   const { data: provider } = useQuery({
     queryKey: [queryKeys.providers, providerId],
-    queryFn: () => fetchProvider(providerId),
+    queryFn: () => (providerId ? fetchProvider(providerId) : null),
   });
 
   const ProviderEditSchema = Yup.object().shape({
@@ -39,21 +36,21 @@ const ProviderEdit: FC = () => {
 
   const formik = useFormik<ProviderFormTypes>({
     initialValues: {
-      apple_private_key: provider?.apple_private_key,
-      apple_private_key_id: provider?.apple_private_key_id,
-      apple_team_id: provider?.apple_team_id,
-      auth_url: provider?.auth_url,
-      client_id: provider?.client_id,
-      client_secret: provider?.client_secret,
-      id: provider?.id,
-      issuer_url: provider?.issuer_url,
-      mapper_url: provider?.mapper_url,
-      microsoft_tenant: provider?.microsoft_tenant,
-      provider: provider?.provider,
-      requested_claims: provider?.requested_claims,
-      scope: provider?.scope?.join(","),
-      subject_source: provider?.subject_source,
-      token_url: provider?.token_url,
+      apple_private_key: provider?.apple_private_key || "",
+      apple_private_key_id: provider?.apple_private_key_id || "",
+      apple_team_id: provider?.apple_team_id || "",
+      auth_url: provider?.auth_url || "",
+      client_id: provider?.client_id || "",
+      client_secret: provider?.client_secret || "",
+      id: provider?.id || "",
+      issuer_url: provider?.issuer_url || "",
+      mapper_url: provider?.mapper_url || "",
+      microsoft_tenant: provider?.microsoft_tenant || "",
+      provider: provider?.provider || "",
+      requested_claims: provider?.requested_claims || "",
+      scope: provider?.scope?.join(",") || "",
+      subject_source: provider?.subject_source || "userinfo",
+      token_url: provider?.token_url || "",
     },
     enableReinitialize: true,
     validationSchema: ProviderEditSchema,
@@ -66,12 +63,16 @@ const ProviderEdit: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.providers],
           });
-          notify.success("Provider updated");
+          notify.success(Label.SUCCESS);
           panelParams.clear();
         })
-        .catch((e) => {
+        .catch((error: unknown) => {
           formik.setSubmitting(false);
-          notify.failure("Provider update failed", e);
+          notify.failure(
+            Label.ERROR,
+            error instanceof Error ? error : null,
+            typeof error === "string" ? error : null,
+          );
         });
     },
   });
@@ -102,7 +103,7 @@ const ProviderEdit: FC = () => {
                 className="u-no-margin--bottom u-sv2"
                 onClick={panelParams.clear}
               >
-                Cancel
+                {Label.CANCEL}
               </Button>
               <ActionButton
                 appearance="positive"
@@ -111,7 +112,7 @@ const ProviderEdit: FC = () => {
                 disabled={!formik.isValid}
                 onClick={() => void formik.submitForm()}
               >
-                Update
+                {Label.SUBMIT}
               </ActionButton>
             </Col>
           </Row>

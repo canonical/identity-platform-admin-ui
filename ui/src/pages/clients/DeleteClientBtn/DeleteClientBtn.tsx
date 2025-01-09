@@ -1,59 +1,30 @@
-import { FC, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FC } from "react";
 import { queryKeys } from "util/queryKeys";
-import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmationButton, useNotify } from "@canonical/react-components";
 import { deleteClient } from "api/client";
 import { Client } from "types/client";
+import DeletePanelButton from "components/DeletePanelButton";
+import { urls } from "urls";
+import { Label } from "./types";
 
 interface Props {
   client: Client;
 }
 
 const DeleteClientBtn: FC<Props> = ({ client }) => {
-  const notify = useNotify();
-  const queryClient = useQueryClient();
-  const [isLoading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handleDelete = () => {
-    setLoading(true);
-    deleteClient(client.client_id)
-      .then(() => {
-        navigate(
-          "/client",
-          notify.queue(notify.success(`Client ${client.client_name} deleted.`)),
-        );
-      })
-      .catch((e) => {
-        notify.failure("Client deletion failed", e);
-      })
-      .finally(() => {
-        setLoading(false);
-        void queryClient.invalidateQueries({
-          queryKey: [queryKeys.clients],
-        });
-      });
-  };
-
   return (
-    <ConfirmationButton
-      className="u-no-margin--bottom"
-      loading={isLoading}
-      confirmationModalProps={{
-        title: "Confirm delete",
-        children: (
-          <p>
-            This will permanently delete client <b>{client.client_name}</b>.
-          </p>
-        ),
-        confirmButtonLabel: "Delete client",
-        onConfirm: handleDelete,
-      }}
-      title="Confirm delete"
-    >
-      Delete
-    </ConfirmationButton>
+    <DeletePanelButton
+      confirmButtonLabel={Label.CONFIRM}
+      confirmContent={
+        <p>
+          This will permanently delete client <b>{client.client_name}</b>.
+        </p>
+      }
+      entityName="Client"
+      invalidateQuery={queryKeys.clients}
+      onDelete={() => deleteClient(client.client_id)}
+      successPath={urls.clients.index}
+      successMessage={`Client ${client.client_name} deleted.`}
+    />
   );
 };
 

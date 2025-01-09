@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.0...v1.22.1) (2024-12-12)
+
+
+### Bug Fixes
+
+* addressing CVE-2024-45337 ([a53fc20](https://github.com/canonical/identity-platform-admin-ui/commit/a53fc2048d683fb3b9e5cc23b494a40fdbe00d58)), closes [#505](https://github.com/canonical/identity-platform-admin-ui/issues/505)
+
 ## [1.22.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.21.0...v1.22.0) (2024-12-04)
 
 

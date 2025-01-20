@@ -77,6 +77,12 @@
       "automerge": true,
       "schedule": ["at any time"],
       "additionalBranchPrefix": "auto-"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/openfga/go-sdk"],
+      "allowedVersions": "v0.3.7",
+      "automerge": false
     }
   ]
 }

@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/google/uuid v1.5.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/openfga/go-sdk v0.3.4
+	github.com/openfga/go-sdk v0.3.7
 	github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379
 	github.com/ory/hydra-client-go/v2 v2.1.1
 	github.com/ory/kratos-client-go v1.1.0
@@ -21,6 +21,7 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
+	github.com/wneessen/go-mail v0.4.4
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.20.0
 	go.opentelemetry.io/otel v1.19.0
@@ -34,7 +35,6 @@ require (
 	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.13.0
 	google.golang.org/protobuf v1.32.0
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.28.3
 	k8s.io/apimachinery v0.28.3
@@ -90,7 +90,6 @@ require (
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/wneessen/go-mail v0.4.4 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect

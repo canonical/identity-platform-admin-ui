@@ -6,6 +6,8 @@ import { IdentityProvider } from "types/provider";
 import { urls } from "urls";
 import DeletePanelButton from "components/DeletePanelButton";
 import { Label } from "./types";
+import { testId } from "test/utils";
+import { TestId } from "./test-types";
 
 interface Props {
   provider: IdentityProvider;
@@ -53,6 +55,7 @@ const DeleteProviderBtn: FC<Props> = ({ provider }) => {
       }}
       successPath={urls.providers.index}
       successMessage={`Provider ${provider.id} deleted.`}
+      {...testId(TestId.COMPONENT)}
     />
   );
 };

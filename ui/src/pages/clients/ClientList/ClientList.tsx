@@ -16,6 +16,7 @@ import DeleteClientBtn from "pages/clients/DeleteClientBtn";
 import Loader from "components/Loader";
 import Pagination from "components/Pagination";
 import { usePagination } from "util/usePagination";
+import { Label } from "./types";
 
 const ClientList: FC = () => {
   const panelParams = usePanelParams();
@@ -34,7 +35,7 @@ const ClientList: FC = () => {
         </div>
         <div className="p-panel__controls">
           <Button appearance="positive" onClick={panelParams.openClientCreate}>
-            Add client
+            {Label.ADD}
           </Button>
         </div>
       </div>
@@ -46,10 +47,10 @@ const ClientList: FC = () => {
               className="u-table-layout--auto"
               responsive
               headers={[
-                { content: "Id" },
-                { content: "Name" },
-                { content: "Date" },
-                { content: "Actions" },
+                { content: Label.HEADER_ID },
+                { content: Label.HEADER_NAME },
+                { content: Label.HEADER_DATE },
+                { content: Label.HEADER_ACTIONS },
               ]}
               rows={response?.data.map((client) => {
                 return {
@@ -57,12 +58,9 @@ const ClientList: FC = () => {
                     {
                       content: client.client_id,
                       role: "rowheader",
-                      "aria-label": "Id",
                     },
                     {
                       content: client.client_name,
-                      role: "rowheader",
-                      "aria-label": "Name",
                     },
                     {
                       content: (
@@ -75,8 +73,6 @@ const ClientList: FC = () => {
                           </div>
                         </>
                       ),
-                      role: "rowheader",
-                      "aria-label": "Created",
                     },
                     {
                       content: (
@@ -85,18 +81,12 @@ const ClientList: FC = () => {
                           <DeleteClientBtn client={client} />
                         </>
                       ),
-                      role: "rowheader",
-                      "aria-label": "Actions",
                     },
                   ],
                 };
               })}
               emptyStateMsg={
-                isLoading ? (
-                  <Loader text="Loading clients..." />
-                ) : (
-                  "No data to display"
-                )
+                isLoading ? <Loader text="Loading clients..." /> : Label.NO_DATA
               }
             />
             <Pagination response={response} />

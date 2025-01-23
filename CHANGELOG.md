@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.1...v1.22.2) (2025-01-23)
+
+
+### Bug Fixes
+
+* lower update frequency to avoid spamming ([46857a6](https://github.com/canonical/identity-platform-admin-ui/commit/46857a6d94eae00e70acc877c5d766345ef3508e))
+
 ## [1.22.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.0...v1.22.1) (2024-12-12)
 
 

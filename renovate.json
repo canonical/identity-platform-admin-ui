@@ -12,6 +12,8 @@
     "helpers:pinGitHubActionDigests",
     ":enablePreCommit"
   ],
+  "timezone": "Europe/London",
+  "schedule": ["* * * * 1,3,6"],
   "automergeType": "pr",
   "rebaseWhen": "behind-base-branch",
   "packageRules": [
@@ -20,7 +22,6 @@
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
-      "schedule": ["at any time"],
       "additionalBranchPrefix": "auto-"
     },
     {
@@ -28,7 +29,6 @@
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest"],
       "automerge": true,
-      "schedule": ["at any time"],
       "prPriority": 4,
       "additionalBranchPrefix": "auto-"
     },
@@ -41,7 +41,6 @@
           "^vanilla-framework"
       ],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "schedule": ["at any time"],
       "prPriority": 5,
       "additionalBranchPrefix": "auto-"
     },
@@ -54,28 +53,24 @@
           "^vanilla-framework"
       ],
       "matchUpdateTypes": ["major"],
-      "schedule": ["at any time"],
       "prPriority": 5
     },
     {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "schedule": ["at any time"],
       "additionalBranchPrefix": "auto-"
     },
     {
       "groupName": "Go deps",
       "matchManagers": ["gomod"],
-      "matchUpdateTypes": ["major"],
-      "schedule": ["at any time"]
+      "matchUpdateTypes": ["major"]
     },
     {
       "groupName": "pre-commit hooks",
       "matchManagers": ["pre-commit"],
       "matchUpdateTypes": ["major", "minor", "patch"],
       "automerge": true,
-      "schedule": ["at any time"],
       "additionalBranchPrefix": "auto-"
     },
     {

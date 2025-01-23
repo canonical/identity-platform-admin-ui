@@ -18,6 +18,7 @@ import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
 import { testId } from "test/utils";
+import { Label } from "./types";
 
 const ClientEdit: FC = () => {
   const navigate = useNavigate();
@@ -26,13 +27,9 @@ const ClientEdit: FC = () => {
   const panelParams = usePanelParams();
   const clientId = panelParams.id;
 
-  if (!clientId) {
-    return;
-  }
-
   const { data } = useQuery({
     queryKey: [queryKeys.clients, clientId],
-    queryFn: () => fetchClient(clientId),
+    queryFn: () => (clientId ? fetchClient(clientId) : null),
   });
   const client = data?.data;
 
@@ -42,13 +39,13 @@ const ClientEdit: FC = () => {
 
   const formik = useFormik<ClientFormTypes>({
     initialValues: {
-      client_uri: client?.client_uri,
-      client_name: client?.client_name,
-      grant_types: client?.grant_types,
-      response_types: client?.response_types,
-      scope: client?.scope,
-      redirect_uris: client?.redirect_uris,
-      request_object_signing_alg: client?.request_object_signing_alg,
+      client_uri: client?.client_uri || "",
+      client_name: client?.client_name || "",
+      grant_types: client?.grant_types || [],
+      response_types: client?.response_types || [],
+      scope: client?.scope || "",
+      redirect_uris: client?.redirect_uris || [],
+      request_object_signing_alg: client?.request_object_signing_alg || "",
     },
     enableReinitialize: true,
     validationSchema: ClientEditSchema,
@@ -58,11 +55,15 @@ const ClientEdit: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.clients],
           });
-          navigate("/client", notify.queue(notify.success("Client updated")));
+          navigate("/client", notify.queue(notify.success(Label.SUCCESS)));
         })
-        .catch((e) => {
+        .catch((error: unknown) => {
           formik.setSubmitting(false);
-          notify.failure("Client update failed", e);
+          notify.failure(
+            Label.ERROR,
+            error instanceof Error ? error : null,
+            typeof error === "string" ? error : null,
+          );
         });
     },
   });
@@ -97,7 +98,7 @@ const ClientEdit: FC = () => {
                 className="u-no-margin--bottom u-sv2"
                 onClick={() => navigate("/client")}
               >
-                Cancel
+                {Label.CANCEL}
               </Button>
               <ActionButton
                 appearance="positive"
@@ -106,7 +107,7 @@ const ClientEdit: FC = () => {
                 disabled={!formik.isValid}
                 onClick={submitForm}
               >
-                Update
+                {Label.SUBMIT}
               </ActionButton>
             </Col>
           </Row>

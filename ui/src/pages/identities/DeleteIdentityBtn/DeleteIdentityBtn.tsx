@@ -5,6 +5,8 @@ import { deleteIdentity } from "api/identities";
 import { urls } from "urls";
 import DeletePanelButton from "components/DeletePanelButton";
 import { Label } from "./types";
+import { testId } from "test/utils";
+import { TestId } from "./test-types";
 
 interface Props {
   identity: Identity;
@@ -24,6 +26,7 @@ const DeleteIdentityBtn: FC<Props> = ({ identity }) => {
       onDelete={() => deleteIdentity(identity.id)}
       successPath={urls.identities.index}
       successMessage={`Identity ${identity.traits?.email} deleted.`}
+      {...testId(TestId.COMPONENT)}
     />
   );
 };

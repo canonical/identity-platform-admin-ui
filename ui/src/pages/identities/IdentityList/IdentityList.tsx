@@ -15,6 +15,7 @@ import usePanelParams from "util/usePanelParams";
 import { usePagination } from "util/usePagination";
 import Pagination from "components/Pagination";
 import DeleteIdentityBtn from "pages/identities/DeleteIdentityBtn";
+import { Label } from "./types";
 
 const IdentityList: FC = () => {
   const panelParams = usePanelParams();
@@ -36,7 +37,7 @@ const IdentityList: FC = () => {
             appearance="positive"
             onClick={panelParams.openIdentityCreate}
           >
-            Add identity
+            {Label.ADD}
           </Button>
         </div>
       </div>
@@ -48,10 +49,10 @@ const IdentityList: FC = () => {
               className="u-table-layout--auto"
               responsive
               headers={[
-                { content: "Id" },
-                { content: "Schema" },
-                { content: "Created at" },
-                { content: "Actions" },
+                { content: Label.HEADER_ID },
+                { content: Label.HEADER_SCHEMA },
+                { content: Label.HEADER_CREATED_AT },
+                { content: Label.HEADER_ACTIONS },
               ]}
               rows={response?.data.map((identity) => {
                 return {
@@ -59,19 +60,14 @@ const IdentityList: FC = () => {
                     {
                       content: identity.traits?.email ?? identity.id,
                       role: "rowheader",
-                      "aria-label": "Id",
                     },
                     {
                       content: identity.schema_id,
-                      role: "rowheader",
-                      "aria-label": "Schema",
                     },
                     {
                       content: identity.created_at
                         ? isoTimeToString(identity.created_at)
                         : "",
-                      role: "rowheader",
-                      "aria-label": "Created at",
                     },
                     {
                       content: (
@@ -79,8 +75,6 @@ const IdentityList: FC = () => {
                           <DeleteIdentityBtn identity={identity} />
                         </>
                       ),
-                      role: "rowheader",
-                      "aria-label": "Actions",
                     },
                   ],
                 };
@@ -89,7 +83,7 @@ const IdentityList: FC = () => {
                 isLoading ? (
                   <Loader text="Loading identities..." />
                 ) : (
-                  "No data to display"
+                  Label.NO_DATA
                 )
               }
             />

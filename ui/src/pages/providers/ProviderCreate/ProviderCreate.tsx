@@ -20,6 +20,17 @@ import SidePanel from "components/SidePanel";
 import ScrollableContainer from "components/ScrollableContainer";
 import { TestId } from "./test-types";
 import { testId } from "test/utils";
+import { Label } from "./types";
+
+export const initialValues = {
+  provider: "generic",
+  id: "",
+  client_id: "",
+  client_secret: "",
+  mapper_url: "",
+  scope: "email",
+  subject_source: "userinfo",
+} as const;
 
 const ProviderCreate: FC = () => {
   const navigate = useNavigate();
@@ -31,15 +42,7 @@ const ProviderCreate: FC = () => {
   });
 
   const formik = useFormik<ProviderFormTypes>({
-    initialValues: {
-      provider: "generic",
-      id: "",
-      client_id: "",
-      client_secret: "",
-      mapper_url: "",
-      scope: "email",
-      subject_source: "userinfo",
-    },
+    initialValues,
     validationSchema: ProviderCreateSchema,
     onSubmit: (values) => {
       createProvider(
@@ -49,12 +52,15 @@ const ProviderCreate: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.providers],
           });
-          const msg = `Provider created.`;
-          navigate("/provider", notify.queue(notify.success(msg)));
+          navigate("/provider", notify.queue(notify.success(Label.SUCCESS)));
         })
-        .catch((e) => {
+        .catch((error: unknown) => {
           formik.setSubmitting(false);
-          notify.failure("Provider creation failed", e);
+          notify.failure(
+            Label.ERROR,
+            error instanceof Error ? error : null,
+            typeof error === "string" ? error : null,
+          );
         });
     },
   });
@@ -85,7 +91,7 @@ const ProviderCreate: FC = () => {
           <Row className="u-align-text--right">
             <Col size={12}>
               <Button appearance="base" onClick={() => navigate("/provider")}>
-                Cancel
+                {Label.CANCEL}
               </Button>
               <ActionButton
                 appearance="positive"
@@ -93,7 +99,7 @@ const ProviderCreate: FC = () => {
                 disabled={!formik.isValid}
                 onClick={submitForm}
               >
-                Save
+                {Label.SUBMIT}
               </ActionButton>
             </Col>
           </Row>

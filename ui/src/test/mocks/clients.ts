@@ -11,7 +11,7 @@ export const mockClient = (overrides?: Partial<Client>): Client => ({
   client_secret_expires_at: faker.number.int(),
   client_uri: faker.word.sample(),
   contacts: [],
-  created_at: faker.word.sample(),
+  created_at: faker.date.anytime().toISOString(),
   grant_types: [],
   logo_uri: faker.word.sample(),
   owner: faker.word.sample(),
@@ -23,7 +23,7 @@ export const mockClient = (overrides?: Partial<Client>): Client => ({
   subject_type: faker.word.sample(),
   token_endpoint_auth_method: faker.word.sample(),
   tos_uri: faker.word.sample(),
-  updated_at: faker.word.sample(),
+  updated_at: faker.date.anytime().toISOString(),
   userinfo_signed_response_alg: faker.word.sample(),
   ...overrides,
 });

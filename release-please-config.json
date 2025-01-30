@@ -7,6 +7,7 @@
       "bump-patch-for-minor-pre-major": false,
       "draft": false,
       "prerelease": false,
+      "pull-request-title-pattern": "ci: release ${version}",
       "extra-files": [
         "rockcraft.yaml",
         "internal/version/const.go"

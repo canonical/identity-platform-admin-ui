@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package roles
@@ -21,12 +21,6 @@ import (
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-)
-
-const (
-	ASSIGNEE_RELATION = "assignee"
-	CAN_VIEW_RELATION = "can_view"
-	ALL_USERS         = "user:*"
 )
 
 type listPermissionsResult struct {
@@ -134,8 +128,8 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) (*Role, err
 
 	err := s.ofga.WriteTuples(
 		ctx,
-		*ofga.NewTuple(user, ASSIGNEE_RELATION, role),
-		*ofga.NewTuple(user, CAN_VIEW_RELATION, role),
+		*ofga.NewTuple(user, authorization.ASSIGNEE_RELATION, role),
+		*ofga.NewTuple(user, authorization.CAN_VIEW_RELATION, role),
 	)
 
 	if err != nil {
@@ -438,7 +432,7 @@ func (s *Service) directRelations() []string {
 }
 
 func (s *Service) getRoleAssigneeUser(roleID string) string {
-	return fmt.Sprintf("role:%s#%s", roleID, ASSIGNEE_RELATION)
+	return fmt.Sprintf("role:%s#%s", roleID, authorization.ASSIGNEE_RELATION)
 }
 
 // NewService returns the implementtation of the business logic for the roles API
@@ -607,13 +601,13 @@ func (s *V1Service) GetRoleEntitlements(ctx context.Context, roleId string, para
 
 	for _, permission := range permissions {
 		p := authorization.NewURNFromURLParam(permission)
-                entity := strings.SplitN(p.Object(), ":", 2)
+		entity := strings.SplitN(p.Object(), ":", 2)
 		r.Data = append(
 			r.Data,
 			resources.EntityEntitlement{
 				Entitlement: p.Relation(),
 				EntityType:  entity[0],
-				EntityId:       entity[1],
+				EntityId:    entity[1],
 			},
 		)
 	}

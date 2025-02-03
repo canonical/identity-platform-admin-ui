@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package groups
@@ -23,7 +23,7 @@ type ServiceInterface interface {
 	ListPermissions(context.Context, string, map[string]string) ([]string, map[string]string, error)
 	AssignPermissions(context.Context, string, ...Permission) error
 	RemovePermissions(context.Context, string, ...Permission) error
-	ListIdentities(context.Context, string, string) ([]string, string, error)
+	ListIdentities(context.Context, string) ([]string, error)
 	AssignIdentities(context.Context, string, ...string) error
 	RemoveIdentities(context.Context, string, ...string) error
 	CanAssignRoles(context.Context, string, ...string) (bool, error)
@@ -33,6 +33,7 @@ type ServiceInterface interface {
 // OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation
 type OpenFGAClientInterface interface {
 	ListObjects(context.Context, string, string, string) ([]string, error)
+	ListUsers(context.Context, string, string, string) ([]string, error)
 	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error

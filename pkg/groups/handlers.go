@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package groups
@@ -582,17 +582,7 @@ func (a *API) handleListIdentities(w http.ResponseWriter, r *http.Request) {
 
 	ID := chi.URLParam(r, "id")
 
-	paginator := types.NewTokenPaginator(a.tracer, a.logger)
-
-	if err := paginator.LoadFromRequest(r.Context(), r); err != nil {
-		a.logger.Error(err)
-	}
-
-	identities, pageToken, err := a.service.ListIdentities(
-		r.Context(),
-		ID,
-		paginator.GetToken(r.Context(), GROUP_TOKEN_KEY),
-	)
+	identities, err := a.service.ListIdentities(r.Context(), ID)
 
 	if err != nil {
 		rr := types.Response{
@@ -606,16 +596,6 @@ func (a *API) handleListIdentities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paginator.SetToken(r.Context(), GROUP_TOKEN_KEY, pageToken)
-
-	pageHeader, err := paginator.PaginationHeader(r.Context())
-
-	if err != nil {
-		a.logger.Errorf("error producing pagination header: %s", err)
-		pageHeader = ""
-	}
-
-	w.Header().Add(types.PAGINATION_HEADER, pageHeader)
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(

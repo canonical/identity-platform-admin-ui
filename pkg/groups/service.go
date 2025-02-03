@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package groups
@@ -357,30 +357,24 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 	return nil
 }
 
-// ListIdentities returns all the identities (users for now) assigned to a group
-func (s *Service) ListIdentities(ctx context.Context, ID, continuationToken string) ([]string, string, error) {
+// ListIdentities returns all the identities (users and group#member associated) assigned to a group
+func (s *Service) ListIdentities(ctx context.Context, ID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListIdentities")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, "", authz.MEMBER_RELATION, authz.GroupForTuple(ID), continuationToken)
-
+	users, err := s.ofga.ListUsers(ctx, "user", authz.MEMBER_RELATION, authz.GroupForTuple(ID))
 	if err != nil {
 		s.logger.Error(err.Error())
-		return nil, "", err
+		return nil, err
 	}
 
-	identities := make([]string, 0)
-
-	for _, t := range r.GetTuples() {
-		// TODO @shipperizer the user: bit will have to change when or if we use the identity type, this will be tricky
-		// best way right now might be to verify if a user is also an identity (no idea how though)
-		// at the moment an identity cannot be a member of a group, only a user
-		if strings.HasPrefix(t.Key.User, "user:") {
-			identities = append(identities, t.Key.User)
-		}
+	groups, err := s.ofga.ListUsers(ctx, "group#member", authz.MEMBER_RELATION, authz.GroupForTuple(ID))
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
 	}
 
-	return identities, r.GetContinuationToken(), nil
+	return append(users, groups...), nil
 }
 
 // AssignIdentities assigns identities to a group, right now using the type user which is disconnected
@@ -709,36 +703,21 @@ func (s *V1Service) DeleteGroup(ctx context.Context, groupId string) (bool, erro
 }
 
 // GetGroupIdentities returns a page of resources.Identity associated with the given group.
-func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, params *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error) {
+func (s *V1Service) GetGroupIdentities(ctx context.Context, groupId string, _ *resources.GetGroupsItemIdentitiesParams) (*resources.PaginatedResponse[resources.Identity], error) {
 	ctx, span := s.tracer.Start(ctx, "groups.V1Service.GetGroupIdentities")
 	defer span.End()
 
-	paginator := types.NewTokenPaginator(s.tracer, s.logger)
-	if err := paginator.LoadFromString(ctx, *params.NextToken); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to parse the page token: %v", err))
-	}
-
-	identities, pageToken, err := s.core.ListIdentities(ctx, groupId, *params.NextToken)
+	result, err := s.core.ListIdentities(ctx, groupId)
 	if err != nil {
 		return nil, v1.NewUnknownError(fmt.Sprintf("failed to list identities for group %s: %v", groupId, err))
 	}
 
-	paginator.SetToken(ctx, GROUP_TOKEN_KEY, pageToken)
-	metaParam, err := paginator.PaginationHeader(ctx)
-	if err != nil {
-		s.logger.Errorf("failed to create the pagination meta param: %v", err)
-		metaParam = ""
-	}
-
 	r := &resources.PaginatedResponse[resources.Identity]{
-		Meta: resources.ResponseMeta{Size: len(identities)},
-		Data: make([]resources.Identity, 0, len(identities)),
-		Next: resources.Next{PageToken: &metaParam},
+		Meta: resources.ResponseMeta{Size: len(result)},
+		Data: make([]resources.Identity, 0, len(result)),
 	}
 
-	for _, identity := range identities {
-		identityParts := strings.SplitN(identity, ":", 2)
-		identityID := identityParts[1]
+	for _, identityID := range result {
 		r.Data = append(r.Data, resources.Identity{Id: &identityID})
 	}
 

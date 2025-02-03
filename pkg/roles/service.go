@@ -57,32 +57,18 @@ func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error
 }
 
 // ListRoleGroups returns all the groups associated to a specific role
-// method relies on the /read endpoint which allows for pagination via the token
-// unfortunately we are not able to distinguish between types assigned on the OpenFGA side,
-// so we'll have to filter here based on the user, this leads to unrealiable object counts
-// TODO @shipperizer a more complex pagination system can be implemented by keeping track of the
-// latest index in the current "page" and encode it in the pagination token header returned to
-// the UI
-func (s *Service) ListRoleGroups(ctx context.Context, ID, continuationToken string) ([]string, string, error) {
+func (s *Service) ListRoleGroups(ctx context.Context, ID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoleGroups")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, "", ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID), continuationToken)
+	groups, err := s.ofga.ListUsers(ctx, "group#member", authorization.ASSIGNEE_RELATION, authorization.RoleForTuple(ID))
 
 	if err != nil {
 		s.logger.Error(err.Error())
-		return nil, "", err
+		return nil, err
 	}
 
-	groups := make([]string, 0)
-
-	for _, t := range r.GetTuples() {
-		if strings.HasPrefix(t.Key.User, "group:") {
-			groups = append(groups, t.Key.User)
-		}
-	}
-
-	return groups, r.GetContinuationToken(), nil
+	return groups, nil
 }
 
 // GetRole returns the specified role using the ID argument, userID is used to validate the visibility by the user

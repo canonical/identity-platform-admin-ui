@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package openfga
 
@@ -354,6 +354,58 @@ func (c *Client) ListObjects(ctx context.Context, user, relation, objectType str
 	for i, p := range objectsResponse.GetObjects() {
 		// remove the "{objectType}:" prefix from the response
 		allowedObjs[i] = p[len(fmt.Sprintf("%s:", objectType)):]
+	}
+
+	return allowedObjs, nil
+}
+
+func (c *Client) ListUsers(ctx context.Context, userFilter, relation, object string) ([]string, error) {
+	ctx, span := c.tracer.Start(ctx, "openfga.Client.ListUsers")
+	defer span.End()
+
+	var filter openfga.UserTypeFilter
+
+	userType, userRelation, _ := strings.Cut(userFilter, "#")
+
+	filter = openfga.UserTypeFilter{
+		Type:     userType,
+		Relation: &userRelation,
+	}
+
+	objectType, objectID, _ := strings.Cut(object, ":")
+
+	listUsersReq := c.c.ListUsers(ctx)
+
+	listUsersReq = listUsersReq.Body(client.ClientListUsersRequest{
+		Object:      openfga.FgaObject{Type: objectType, Id: objectID},
+		Relation:    relation,
+		UserFilters: []openfga.UserTypeFilter{filter},
+	})
+
+	usersResponse, err := c.c.ListUsersExecute(listUsersReq)
+	if err != nil {
+		c.logger.Errorf("issues performing list users operation: %s", err)
+		return nil, err
+	}
+
+	users := usersResponse.GetUsers()
+
+	allowedObjs := make([]string, len(users))
+	for i, user := range users {
+		if o, ok := user.GetObjectOk(); ok {
+			allowedObjs[i] = fmt.Sprintf("%s:%s", o.GetType(), o.GetId())
+			continue
+		}
+
+		if us, ok := user.GetUsersetOk(); ok {
+			allowedObjs[i] = fmt.Sprintf("%s:%s", us.GetType(), us.GetId())
+			continue
+		}
+
+		if u, ok := user.GetWildcardOk(); ok {
+			allowedObjs[i] = fmt.Sprintf("%s:*", u.GetType())
+			continue
+		}
 	}
 
 	return allowedObjs, nil

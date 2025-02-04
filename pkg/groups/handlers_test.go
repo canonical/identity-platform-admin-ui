@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package groups
@@ -1937,28 +1937,25 @@ func TestHandleRemoveRole(t *testing.T) {
 // {
 //     "_meta": null,
 //     "data": [
-//        "user:joe",
-//        "user:susan",
-//        "user:dummy",
+//       	"user:joe",
+//        	"user:susan",
+//        	"user:dummy",
+//          "group:group-1"
 //     ],
 //     "message": "List of entitlements",
 //     "status": 200
 // }
 
 func TestHandleListIdentitiesSuccess(t *testing.T) {
-	type expected struct {
-		identities []string
-		cToken     string
-	}
 
 	tests := []struct {
 		name     string
-		expected expected
+		expected []string
 		output   *types.Response
 	}{
 		{
 			name:     "no identities",
-			expected: expected{identities: []string{}},
+			expected: []string{},
 			output: &types.Response{
 				Data:    []string{},
 				Message: "List of identities",
@@ -1966,17 +1963,10 @@ func TestHandleListIdentitiesSuccess(t *testing.T) {
 			},
 		},
 		{
-			name: "full identities",
-			expected: expected{
-				identities: []string{
-					"user:joe", "user:susan", "user:dummy",
-				},
-				cToken: "test",
-			},
+			name:     "full identities",
+			expected: []string{"user:joe", "user:susan", "user:dummy", "group:group-1#member"},
 			output: &types.Response{
-				Data: []string{
-					"user:joe", "user:susan", "user:dummy",
-				},
+				Data:    []string{"user:joe", "user:susan", "user:dummy", "group:group-1#member"},
 				Message: "List of identities",
 				Status:  http.StatusOK,
 			},
@@ -1997,10 +1987,7 @@ func TestHandleListIdentitiesSuccess(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/groups/%s/identities", groupID), nil)
 			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.LoadFromRequest").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.PaginationHeader").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-
-			mockService.EXPECT().ListIdentities(gomock.Any(), groupID, "").Return(test.expected.identities, test.expected.cToken, nil)
+			mockService.EXPECT().ListIdentities(gomock.Any(), groupID).Return(test.expected, nil)
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -2018,22 +2005,6 @@ func TestHandleListIdentitiesSuccess(t *testing.T) {
 
 			if res.StatusCode != http.StatusOK {
 				t.Errorf("expected HTTP status code 200 got %v", res.StatusCode)
-			}
-
-			tokenMap, err := base64.StdEncoding.DecodeString(res.Header.Get(types.PAGINATION_HEADER))
-
-			if test.expected.cToken != "" {
-				if err != nil {
-					t.Errorf("expected continuation token in headers")
-				}
-
-				tokens := map[string]string{}
-
-				_ = json.Unmarshal(tokenMap, &tokens)
-
-				if !reflect.DeepEqual(tokens[GROUP_TOKEN_KEY], test.expected.cToken) {
-					t.Errorf("expected continuation token to match: %v - %v", tokens[GROUP_TOKEN_KEY], test.expected.cToken)
-				}
 			}
 
 			// duplicate types.Response attribute we care and assign the proper type instead of interface{}

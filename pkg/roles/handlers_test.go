@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package roles
@@ -576,10 +576,7 @@ func TestHandleListRoleGroupsSuccess(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v0/roles/%s/groups", roleID), nil)
 			req = req.WithContext(authentication.PrincipalContext(req.Context(), &authentication.UserPrincipal{Email: "test-user"}))
 
-			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.LoadFromRequest").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockTracer.EXPECT().Start(gomock.Any(), "types.TokenPaginator.PaginationHeader").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-
-			mockService.EXPECT().ListRoleGroups(gomock.Any(), roleID, "").Return(test.expected.groups, test.expected.cTokens["roles"], nil)
+			mockService.EXPECT().ListRoleGroups(gomock.Any(), roleID).Return(test.expected.groups, nil)
 
 			w := httptest.NewRecorder()
 			mux := chi.NewMux()
@@ -597,22 +594,6 @@ func TestHandleListRoleGroupsSuccess(t *testing.T) {
 
 			if res.StatusCode != http.StatusOK {
 				t.Errorf("expected HTTP status code 200 got %v", res.StatusCode)
-			}
-
-			tokenMap, err := base64.StdEncoding.DecodeString(res.Header.Get(types.PAGINATION_HEADER))
-
-			if test.expected.cTokens != nil {
-				if err != nil {
-					t.Errorf("expected continuation token in headers")
-				}
-
-				tokens := map[string]string{}
-
-				_ = json.Unmarshal(tokenMap, &tokens)
-
-				if !reflect.DeepEqual(tokens, test.expected.cTokens) {
-					t.Errorf("expected continuation tokens to match: %v - %v", tokens, test.expected.cTokens)
-				}
 			}
 
 			// duplicate types.Response attribute we care and assign the proper type instead of interface{}

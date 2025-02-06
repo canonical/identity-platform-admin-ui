@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package openfga
 
@@ -31,6 +31,10 @@ func NewNoopClient(tracer tracing.TracingInterface, monitor monitoring.MonitorIn
 }
 
 func (c *NoopClient) ListObjects(ctx context.Context, user, relation, objectType string) ([]string, error) {
+	return make([]string, 0), nil
+}
+
+func (c *NoopClient) ListUsers(ctx context.Context, userFilter, relation, object string) ([]string, error) {
 	return make([]string, 0), nil
 }
 

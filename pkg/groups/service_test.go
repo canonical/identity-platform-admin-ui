@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package groups
@@ -213,85 +213,74 @@ func TestServiceListRoles(t *testing.T) {
 }
 
 func TestServiceListIdentities(t *testing.T) {
-	type expected struct {
-		err    error
-		tuples []string
-		token  string
+	type tuples struct {
+		users  []string
+		groups []string
 	}
 
-	type input struct {
-		group string
-		token string
+	type expected struct {
+		errUsersListUsers  error
+		errGroupsListUsers error
+		tuples             tuples
 	}
 
 	tests := []struct {
 		name     string
-		input    input
+		group    string
 		expected expected
 		output   []string
 	}{
 		{
-			name: "empty result",
-			input: input{
-				group: "administrator",
-			},
+			name:  "empty result",
+			group: "administrator",
 			expected: expected{
-				tuples: []string{},
-				token:  "",
-				err:    nil,
+				tuples: tuples{
+					users:  []string{},
+					groups: []string{},
+				},
 			},
 			output: []string{},
 		},
 		{
-			name: "error",
-			input: input{
-				group: "administrator",
-			},
+			name:  "error-users-listusers",
+			group: "administrator",
 			expected: expected{
-				tuples: []string{},
-				token:  "",
-				err:    fmt.Errorf("error"),
+				tuples: tuples{
+					users:  []string{},
+					groups: []string{},
+				},
+				errUsersListUsers: fmt.Errorf("error"),
 			},
 		},
 		{
-			name: "full result without token",
-			input: input{
-				group: "administrator",
-			},
+			name:  "error-groups-listusers",
+			group: "administrator",
 			expected: expected{
-				tuples: []string{
-					"group:c-level#member",
-					"group:it-admin#member",
-					"user:joe",
-					"user:test",
+				tuples: tuples{
+					users:  []string{},
+					groups: []string{},
 				},
-				token: "test",
-				err:   nil,
+				errGroupsListUsers: fmt.Errorf("error"),
+			},
+		},
+		{
+			name:  "full result",
+			group: "administrator",
+			expected: expected{
+				tuples: tuples{
+					users: []string{
+						"user:joe",
+						"user:test",
+					},
+					groups: []string{
+						"group:group1",
+					},
+				},
 			},
 			output: []string{
 				"user:joe",
 				"user:test",
-			},
-		},
-		{
-			name: "full result with token",
-			input: input{
-				group: "administrator",
-				token: "test",
-			},
-			expected: expected{
-				tuples: []string{
-					"group:c-level#member",
-					"group:it-admin#member",
-					"user:joe",
-					"user:test",
-				},
-				token: "",
-				err:   nil,
-			},
-			output: []string{
-				"user:joe",
-				"user:test",
+				"group:group1",
 			},
 		},
 	}
@@ -308,44 +297,28 @@ func TestServiceListIdentities(t *testing.T) {
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			r := new(client.ClientReadResponse)
-
-			tuples := []openfga.Tuple{}
-			for _, t := range test.expected.tuples {
-				tuples = append(
-					tuples,
-					*openfga.NewTuple(
-						*openfga.NewTupleKey(
-							t, authz.ASSIGNEE_RELATION, fmt.Sprintf("group:%s", test.input.group),
-						),
-						time.Now(),
-					),
-				)
-			}
-
-			r.SetContinuationToken(test.expected.token)
-			r.SetTuples(tuples)
-
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.Service.ListIdentities").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.input.group), test.input.token).Return(r, test.expected.err)
 
-			if test.expected.err != nil {
+			mockOpenFGA.EXPECT().ListUsers(gomock.Any(), "user", authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.group)).Return(test.expected.tuples.users, test.expected.errUsersListUsers)
+			if test.expected.errUsersListUsers != nil {
+				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
+			} else {
+				mockOpenFGA.EXPECT().ListUsers(gomock.Any(), "group#member", authz.MEMBER_RELATION, fmt.Sprintf("group:%s", test.group)).Return(test.expected.tuples.groups, test.expected.errGroupsListUsers)
+			}
+
+			if test.expected.errUsersListUsers == nil && test.expected.errGroupsListUsers != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			identities, token, err := svc.ListIdentities(context.Background(), test.input.group, test.input.token)
+			identities, err := svc.ListIdentities(context.Background(), test.group)
 
-			if err != test.expected.err {
-				t.Errorf("expected error to be %v got %v", test.expected.err, err)
+			if err != test.expected.errUsersListUsers && err != test.expected.errGroupsListUsers {
+				t.Errorf("expected error to be one of %v and %v got %v", test.expected.errUsersListUsers, test.expected.errGroupsListUsers, err)
 			}
 
-			if test.expected.err == nil && token != test.expected.token {
-				t.Errorf("invalid result, expected: %v, got: %v", test.expected.token, token)
-			}
-
-			if test.expected.err == nil && !reflect.DeepEqual(identities, test.output) {
+			if test.expected.errUsersListUsers == nil && test.expected.errGroupsListUsers == nil && !reflect.DeepEqual(identities, test.output) {
 				t.Errorf("invalid result, expected: %v, got: %v", test.output, identities)
 			}
 		})
@@ -1770,16 +1743,10 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 	defer ctrl.Finish()
 
 	identities := []string{"identity1", "identity2"}
-	currPageToken := map[string]string{
-		"groups": "page-token",
-	}
-	nextPageToken := "new-page-token"
-
-	paginator := types.NewTokenPaginator(mockTracer, mockLogger)
 
 	type testCase struct {
 		name           string
-		setupMocks     func(string)
+		setupMocks     func()
 		contextSetup   func() context.Context
 		expectedResult *resources.PaginatedResponse[resources.Identity]
 		expectedError  error
@@ -1788,10 +1755,10 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 	testCases := []testCase{
 		{
 			name: "Successfully retrieves group identities",
-			setupMocks: func(pageToken string) {
+			setupMocks: func() {
 				mockService.EXPECT().
-					ListIdentities(gomock.Any(), "mock-group-id", pageToken).
-					Return([]string{"user:identity1", "user:identity2"}, nextPageToken, nil)
+					ListIdentities(gomock.Any(), "mock-group-id").
+					Return([]string{"identity1", "identity2"}, nil)
 			},
 			contextSetup: func() context.Context {
 				ctx := context.Background()
@@ -1808,10 +1775,10 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 		},
 		{
 			name: "Error while retrieving group identities",
-			setupMocks: func(pageToken string) {
+			setupMocks: func() {
 				mockService.EXPECT().
-					ListIdentities(gomock.Any(), "mock-group-id", pageToken).
-					Return(nil, "", errors.New("some error"))
+					ListIdentities(gomock.Any(), "mock-group-id").
+					Return(nil, errors.New("some error"))
 			},
 			contextSetup: func() context.Context {
 				ctx := context.Background()
@@ -1825,19 +1792,14 @@ func TestV1Service_GetGroupIdentities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := tc.contextSetup()
-			paginator.SetTokens(ctx, currPageToken)
-			pageToken, _ := paginator.PaginationHeader(ctx)
-			tc.setupMocks(pageToken)
+			tc.setupMocks()
 
 			s := NewV1Service(mockService, mockTracer, mockMonitor, mockLogger)
 
-			result, err := s.GetGroupIdentities(ctx, "mock-group-id", &resources.GetGroupsItemIdentitiesParams{NextToken: &pageToken})
+			_, err := s.GetGroupIdentities(ctx, "mock-group-id", &resources.GetGroupsItemIdentitiesParams{})
 
 			if tc.expectedError == nil {
-				paginator.SetToken(ctx, GROUP_TOKEN_KEY, nextPageToken)
-				expectedToken, _ := paginator.PaginationHeader(ctx)
 				assert.Equal(t, tc.expectedResult.Meta.Size, len(identities))
-				assert.Equal(t, expectedToken, *result.Next.PageToken)
 			}
 			assert.Equal(t, tc.expectedError, err)
 		})

@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package web
@@ -25,6 +25,7 @@ type OpenFGAClientInterface interface {
 	DeleteTuple(context.Context, string, string, string) error
 	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
 	ListObjects(context.Context, string, string, string) ([]string, error)
+	ListUsers(context.Context, string, string, string) ([]string, error)
 	WriteTuples(context.Context, ...ofga.Tuple) error
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	BatchCheck(context.Context, ...ofga.Tuple) (bool, error)

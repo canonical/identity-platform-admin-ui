@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package roles
@@ -142,80 +142,44 @@ func TestServiceListRoleGroups(t *testing.T) {
 	type expected struct {
 		err    error
 		tuples []string
-		token  string
-	}
-
-	type input struct {
-		role  string
-		token string
 	}
 
 	tests := []struct {
 		name     string
-		input    input
+		input    string
 		expected expected
 		output   []string
 	}{
 		{
-			name: "empty result",
-			input: input{
-				role: "administrator",
-			},
+			name:  "empty result",
+			input: "administrator",
 			expected: expected{
 				tuples: []string{},
-				token:  "",
 				err:    nil,
 			},
 			output: []string{},
 		},
 		{
-			name: "error",
-			input: input{
-				role: "administrator",
-			},
+			name:  "error",
+			input: "administrator",
 			expected: expected{
 				tuples: []string{},
-				token:  "",
 				err:    fmt.Errorf("error"),
 			},
 		},
 		{
-			name: "full result without token",
-			input: input{
-				role: "administrator",
-			},
+			name:  "full result",
+			input: "administrator",
 			expected: expected{
 				tuples: []string{
-					"group:c-level#member",
-					"group:it-admin#member",
-					"user:joe",
-					"user:test",
+					"c-level#member",
+					"it-admin#member",
 				},
-				token: "test",
-				err:   nil,
+				err: nil,
 			},
 			output: []string{
-				"group:c-level#member",
-				"group:it-admin#member",
-			},
-		},
-		{
-			name: "full result with token",
-			input: input{
-				role:  "administrator",
-				token: "test",
-			},
-			expected: expected{
-				tuples: []string{
-					"group:c-level#member",
-					"group:it-admin#member",
-				},
-				token: "",
-				err:   nil,
-			},
-			output: []string{
-				"group:c-level#member",
-				"group:it-admin#member",
+				"c-level#member",
+				"it-admin#member",
 			},
 		},
 	}
@@ -232,41 +196,19 @@ func TestServiceListRoleGroups(t *testing.T) {
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			r := new(client.ClientReadResponse)
-
-			tuples := []openfga.Tuple{}
-			for _, t := range test.expected.tuples {
-				tuples = append(
-					tuples,
-					*openfga.NewTuple(
-						*openfga.NewTupleKey(
-							t, ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role),
-						),
-						time.Now(),
-					),
-				)
-			}
-
-			r.SetContinuationToken(test.expected.token)
-			r.SetTuples(tuples)
-
 			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoleGroups").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), "", ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role), test.input.token).Return(r, test.expected.err)
+			mockOpenFGA.EXPECT().ListUsers(gomock.Any(), "group#member", authorization.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input)).Return(test.expected.tuples, test.expected.err)
 
 			if test.expected.err != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			groups, token, err := svc.ListRoleGroups(context.Background(), test.input.role, test.input.token)
+			groups, err := svc.ListRoleGroups(context.Background(), test.input)
 
 			if err != test.expected.err {
 				t.Errorf("expected error to be %v got %v", test.expected.err, err)
-			}
-
-			if test.expected.err == nil && token != test.expected.token {
-				t.Errorf("invalid result, expected: %v, got: %v", test.expected.token, token)
 			}
 
 			if test.expected.err == nil && !reflect.DeepEqual(groups, test.output) {
@@ -412,8 +354,8 @@ func TestServiceCreateRole(t *testing.T) {
 
 					ps = append(
 						ps,
-						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
-						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
+						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), authorization.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
+						*ofga.NewTuple(fmt.Sprintf("user:%s", test.input.user), authorization.CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
 					)
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -490,7 +432,7 @@ func TestServiceDeleteRole(t *testing.T) {
 
 				calls = append(
 					calls,
-					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
+					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
 						func(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
 							if test.expected != nil {
 								return nil, test.expected
@@ -528,13 +470,13 @@ func TestServiceDeleteRole(t *testing.T) {
 							tuples := []openfga.Tuple{
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"user:test", ASSIGNEE_RELATION, object,
+										"user:test", authorization.ASSIGNEE_RELATION, object,
 									),
 									time.Now(),
 								),
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"group:test#member", ASSIGNEE_RELATION, object,
+										"group:test#member", authorization.ASSIGNEE_RELATION, object,
 									),
 									time.Now(),
 								),
@@ -561,8 +503,8 @@ func TestServiceDeleteRole(t *testing.T) {
 						case 1:
 							tuple := tuples[0]
 
-							if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
-								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
+							if tuple.User != fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
+								t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
 							}
 
 							if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
@@ -579,8 +521,8 @@ func TestServiceDeleteRole(t *testing.T) {
 									t.Errorf("expected user to be one of %v got %v", []string{"user:test", "group:test#member"}, tuple.User)
 								}
 
-								if tuple.Relation != ASSIGNEE_RELATION {
-									t.Errorf("expected relation to be of %v got %v", ASSIGNEE_RELATION, tuple.Relation)
+								if tuple.Relation != authorization.ASSIGNEE_RELATION {
+									t.Errorf("expected relation to be of %v got %v", authorization.ASSIGNEE_RELATION, tuple.Relation)
 								}
 
 								if tuple.Object != fmt.Sprintf("role:%s", test.input) {
@@ -688,8 +630,8 @@ func TestServiceListPermissions(t *testing.T) {
 								return nil, test.expected
 							}
 
-							if user != fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION) {
-								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), user)
+							if user != fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION) {
+								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), user)
 							}
 
 							if object == "role:" && continuationToken != "test" {
@@ -797,7 +739,7 @@ func TestServiceAssignPermissions(t *testing.T) {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -876,7 +818,7 @@ func TestServiceRemovePermissions(t *testing.T) {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -1100,13 +1042,13 @@ func TestV1ServiceCreateRole(t *testing.T) {
 
 						ps["create"] = append(
 							ps["create"],
-							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
-							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
+							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), authorization.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input.role)),
+							*ofga.NewTuple(fmt.Sprintf("user:%s", principal.Identifier()), authorization.CAN_VIEW_RELATION, fmt.Sprintf("role:%s", test.input.role)),
 						)
 
 						for _, entitlement := range test.input.entitlements {
 							p := authorization.NewURNFromURLParam(entitlement)
-							ps["assign"] = append(ps["assign"], *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), p.Relation(), p.Object()))
+							ps["assign"] = append(ps["assign"], *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), p.Relation(), p.Object()))
 						}
 
 						if !reflect.DeepEqual(ps["create"], tuples) && !reflect.DeepEqual(ps["assign"], tuples) {
@@ -1314,7 +1256,7 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 
 				calls = append(
 					calls,
-					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
+					mockOpenFGA.EXPECT().ReadTuples(gomock.Any(), fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION), "", fmt.Sprintf("%s:", pType), "").Times(1).DoAndReturn(
 						func(ctx context.Context, user, relation, object, continuationToken string) (*client.ClientReadResponse, error) {
 							if test.expected != nil {
 								return nil, test.expected
@@ -1352,13 +1294,13 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 							tuples := []openfga.Tuple{
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"user:test", ASSIGNEE_RELATION, object,
+										"user:test", authorization.ASSIGNEE_RELATION, object,
 									),
 									time.Now(),
 								),
 								*openfga.NewTuple(
 									*openfga.NewTupleKey(
-										"group:test#member", ASSIGNEE_RELATION, object,
+										"group:test#member", authorization.ASSIGNEE_RELATION, object,
 									),
 									time.Now(),
 								),
@@ -1383,8 +1325,8 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 					case 1:
 						tuple := tuples[0]
 
-						if tuple.User != fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
-							t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
+						if tuple.User != fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION) && tuple.User != authorization.ADMIN_OBJECT {
+							t.Errorf("expected user to be one of %v got %v", []string{fmt.Sprintf("role:%s#%s", test.input, authorization.ASSIGNEE_RELATION), authorization.ADMIN_OBJECT}, tuple.User)
 						}
 
 						if tuple.Relation != "privileged" && tuple.Relation != "can_edit" {
@@ -1401,8 +1343,8 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 								t.Errorf("expected user to be one of %v got %v", []string{"user:test", "group:test#member"}, tuple.User)
 							}
 
-							if tuple.Relation != ASSIGNEE_RELATION {
-								t.Errorf("expected relation to be of %v got %v", ASSIGNEE_RELATION, tuple.Relation)
+							if tuple.Relation != authorization.ASSIGNEE_RELATION {
+								t.Errorf("expected relation to be of %v got %v", authorization.ASSIGNEE_RELATION, tuple.Relation)
 							}
 
 							if tuple.Object != fmt.Sprintf("role:%s", test.input) {
@@ -1519,8 +1461,8 @@ func TestV1ServiceListPermissions(t *testing.T) {
 								return nil, test.expected
 							}
 
-							if user != fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION) {
-								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), user)
+							if user != fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION) {
+								t.Errorf("wrong user parameter expected %s got %s", fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), user)
 							}
 
 							if object == "role:" && continuationToken != "test" {
@@ -1666,7 +1608,7 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {
@@ -1777,7 +1719,7 @@ func TestV1ServicePatchRoleEntitlementseRemovesPermissions(t *testing.T) {
 					ps := make([]ofga.Tuple, 0)
 
 					for _, p := range test.input.permissions {
-						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, ASSIGNEE_RELATION), p.Relation, p.Object))
+						ps = append(ps, *ofga.NewTuple(fmt.Sprintf("role:%s#%s", test.input.role, authorization.ASSIGNEE_RELATION), p.Relation, p.Object))
 					}
 
 					if !reflect.DeepEqual(ps, tuples) {

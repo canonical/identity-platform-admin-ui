@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd.
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package openfga
 
@@ -29,6 +29,8 @@ type OpenFGACoreClientInterface interface {
 	WriteExecute(client.SdkClientWriteRequestInterface) (*client.ClientWriteResponse, error)
 	ListObjects(context.Context) client.SdkClientListObjectsRequestInterface
 	ListObjectsExecute(client.SdkClientListObjectsRequestInterface) (*client.ClientListObjectsResponse, error)
+	ListUsers(context.Context) client.SdkClientListUsersRequestInterface
+	ListUsersExecute(client.SdkClientListUsersRequestInterface) (*client.ClientListUsersResponse, error)
 }
 
 // OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation

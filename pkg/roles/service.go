@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package roles
@@ -21,12 +21,6 @@ import (
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-)
-
-const (
-	ASSIGNEE_RELATION = "assignee"
-	CAN_VIEW_RELATION = "can_view"
-	ALL_USERS         = "user:*"
 )
 
 type listPermissionsResult struct {
@@ -63,32 +57,18 @@ func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error
 }
 
 // ListRoleGroups returns all the groups associated to a specific role
-// method relies on the /read endpoint which allows for pagination via the token
-// unfortunately we are not able to distinguish between types assigned on the OpenFGA side,
-// so we'll have to filter here based on the user, this leads to unrealiable object counts
-// TODO @shipperizer a more complex pagination system can be implemented by keeping track of the
-// latest index in the current "page" and encode it in the pagination token header returned to
-// the UI
-func (s *Service) ListRoleGroups(ctx context.Context, ID, continuationToken string) ([]string, string, error) {
+func (s *Service) ListRoleGroups(ctx context.Context, ID string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoleGroups")
 	defer span.End()
 
-	r, err := s.ofga.ReadTuples(ctx, "", ASSIGNEE_RELATION, fmt.Sprintf("role:%s", ID), continuationToken)
+	groups, err := s.ofga.ListUsers(ctx, "group#member", authorization.ASSIGNEE_RELATION, authorization.RoleForTuple(ID))
 
 	if err != nil {
 		s.logger.Error(err.Error())
-		return nil, "", err
+		return nil, err
 	}
 
-	groups := make([]string, 0)
-
-	for _, t := range r.GetTuples() {
-		if strings.HasPrefix(t.Key.User, "group:") {
-			groups = append(groups, t.Key.User)
-		}
-	}
-
-	return groups, r.GetContinuationToken(), nil
+	return groups, nil
 }
 
 // GetRole returns the specified role using the ID argument, userID is used to validate the visibility by the user
@@ -134,8 +114,8 @@ func (s *Service) CreateRole(ctx context.Context, userID, ID string) (*Role, err
 
 	err := s.ofga.WriteTuples(
 		ctx,
-		*ofga.NewTuple(user, ASSIGNEE_RELATION, role),
-		*ofga.NewTuple(user, CAN_VIEW_RELATION, role),
+		*ofga.NewTuple(user, authorization.ASSIGNEE_RELATION, role),
+		*ofga.NewTuple(user, authorization.CAN_VIEW_RELATION, role),
 	)
 
 	if err != nil {
@@ -438,7 +418,7 @@ func (s *Service) directRelations() []string {
 }
 
 func (s *Service) getRoleAssigneeUser(roleID string) string {
-	return fmt.Sprintf("role:%s#%s", roleID, ASSIGNEE_RELATION)
+	return fmt.Sprintf("role:%s#%s", roleID, authorization.ASSIGNEE_RELATION)
 }
 
 // NewService returns the implementtation of the business logic for the roles API
@@ -607,13 +587,13 @@ func (s *V1Service) GetRoleEntitlements(ctx context.Context, roleId string, para
 
 	for _, permission := range permissions {
 		p := authorization.NewURNFromURLParam(permission)
-                entity := strings.SplitN(p.Object(), ":", 2)
+		entity := strings.SplitN(p.Object(), ":", 2)
 		r.Data = append(
 			r.Data,
 			resources.EntityEntitlement{
 				Entitlement: p.Relation(),
 				EntityType:  entity[0],
-				EntityId:       entity[1],
+				EntityId:    entity[1],
 			},
 		)
 	}

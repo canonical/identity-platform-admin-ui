@@ -1219,15 +1219,15 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@canonical/react-components@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@canonical/react-components/-/react-components-1.0.0.tgz#f075749e4bed7b89852959e2c4d0e3556e2a04c2"
-  integrity sha512-lcXy+TVSYR6MXSR60/wta/i+LGEK39gFyVBfsEU++nIhWnC/D5e/0DqQ7Oup1LgxdvMfm47BkCIbs7MQiAR0Rg==
+"@canonical/react-components@1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@canonical/react-components/-/react-components-1.10.0.tgz#ee9ec026932b592b4ea6f11a4820a05dadcfd97f"
+  integrity sha512-BQHnVJ1qLB/bGC1ZcyVCLYsJ1QzweEZMlMVZWTTq9lCJ+J+SJe9x5Zg+chheH6LfZlVaLHR2hkOUPYQRU20FIg==
   dependencies:
-    "@types/jest" "29.5.12"
-    "@types/node" "20.12.11"
-    "@types/react" "18.3.1"
-    "@types/react-dom" "18.3.0"
+    "@types/jest" "29.5.14"
+    "@types/node" "20.17.13"
+    "@types/react" "18.3.18"
+    "@types/react-dom" "18.3.5"
     "@types/react-table" "7.7.20"
     classnames "2.5.1"
     jest-environment-jsdom "29.7.0"
@@ -1958,10 +1958,10 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@29.5.12":
-  version "29.5.12"
-  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-29.5.12.tgz#7f7dc6eb4cf246d2474ed78744b05d06ce025544"
-  integrity sha512-eDC8bTvT/QhYdxJAulQikueigY5AsdBRH2yDKW3yveW7svY3+DzN84/2NUgkw10RTiJbWqZrTtoGVdYlvFJdLw==
+"@types/jest@29.5.14":
+  version "29.5.14"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-29.5.14.tgz#2b910912fa1d6856cadcd0c1f95af7df1d6049e5"
+  integrity sha512-ZN+4sdnLUbo8EVvVc2ao0GFW6oVrQRPn4K2lglySj7APvSrgzxHiNNK99us4WDMi57xxA2yggblIAMNhXOotLQ==
   dependencies:
     expect "^29.0.0"
     pretty-format "^29.0.0"
@@ -1987,12 +1987,12 @@
   dependencies:
     undici-types "~5.26.4"
 
-"@types/node@20.12.11":
-  version "20.12.11"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.12.11.tgz#c4ef00d3507000d17690643278a60dc55a9dc9be"
-  integrity sha512-vDg9PZ/zi+Nqp6boSOT7plNuthRugEKixDv5sFTIpkE89MmNtEArAShI4mxuX2+UrLEe9pxC1vm2cjm9YlWbJw==
+"@types/node@20.17.13":
+  version "20.17.13"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.13.tgz#26a7d3e72724ed73bc2fd39a66a2ab17e6e19a00"
+  integrity sha512-RNf+4dEeV69PIvyp++4IKM2vnLXtmp/JovfeQm5P5+qpKb6wHoH7INywLdZ7z+gVX46kgBP/fwJJvZYaHxtdyw==
   dependencies:
-    undici-types "~5.26.4"
+    undici-types "~6.19.2"
 
 "@types/prop-types@*":
   version "15.7.9"
@@ -2006,12 +2006,10 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react-dom@18.3.0":
-  version "18.3.0"
-  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.3.0.tgz#0cbc818755d87066ab6ca74fbedb2547d74a82b0"
-  integrity sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==
-  dependencies:
-    "@types/react" "*"
+"@types/react-dom@18.3.5":
+  version "18.3.5"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.3.5.tgz#45f9f87398c5dcea085b715c58ddcf1faf65f716"
+  integrity sha512-P4t6saawp+b/dFrUr2cvkVsfvPguwsxtH6dNIYRllMsefqFzkZk5UIjzyDOv5g1dXIPdG4Sp1yCR4Z6RCUsG/Q==
 
 "@types/react-router-dom@5.3.3":
   version "5.3.3"
@@ -2055,10 +2053,10 @@
     "@types/scheduler" "*"
     csstype "^3.0.2"
 
-"@types/react@18.3.1":
-  version "18.3.1"
-  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.3.1.tgz#fed43985caa834a2084d002e4771e15dfcbdbe8e"
-  integrity sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==
+"@types/react@18.3.18":
+  version "18.3.18"
+  resolved "https://registry.yarnpkg.com/@types/react/-/react-18.3.18.tgz#9b382c4cd32e13e463f97df07c2ee3bbcd26904b"
+  integrity sha512-t4yC+vtgnkYjNSKlFx1jkAhH8LgTo2N/7Qvi83kdEaUtMDiwpbLAktKDaAMlRcJ5eSxZkH74eEGt1ky31d7kfQ==
   dependencies:
     "@types/prop-types" "*"
     csstype "^3.0.2"
@@ -7254,6 +7252,11 @@ undici-types@~5.26.4:
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-5.26.5.tgz#bcd539893d00b56e964fd2657a4866b221a65617"
   integrity sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==
 
+undici-types@~6.19.2:
+  version "6.19.8"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
+  integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==
+
 unicode-canonical-property-names-ecmascript@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/unicode-canonical-property-names-ecmascript/-/unicode-canonical-property-names-ecmascript-2.0.0.tgz#301acdc525631670d39f6146e0e77ff6bbdebddc"
@@ -7333,10 +7336,10 @@ util-deprecate@^1.0.2:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
-vanilla-framework@4.9.0:
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.9.0.tgz#7566b42a22c2394ea1d7ea843d24ec305446cb3e"
-  integrity sha512-iTmvqWlsX0ic69VZ1sR9NPQtYRR9+iM679HZCl7SDQhMQSsEeJEQ6Ejjen3JN5a7YxiYmeIhxaLlmC4rExRT1w==
+vanilla-framework@4.21.0:
+  version "4.21.0"
+  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.21.0.tgz#745e6d4cff71b9d2a976540fc8041478d43127ae"
+  integrity sha512-/qQu0J5L17Oumpd9AD+kqEYgkBm/JjOJNO3ArObnw9Hx9Dk1Vt3dIasYEo9IR6QFAMU64daOXqbFB+Dz8fZmxw==
 
 vary@~1.1.2:
   version "1.1.2"

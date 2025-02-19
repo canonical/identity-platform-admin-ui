@@ -22,7 +22,7 @@
     "proxy-serve": "./entrypoint"
   },
   "dependencies": {
-    "@canonical/react-components": "1.10.0",
+    "@canonical/react-components": "2.1.0",
     "@canonical/rebac-admin-admin-ui": "0.0.1",
     "@tanstack/react-query": "^5.28.6",
     "@use-it/event-listener": "0.1.7",

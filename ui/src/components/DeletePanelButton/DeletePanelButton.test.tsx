@@ -10,7 +10,7 @@ import { renderComponent } from "test/utils";
 
 import DeletePanelButton from "./DeletePanelButton";
 import { Label } from "./types";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 
 vi.mock("@tanstack/react-query", async () => {
   const actual = await vi.importActual("@tanstack/react-query");

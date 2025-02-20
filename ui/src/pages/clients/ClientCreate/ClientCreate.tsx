@@ -10,7 +10,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { queryKeys } from "util/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { createClient } from "api/client";
 import SidePanel from "components/SidePanel";
@@ -48,7 +48,7 @@ const ClientCreate: FC = () => {
             queryKey: [queryKeys.clients],
           });
           const msg = `Client created. Id: ${result.client_id} Secret: ${result.client_secret}`;
-          navigate("/client", notify.queue(notify.success(msg)));
+          return navigate("/client", notify.queue(notify.success(msg)));
         })
         .catch((error: unknown) => {
           formik.setSubmitting(false);

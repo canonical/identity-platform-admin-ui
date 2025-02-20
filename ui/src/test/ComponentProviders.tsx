@@ -1,12 +1,8 @@
 import { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, type PropsWithChildren } from "react";
-import type { Location, RouteObject } from "react-router-dom";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  useLocation,
-} from "react-router-dom";
+import type { Location, RouteObject } from "react-router";
+import { createBrowserRouter, RouterProvider, useLocation } from "react-router";
 
 export type ComponentProps = {
   path: string;

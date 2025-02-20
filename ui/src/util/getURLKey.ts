@@ -1,4 +1,4 @@
-import { matchPath } from "react-router-dom";
+import { matchPath } from "react-router";
 import { urls } from "urls";
 
 export type URLS = {

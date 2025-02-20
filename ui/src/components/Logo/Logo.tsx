@@ -1,6 +1,6 @@
 import { SITE_NAME } from "consts";
 import { FC } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 
 const Logo: FC = () => {
   return (

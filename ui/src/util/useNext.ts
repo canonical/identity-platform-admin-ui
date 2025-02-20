@@ -1,6 +1,6 @@
 import { removeTrailingSlash } from "util/removeTrailingSlash";
 import { keyToPath } from "./keyToPath";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { useEffect } from "react";
 
 export const useNext = () => {
@@ -26,6 +26,6 @@ export const useNext = () => {
       setSearchParams(searchParams);
       return;
     }
-    navigate(path, { replace: true });
+    void navigate(path, { replace: true });
   }, [location, searchParams]);
 };

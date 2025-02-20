@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { useNotify } from "@canonical/react-components";
 
 export interface PanelHelper {

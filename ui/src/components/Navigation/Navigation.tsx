@@ -1,6 +1,6 @@
 import { SideNavigation } from "@canonical/react-components";
 import { FC } from "react";
-import { NavLink, NavLinkProps } from "react-router-dom";
+import { NavLink, NavLinkProps } from "react-router";
 import { Button } from "@canonical/react-components";
 import { GroupsLink, RolesLink } from "@canonical/rebac-admin-admin-ui";
 import { authURLs } from "api/auth";

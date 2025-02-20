@@ -9,7 +9,7 @@ import {
 } from "test/mocks/responses";
 import userEvent from "@testing-library/user-event";
 import { Label } from "./types";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 
 test("displays nothing if this is the first page and there is no next page", () => {
   const { result } = renderComponent(

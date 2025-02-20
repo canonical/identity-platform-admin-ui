@@ -16,7 +16,7 @@ import { DeleteIdentityBtnTestId } from "../DeleteIdentityBtn";
 
 import { Label } from "./types";
 import IdentityList from "./IdentityList";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 import { panels } from "util/usePanelParams";
 
 const mock = new MockAdapter(axiosInstance);

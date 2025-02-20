@@ -1,5 +1,5 @@
 import { FC, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmationButton, useNotify } from "@canonical/react-components";
 import { Label, Props } from "./types";
@@ -24,9 +24,9 @@ const DeletePanelButton: FC<Props> = ({
   const handleDelete = () => {
     setLoading(true);
     onDelete()
-      .then(() => {
-        navigate(successPath, notify.queue(notify.success(successMessage)));
-      })
+      .then(() =>
+        navigate(successPath, notify.queue(notify.success(successMessage))),
+      )
       .catch((error: unknown) => {
         notify.failure(
           `${entityName} deletion failed`,

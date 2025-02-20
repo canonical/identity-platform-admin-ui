@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/dom";
 import { faker } from "@faker-js/faker";
 import userEvent from "@testing-library/user-event";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 import MockAdapter from "axios-mock-adapter";
 import * as reactQuery from "@tanstack/react-query";
 

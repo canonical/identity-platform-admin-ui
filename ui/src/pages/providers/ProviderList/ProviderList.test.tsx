@@ -14,7 +14,7 @@ import { EditProviderBtnTestId } from "../EditProviderBtn";
 
 import { Label } from "./types";
 import ProviderList from "./ProviderList";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 import { panels } from "util/usePanelParams";
 
 const mock = new MockAdapter(axiosInstance);

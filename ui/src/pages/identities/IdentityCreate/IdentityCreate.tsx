@@ -10,7 +10,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { queryKeys } from "util/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import IdentityForm, { IdentityFormTypes } from "pages/identities/IdentityForm";
 import { createIdentity } from "api/identities";
 import SidePanel from "components/SidePanel";
@@ -46,7 +46,10 @@ const IdentityCreate: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.identities],
           });
-          navigate("/identity", notify.queue(notify.success(Label.SUCCESS)));
+          return navigate(
+            "/identity",
+            notify.queue(notify.success(Label.SUCCESS)),
+          );
         })
         .catch((error: unknown) => {
           formik.setSubmitting(false);

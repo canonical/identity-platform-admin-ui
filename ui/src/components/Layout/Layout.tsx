@@ -1,5 +1,5 @@
 import { FC, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 import { ApplicationLayout } from "@canonical/react-components";
 import Loader from "components/Loader";
 import Login from "components/Login";

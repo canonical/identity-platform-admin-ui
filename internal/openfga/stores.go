@@ -5,6 +5,7 @@ package openfga
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -255,7 +256,7 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 
 	permissions := make([]Permission, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		v := r.Value.(listPermissionsResult)
@@ -263,22 +264,22 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf("%s", eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 // ListPermissionsWithFilters returns all the permissions associated to a specific entity
@@ -335,7 +336,7 @@ func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string
 
 	permissions := make([]Permission, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		v := r.Value.(listPermissionsResult)
@@ -343,22 +344,22 @@ func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf("%s", eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, relation, ofgaType, cToken string) func() any {

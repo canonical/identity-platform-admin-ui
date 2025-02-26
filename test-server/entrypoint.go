@@ -84,8 +84,8 @@ func run() error {
 	signal := make(chan error)
 	go func() {
 		if err := http.ListenAndServe(listenAddress, mux); err != nil {
-			signal <- err
 			log.Println("ListenAndServe:", err)
+			signal <- err
 		}
 	}()
 

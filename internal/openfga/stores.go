@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package openfga
@@ -12,8 +12,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
-
-	trace "go.opentelemetry.io/otel/trace"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 const (
@@ -31,7 +30,7 @@ type OpenFGAStore struct {
 
 	wpool pool.WorkerPoolInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -457,7 +456,7 @@ func (s *OpenFGAStore) permissionTypes() []string {
 }
 
 // NewOpenFGAStore returns the implementation of the store
-func NewOpenFGAStore(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *OpenFGAStore {
+func NewOpenFGAStore(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *OpenFGAStore {
 	s := new(OpenFGAStore)
 
 	s.ofga = ofga

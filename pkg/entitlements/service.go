@@ -1,3 +1,6 @@
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 package entitlements
 
 import (
@@ -6,12 +9,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/logging"
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	openfga "github.com/openfga/go-sdk"
-	"go.opentelemetry.io/otel/trace"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type V1Service struct {
@@ -19,7 +23,7 @@ type V1Service struct {
 
 	authModel *openfga.AuthorizationModel
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -89,7 +93,7 @@ func buildReceivers(relationReferences []openfga.RelationReference) string {
 	return builder.String()
 }
 
-func NewV1Service(ofga OpenFGAClientInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+func NewV1Service(ofga OpenFGAClientInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
 	authModel, err := ofga.ReadModel(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to read the authorization model: %v", err))

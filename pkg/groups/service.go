@@ -13,9 +13,8 @@ import (
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-
-	"go.opentelemetry.io/otel/trace"
 
 	authz "github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -37,7 +36,7 @@ type Service struct {
 
 	wpool pool.WorkerPoolInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -580,7 +579,7 @@ func (s *Service) directRelations() []string {
 }
 
 // NewService returns the implementation of the business logic for the groups API
-func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga
@@ -597,7 +596,7 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 type V1Service struct {
 	core ServiceInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -902,7 +901,7 @@ func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, 
 	return true, nil
 }
 
-func NewV1Service(svc ServiceInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+func NewV1Service(svc ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
 	s := new(V1Service)
 
 	s.core = svc

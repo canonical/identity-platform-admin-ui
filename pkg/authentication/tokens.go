@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authentication
@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -56,7 +55,7 @@ func (j *JWKSTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken string
 	return NewUserPrincipalFromClaims(t)
 }
 
-func NewJWKSTokenVerifier(provider ProviderInterface, clientID string, tracer trace.Tracer, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *JWKSTokenVerifier {
+func NewJWKSTokenVerifier(provider ProviderInterface, clientID string, tracer tracing.TracingInterface, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *JWKSTokenVerifier {
 	j := new(JWKSTokenVerifier)
 	j.tracer = tracer
 	j.logger = logger
@@ -127,7 +126,7 @@ func (u *UserinfoTokenVerifier) VerifyIDToken(ctx context.Context, rawIDToken st
 	return NewUserPrincipalFromClaims(t)
 }
 
-func NewUserinfoTokenVerifier(provider ProviderInterface, clientID string, tracer trace.Tracer, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *UserinfoTokenVerifier {
+func NewUserinfoTokenVerifier(provider ProviderInterface, clientID string, tracer tracing.TracingInterface, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *UserinfoTokenVerifier {
 	u := new(UserinfoTokenVerifier)
 	u.tracer = tracer
 	u.logger = logger

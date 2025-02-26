@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package status
@@ -8,10 +8,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 const okValue = "ok"
@@ -22,7 +22,7 @@ type Status struct {
 }
 
 type API struct {
-	tracer trace.Tracer
+	tracer tracing.TracingInterface
 
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
@@ -67,7 +67,7 @@ func (a *API) version(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func NewAPI(tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
+func NewAPI(tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
 	a.tracer = tracer

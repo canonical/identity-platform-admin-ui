@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package idp
@@ -12,13 +12,13 @@ import (
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"github.com/google/uuid"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/yaml.v3"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type Config struct {
@@ -36,7 +36,7 @@ type Service struct {
 	k8s   coreV1.CoreV1Interface
 	authz AuthorizerInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -343,7 +343,7 @@ func (s *Service) keyIDMapper(id, namespace string) string {
 }
 
 // TODO @shipperizer analyze if providers IDs need to be what we use for path or if filename is the right one
-func NewService(config *Config, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(config *Config, authz AuthorizerInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	if config == nil {

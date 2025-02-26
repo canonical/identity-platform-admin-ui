@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package mail
@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/wneessen/go-mail"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type Config struct {
@@ -41,7 +41,7 @@ type EmailService struct {
 	from   string
 	client MailClientInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -69,7 +69,7 @@ func (e *EmailService) Send(ctx context.Context, to, subject string, template *t
 	return e.client.DialAndSendWithContext(ctx, msg)
 }
 
-func NewEmailService(config *Config, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *EmailService {
+func NewEmailService(config *Config, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *EmailService {
 	s := new(EmailService)
 	s.from = config.FromAddress
 

@@ -923,7 +923,7 @@ func TestV1ServiceListRoles(t *testing.T) {
 
 			var err error
 			if test.expected.err != nil {
-				err = fmt.Errorf(test.expected.err.Error())
+				err = fmt.Errorf("%s", test.expected.err.Error())
 			}
 
 			mockOpenFGA.EXPECT().ListObjects(gomock.Any(), fmt.Sprintf("user:%s", principal.Identifier()), "can_view", "role").Return(test.expected.roles, err)

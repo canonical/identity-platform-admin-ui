@@ -234,7 +234,7 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 		eMsg = fmt.Sprintf("%v - %s\n", n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, fmt.Errorf("%s", eMsg)
 }
 
 // DeleteRole returns all the permissions associated to a specific role

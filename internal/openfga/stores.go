@@ -278,7 +278,7 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, fmt.Errorf("%s", eMsg)
 }
 
 // ListPermissionsWithFilters returns all the permissions associated to a specific entity
@@ -358,7 +358,7 @@ func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, fmt.Errorf("%s", eMsg)
 }
 
 func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, relation, ofgaType, cToken string) func() any {

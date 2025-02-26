@@ -127,7 +127,7 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, fmt.Errorf("%s", eMsg)
 }
 
 // GetGroup returns the specified group using the ID argument, userID is used to validate the visibility by the user

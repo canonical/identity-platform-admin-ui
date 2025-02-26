@@ -10,7 +10,7 @@ import { FC, ReactNode } from "react";
 import { SITE_NAME } from "consts";
 import { Label } from "./types";
 import { appendAPIBasePath } from "util/basePaths";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { getURLKey } from "util/getURLKey";
 
 type Props = {

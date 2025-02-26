@@ -1,5 +1,5 @@
 import { act, screen, waitFor } from "@testing-library/react";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 
 import { renderComponent, renderWrappedHook } from "test/utils";
 

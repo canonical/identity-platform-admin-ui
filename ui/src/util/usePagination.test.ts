@@ -1,6 +1,6 @@
 import { renderWrappedHook } from "test/utils";
 import { usePagination } from "./usePagination";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 import { act } from "@testing-library/react";
 
 test("gets the token from the query params", () => {

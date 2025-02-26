@@ -13,7 +13,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { queryKeys } from "util/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ProviderForm, { ProviderFormTypes } from "pages/providers/ProviderForm";
 import { createProvider } from "api/provider";
 import SidePanel from "components/SidePanel";
@@ -52,7 +52,10 @@ const ProviderCreate: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.providers],
           });
-          navigate("/provider", notify.queue(notify.success(Label.SUCCESS)));
+          return navigate(
+            "/provider",
+            notify.queue(notify.success(Label.SUCCESS)),
+          );
         })
         .catch((error: unknown) => {
           formik.setSubmitting(false);

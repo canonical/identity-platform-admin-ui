@@ -1,6 +1,6 @@
 import { renderWrappedHook } from "test/utils";
 import { useNext } from "./useNext";
-import { Location } from "react-router-dom";
+import { Location } from "react-router";
 
 vi.mock("./basePaths", async () => {
   const actual = await vi.importActual("./basePaths");

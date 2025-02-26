@@ -10,7 +10,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { queryKeys } from "util/queryKeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import ClientForm, { ClientFormTypes } from "pages/clients/ClientForm";
 import { fetchClient, updateClient } from "api/client";
 import usePanelParams from "util/usePanelParams";
@@ -55,7 +55,10 @@ const ClientEdit: FC = () => {
           void queryClient.invalidateQueries({
             queryKey: [queryKeys.clients],
           });
-          navigate("/client", notify.queue(notify.success(Label.SUCCESS)));
+          return navigate(
+            "/client",
+            notify.queue(notify.success(Label.SUCCESS)),
+          );
         })
         .catch((error: unknown) => {
           formik.setSubmitting(false);

@@ -3,20 +3,20 @@ module github.com/canonical/identity-platform-admin-ui
 go 1.24.0
 
 require (
-	github.com/canonical/rebac-admin-ui-handlers v0.1.0
+	github.com/canonical/rebac-admin-ui-handlers v0.1.2
 	github.com/coreos/go-oidc/v3 v3.10.0
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/chi/v5 v5.0.14
 	github.com/go-chi/cors v1.2.1
-	github.com/go-playground/validator/v10 v10.22.0
+	github.com/go-playground/validator/v10 v10.22.1
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/openfga/go-sdk v0.3.7
 	github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379
 	github.com/ory/hydra-client-go/v2 v2.1.1
 	github.com/ory/kratos-client-go v1.1.0
-	github.com/ory/oathkeeper-client-go v0.40.6
+	github.com/ory/oathkeeper-client-go v0.40.8
 	github.com/prometheus/client_golang v1.17.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/wneessen/go-mail v0.4.4
@@ -34,9 +34,9 @@ require (
 	golang.org/x/oauth2 v0.26.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.28.3
-	k8s.io/apimachinery v0.28.3
-	k8s.io/client-go v0.28.3
+	k8s.io/api v0.28.15
+	k8s.io/apimachinery v0.28.15
+	k8s.io/client-go v0.28.15
 )
 
 require (

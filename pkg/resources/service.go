@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package resources
@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
-	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	v1Resources "github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 
-	"go.opentelemetry.io/otel/trace"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
@@ -24,7 +24,7 @@ import (
 type V1Service struct {
 	store OpenFGAStoreInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -113,7 +113,7 @@ func (s *V1Service) ListResources(ctx context.Context, params *v1Resources.GetRe
 	return r, nil
 }
 
-func NewV1Service(store OpenFGAStoreInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+func NewV1Service(store OpenFGAStoreInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
 	s := new(V1Service)
 
 	s.store = store

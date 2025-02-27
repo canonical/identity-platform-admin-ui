@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package clients
@@ -10,11 +10,11 @@ import (
 	"net/http"
 
 	hClient "github.com/ory/hydra-client-go/v2"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type ListClientsRequest struct {
@@ -40,7 +40,7 @@ type Service struct {
 	hydra HydraClientInterface
 	authz AuthorizerInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -206,7 +206,7 @@ func (s *Service) parseServiceError(r *http.Response) (*ErrorOAuth2, error) {
 	return se, nil
 }
 
-func NewService(hydra HydraClientInterface, authz AuthorizerInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(hydra HydraClientInterface, authz AuthorizerInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.hydra = hydra

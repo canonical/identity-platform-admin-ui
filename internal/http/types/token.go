@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd.
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package types
 
@@ -8,8 +8,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
@@ -124,7 +122,7 @@ func (p *TokenPaginator) PaginationHeader(ctx context.Context) (string, error) {
 	return base64.StdEncoding.EncodeToString(tokenMap), nil
 }
 
-func NewTokenPaginator(tracer trace.Tracer, logger logging.LoggerInterface) *TokenPaginator {
+func NewTokenPaginator(tracer tracing.TracingInterface, logger logging.LoggerInterface) *TokenPaginator {
 	p := new(TokenPaginator)
 
 	p.logger = logger

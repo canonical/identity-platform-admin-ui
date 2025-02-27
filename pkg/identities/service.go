@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package identities
@@ -14,7 +14,6 @@ import (
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	kClient "github.com/ory/kratos-client-go"
-	"go.opentelemetry.io/otel/trace"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 // TODO @shipperizer unify this value with schemas/service.go
@@ -36,7 +36,7 @@ type Service struct {
 	authz  AuthorizerInterface
 	email  mail.EmailServiceInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -293,7 +293,7 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	return data, err
 }
 
-func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, email mail.EmailServiceInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, email mail.EmailServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.kratos = kratos

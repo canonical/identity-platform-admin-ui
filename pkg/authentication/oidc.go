@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authentication
@@ -12,11 +12,11 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	client "github.com/ory/hydra-client-go/v2"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 )
 
@@ -36,7 +36,7 @@ type OAuth2Context struct {
 	hydraAdmin  clients.HydraClientInterface
 	hydraPublic clients.HydraClientInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	logger  logging.LoggerInterface
 	monitor monitoring.MonitorInterface
 }
@@ -156,7 +156,7 @@ func (o *OAuth2Context) Verifier() TokenVerifier {
 	return o.verifier
 }
 
-func NewOAuth2Context(config *Config, getProvider OIDCProviderSupplier, tracer trace.Tracer, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *OAuth2Context {
+func NewOAuth2Context(config *Config, getProvider OIDCProviderSupplier, tracer tracing.TracingInterface, logger logging.LoggerInterface, monitor monitoring.MonitorInterface) *OAuth2Context {
 	o := new(OAuth2Context)
 	o.tracer = tracer
 	o.logger = logger

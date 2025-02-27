@@ -5,6 +5,7 @@ package groups
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -13,9 +14,8 @@ import (
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
-
-	"go.opentelemetry.io/otel/trace"
 
 	authz "github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -37,7 +37,7 @@ type Service struct {
 
 	wpool pool.WorkerPoolInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -104,7 +104,7 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 
 	permissions := make([]string, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		s.logger.Info(results)
@@ -113,22 +113,22 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 // GetGroup returns the specified group using the ID argument, userID is used to validate the visibility by the user
@@ -580,7 +580,7 @@ func (s *Service) directRelations() []string {
 }
 
 // NewService returns the implementation of the business logic for the groups API
-func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga
@@ -597,7 +597,7 @@ func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tra
 type V1Service struct {
 	core ServiceInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -902,7 +902,7 @@ func (s *V1Service) PatchGroupEntitlements(ctx context.Context, groupId string, 
 	return true, nil
 }
 
-func NewV1Service(svc ServiceInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+func NewV1Service(svc ServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
 	s := new(V1Service)
 
 	s.core = svc

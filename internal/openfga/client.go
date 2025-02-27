@@ -5,6 +5,7 @@ package openfga
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -302,7 +303,8 @@ func (c *Client) BatchCheck(ctx context.Context, tuples ...Tuple) (bool, error) 
 	}
 
 	if !allowed {
-		return false, fmt.Errorf(strings.Join(errString, "\n"))
+		errorDescriptions := strings.Join(errString, "\n")
+		return false, errors.New(errorDescriptions)
 	}
 
 	return allowed, nil

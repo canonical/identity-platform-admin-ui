@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authentication
@@ -10,11 +10,11 @@ import (
 	"net/url"
 
 	"github.com/go-chi/chi/v5"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
@@ -74,7 +74,7 @@ type API struct {
 	helper           OAuth2HelperInterface
 	cookieManager    AuthCookieManagerInterface
 
-	tracer trace.Tracer
+	tracer tracing.TracingInterface
 	logger logging.LoggerInterface
 }
 
@@ -287,7 +287,7 @@ func NewAPI(
 	oauth2Context OAuth2ContextInterface,
 	helper OAuth2HelperInterface,
 	cookieManager AuthCookieManagerInterface,
-	tracer trace.Tracer,
+	tracer tracing.TracingInterface,
 	logger logging.LoggerInterface,
 ) *API {
 	a := new(API)

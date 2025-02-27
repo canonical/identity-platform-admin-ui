@@ -1,10 +1,11 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package openfga
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -12,8 +13,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
-
-	trace "go.opentelemetry.io/otel/trace"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 const (
@@ -31,7 +31,7 @@ type OpenFGAStore struct {
 
 	wpool pool.WorkerPoolInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -256,7 +256,7 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 
 	permissions := make([]Permission, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		v := r.Value.(listPermissionsResult)
@@ -264,22 +264,22 @@ func (s *OpenFGAStore) ListPermissions(ctx context.Context, ID string, continuat
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 // ListPermissionsWithFilters returns all the permissions associated to a specific entity
@@ -336,7 +336,7 @@ func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string
 
 	permissions := make([]Permission, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		v := r.Value.(listPermissionsResult)
@@ -344,22 +344,22 @@ func (s *OpenFGAStore) ListPermissionsWithFilters(ctx context.Context, ID string
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%s%v - %s\n", eMsg, n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 func (s *OpenFGAStore) listPermissionsFunc(ctx context.Context, ID, relation, ofgaType, cToken string) func() any {
@@ -457,7 +457,7 @@ func (s *OpenFGAStore) permissionTypes() []string {
 }
 
 // NewOpenFGAStore returns the implementation of the store
-func NewOpenFGAStore(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *OpenFGAStore {
+func NewOpenFGAStore(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *OpenFGAStore {
 	s := new(OpenFGAStore)
 
 	s.ofga = ofga

@@ -5,11 +5,10 @@ package roles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
-
-	"go.opentelemetry.io/otel/trace"
 
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
@@ -20,6 +19,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
@@ -36,7 +36,7 @@ type Service struct {
 
 	wpool pool.WorkerPoolInterface
 
-	tracer  trace.Tracer
+	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
 	logger  logging.LoggerInterface
 }
@@ -211,7 +211,7 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 
 	permissions := make([]string, 0)
 	tMap := make(map[string]string)
-	errors := make([]error, 0)
+	errorList := make([]error, 0)
 
 	for r := range results {
 		s.logger.Info(results)
@@ -220,22 +220,22 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 		tMap[v.ofgaType] = v.token
 
 		if v.err != nil {
-			errors = append(errors, v.err)
+			errorList = append(errorList, v.err)
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errorList) == 0 {
 		return permissions, tMap, nil
 	}
 
 	eMsg := ""
 
-	for n, e := range errors {
+	for n, e := range errorList {
 		s.logger.Errorf(e.Error())
 		eMsg = fmt.Sprintf("%v - %s\n", n, e.Error())
 	}
 
-	return permissions, tMap, fmt.Errorf(eMsg)
+	return permissions, tMap, errors.New(eMsg)
 }
 
 // DeleteRole returns all the permissions associated to a specific role
@@ -422,7 +422,7 @@ func (s *Service) getRoleAssigneeUser(roleID string) string {
 }
 
 // NewService returns the implementtation of the business logic for the roles API
-func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer trace.Tracer, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga

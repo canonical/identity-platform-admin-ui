@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.23.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.1...v1.23.0) (2025-02-27)
+
+
+### Features
+
+* add ListUsers to OpenFGA noop client ([ba161ee](https://github.com/canonical/identity-platform-admin-ui/commit/ba161ee4bcba6d2a27bb04d10b28fadc5bb8a363))
+* implement ListUsers in our OpenFGA client ([1b3a436](https://github.com/canonical/identity-platform-admin-ui/commit/1b3a4367238a8874c693cf8d0711f95a5202a2bf))
+* upgrade Go to 1.23.6 + refactor to adapt ([fbeb718](https://github.com/canonical/identity-platform-admin-ui/commit/fbeb718f109c5ce909229a3cbe555959d40a80fe))
+* upgrade Go to 1.24.0 + adapt code + rockcraft.yaml update ([4492b5e](https://github.com/canonical/identity-platform-admin-ui/commit/4492b5e02c9e07b3144a53032bf002d6420c85b7))
+
+
+### Bug Fixes
+
+* add pr permission after last config change ([32626e7](https://github.com/canonical/identity-platform-admin-ui/commit/32626e77d93be329d13d3ce6d5566958591b1328))
+* add required label (empty string won't do) ([45fd8c0](https://github.com/canonical/identity-platform-admin-ui/commit/45fd8c01bca6050c919f8ff7bb9cb3a4cddccb48))
+* **deps:** update dependency vanilla-framework to v4.9.1 ([f4e68ca](https://github.com/canonical/identity-platform-admin-ui/commit/f4e68ca61b12815deb05a6f9987161b9cfeff257))
+* **deps:** update internal ui dependencies ([f59e5ba](https://github.com/canonical/identity-platform-admin-ui/commit/f59e5ba53fee0ae1e28107123fcb0b1f41e2d556))
+* **deps:** update ui deps ([7f7d627](https://github.com/canonical/identity-platform-admin-ui/commit/7f7d627a0c810db0d8dea0b11b2d97cdb3fc3f25))
+* **deps:** update ui deps ([5b2f8b1](https://github.com/canonical/identity-platform-admin-ui/commit/5b2f8b1c3f69929262fcb475dd2d7e61f63165de))
+* **deps:** update ui deps ([7e93c6e](https://github.com/canonical/identity-platform-admin-ui/commit/7e93c6e65dd4b5c38f5b7c292d3b83bc00f65ce7))
+* lower update frequency to avoid spamming ([46857a6](https://github.com/canonical/identity-platform-admin-ui/commit/46857a6d94eae00e70acc877c5d766345ef3508e))
+
 ## [1.22.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.0...v1.22.1) (2024-12-12)
 
 

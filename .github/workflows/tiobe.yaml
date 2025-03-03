@@ -33,7 +33,7 @@ jobs:
           make npm-build test
           gocov convert coverage.out > coverage.json
           # Annoyingly, the coverage.xml file needs to be in a .coverage folder.
-          mkdir .coverage
+          mkdir .coverage ui/coverage
           gocov-xml < coverage.json > .coverage/coverage.xml
 
       - name: Get repo name

@@ -64,6 +64,7 @@ test("calls the API on submit", async () => {
     ...initialValues,
     scope: initialValues.scope.split(","),
     ...values,
+    label: values.id,
   });
 });
 

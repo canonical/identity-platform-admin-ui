@@ -92,6 +92,7 @@ test("calls the API on submit", async () => {
     client_secret: provider.client_secret,
     id: provider.id,
     issuer_url: provider.issuer_url,
+    label: provider.id,
     mapper_url: provider.mapper_url,
     microsoft_tenant: provider.microsoft_tenant,
     provider: provider.provider,
@@ -100,6 +101,20 @@ test("calls the API on submit", async () => {
     token_url: provider.token_url,
     scope: [values.scope],
   });
+});
+
+test("does not send blank strings for requested_claims", async () => {
+  mock
+    .onGet(`/idps/${provider.id}`)
+    .reply(200, { data: [{ ...provider, requested_claims: "" }] });
+  renderComponent(<ProviderEdit />, {
+    url: `/?id=${provider.id}`,
+  });
+  await userEvent.click(screen.getByRole("button", { name: Label.SUBMIT }));
+  expect(
+    (JSON.parse(mock.history.patch[0].data as string) as IdentityProvider)
+      .requested_claims,
+  ).toBeUndefined();
 });
 
 test("handles API success", async () => {

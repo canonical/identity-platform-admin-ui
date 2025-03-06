@@ -57,7 +57,12 @@ const ProviderEdit: FC = () => {
     onSubmit: (values) => {
       updateProvider(
         provider?.id ?? "",
-        JSON.stringify({ ...values, scope: values.scope?.split(",") }),
+        JSON.stringify({
+          ...values,
+          label: values.id,
+          requested_claims: values.requested_claims || undefined,
+          scope: values.scope?.split(","),
+        }),
       )
         .then(() => {
           void queryClient.invalidateQueries({

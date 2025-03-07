@@ -3,13 +3,14 @@ module github.com/canonical/identity-platform-admin-ui
 go 1.24.0
 
 require (
-	github.com/canonical/identity-platform-api v0.0.0-20250228134808-c469846f6ca0
+	github.com/canonical/identity-platform-api v0.0.0-20250304153015-e1c4e5898c2c
 	github.com/canonical/rebac-admin-ui-handlers v0.1.0
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/google/uuid v1.6.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/openfga/go-sdk v0.3.7
 	github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379
@@ -33,6 +34,8 @@ require (
 	go.uber.org/mock v0.4.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.26.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250227231956-55c901821b1e
+	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.28.3
@@ -66,7 +69,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20221010195024-131d412537ea // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
@@ -100,9 +102,7 @@ require (
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/grpc v1.70.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250227231956-55c901821b1e // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect

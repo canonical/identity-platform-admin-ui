@@ -173,7 +173,7 @@ func TestHandleList(t *testing.T) {
 //     "data": [
 //         "administrator"
 //     ],
-//     "message": "Rule detail",
+//     "message": "Role detail",
 //     "status": 200
 // }
 
@@ -202,7 +202,7 @@ func TestHandleDetail(t *testing.T) {
 					ID:   "administrator",
 					Name: "administrator",
 				}},
-				Message: "Rule detail",
+				Message: "Role detail",
 				Status:  http.StatusOK,
 			},
 		},

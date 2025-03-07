@@ -1,18 +1,21 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package web
 
 import (
+	"context"
 	"net/http"
 
+	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
+	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
-	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
+	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
@@ -32,6 +35,8 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
+
+	//"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
@@ -212,8 +217,23 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	idpAPI.RegisterEndpoints(apiRouter)
 	schemasAPI.RegisterEndpoints(apiRouter)
 	rulesAPI.RegisterEndpoints(apiRouter)
-	rolesAPI.RegisterEndpoints(apiRouter)
+	// while we port APIs to the new gRPC-gateway based implementation, we disable this one
+	// rolesAPI.RegisterEndpoints(apiRouter)
 	groupsAPI.RegisterEndpoints(apiRouter)
+
+	/********* gRPC gateway integration **********/
+	gRPCGatewayMux := runtime.NewServeMux(
+		runtime.WithForwardResponseOption(types.SetHeaderFromMetadataFilter),
+		runtime.WithForwardResponseRewriter(types.ForwardErrorResponseRewriter),
+	)
+
+	err := v0Roles.RegisterRolesServiceHandlerServer(context.Background(), gRPCGatewayMux, roles.NewGrpcHandler(rolesSvc, tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
+	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
+	/********* gRPC gateway integration **********/
 
 	if oauth2Config.Enabled {
 

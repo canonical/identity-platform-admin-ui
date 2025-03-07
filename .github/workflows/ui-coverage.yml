@@ -12,15 +12,15 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           name: coverage
           run-id: ${{ github.event.workflow_run.id }}
           path: "./ui/coverage"
       - name: "Report Coverage"
-        uses: davelosert/vitest-coverage-report-action@v2
+        uses: davelosert/vitest-coverage-report-action@5a78cb16e761204097ad8a39369ea5d0ff7c8a5d # v2
         with:
             working-directory: "./ui"
             name: "UI Test Coverage"

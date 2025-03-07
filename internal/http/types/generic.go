@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package types
@@ -13,10 +13,10 @@ import (
 )
 
 type Response struct {
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
 	Message string      `json:"message"`
 	Status  int         `json:"status"`
-	Meta    *Pagination `json:"_meta"`
+	Meta    *Pagination `json:"_meta,omitempty"`
 }
 
 // NavigationTokens are parameters used to navigate `list` result endpoints

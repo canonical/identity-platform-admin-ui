@@ -46,7 +46,11 @@ const ProviderCreate: FC = () => {
     validationSchema: ProviderCreateSchema,
     onSubmit: (values) => {
       createProvider(
-        JSON.stringify({ ...values, scope: values.scope?.split(",") }),
+        JSON.stringify({
+          ...values,
+          label: values.id,
+          scope: values.scope?.split(","),
+        }),
       )
         .then(() => {
           void queryClient.invalidateQueries({

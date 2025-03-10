@@ -131,6 +131,13 @@ const ProviderForm: FC<Props> = ({ formik, isEdit = false }) => {
         label={Label.NAME}
         error={formik.touched.id ? formik.errors.id : null}
         disabled={isEdit}
+        help={
+          <>
+            Name will be used as the button label for signing in.
+            <br />
+            {"Example: Sign in with <Name>"}
+          </>
+        }
       />
       <Input
         {...formik.getFieldProps("client_id")}

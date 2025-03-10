@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.23.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.1...v1.23.0) (2025-03-10)
+
+
+### Features
+
+* add ListUsers to OpenFGA noop client ([ba161ee](https://github.com/canonical/identity-platform-admin-ui/commit/ba161ee4bcba6d2a27bb04d10b28fadc5bb8a363))
+* implement ListUsers in our OpenFGA client ([1b3a436](https://github.com/canonical/identity-platform-admin-ui/commit/1b3a4367238a8874c693cf8d0711f95a5202a2bf))
+* pass label when creating idps ([48b2193](https://github.com/canonical/identity-platform-admin-ui/commit/48b2193edb74da90164b9ab4d94f219b04a68ea7))
+* pass label when creating idps ([9b31198](https://github.com/canonical/identity-platform-admin-ui/commit/9b31198f3941c16a9df4476328da064affd71f17))
+* update go version to 1.24.0 + adapt code to changes ([6ee7af2](https://github.com/canonical/identity-platform-admin-ui/commit/6ee7af21b7daf49efc3d8a1f7ecf41b8001e71f2))
+* upgrade Go to 1.23.6 + refactor to adapt ([fbeb718](https://github.com/canonical/identity-platform-admin-ui/commit/fbeb718f109c5ce909229a3cbe555959d40a80fe))
+* upgrade Go to 1.24.0 + adapt code + rockcraft.yaml update ([4492b5e](https://github.com/canonical/identity-platform-admin-ui/commit/4492b5e02c9e07b3144a53032bf002d6420c85b7))
+
+
+### Bug Fixes
+
+* add pr permission after last config change ([d875280](https://github.com/canonical/identity-platform-admin-ui/commit/d8752807e4dd1feac1d9ae5e17bed023cbe30f35))
+* add pr permission after last config change ([32626e7](https://github.com/canonical/identity-platform-admin-ui/commit/32626e77d93be329d13d3ce6d5566958591b1328))
+* add required label (empty string won't do) ([45fd8c0](https://github.com/canonical/identity-platform-admin-ui/commit/45fd8c01bca6050c919f8ff7bb9cb3a4cddccb48))
+* **deps:** update dependency vanilla-framework to v4.9.1 ([6d6730f](https://github.com/canonical/identity-platform-admin-ui/commit/6d6730fe1c9af03edf65e28adc2ea3418b16a48e))
+* **deps:** update dependency vanilla-framework to v4.9.1 ([f4e68ca](https://github.com/canonical/identity-platform-admin-ui/commit/f4e68ca61b12815deb05a6f9987161b9cfeff257))
+* **deps:** update internal ui dependencies ([f59e5ba](https://github.com/canonical/identity-platform-admin-ui/commit/f59e5ba53fee0ae1e28107123fcb0b1f41e2d556))
+* **deps:** update internal ui dependencies (minor) ([48c3c5f](https://github.com/canonical/identity-platform-admin-ui/commit/48c3c5f396692b466794c1b2994012c625d86707))
+* **deps:** update ui deps ([7f7d627](https://github.com/canonical/identity-platform-admin-ui/commit/7f7d627a0c810db0d8dea0b11b2d97cdb3fc3f25))
+* **deps:** update ui deps ([5b2f8b1](https://github.com/canonical/identity-platform-admin-ui/commit/5b2f8b1c3f69929262fcb475dd2d7e61f63165de))
+* **deps:** update ui deps ([7e93c6e](https://github.com/canonical/identity-platform-admin-ui/commit/7e93c6e65dd4b5c38f5b7c292d3b83bc00f65ce7))
+* **deps:** update ui deps (minor) ([23587a3](https://github.com/canonical/identity-platform-admin-ui/commit/23587a3492c4831c88bf8a0b07d3b3c4ab54440a))
+* **deps:** update ui deps (patch) ([76353c1](https://github.com/canonical/identity-platform-admin-ui/commit/76353c132f85f996bffdb7b8e494d3975014a121))
+* lower update frequency to avoid spamming ([46857a6](https://github.com/canonical/identity-platform-admin-ui/commit/46857a6d94eae00e70acc877c5d766345ef3508e))
+
 ## [1.22.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.0...v1.22.1) (2024-12-12)
 
 

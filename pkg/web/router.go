@@ -36,7 +36,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 
-	//"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 

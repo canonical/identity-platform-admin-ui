@@ -139,7 +139,7 @@ func (a *API) handleDetail(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(
 		types.Response{
 			Data:    []Role{*role},
-			Message: "Rule detail",
+			Message: "Role detail",
 			Status:  http.StatusOK,
 		},
 	)

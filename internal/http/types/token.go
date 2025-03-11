@@ -9,12 +9,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 const (
 	PAGINATION_HEADER = "X-Token-Pagination"
+	// GRPC_PAGINATION_METADATA  all gRPC metadata are lowercase
+	GRPC_PAGINATION_METADATA = "x-token-pagination"
 )
 
 // TODO @shipperizer move this under openfga package or at least change name to reflect this is used for openfga
@@ -62,6 +66,24 @@ func (p *TokenPaginator) LoadFromRequest(ctx context.Context, r *http.Request) e
 	}
 
 	return p.LoadFromString(ctx, header)
+}
+
+// LoadFromGRPCContext populates the TokenPaginator struct with pagination tokens from the gRPC context metadata
+func (p *TokenPaginator) LoadFromGRPCContext(ctx context.Context) error {
+	_, span := p.tracer.Start(ctx, "types.TokenPaginator.LoadFromGRPCContext")
+	defer span.End()
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	var header []string
+	if header, ok = md[GRPC_PAGINATION_METADATA]; !ok || len(header) == 0 || header[0] == "" {
+		return nil
+	}
+
+	return p.LoadFromString(ctx, header[0])
 }
 
 // SetToken sets a pagination token value for the specified type represented by key

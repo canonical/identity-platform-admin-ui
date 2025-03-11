@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.24.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.23.0...v1.24.0) (2025-03-11)
+
+
+### Features
+
+* add LoadFromGRPCContext for tokenpaginator ([f53cfbe](https://github.com/canonical/identity-platform-admin-ui/commit/f53cfbe0b151162eb1be0a44ceae1a9d242b8502))
+* add necessary functions for all API porting ([41bd6eb](https://github.com/canonical/identity-platform-admin-ui/commit/41bd6eb20adb07392e2d31619d92957747651516))
+* port Roles API to gRPC-gateway implementation ([789e24f](https://github.com/canonical/identity-platform-admin-ui/commit/789e24f236ea4457d3f3d73552dbf7f0d377add8))
+
+
+### Bug Fixes
+
+* typo ([9c88b07](https://github.com/canonical/identity-platform-admin-ui/commit/9c88b07c4c782083c3a492dae7e641b522cb19ae))
+
 ## [1.23.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.22.1...v1.23.0) (2025-03-10)
 
 

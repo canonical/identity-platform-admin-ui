@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	v0Types "github.com/canonical/identity-platform-api/v0/http"
 	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
@@ -231,6 +232,10 @@ func TestCreateRole(t *testing.T) {
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.GrpcHandler.CreateRole").Return(mockCtx, mockSpan)
 
+			if test.name == "Empty role name" {
+				mockLogger.EXPECT().Debug(gomock.Any())
+			}
+
 			if test.name == "Service error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			}
@@ -312,7 +317,7 @@ func TestRemoveRole(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.GrpcHandler.RemoveRole").Return(mockCtx, mockSpan)
 
 			if test.name == "Empty role ID" {
-				mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any())
+				mockLogger.EXPECT().Debug(gomock.Any())
 			} else if test.name == "Service error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			}
@@ -399,7 +404,7 @@ func TestListRoleEntitlements(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().Return(mockCtx, mockSpan)
 
 			if test.name == "Empty role ID" {
-				mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any())
+				mockLogger.EXPECT().Debug(gomock.Any())
 			} else if test.name == "Paginator load error" || test.name == "Pagination metadata error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			} else if test.name == "Service error" {
@@ -451,8 +456,8 @@ func TestUpdateRoleEntitlements(t *testing.T) {
 			name: "Successful update",
 			req: &v0Roles.UpdateRoleEntitlementsReq{
 				Id: "role1",
-				EntitlementsPatchReq: &v0Roles.Permissions{
-					Updates: []*v0Roles.Permission{
+				EntitlementsPatchReq: &v0Types.Permissions{
+					Updates: []*v0Types.Permission{
 						{Relation: "relation1", Object: "object1"},
 					},
 				},
@@ -467,8 +472,8 @@ func TestUpdateRoleEntitlements(t *testing.T) {
 			name: "Empty role ID",
 			req: &v0Roles.UpdateRoleEntitlementsReq{
 				Id: "",
-				EntitlementsPatchReq: &v0Roles.Permissions{
-					Updates: []*v0Roles.Permission{
+				EntitlementsPatchReq: &v0Types.Permissions{
+					Updates: []*v0Types.Permission{
 						{Relation: "relation1", Object: "object1"},
 					},
 				},
@@ -480,8 +485,8 @@ func TestUpdateRoleEntitlements(t *testing.T) {
 			name: "Service error",
 			req: &v0Roles.UpdateRoleEntitlementsReq{
 				Id: "role1",
-				EntitlementsPatchReq: &v0Roles.Permissions{
-					Updates: []*v0Roles.Permission{
+				EntitlementsPatchReq: &v0Types.Permissions{
+					Updates: []*v0Types.Permission{
 						{Relation: "relation1", Object: "object1"},
 					},
 				},
@@ -504,7 +509,7 @@ func TestUpdateRoleEntitlements(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.GrpcHandler.UpdateRoleEntitlements").Return(mockCtx, mockSpan)
 
 			if test.name == "Empty role ID" {
-				mockLogger.EXPECT().Debugf(gomock.Any())
+				mockLogger.EXPECT().Debug(gomock.Any())
 			} else if test.name == "Service error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			}
@@ -596,7 +601,7 @@ func TestRemoveRoleEntitlement(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.GrpcHandler.RemoveRoleEntitlement").Return(mockCtx, mockSpan)
 
 			if test.name == "Empty role ID" || test.name == "Empty entitlement ID" {
-				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
+				mockLogger.EXPECT().Debug(gomock.Any())
 			} else if test.name == "Service error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			}
@@ -668,7 +673,7 @@ func TestGetRoleGroups(t *testing.T) {
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.GrpcHandler.GetRoleGroups").Return(mockCtx, mockSpan)
 
 			if test.name == "Empty role ID" {
-				mockLogger.EXPECT().Debugf(gomock.Any())
+				mockLogger.EXPECT().Debug(gomock.Any())
 			} else if test.name == "Service error" {
 				mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any())
 			}

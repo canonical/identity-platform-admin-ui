@@ -7,6 +7,7 @@ import (
 	"context"
 	"net/http"
 
+	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
 	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -216,9 +217,9 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	idpAPI.RegisterEndpoints(apiRouter)
 	schemasAPI.RegisterEndpoints(apiRouter)
 	rulesAPI.RegisterEndpoints(apiRouter)
-	// while we port APIs to the new gRPC-gateway based implementation, we disable this one
+	// while we port APIs to the new gRPC-gateway based implementation, we disable the original ones step by step
 	// rolesAPI.RegisterEndpoints(apiRouter)
-	groupsAPI.RegisterEndpoints(apiRouter)
+	// groupsAPI.RegisterEndpoints(apiRouter)
 
 	/********* gRPC gateway integration **********/
 	gRPCGatewayMux := runtime.NewServeMux(
@@ -231,7 +232,13 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		panic(err)
 	}
 
+	err = v0Groups.RegisterGroupsServiceHandlerServer(context.Background(), gRPCGatewayMux, groups.NewGrpcHandler(groupsSvc, tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
 	/********* gRPC gateway integration **********/
 
 	if oauth2Config.Enabled {

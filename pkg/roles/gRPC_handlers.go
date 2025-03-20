@@ -96,6 +96,7 @@ func (g *GrpcHandler) CreateRole(ctx context.Context, req *v0Roles.CreateRoleReq
 
 	role := req.GetRole()
 	if role == nil || role.GetName() == "" {
+		g.logger.Debug("role name is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role name is empty")
 	}
 
@@ -134,7 +135,7 @@ func (g *GrpcHandler) RemoveRole(ctx context.Context, req *v0Roles.RemoveRoleReq
 
 	roleID := req.GetId()
 	if roleID == "" {
-		g.logger.Debugf("role ID is empty")
+		g.logger.Debug("role ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role ID is empty")
 	}
 
@@ -157,7 +158,7 @@ func (g *GrpcHandler) ListRoleEntitlements(ctx context.Context, req *v0Roles.Lis
 
 	roleID := req.GetId()
 	if roleID == "" {
-		g.logger.Debugf("role ID is empty")
+		g.logger.Debug("role ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role ID is empty")
 	}
 
@@ -206,7 +207,7 @@ func (g *GrpcHandler) UpdateRoleEntitlements(ctx context.Context, req *v0Roles.U
 
 	roleID := req.GetId()
 	if roleID == "" {
-		g.logger.Debugf("role ID is empty")
+		g.logger.Debug("role ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role ID is empty")
 	}
 
@@ -238,13 +239,13 @@ func (g *GrpcHandler) RemoveRoleEntitlement(ctx context.Context, req *v0Roles.Re
 
 	roleID := req.GetId()
 	if roleID == "" {
-		g.logger.Errorf("role ID is empty")
+		g.logger.Debug("role ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role ID is empty")
 	}
 
 	entitlementID := req.GetEntitlementId()
 	if entitlementID == "" {
-		g.logger.Errorf("entitlement ID is empty")
+		g.logger.Debug("entitlement ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "entitlement ID is empty")
 	}
 
@@ -274,7 +275,7 @@ func (g *GrpcHandler) GetRoleGroups(ctx context.Context, req *v0Roles.GetRoleGro
 
 	roleID := req.GetId()
 	if roleID == "" {
-		g.logger.Debugf("role ID is empty")
+		g.logger.Debug("role ID is empty")
 		return nil, status.Errorf(codes.InvalidArgument, "role ID is empty")
 	}
 

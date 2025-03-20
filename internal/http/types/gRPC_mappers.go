@@ -37,7 +37,7 @@ func SetHeaderFromMetadataFilter(ctx context.Context, w http.ResponseWriter, _ p
 
 	for key, values := range md {
 		// filter out grpcgateway headers
-		if strings.HasPrefix(key, "grpcgateway-") {
+		if strings.HasPrefix(key, runtime.MetadataPrefix) {
 			continue
 		}
 

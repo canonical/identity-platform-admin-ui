@@ -9,6 +9,7 @@ import (
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
 	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
+	v0Status "github.com/canonical/identity-platform-api/v0/status"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
@@ -110,7 +111,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	router.Use(middlewares...)
 
-	statusAPI := status.NewAPI(tracer, monitor, logger)
+	//statusAPI := status.NewAPI(tracer, monitor, logger)
 	metricsAPI := metrics.NewAPI(logger)
 
 	identitiesAPI := identities.NewAPI(
@@ -209,7 +210,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	}
 
 	// register endpoints as last step
-	statusAPI.RegisterEndpoints(apiRouter)
+	//statusAPI.RegisterEndpoints(apiRouter)
 	metricsAPI.RegisterEndpoints(apiRouter)
 
 	identitiesAPI.RegisterEndpoints(apiRouter)
@@ -237,8 +238,15 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		panic(err)
 	}
 
+	err = v0Status.RegisterStatusServiceHandlerServer(context.Background(), gRPCGatewayMux, status.NewGrpcHandler(tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
 	/********* gRPC gateway integration **********/
 
 	if oauth2Config.Enabled {

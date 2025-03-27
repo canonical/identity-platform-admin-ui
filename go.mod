@@ -3,7 +3,7 @@ module github.com/canonical/identity-platform-admin-ui
 go 1.24.0
 
 require (
-	github.com/canonical/identity-platform-api v0.0.0-20250314142936-a6a2b2d1f0c0
+	github.com/canonical/identity-platform-api v0.0.0-20250325161223-af7476dafc9b
 	github.com/canonical/rebac-admin-ui-handlers v0.1.0
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/go-chi/chi/v5 v5.0.12

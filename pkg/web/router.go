@@ -211,7 +211,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	// register endpoints as last step
 	//statusAPI.RegisterEndpoints(apiRouter)
-	metricsAPI.RegisterEndpoints(apiRouter)
+	//metricsAPI.RegisterEndpoints(apiRouter)
 
 	identitiesAPI.RegisterEndpoints(apiRouter)
 	clientsAPI.RegisterEndpoints(apiRouter)
@@ -247,6 +247,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/metrics", metricsAPI.Handler())
 	/********* gRPC gateway integration **********/
 
 	if oauth2Config.Enabled {

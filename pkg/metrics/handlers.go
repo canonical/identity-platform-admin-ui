@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package metrics
@@ -22,6 +22,12 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 
 func (a *API) prometheusHTTP(w http.ResponseWriter, r *http.Request) {
 	promhttp.Handler().ServeHTTP(w, r)
+}
+
+func (a *API) Handler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		a.prometheusHTTP(w, r)
+	})
 }
 
 func NewAPI(logger logging.LoggerInterface) *API {

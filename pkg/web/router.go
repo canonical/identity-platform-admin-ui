@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
+	v0Identities "github.com/canonical/identity-platform-api/v0/identities"
 	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
 	v0Status "github.com/canonical/identity-platform-api/v0/status"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
@@ -213,7 +214,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	//statusAPI.RegisterEndpoints(apiRouter)
 	//metricsAPI.RegisterEndpoints(apiRouter)
 
-	identitiesAPI.RegisterEndpoints(apiRouter)
+	//identitiesAPI.RegisterEndpoints(apiRouter)
 	clientsAPI.RegisterEndpoints(apiRouter)
 	idpAPI.RegisterEndpoints(apiRouter)
 	schemasAPI.RegisterEndpoints(apiRouter)
@@ -243,6 +244,12 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		panic(err)
 	}
 
+	err = v0Identities.RegisterIdentitiesServiceHandlerServer(context.Background(), gRPCGatewayMux, identities.NewGrpcHandler(identitiesSvc, identities.NewGrpcMapper(logger), tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
+	apiRouter.Mount("/api/v0/identities", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)

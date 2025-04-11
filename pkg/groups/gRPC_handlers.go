@@ -26,7 +26,7 @@ import (
 
 type GrpcHandler struct {
 	svc ServiceInterface
-	// UnimplementedRolesServiceServer must be embedded to get forward compatible implementations.
+	// UnimplementedGroupsServiceServer must be embedded to get forward compatible implementations.
 	v0Groups.UnimplementedGroupsServiceServer
 
 	logger  logging.LoggerInterface

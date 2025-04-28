@@ -306,3 +306,8 @@ Vary: Origin
     "status": 200
 }
 ```
+
+## Security
+
+Please see [SECURITY.md](https://github.com/canonical/identity-platform-admin-ui/blob/main/SECURITY.md)
+for guidelines on reporting security issues.

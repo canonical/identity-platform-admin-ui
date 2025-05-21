@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.0...v1.24.1) (2025-05-21)
+
+
+### Bug Fixes
+
+* address CVE-2025-30153 ([c6e97e5](https://github.com/canonical/identity-platform-admin-ui/commit/c6e97e5f538e8fbe883cde49b43d7e2fd66bb5e9)), closes [#565](https://github.com/canonical/identity-platform-admin-ui/issues/565)
+
 ## [1.24.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.23.0...v1.24.0) (2025-04-15)
 
 

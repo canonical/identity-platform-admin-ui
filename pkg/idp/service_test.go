@@ -6,6 +6,7 @@ package idp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	reflect "reflect"
 	"strings"
@@ -13,7 +14,6 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 	gomock "go.uber.org/mock/gomock"
-	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -48,29 +48,32 @@ func TestListResourcesSuccess(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -115,7 +118,7 @@ func TestListResourcesSuccessButEmpty(t *testing.T) {
 
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[cfg.KeyName] = ""
+	cm.Data[cfg.KeyName] = `[]`
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.ListResources").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
@@ -186,29 +189,32 @@ func TestListResourcesFailsOnMissingKey(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -253,29 +259,32 @@ func TestGetResourceSuccess(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -319,29 +328,32 @@ func TestGetResourceNotfound(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -385,7 +397,7 @@ func TestGetResourceSuccessButEmpty(t *testing.T) {
 
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[cfg.KeyName] = ""
+	cm.Data[cfg.KeyName] = "[]"
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.GetResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
@@ -421,12 +433,11 @@ func TestGetResourceFails(t *testing.T) {
 	cfg.Namespace = "default"
 
 	cm := new(v1.ConfigMap)
-	cm.Data = make(map[string]string)
-	cm.Data[cfg.KeyName] = ""
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.GetResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockLogger.EXPECT().Error(gomock.Any())
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(1).Return(mockConfigMapV1)
-	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
+	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, errors.New("some error"))
 
 	is, err := NewService(cfg, mockAuthz, mockTracer, mockMonitor, mockLogger).GetResource(ctx, "fake")
 
@@ -434,8 +445,8 @@ func TestGetResourceFails(t *testing.T) {
 		t.Fatalf("expected providers to be empty not  %v", is)
 	}
 
-	if err != nil {
-		t.Fatalf("expected error to be nil not  %v", err)
+	if err == nil {
+		t.Fatalf("expected error to be not nil %v", err)
 	}
 }
 
@@ -459,29 +470,32 @@ func TestEditResourceSuccess(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -530,29 +544,32 @@ func TestEditResourceNotfound(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -599,29 +616,32 @@ func TestEditResourceFails(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -669,29 +689,32 @@ func TestCreateResourceSuccess(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -718,7 +741,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 
 			rawIdps := configMap.Data[cfg.KeyName]
 
-			_ = yaml.Unmarshal([]byte(rawIdps), &i)
+			_ = json.Unmarshal([]byte(rawIdps), &i)
 
 			if len(i) != len(idps)+1 {
 				t.Fatalf("expected providers to be %v not %v", len(idps)+1, len(i))
@@ -758,7 +781,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 
 	cm := new(v1.ConfigMap)
 	cm.Data = make(map[string]string)
-	cm.Data[cfg.KeyName] = ""
+	cm.Data[cfg.KeyName] = "[]"
 
 	c := new(Configuration)
 	c.ClientSecret = "secret-9"
@@ -766,6 +789,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	c.Provider = "okta"
 	c.Mapper = "file:///etc/config/kratos/okta_schema.jsonnet"
 	c.Scope = []string{"email"}
+	c.RequestedClaims = []byte("null")
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.CreateResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 	mockAuthz.EXPECT().SetCreateProviderEntitlements(gomock.Any(), gomock.Any())
@@ -781,7 +805,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 				t.Fatalf("key is missing from the configmap")
 			}
 
-			_ = yaml.Unmarshal([]byte(rawIdps), &i)
+			_ = json.Unmarshal([]byte(rawIdps), &i)
 
 			if len(i) != 1 {
 				t.Fatalf("expected providers to be %v not %v", 1, len(i))
@@ -802,7 +826,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Fatalf("expected error to be nil not  %v", err)
+		t.Fatalf("expected error to be nil not %v", err)
 	}
 }
 
@@ -826,29 +850,32 @@ func TestCreateResourceFails(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -874,7 +901,7 @@ func TestCreateResourceFails(t *testing.T) {
 
 			rawIdps := configMap.Data[cfg.KeyName]
 
-			_ = yaml.Unmarshal([]byte(rawIdps), &i)
+			_ = json.Unmarshal([]byte(rawIdps), &i)
 
 			if len(i) != len(idps)+1 {
 				t.Fatalf("expected providers to be %v not %v", len(idps)+1, len(i))
@@ -914,29 +941,32 @@ func TestDeleteResourceSuccess(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -955,7 +985,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 
 			rawIdps := configMap.Data[cfg.KeyName]
 
-			_ = yaml.Unmarshal([]byte(rawIdps), &i)
+			_ = json.Unmarshal([]byte(rawIdps), &i)
 
 			if len(i) != len(idps)-1 {
 				t.Fatalf("expected providers to be %v not %v", len(idps)+1, len(i))
@@ -991,29 +1021,32 @@ func TestDeleteResourceFails(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -1052,29 +1085,32 @@ func TestV1ServiceListIdentityProviders(t *testing.T) {
 
 	k8sIdps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -1281,29 +1317,32 @@ func TestV1ServiceDeleteConfiguration(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -1367,7 +1406,7 @@ func TestV1ServiceDeleteConfiguration(t *testing.T) {
 
 					rawIdps := configMap.Data[cfg.KeyName]
 
-					_ = yaml.Unmarshal([]byte(rawIdps), &i)
+					_ = json.Unmarshal([]byte(rawIdps), &i)
 
 					if test.expected.err != nil {
 						return cm, test.expected.err
@@ -1405,29 +1444,32 @@ func TestV1ServiceGetConfiguration(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 
@@ -1534,29 +1576,32 @@ func TestV1ServiceUpdateConfiguration(t *testing.T) {
 
 	idps := []*Configuration{
 		{
-			ID:           "microsoft_af675f353bd7451588e2b8032e315f6f",
-			ClientID:     "af675f35-3bd7-4515-88e2-b8032e315f6f",
-			Provider:     "microsoft",
-			ClientSecret: "secret-1",
-			Tenant:       "e1574293-28de-4e94-87d5-b61c76fc14e1",
-			Mapper:       "file:///etc/config/kratos/microsoft_schema.jsonnet",
-			Scope:        []string{"email"},
+			ID:              "microsoft_af675f353bd7451588e2b8032e315f6f",
+			ClientID:        "af675f35-3bd7-4515-88e2-b8032e315f6f",
+			Provider:        "microsoft",
+			ClientSecret:    "secret-1",
+			Tenant:          "e1574293-28de-4e94-87d5-b61c76fc14e1",
+			Mapper:          "file:///etc/config/kratos/microsoft_schema.jsonnet",
+			Scope:           []string{"email"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "google_18fa2999e6c9475aa49515d933d8e8ce",
-			ClientID:     "18fa2999-e6c9-475a-a495-15d933d8e8ce",
-			Provider:     "google",
-			ClientSecret: "secret-2",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"email", "profile"},
+			ID:              "google_18fa2999e6c9475aa49515d933d8e8ce",
+			ClientID:        "18fa2999-e6c9-475a-a495-15d933d8e8ce",
+			Provider:        "google",
+			ClientSecret:    "secret-2",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"email", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 		{
-			ID:           "aws_18fa2999e6c9475aa49589d941d8e1zy",
-			ClientID:     "18fa2999-e6c9-475a-a495-89d941d8e1zy",
-			Provider:     "aws",
-			ClientSecret: "secret-3",
-			Mapper:       "file:///etc/config/kratos/google_schema.jsonnet",
-			Scope:        []string{"address", "profile"},
+			ID:              "aws_18fa2999e6c9475aa49589d941d8e1zy",
+			ClientID:        "18fa2999-e6c9-475a-a495-89d941d8e1zy",
+			Provider:        "aws",
+			ClientSecret:    "secret-3",
+			Mapper:          "file:///etc/config/kratos/google_schema.jsonnet",
+			Scope:           []string{"address", "profile"},
+			RequestedClaims: []byte("null"),
 		},
 	}
 

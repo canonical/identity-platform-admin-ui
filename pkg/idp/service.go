@@ -12,7 +12,6 @@ import (
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"github.com/google/uuid"
-	"gopkg.in/yaml.v3"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
@@ -157,8 +156,6 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 		return nil, nil
 	}
 
-	var idp *Configuration
-
 	// assign random ID if empty
 	if data.ID == "" {
 		data.ID = uuid.NewString()
@@ -193,7 +190,7 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 
 	s.authz.SetCreateProviderEntitlements(ctx, data.ID)
 
-	return []*Configuration{idp}, nil
+	return []*Configuration{data}, nil
 }
 
 func (s *Service) DeleteResource(ctx context.Context, providerID string) error {
@@ -322,13 +319,12 @@ func (s *Service) idpConfiguration(idps map[string]string) ([]*Configuration, er
 	idpConfig := make([]*Configuration, 0)
 
 	rawIdps, ok := idps[s.keyName]
-
 	if !ok {
 		s.logger.Errorf("failed to find key %s in configMap %v", s.keyName, idps)
 		return idpConfig, nil
 	}
 
-	err := yaml.Unmarshal([]byte(rawIdps), &idpConfig)
+	err := json.Unmarshal([]byte(rawIdps), &idpConfig)
 
 	if err != nil {
 		s.logger.Errorf("failed unmarshalling %s - %v", rawIdps, err)

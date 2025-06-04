@@ -32,9 +32,10 @@ const (
 )
 
 type Service struct {
-	kratos kClient.IdentityAPI
-	authz  AuthorizerInterface
-	email  mail.EmailServiceInterface
+	kratos       kClient.IdentityAPI
+	kratosPublic kClient.FrontendAPI
+	authz        AuthorizerInterface
+	email        mail.EmailServiceInterface
 
 	tracer  tracing.TracingInterface
 	monitor monitoring.MonitorInterface
@@ -45,6 +46,11 @@ type IdentityData struct {
 	Identities []kClient.Identity
 	Tokens     types.NavigationTokens
 	Error      *kClient.GenericError
+}
+
+type SessionData struct {
+	Session kClient.Session
+	Error   *kClient.GenericError
 }
 
 // TODO @shipperizer verify during integration test if this is actually the format
@@ -74,6 +80,70 @@ func (s *Service) parseError(r *http.Response) *kClient.GenericError {
 	}
 
 	return gerr.Error
+}
+
+func (s *Service) cookiesToString(cookies []*http.Cookie) string {
+	var ret = make([]string, len(cookies))
+	for i, c := range cookies {
+		ret[i] = fmt.Sprintf("%s=%s", c.Name, c.Value)
+	}
+	return strings.Join(ret, "; ")
+}
+
+func (s *Service) GetIdentitySession(ctx context.Context, cookies []*http.Cookie) (*SessionData, error) {
+	ctx, span := s.tracer.Start(ctx, "identities.Service.GetIdentitySession")
+	defer span.End()
+
+	// GET /sessions/whoami
+	session, rr, err := s.kratosPublic.
+		ToSession(ctx).
+		Cookie(s.cookiesToString(cookies)).
+		Execute()
+
+	if err != nil {
+		s.logger.Error("failed to get identity session: %v", err)
+		return nil, err
+	}
+
+	data := new(SessionData)
+	if err != nil {
+		s.logger.Error(err)
+		data.Error = s.parseError(rr)
+		return data, err
+	}
+
+	if session != nil {
+		data.Session = *session
+	} else {
+		data.Session = kClient.Session{}
+	}
+
+	return data, nil
+}
+
+func (s *Service) DisableSession(ctx context.Context, sessionID string) (*SessionData, error) {
+	ctx, span := s.tracer.Start(ctx, "identities.Service.DisableSession")
+	defer span.End()
+
+	// DEL /admin/sessions/{id}
+	rr, err := s.kratos.DisableSessionExecute(
+		s.kratos.DisableSession(ctx, sessionID),
+	)
+
+	if err != nil {
+		s.logger.Error("failed to disable kratos session: %v", err)
+		return nil, err
+	}
+
+	data := new(SessionData)
+
+	if err != nil {
+		s.logger.Error(err)
+		data.Error = s.parseError(rr)
+		return data, err
+	}
+
+	return data, err
 }
 
 func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID string) (*IdentityData, error) {
@@ -293,10 +363,11 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	return data, err
 }
 
-func NewService(kratos kClient.IdentityAPI, authz AuthorizerInterface, email mail.EmailServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(kratos kClient.IdentityAPI, kratosPublic kClient.FrontendAPI, authz AuthorizerInterface, email mail.EmailServiceInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.kratos = kratos
+	s.kratosPublic = kratosPublic
 	s.authz = authz
 	s.email = email
 

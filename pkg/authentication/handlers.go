@@ -17,6 +17,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
+	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
@@ -73,6 +74,7 @@ type API struct {
 	oauth2           OAuth2ContextInterface
 	helper           OAuth2HelperInterface
 	cookieManager    AuthCookieManagerInterface
+	identities       identities.ServiceInterface
 
 	tracer tracing.TracingInterface
 	logger logging.LoggerInterface
@@ -253,6 +255,26 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.ClearAccessTokenCookie(w)
 	a.cookieManager.ClearRefreshTokenCookie(w)
 
+	session, err := a.identities.GetIdentitySession(ctx, r.Cookies())
+	if err != nil {
+		a.logger.Errorf("failed to retrieve kratos session, err: %v", err)
+		a.badRequest(w, err)
+		return
+	}
+	if session == nil {
+		a.badRequest(w, fmt.Errorf("failed to get session id"))
+		return
+	}
+
+	sessionID := session.Session.Id
+	_, err = a.identities.DisableSession(ctx, sessionID)
+
+	if err != nil {
+		a.logger.Errorf("failed to disable kratos session, err: %v", err)
+		a.badRequest(w, err)
+		return
+	}
+
 	nextTo := r.URL.Query().Get("next")
 	a.uiRedirect(w, r, nextTo)
 }
@@ -287,6 +309,7 @@ func NewAPI(
 	oauth2Context OAuth2ContextInterface,
 	helper OAuth2HelperInterface,
 	cookieManager AuthCookieManagerInterface,
+	identitiesSvc identities.ServiceInterface,
 	tracer tracing.TracingInterface,
 	logger logging.LoggerInterface,
 ) *API {
@@ -296,6 +319,7 @@ func NewAPI(
 	a.oauth2 = oauth2Context
 	a.helper = helper
 	a.cookieManager = cookieManager
+	a.identities = identitiesSvc
 
 	a.logger = logger
 	a.tracer = tracer

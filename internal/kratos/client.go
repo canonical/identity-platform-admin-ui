@@ -18,6 +18,10 @@ func (c *Client) IdentityAPI() client.IdentityAPI {
 	return c.c.IdentityAPI
 }
 
+func (c *Client) FrontendAPI() client.FrontendAPI {
+	return c.c.FrontendAPI
+}
+
 func NewClient(url string, debug bool) *Client {
 	c := new(Client)
 

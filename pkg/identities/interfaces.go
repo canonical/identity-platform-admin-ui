@@ -5,6 +5,7 @@ package identities
 
 import (
 	"context"
+	"net/http"
 
 	kClient "github.com/ory/kratos-client-go"
 
@@ -17,6 +18,8 @@ type AuthorizerInterface interface {
 }
 
 type ServiceInterface interface {
+	GetIdentitySession(context.Context, []*http.Cookie) (*SessionData, error)
+	DisableSession(context.Context, string) (*SessionData, error)
 	ListIdentities(context.Context, int64, string, string) (*IdentityData, error)
 	GetIdentity(context.Context, string) (*IdentityData, error)
 	CreateIdentity(context.Context, *kClient.CreateIdentityBody) (*IdentityData, error)

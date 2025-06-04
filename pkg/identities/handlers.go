@@ -45,8 +45,9 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	mux.Put("/api/v0/identities/{id:.+}", a.handleUpdate)
 	// mux.Patch("/api/v0/identities/{id:.+}", a.handlePartialUpdate)
 	mux.Delete("/api/v0/identities/{id:.+}", a.handleRemove)
+	mux.Delete("/api/v0/identities/sessions/{id:.+}", a.handleSessionDisable)
 	// mux.Delete("/api/v0/identities/{id:.+}/sessions", a.handleSessionRemove)
-	// mux.Delete("/api/v0/identities/{id:.+}/credentials/{type}", a.handleCrededntialRemove)
+	// mux.Delete("/api/v0/identities/{id:.+}/credentials/{type}", a.handleCredentialRemove)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {
@@ -259,6 +260,30 @@ func (a *API) handleRemove(w http.ResponseWriter, r *http.Request) {
 		types.Response{
 			Data:    identities.Identities,
 			Message: "Identity Deleted",
+			Status:  http.StatusOK,
+		},
+	)
+}
+
+func (a *API) handleSessionDisable(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	sessionID := chi.URLParam(r, "id")
+
+	session, err := a.service.DisableSession(r.Context(), sessionID)
+
+	if err != nil {
+		rr := a.error(session.Error)
+
+		w.WriteHeader(rr.Status)
+		json.NewEncoder(w).Encode(rr)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		types.Response{
+			Message: "Session Deleted",
 			Status:  http.StatusOK,
 		},
 	)

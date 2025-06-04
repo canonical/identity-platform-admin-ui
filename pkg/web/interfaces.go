@@ -43,6 +43,7 @@ type O11yConfigInterface interface {
 type ExternalClientsConfigInterface interface {
 	HydraAdmin() *ih.Client
 	KratosAdmin() *ik.Client
+	KratosPublic() *ik.Client
 	OpenFGA() OpenFGAClientInterface
 	Authorizer() AuthorizerClientInterface
 }

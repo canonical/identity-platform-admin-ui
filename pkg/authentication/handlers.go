@@ -73,6 +73,7 @@ type API struct {
 	oauth2           OAuth2ContextInterface
 	helper           OAuth2HelperInterface
 	cookieManager    AuthCookieManagerInterface
+	sessions         SessionManagerInterface
 
 	tracer tracing.TracingInterface
 	logger logging.LoggerInterface
@@ -253,6 +254,23 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.ClearAccessTokenCookie(w)
 	a.cookieManager.ClearRefreshTokenCookie(w)
 
+	s, err := a.sessions.GetIdentitySession(ctx, r.Cookies())
+	if err != nil {
+		a.logger.Errorf("failed to retrieve kratos session, err: %v", err)
+		a.badRequest(w, err)
+		return
+	}
+
+	sessionID := s.Session.Id
+	_, err = a.sessions.DisableSession(ctx, sessionID)
+
+	if err != nil {
+		err = fmt.Errorf("failed to disable kratos session, err: %v", err)
+		a.logger.Error(err.Error())
+		a.badRequest(w, err)
+		return
+	}
+
 	nextTo := r.URL.Query().Get("next")
 	a.uiRedirect(w, r, nextTo)
 }
@@ -287,6 +305,7 @@ func NewAPI(
 	oauth2Context OAuth2ContextInterface,
 	helper OAuth2HelperInterface,
 	cookieManager AuthCookieManagerInterface,
+	sessions SessionManagerInterface,
 	tracer tracing.TracingInterface,
 	logger logging.LoggerInterface,
 ) *API {
@@ -296,6 +315,7 @@ func NewAPI(
 	a.oauth2 = oauth2Context
 	a.helper = helper
 	a.cookieManager = cookieManager
+	a.sessions = sessions
 
 	a.logger = logger
 	a.tracer = tracer

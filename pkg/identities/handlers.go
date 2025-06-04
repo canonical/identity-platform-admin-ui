@@ -46,7 +46,7 @@ func (a *API) RegisterEndpoints(mux *chi.Mux) {
 	// mux.Patch("/api/v0/identities/{id:.+}", a.handlePartialUpdate)
 	mux.Delete("/api/v0/identities/{id:.+}", a.handleRemove)
 	// mux.Delete("/api/v0/identities/{id:.+}/sessions", a.handleSessionRemove)
-	// mux.Delete("/api/v0/identities/{id:.+}/credentials/{type}", a.handleCrededntialRemove)
+	// mux.Delete("/api/v0/identities/{id:.+}/credentials/{type}", a.handleCredentialRemove)
 }
 
 func (a *API) RegisterValidation(v validation.ValidationRegistryInterface) {

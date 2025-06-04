@@ -282,11 +282,13 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	if oauth2Config.Enabled {
 
+		sessionManager := authentication.NewSessionManagerService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.KratosPublic().FrontendAPI(), tracer, monitor, logger)
 		login := authentication.NewAPI(
 			config.contextPath,
 			oauth2Context,
 			authentication.NewOAuth2Helper(),
 			cookieManager,
+			sessionManager,
 			tracer,
 			logger,
 		)

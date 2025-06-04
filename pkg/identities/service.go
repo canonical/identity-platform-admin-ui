@@ -5,9 +5,7 @@ package identities
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
@@ -18,6 +16,7 @@ import (
 	coreV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
@@ -47,11 +46,6 @@ type IdentityData struct {
 	Error      *kClient.GenericError
 }
 
-// TODO @shipperizer verify during integration test if this is actually the format
-type KratosError struct {
-	Error *kClient.GenericError `json:"error,omitempty"`
-}
-
 func (s *Service) buildListRequest(ctx context.Context, size int64, token, credID string) kClient.IdentityAPIListIdentitiesRequest {
 	r := s.kratos.ListIdentities(ctx).PageToken(token).PageSize(size)
 
@@ -60,20 +54,6 @@ func (s *Service) buildListRequest(ctx context.Context, size int64, token, credI
 	}
 
 	return r
-}
-
-func (s *Service) parseError(r *http.Response) *kClient.GenericError {
-	gerr := KratosError{Error: kClient.NewGenericErrorWithDefaults()}
-
-	defer r.Body.Close()
-	body, _ := io.ReadAll(r.Body)
-
-	if err := json.Unmarshal(body, &gerr); err != nil {
-		gerr.Error.SetMessage("unable to parse kratos error response")
-		gerr.Error.SetCode(http.StatusInternalServerError)
-	}
-
-	return gerr.Error
 }
 
 func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID string) (*IdentityData, error) {
@@ -88,7 +68,7 @@ func (s *Service) ListIdentities(ctx context.Context, size int64, token, credID 
 
 	if err != nil {
 		s.logger.Error(err)
-		data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
 	}
 
 	if navTokens, err := types.ParseLinkTokens(rr.Header); err != nil {
@@ -119,7 +99,7 @@ func (s *Service) GetIdentity(ctx context.Context, ID string) (*IdentityData, er
 
 	if err != nil {
 		s.logger.Error(err)
-		data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
 	}
 
 	if identity != nil {
@@ -140,7 +120,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 
 		data := new(IdentityData)
 		data.Identities = []kClient.Identity{}
-		data.Error = s.parseError(nil)
+		data.Error = kratos.ParseKratosError(nil)
 		data.Error.SetMessage(err.Error())
 
 		s.logger.Error(err)
@@ -162,7 +142,7 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 
 	if err != nil {
 		s.logger.Error(err)
-		data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
 		return data, err
 	}
 
@@ -230,7 +210,7 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 
 		data := new(IdentityData)
 		data.Identities = []kClient.Identity{}
-		data.Error = s.parseError(nil)
+		data.Error = kratos.ParseKratosError(nil)
 		data.Error.SetMessage(err.Error())
 
 		s.logger.Error(err)
@@ -243,7 +223,7 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 
 		data := new(IdentityData)
 		data.Identities = []kClient.Identity{}
-		data.Error = s.parseError(nil)
+		data.Error = kratos.ParseKratosError(nil)
 		data.Error.SetMessage(err.Error())
 
 		s.logger.Error(err)
@@ -259,7 +239,7 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 
 	if err != nil {
 		s.logger.Error(err)
-		data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
 	}
 
 	if identity != nil {
@@ -284,7 +264,7 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	data.Identities = []kClient.Identity{}
 	if err != nil {
 		s.logger.Error(err)
-		data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
 		return data, err
 	}
 

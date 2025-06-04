@@ -7,6 +7,8 @@ import (
 	"context"
 	"net/http"
 
+	kClient "github.com/ory/kratos-client-go"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )
@@ -111,4 +113,14 @@ type PrincipalInterface interface {
 	AccessToken() string
 	RefreshToken() string
 	IDToken() string
+}
+
+type KratosSession interface {
+	GetSession() kClient.Session
+	GetError() *kClient.GenericError
+}
+
+type SessionManagerInterface interface {
+	GetIdentitySession(context.Context, []*http.Cookie) (KratosSession, error)
+	DisableSession(ctx context.Context, sessionID string) (KratosSession, error)
 }

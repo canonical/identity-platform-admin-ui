@@ -770,3 +770,96 @@ func TestRegisterValidation(t *testing.T) {
 	// second registration of `apiKey` causes logger.Fatal invocation
 	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterValidation(mockValidationRegistry)
 }
+
+func TestHandleDisableSessionSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	sessionID := "test"
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/identities/sessions/%s", sessionID), nil)
+
+	mockService.EXPECT().DisableSession(gomock.Any(), sessionID).Return(&SessionData{Session: kClient.Session{}}, nil)
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("expected HTTP status code 200 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Status != http.StatusOK {
+		t.Errorf("expected code to be %v got %v", http.StatusOK, rr.Status)
+	}
+}
+
+func TestHandleDisableSessionFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockService := NewMockServiceInterface(ctrl)
+
+	sessionID := "test"
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v0/identities/sessions/%s", sessionID), nil)
+
+	gerr := new(kClient.GenericError)
+	gerr.SetCode(http.StatusBadRequest)
+	gerr.SetMessage("session not found")
+	gerr.SetReason("resource missing")
+
+	mockService.EXPECT().DisableSession(gomock.Any(), sessionID).Return(&SessionData{Session: kClient.Session{}, Error: gerr}, fmt.Errorf("error"))
+
+	w := httptest.NewRecorder()
+	mux := chi.NewMux()
+	NewAPI(mockService, mockTracer, mockMonitor, mockLogger).RegisterEndpoints(mux)
+
+	mux.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if res.StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected HTTP status code 400 got %v", res.StatusCode)
+	}
+
+	rr := new(types.Response)
+	if err := json.Unmarshal(data, rr); err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+
+	if rr.Message != *gerr.Reason {
+		t.Errorf("expected message to be %s got %s", *gerr.Reason, rr.Message)
+	}
+
+	if rr.Status != int(*gerr.Code) {
+		t.Errorf("expected code to be %v got %v", *gerr.Code, rr.Status)
+	}
+}

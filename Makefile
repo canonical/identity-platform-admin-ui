@@ -58,3 +58,31 @@ dev:
 		--tail \
 		--cache-artifacts=false
 .PHONY: dev
+
+
+GOOSE=goose
+GOOSE_DRIVER=postgres
+GOOSE_DBSTRING?=postgresql://user:user@localhost:5432/admin-service?sslmode=disable
+GOOSE_MIGRATION_DIR?=./migrations
+
+db-status:
+	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
+	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
+	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) status
+.PHONY: db-status
+
+db:
+	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
+	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
+	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) up
+.PHONY: migrate
+
+db-down:
+	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
+	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
+	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) down
+.PHONY: migrate-down
+
+install-goose:
+	go install github.com/pressly/goose/v3/cmd/goose@v3.24.3
+.PHONY: install-goose

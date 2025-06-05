@@ -4,9 +4,11 @@
 package identities
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	reflect "reflect"
@@ -31,6 +33,7 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_corev1.go k8s.io/client-go/kubernetes/typed/core/v1 CoreV1Interface,ConfigMapInterface
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos.go github.com/ory/kratos-client-go IdentityAPI
+//go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_kratos_frontend_api.go github.com/ory/kratos-client-go FrontendAPI
 
 func TestListIdentitiesSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -41,6 +44,7 @@ func TestListIdentitiesSuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -81,7 +85,7 @@ func TestListIdentitiesSuccess(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "")
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "")
 
 	if !reflect.DeepEqual(ids.Identities, identities) {
 		t.Fatalf("expected identities to be %v not  %v", identities, ids.Identities)
@@ -108,6 +112,7 @@ func TestListIdentitiesFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -160,7 +165,7 @@ func TestListIdentitiesFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "test")
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).ListIdentities(ctx, 10, "eyJvZmZzZXQiOiIyNTAiLCJ2IjoyfQ", "test")
 
 	if !reflect.DeepEqual(ids.Identities, identities) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -188,6 +193,7 @@ func TestGetIdentitySuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -203,7 +209,7 @@ func TestGetIdentitySuccess(t *testing.T) {
 	mockKratosIdentityAPI.EXPECT().GetIdentity(ctx, credID).Times(1).Return(identityRequest)
 	mockKratosIdentityAPI.EXPECT().GetIdentityExecute(gomock.Any()).Times(1).Return(identity, new(http.Response), nil)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -222,6 +228,7 @@ func TestGetIdentityFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -259,7 +266,7 @@ func TestGetIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).GetIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -287,6 +294,7 @@ func TestCreateIdentitySuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -315,7 +323,7 @@ func TestCreateIdentitySuccess(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -335,6 +343,7 @@ func TestCreateIdentityFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -375,7 +384,7 @@ func TestCreateIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).CreateIdentity(ctx, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -403,6 +412,7 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -431,7 +441,7 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, identity.Id, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, identity.Id, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, []kClient.Identity{*identity}) {
 		t.Fatalf("expected identities to be %v not  %v", *identity, ids.Identities)
@@ -451,6 +461,7 @@ func TestUpdateIdentityFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -494,7 +505,7 @@ func TestUpdateIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, credID, identityBody)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).UpdateIdentity(ctx, credID, identityBody)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -522,6 +533,7 @@ func TestDeleteIdentitySuccess(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -536,7 +548,7 @@ func TestDeleteIdentitySuccess(t *testing.T) {
 	mockKratosIdentityAPI.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
 	mockKratosIdentityAPI.EXPECT().DeleteIdentityExecute(gomock.Any()).Times(1).Return(new(http.Response), nil)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
 
 	if len(ids.Identities) > 0 {
 		t.Fatalf("invalid result, expected no identities, got %v", ids.Identities)
@@ -556,6 +568,7 @@ func TestDeleteIdentityFails(t *testing.T) {
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
 	ctx := context.Background()
@@ -593,7 +606,7 @@ func TestDeleteIdentityFails(t *testing.T) {
 		},
 	)
 
-	ids, err := NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
+	ids, err := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger).DeleteIdentity(ctx, credID)
 
 	if !reflect.DeepEqual(ids.Identities, make([]kClient.Identity, 0)) {
 		t.Fatalf("expected identities to be empty not  %v", ids.Identities)
@@ -719,6 +732,7 @@ func TestV1ServiceListIdentities(t *testing.T) {
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -792,7 +806,7 @@ func TestV1ServiceListIdentities(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			r, err := svc.ListIdentities(
@@ -902,6 +916,7 @@ func TestV1ServiceCreateIdentity(t *testing.T) {
 			mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -974,7 +989,7 @@ func TestV1ServiceCreateIdentity(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			newIdentity, err := svc.CreateIdentity(ctx, test.input.identity)
@@ -1065,6 +1080,7 @@ func TestV1ServiceGetIdentity(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1118,7 +1134,7 @@ func TestV1ServiceGetIdentity(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			identity, err := svc.GetIdentity(ctx, test.input)
@@ -1219,6 +1235,7 @@ func TestV1ServiceUpdateIdentity(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1286,7 +1303,7 @@ func TestV1ServiceUpdateIdentity(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			identity, err := svc.UpdateIdentity(ctx, test.input)
@@ -1359,6 +1376,7 @@ func TestV1ServiceDeleteIdentity(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1413,7 +1431,7 @@ func TestV1ServiceDeleteIdentity(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ok, err := svc.DeleteIdentity(ctx, test.input)
@@ -1489,6 +1507,7 @@ func TestV1ServiceGetIdentityGroups(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1506,7 +1525,7 @@ func TestV1ServiceGetIdentityGroups(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
@@ -1602,6 +1621,7 @@ func TestV1ServiceGetIdentityRoles(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1619,7 +1639,7 @@ func TestV1ServiceGetIdentityRoles(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
@@ -1739,6 +1759,7 @@ func TestV1ServicePatchIdentityRoles(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1756,7 +1777,7 @@ func TestV1ServicePatchIdentityRoles(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			// AssignRoles(context.Context, string, ...string) error
@@ -1912,6 +1933,7 @@ func TestV1ServicePatchIdentityGroups(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -1929,7 +1951,7 @@ func TestV1ServicePatchIdentityGroups(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			// AssignGroups(context.Context, string, ...string) error
@@ -2080,6 +2102,7 @@ func TestV1ServiceGetIdentityEntitlements(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -2097,7 +2120,7 @@ func TestV1ServiceGetIdentityEntitlements(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
@@ -2247,6 +2270,7 @@ func TestV1ServicePatchIdentityEntitlements(t *testing.T) {
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
 			mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+			mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
@@ -2264,7 +2288,7 @@ func TestV1ServicePatchIdentityEntitlements(t *testing.T) {
 
 			svc := NewV1Service(
 				cfg,
-				NewService(mockKratosIdentityAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
+				NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger),
 			)
 
 			// AssignGroups(context.Context, string, ...string) error
@@ -2349,5 +2373,239 @@ func TestV1ServicePatchIdentityEntitlements(t *testing.T) {
 				t.Errorf("invalid result, expected: %v, got: %v", test.expected.ok, ok)
 			}
 		})
+	}
+}
+
+func TestGetIdentitySessionSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
+	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
+
+	ctx := context.Background()
+	cookies := make([]*http.Cookie, 0)
+	cookie := &http.Cookie{Name: "test", Value: "test"}
+	cookies = append(cookies, cookie)
+	session := &kClient.Session{
+		Id: "test",
+	}
+
+	mockTracer.EXPECT().Start(ctx, "identities.Service.GetIdentitySession").Return(ctx, trace.SpanFromContext(ctx))
+
+	sessionRequest := kClient.FrontendAPIToSessionRequest{
+		ApiService: mockKratosFrontendAPI,
+	}
+	resp := http.Response{
+		Header: http.Header{"Set-Cookie": []string{cookie.Raw}},
+	}
+
+	mockKratosFrontendAPI.EXPECT().ToSession(ctx).Times(1).Return(sessionRequest)
+	mockKratosFrontendAPI.EXPECT().ToSessionExecute(gomock.Any()).Times(1).DoAndReturn(
+		func(r kClient.FrontendAPIToSessionRequest) (*kClient.Session, *http.Response, error) {
+			if cookie := (*string)(reflect.ValueOf(r).FieldByName("cookie").UnsafePointer()); *cookie != "test=test" {
+				t.Fatalf("expected cookie string as test=test, got %s", *cookie)
+			}
+
+			return session, &resp, nil
+		},
+	)
+
+	service := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger)
+
+	s, err := service.GetIdentitySession(ctx, cookies)
+
+	if err != nil {
+		t.Fatalf("expected error to be nil, got %v", err)
+	}
+
+	if s.GetError() != nil {
+		t.Fatalf("expected session error to be nil, got %v", s.GetError())
+	}
+
+	if s.GetSession().Id != session.Id {
+		t.Fatalf("expected session id %v, got %v", session.Id, s.GetSession().Id)
+	}
+}
+
+func TestGetIdentitySessionFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
+	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
+
+	ctx := context.Background()
+	cookies := make([]*http.Cookie, 0)
+	cookie := &http.Cookie{Name: "test", Value: "test"}
+	cookies = append(cookies, cookie)
+
+	mockTracer.EXPECT().Start(ctx, "identities.Service.GetIdentitySession").Return(ctx, trace.SpanFromContext(ctx))
+
+	sessionRequest := kClient.FrontendAPIToSessionRequest{
+		ApiService: mockKratosFrontendAPI,
+	}
+
+	rr := httptest.NewRecorder()
+	rr.Header().Set("Content-Type", "application/json")
+	rr.WriteHeader(http.StatusUnauthorized)
+
+	_ = json.NewEncoder(rr).Encode(map[string]interface{}{
+		"error": map[string]interface{}{
+			"code":    http.StatusUnauthorized,
+			"debug":   "invalid kratos session cookie",
+			"details": map[string]interface{}{},
+			"id":      "some-id",
+			"message": "unauthorized",
+			"reason":  "invalid credentials",
+			"request": "req-id-123",
+			"status":  "Unauthorized",
+		},
+	})
+	resp := rr.Result()
+	resp.Body = io.NopCloser(bytes.NewBuffer(rr.Body.Bytes()))
+
+	mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any()).AnyTimes()
+
+	mockKratosFrontendAPI.EXPECT().ToSession(ctx).Return(sessionRequest).Times(1)
+	mockKratosFrontendAPI.EXPECT().
+		ToSessionExecute(gomock.Any()).
+		Times(1).
+		DoAndReturn(func(r kClient.FrontendAPIToSessionRequest) (*kClient.Session, *http.Response, error) {
+			return nil, resp, fmt.Errorf("error")
+		})
+
+	service := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger)
+
+	s, err := service.GetIdentitySession(ctx, cookies)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if s.GetError() == nil {
+		t.Fatal("expected session error to be populated")
+	}
+
+	if *s.GetError().Code != int64(http.StatusUnauthorized) {
+		t.Fatalf("expected error code %v, got %v", http.StatusUnauthorized, *s.GetError().Code)
+	}
+}
+
+func TestDisableSessionSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
+	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
+
+	ctx := context.Background()
+	sessionID := "test"
+
+	mockTracer.EXPECT().Start(ctx, "identities.Service.DisableSession").Return(ctx, trace.SpanFromContext(ctx))
+
+	disableSessionRequest := kClient.IdentityAPIDisableSessionRequest{
+		ApiService: mockKratosIdentityAPI,
+	}
+
+	mockKratosIdentityAPI.EXPECT().DisableSession(ctx, sessionID).Return(disableSessionRequest)
+	mockKratosIdentityAPI.EXPECT().DisableSessionExecute(disableSessionRequest).Return(&http.Response{StatusCode: http.StatusNoContent}, nil)
+
+	service := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger)
+
+	session, err := service.DisableSession(ctx, sessionID)
+
+	if err != nil {
+		t.Fatalf("expected error to be nil, got: %v", err)
+	}
+	if session == nil {
+		t.Fatalf("expected session data, got nil")
+	}
+}
+
+func TestDisableSessionFails(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockLogger := NewMockLoggerInterface(ctrl)
+	mockTracer := NewMockTracer(ctrl)
+	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockAuthz := NewMockAuthorizerInterface(ctrl)
+	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
+	mockKratosFrontendAPI := NewMockFrontendAPI(ctrl)
+	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
+
+	ctx := context.Background()
+	sessionID := "test"
+
+	disableSessionRequest := kClient.IdentityAPIDisableSessionRequest{
+		ApiService: mockKratosIdentityAPI,
+	}
+
+	mockTracer.EXPECT().Start(ctx, "identities.Service.DisableSession").AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+	mockKratosIdentityAPI.EXPECT().DisableSession(ctx, sessionID).Times(1).Return(disableSessionRequest)
+
+	mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any()).AnyTimes()
+
+	mockKratosIdentityAPI.EXPECT().
+		DisableSessionExecute(gomock.Any()).
+		Times(1).
+		DoAndReturn(func(r kClient.IdentityAPIDisableSessionRequest) (*http.Response, error) {
+			rr := httptest.NewRecorder()
+			rr.Header().Set("Content-Type", "application/json")
+			rr.WriteHeader(http.StatusBadRequest)
+
+			_ = json.NewEncoder(rr).Encode(
+				map[string]interface{}{
+					"error": map[string]interface{}{
+						"code":    http.StatusBadRequest,
+						"debug":   "--------",
+						"details": map[string]interface{}{},
+						"id":      "some-id",
+						"message": "session not found",
+						"reason":  "not found",
+						"request": "req-id-123",
+						"status":  "Not Found",
+					},
+				},
+			)
+
+			res := rr.Result()
+
+			bodyBytes := rr.Body.Bytes()
+			res.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+			return res, fmt.Errorf("error")
+		})
+
+	service := NewService(mockKratosIdentityAPI, mockKratosFrontendAPI, mockAuthz, mockEmail, mockTracer, mockMonitor, mockLogger)
+
+	session, err := service.DisableSession(ctx, sessionID)
+
+	if err == nil {
+		t.Fatalf("expected error, not nil")
+	}
+
+	if session.GetError() == nil {
+		t.Fatalf("expected session error to be populated")
+	}
+
+	if *session.GetError().Code != int64(http.StatusBadRequest) {
+		t.Fatalf("expected error code %v, got %v", http.StatusBadRequest, *session.GetError().Code)
 	}
 }

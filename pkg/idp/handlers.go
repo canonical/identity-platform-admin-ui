@@ -17,8 +17,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 )
 
-const okValue = "ok"
-
 type API struct {
 	apiKey           string
 	service          ServiceInterface

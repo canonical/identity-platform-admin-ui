@@ -5,6 +5,7 @@ package web
 
 import (
 	"context"
+	v0Idps "github.com/canonical/identity-platform-api/v0/idps"
 	"net/http"
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
@@ -216,7 +217,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	//identitiesAPI.RegisterEndpoints(apiRouter)
 	clientsAPI.RegisterEndpoints(apiRouter)
-	idpAPI.RegisterEndpoints(apiRouter)
+	//idpAPI.RegisterEndpoints(apiRouter)
 	schemasAPI.RegisterEndpoints(apiRouter)
 	rulesAPI.RegisterEndpoints(apiRouter)
 	// while we port APIs to the new gRPC-gateway based implementation, we disable the original ones step by step
@@ -249,9 +250,15 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		panic(err)
 	}
 
+	err = v0Idps.RegisterIdpsServiceHandlerServer(context.Background(), gRPCGatewayMux, idp.NewGrpcHandler(idpSvc, idp.NewGrpcMapper(logger), tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
 	apiRouter.Mount("/api/v0/identities", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/idps", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/metrics", metricsAPI.Handler())

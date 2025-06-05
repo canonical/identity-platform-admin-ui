@@ -272,7 +272,7 @@ func (a *API) handleSessionDisable(w http.ResponseWriter, r *http.Request) {
 	session, err := a.service.DisableSession(r.Context(), sessionID)
 
 	if err != nil {
-		rr := a.error(session.Error)
+		rr := a.error(session.GetError())
 
 		w.WriteHeader(rr.Status)
 		json.NewEncoder(w).Encode(rr)

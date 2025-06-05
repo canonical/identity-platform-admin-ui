@@ -23,6 +23,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 // TODO @shipperizer unify this value with schemas/service.go
@@ -58,6 +59,14 @@ type KratosError struct {
 	Error *kClient.GenericError `json:"error,omitempty"`
 }
 
+func (s *SessionData) GetError() *kClient.GenericError {
+	return s.Error
+}
+
+func (s *SessionData) GetSession() kClient.Session {
+	return s.Session
+}
+
 func (s *Service) buildListRequest(ctx context.Context, size int64, token, credID string) kClient.IdentityAPIListIdentitiesRequest {
 	r := s.kratos.ListIdentities(ctx).PageToken(token).PageSize(size)
 
@@ -90,7 +99,7 @@ func (s *Service) cookiesToString(cookies []*http.Cookie) string {
 	return strings.Join(ret, "; ")
 }
 
-func (s *Service) GetIdentitySession(ctx context.Context, cookies []*http.Cookie) (*SessionData, error) {
+func (s *Service) GetIdentitySession(ctx context.Context, cookies []*http.Cookie) (authentication.KratosSession, error) {
 	ctx, span := s.tracer.Start(ctx, "identities.Service.GetIdentitySession")
 	defer span.End()
 
@@ -100,14 +109,9 @@ func (s *Service) GetIdentitySession(ctx context.Context, cookies []*http.Cookie
 		Cookie(s.cookiesToString(cookies)).
 		Execute()
 
-	if err != nil {
-		s.logger.Error("failed to get identity session: %v", err)
-		return nil, err
-	}
-
 	data := new(SessionData)
 	if err != nil {
-		s.logger.Error(err)
+		s.logger.Error("failed to get identity session: %v", err)
 		data.Error = s.parseError(rr)
 		return data, err
 	}
@@ -121,7 +125,7 @@ func (s *Service) GetIdentitySession(ctx context.Context, cookies []*http.Cookie
 	return data, nil
 }
 
-func (s *Service) DisableSession(ctx context.Context, sessionID string) (*SessionData, error) {
+func (s *Service) DisableSession(ctx context.Context, sessionID string) (authentication.KratosSession, error) {
 	ctx, span := s.tracer.Start(ctx, "identities.Service.DisableSession")
 	defer span.End()
 
@@ -130,15 +134,9 @@ func (s *Service) DisableSession(ctx context.Context, sessionID string) (*Sessio
 		s.kratos.DisableSession(ctx, sessionID),
 	)
 
+	data := new(SessionData)
 	if err != nil {
 		s.logger.Error("failed to disable kratos session: %v", err)
-		return nil, err
-	}
-
-	data := new(SessionData)
-
-	if err != nil {
-		s.logger.Error(err)
 		data.Error = s.parseError(rr)
 		return data, err
 	}

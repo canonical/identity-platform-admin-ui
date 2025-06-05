@@ -131,10 +131,13 @@ func (d *DBClient) RunInTransaction(ctx context.Context, action QueryAction, rol
 func NewDBClient(dsn string, queryCacheEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
 	config, err := pgx.ParseConfig(dsn)
 	if err != nil {
-		logger.Fatalf("DSN validation failed, shutting down, dsn: %s, err: %v", dsn, err)
+		logger.Fatalf("DSN validation failed, shutting down, err: %v", err)
 	}
 
 	db := stdlib.OpenDB(*config)
+	if err := db.Ping(); err != nil {
+		logger.Fatalf("DB connection failed, shutting down, err: %v", err)
+	}
 
 	d := new(DBClient)
 	d.db = db

@@ -135,6 +135,9 @@ func NewDBClient(dsn string, queryCacheEnabled bool, tracer tracing.TracingInter
 	}
 
 	db := stdlib.OpenDB(*config)
+	if err := db.Ping(); err != nil {
+		logger.Fatalf("DB connection failed, shutting down, dsn: %s, err: %v", dsn, err)
+	}
 
 	d := new(DBClient)
 	d.db = db

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.25.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.1...v1.25.0) (2025-06-05)
+
+
+### Features
+
+* add goose migration sql file + makefile targets ([8d743da](https://github.com/canonical/identity-platform-admin-ui/commit/8d743daef2d51d6eac3244ddee645ccccc438349))
+* introduce DBClient for database support ([911f345](https://github.com/canonical/identity-platform-admin-ui/commit/911f3454c1ec275cd81226bb4b1b74e71347ecf5))
+* porting IDP API ([bbe8b8c](https://github.com/canonical/identity-platform-admin-ui/commit/bbe8b8c13fafac282e37d66451973ce5546f74fb))
+* porting IDP API ([54d942c](https://github.com/canonical/identity-platform-admin-ui/commit/54d942ccd56ff8870d1df654b342317e0847f9f4))
+
 ## [1.24.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.0...v1.24.1) (2025-05-21)
 
 

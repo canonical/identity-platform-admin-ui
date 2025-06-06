@@ -89,15 +89,15 @@ CREATE TABLE identity_role
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS "role_identity";
+DROP TABLE IF EXISTS "identity_role";
 DROP TABLE IF EXISTS "group_role";
 DROP TABLE IF EXISTS "group_identity";
 DROP TABLE IF EXISTS "permission";
 DROP TABLE IF EXISTS "policy";
+DROP TABLE IF EXISTS "application";
 DROP TABLE IF EXISTS "role";
 DROP TABLE IF EXISTS "group";
 DROP TABLE IF EXISTS "identity";
-DROP TABLE IF EXISTS "application";
 
 DROP SEQUENCE IF EXISTS "application_id_seq";
 DROP SEQUENCE IF EXISTS "identity_id_seq";

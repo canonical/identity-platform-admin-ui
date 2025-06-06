@@ -5,12 +5,13 @@ package web
 
 import (
 	"context"
-	v0Idps "github.com/canonical/identity-platform-api/v0/idps"
 	"net/http"
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
 	v0Identities "github.com/canonical/identity-platform-api/v0/identities"
+	v0Idps "github.com/canonical/identity-platform-api/v0/idps"
 	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
+	v0Schemas "github.com/canonical/identity-platform-api/v0/schemas"
 	v0Status "github.com/canonical/identity-platform-api/v0/status"
 	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -110,6 +111,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	idpSvc := idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger)
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
+	schemaSvc := schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger)
 
 	router.Use(middlewares...)
 
@@ -138,7 +140,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	)
 
 	schemasAPI := schemas.NewAPI(
-		schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		schemaSvc,
 		tracer,
 		monitor,
 		logger,
@@ -218,7 +220,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	//identitiesAPI.RegisterEndpoints(apiRouter)
 	clientsAPI.RegisterEndpoints(apiRouter)
 	//idpAPI.RegisterEndpoints(apiRouter)
-	schemasAPI.RegisterEndpoints(apiRouter)
+	//schemasAPI.RegisterEndpoints(apiRouter)
 	rulesAPI.RegisterEndpoints(apiRouter)
 	// while we port APIs to the new gRPC-gateway based implementation, we disable the original ones step by step
 	// rolesAPI.RegisterEndpoints(apiRouter)
@@ -255,10 +257,13 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		panic(err)
 	}
 
+	err = v0Schemas.RegisterSchemasServiceHandlerServer(context.Background(), gRPCGatewayMux, schemas.NewGrpcHandler(schemaSvc, schemas.NewGrpcMapper(logger), tracer, monitor, logger))
+
 	apiRouter.Mount("/api/v0/identities", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/idps", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/schemas", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/metrics", metricsAPI.Handler())

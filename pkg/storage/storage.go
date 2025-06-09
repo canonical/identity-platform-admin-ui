@@ -128,6 +128,14 @@ func (d *DBClient) RunInTransaction(ctx context.Context, action QueryAction, rol
 	return ret, nil
 }
 
+func (d *DBClient) Close() error {
+	if d.db != nil {
+		return d.db.Close()
+	}
+
+	return nil
+}
+
 func NewDBClient(dsn string, queryCacheEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
 	config, err := pgx.ParseConfig(dsn)
 	if err != nil {

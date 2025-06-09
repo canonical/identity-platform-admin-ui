@@ -10,8 +10,8 @@ github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
-github.com/canonical/identity-platform-api v0.0.0-20250603131352-db1ce3d432aa h1:FIQ1/WHNlSffg400lakTiiQ+oiUocv57k0YCJpyoWVE=
-github.com/canonical/identity-platform-api v0.0.0-20250603131352-db1ce3d432aa/go.mod h1:ADkrFcoTthWeJXDlxeEG9pOlJGNR/XMbl1H1lNQmCLM=
+github.com/canonical/identity-platform-api v0.0.0-20250606151742-c81588e18c36 h1:9hJqxpSG8klQoXgdPw8up31JmhjbxQO8iXJeUbf/Xyc=
+github.com/canonical/identity-platform-api v0.0.0-20250606151742-c81588e18c36/go.mod h1:ADkrFcoTthWeJXDlxeEG9pOlJGNR/XMbl1H1lNQmCLM=
 github.com/canonical/rebac-admin-ui-handlers v0.1.0 h1:Bef1N/RgQine8hHX4ZMksQz/1VKsy4DHK2XdhAzQsZs=
 github.com/canonical/rebac-admin-ui-handlers v0.1.0/go.mod h1:EIdBoaTHWYPkzNeUeXUBueJkglN9nQz5HLIvaOT7o1k=
 github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqylYbM=

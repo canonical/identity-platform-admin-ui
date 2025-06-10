@@ -80,7 +80,7 @@ db:
 db-down:
 	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
 	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
-	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) down
+	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) down-to 0
 .PHONY: migrate-down
 
 install-goose:

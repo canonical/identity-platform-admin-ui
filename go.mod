@@ -8,6 +8,7 @@ require (
 	github.com/canonical/identity-platform-api v0.0.0-20250606151742-c81588e18c36
 	github.com/canonical/rebac-admin-ui-handlers v0.1.0
 	github.com/coreos/go-oidc/v3 v3.10.0
+	github.com/exaring/otelpgx v0.9.3
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-playground/validator/v10 v10.22.0

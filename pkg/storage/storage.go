@@ -9,7 +9,8 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5"
+	"github.com/exaring/otelpgx"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -136,13 +137,30 @@ func (d *DBClient) Close() error {
 	return nil
 }
 
-func NewDBClient(dsn string, queryCacheEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
-	config, err := pgx.ParseConfig(dsn)
+func NewDBClient(dsn string, queryCacheEnabled bool, tracingEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		logger.Fatalf("DSN validation failed, shutting down, err: %v", err)
 	}
 
-	db := stdlib.OpenDB(*config)
+	if tracingEnabled {
+		// otelpgx.NewTracer will use default global TracerProvider, just like our tracer struct
+		config.ConnConfig.Tracer = otelpgx.NewTracer()
+	}
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		logger.Fatalf("DB pool creation failed, shutting down, err: %v", err)
+	}
+
+	if tracingEnabled {
+		// when tracing is enabled, also collect metrics
+		if err := otelpgx.RecordStats(pool); err != nil {
+			logger.Fatalf("unable to start metrics collection for database: %v", err)
+		}
+	}
+
+	db := stdlib.OpenDBFromPool(pool)
 	if err := db.Ping(); err != nil {
 		logger.Fatalf("DB connection failed, shutting down, err: %v", err)
 	}

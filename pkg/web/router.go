@@ -5,6 +5,7 @@ package web
 
 import (
 	"context"
+	v0Clients "github.com/canonical/identity-platform-api/v0/clients"
 	"net/http"
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
@@ -112,6 +113,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 	schemaSvc := schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger)
+	clientsSvc := clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger)
 
 	router.Use(middlewares...)
 
@@ -126,7 +128,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	)
 
 	clientsAPI := clients.NewAPI(
-		clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger),
+		clientsSvc,
 		tracer,
 		monitor,
 		logger,
@@ -218,7 +220,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	//metricsAPI.RegisterEndpoints(apiRouter)
 
 	//identitiesAPI.RegisterEndpoints(apiRouter)
-	clientsAPI.RegisterEndpoints(apiRouter)
+	//clientsAPI.RegisterEndpoints(apiRouter)
 	//idpAPI.RegisterEndpoints(apiRouter)
 	//schemasAPI.RegisterEndpoints(apiRouter)
 	rulesAPI.RegisterEndpoints(apiRouter)
@@ -258,12 +260,21 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 	}
 
 	err = v0Schemas.RegisterSchemasServiceHandlerServer(context.Background(), gRPCGatewayMux, schemas.NewGrpcHandler(schemaSvc, schemas.NewGrpcMapper(logger), tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
+
+	err = v0Clients.RegisterClientsServiceHandlerServer(context.Background(), gRPCGatewayMux, clients.NewGrpcHandler(clientsSvc, clients.NewGrpcMapper(logger), tracer, monitor, logger))
+	if err != nil {
+		panic(err)
+	}
 
 	apiRouter.Mount("/api/v0/identities", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/idps", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/schemas", gRPCGatewayMux)
+	apiRouter.Mount("/api/v0/clients", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/metrics", metricsAPI.Handler())

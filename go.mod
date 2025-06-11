@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/canonical/identity-platform-api v0.0.0-20250606151742-c81588e18c36
+	github.com/canonical/identity-platform-api v0.0.0-20250611102359-d0c2d853bd7f
 	github.com/canonical/rebac-admin-ui-handlers v0.1.0
 	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/exaring/otelpgx v0.9.3

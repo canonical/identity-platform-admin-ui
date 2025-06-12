@@ -45,12 +45,10 @@ CREATE TABLE role
 
 CREATE TABLE policy
 (
-    id       BIGINT PRIMARY KEY DEFAULT nextval('policy_id_seq'),
-    version  TEXT   NOT NULL,
-    name     TEXT   NOT NULL,
-    owner    TEXT   NOT NULL,
-    owner_id BIGINT REFERENCES identity (id) ON DELETE CASCADE, -- not used now, will become NOT NULL during the epic
-    role_id  BIGINT NOT NULL REFERENCES role (id) ON DELETE CASCADE
+    id      BIGINT PRIMARY KEY DEFAULT nextval('policy_id_seq'),
+    version TEXT   NOT NULL,
+    name    TEXT   NOT NULL,
+    role_id BIGINT NOT NULL REFERENCES role (id) ON DELETE CASCADE
 );
 
 CREATE TABLE permission

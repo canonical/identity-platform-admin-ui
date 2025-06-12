@@ -35,8 +35,9 @@ type UpdatePermissionsRequest struct {
 }
 
 type Role struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty" validate:"required,notblank"`
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name,omitempty" validate:"required,notblank"`
+	Owner string `json:"owner,omitempty" validate:"required,notblank"`
 }
 
 // API is the core HTTP object that implements all the HTTP and business logic for the roles

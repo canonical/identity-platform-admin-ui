@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package config
@@ -63,4 +63,6 @@ type EnvSpec struct {
 	MailPassword           string `envconfig:"MAIL_PASSWORD"`
 	MailFromAddress        string `envconfig:"MAIL_FROM_ADDRESS" required:"true"`
 	MailSendTimeoutSeconds int    `envconfig:"MAIL_SEND_TIMEOUT_SECONDS" default:"15"`
+
+	DSN string `envconfig:"DSN" required:"true"`
 }

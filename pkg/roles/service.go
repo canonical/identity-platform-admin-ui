@@ -21,6 +21,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 )
 
 type listPermissionsResult struct {
@@ -33,6 +34,7 @@ type listPermissionsResult struct {
 // Service contains the business logic to deal with roles on the Admin UI OpenFGA model
 type Service struct {
 	ofga OpenFGAClientInterface
+	repo RoleRepositoryInterface
 
 	wpool pool.WorkerPoolInterface
 
@@ -46,8 +48,7 @@ func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoles")
 	defer span.End()
 
-	roles, err := s.ofga.ListObjects(ctx, fmt.Sprintf("user:%s", userID), "can_view", "role")
-
+	roles, err := s.repo.ListRoles(ctx, userID, 0, 200)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
@@ -57,12 +58,17 @@ func (s *Service) ListRoles(ctx context.Context, userID string) ([]string, error
 }
 
 // ListRoleGroups returns all the groups associated to a specific role
-func (s *Service) ListRoleGroups(ctx context.Context, ID string) ([]string, error) {
+func (s *Service) ListRoleGroups(ctx context.Context, roleName string) ([]string, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoleGroups")
 	defer span.End()
 
-	groups, err := s.ofga.ListUsers(ctx, "group#member", authorization.ASSIGNEE_RELATION, authorization.RoleForTuple(ID))
+	role, err := s.repo.FindRoleByName(ctx, roleName)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, err
+	}
 
+	groups, err := s.repo.ListRoleGroups(ctx, role.ID, 0, 200)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
@@ -73,60 +79,68 @@ func (s *Service) ListRoleGroups(ctx context.Context, ID string) ([]string, erro
 
 // GetRole returns the specified role using the ID argument, userID is used to validate the visibility by the user
 // making the call
-func (s *Service) GetRole(ctx context.Context, userID, ID string) (*Role, error) {
+func (s *Service) GetRole(ctx context.Context, userID, roleName string) (*Role, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.GetRole")
 	defer span.End()
 
-	exists, err := s.ofga.Check(ctx, fmt.Sprintf("user:%s", userID), "can_view", fmt.Sprintf("role:%s", ID))
+	role, err := s.repo.FindRoleByNameAndOwner(ctx, roleName, userID)
 
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil, err
-	}
-
-	if !exists {
+	if errors.Is(err, storage.ErrNotFound) {
+		s.logger.Debugf("role %s for owner %s not found", roleName, userID)
 		return nil, nil
 	}
 
-	role := new(Role)
-	role.ID = ID
-	role.Name = ID
+	if err != nil {
+		err = fmt.Errorf("unable to get role %s for owner %s, %w", roleName, userID, err)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
 
 	return role, nil
 }
 
 // CreateRole creates a role and associates it with the userID passed as argument
-// an extra tuple is created to estabilish the "privileged" relatin for admin users
-func (s *Service) CreateRole(ctx context.Context, userID, ID string) (*Role, error) {
+// an extra tuple is created to estabilish the "privileged" relation for admin users
+func (s *Service) CreateRole(ctx context.Context, userID, roleName string) (*Role, error) {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
 
-	// TODO @shipperizer @barco will we need also the can_edit, can_delete?
-	// does creating a role mean that you are the owner, therefore u get all the permissions on it?
-	// right now assumption is only admins will be able to do this
-	// potentially changing the model to say
-	// `define can_view: [user, user:*, role#assignee, group#member] or assignee or admin from privileged`
-	// might sort the problem
-
-	// TODO @shipperizer offload to privileged creator object
-	role := fmt.Sprintf("role:%s", ID)
-	user := fmt.Sprintf("user:%s", userID)
-
-	err := s.ofga.WriteTuples(
-		ctx,
-		*ofga.NewTuple(user, authorization.ASSIGNEE_RELATION, role),
-		*ofga.NewTuple(user, authorization.CAN_VIEW_RELATION, role),
-	)
-
+	createdRole, tx, err := s.repo.CreateRoleTx(ctx, userID, roleName)
 	if err != nil {
+		err = fmt.Errorf("unable to create role %s for user %s, %w", roleName, userID, err)
 		s.logger.Error(err.Error())
 		return nil, err
 	}
 
-	return &Role{
-		ID:   ID,
-		Name: ID,
-	}, nil
+	role := fmt.Sprintf("role:%s", roleName)
+	user := fmt.Sprintf("user:%s", userID)
+
+	tuples := []ofga.Tuple{
+		*ofga.NewTuple(user, authorization.ASSIGNEE_RELATION, role),
+		*ofga.NewTuple(user, authorization.CAN_DELETE, role),
+	}
+
+	err = s.ofga.WriteTuples(ctx, tuples...)
+
+	if err != nil {
+		rollbackErr := tx.Rollback()
+
+		err = errors.Join(err, rollbackErr)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	// if commit fails, we rollback db transaction and the newly created tuples on OpenFGA
+	if err = tx.Commit(); err != nil {
+		rollbackErr := tx.Rollback()
+		deleteTuplesErr := s.ofga.DeleteTuples(ctx, tuples...)
+
+		err = errors.Join(err, rollbackErr, deleteTuplesErr)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	return createdRole, nil
 }
 
 // AssignPermissions assigns permissions to a role
@@ -239,15 +253,20 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 }
 
 // DeleteRole returns all the permissions associated to a specific role
-func (s *Service) DeleteRole(ctx context.Context, ID string) error {
+func (s *Service) DeleteRole(ctx context.Context, roleName string) error {
 	ctx, span := s.tracer.Start(ctx, "roles.Service.DeleteRole")
 	defer span.End()
 
+	// TODO: @barco,@shipperizer use DeleteRoleTx when we actually check errors from pool submitted jobs
+	_, err := s.repo.DeleteRoleByName(ctx, roleName)
+	if err != nil {
+		err = fmt.Errorf("unable to delete role %s, %w", roleName, err)
+		s.logger.Error(err.Error())
+		return err
+	}
+
 	// keep it a buffered channel, if set to unbuffered we would need a goroutine
 	// to consume from it before pushing to it
-	// https://go.dev/ref/spec#Send_statements
-	// A send on an unbuffered channel can proceed if a receiver is ready.
-	// A send on a buffered channel can proceed if there is room in the buffer
 	permissionTypes := s.permissionTypes()
 	directRelations := s.directRelations()
 
@@ -260,7 +279,7 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 	// TODO @shipperizer use a background operator
 	for _, t := range permissionTypes {
 		s.wpool.Submit(
-			s.removePermissionsFunc(ctx, ID, t),
+			s.removePermissionsFunc(ctx, roleName, t),
 			results,
 			&wg,
 		)
@@ -268,7 +287,7 @@ func (s *Service) DeleteRole(ctx context.Context, ID string) error {
 
 	for _, t := range directRelations {
 		s.wpool.Submit(
-			s.removeDirectAssociationsFunc(ctx, ID, t),
+			s.removeDirectAssociationsFunc(ctx, roleName, t),
 			results,
 			&wg,
 		)
@@ -422,10 +441,11 @@ func (s *Service) getRoleAssigneeUser(roleID string) string {
 }
 
 // NewService returns the implementtation of the business logic for the roles API
-func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, repo RoleRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga
+	s.repo = repo
 	s.wpool = wpool
 
 	s.monitor = monitor
@@ -546,7 +566,7 @@ func (s *V1Service) UpdateRole(ctx context.Context, role *resources.Role) (*reso
 }
 
 func (s *V1Service) DeleteRole(ctx context.Context, roleId string) (bool, error) {
-	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.DeleteRole")
+	ctx, span := s.core.tracer.Start(ctx, "roles.V1Service.DeleteRoleByName")
 	defer span.End()
 
 	if err := s.core.DeleteRole(ctx, roleId); err != nil {

@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.25.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.1...v1.25.0) (2025-06-12)
+
+
+### Features
+
+* add Close method on dbclient ([acec456](https://github.com/canonical/identity-platform-admin-ui/commit/acec45674d00916af69a6bd5602fdd3e6f149bd9))
+* add embedded migrations ([ace047a](https://github.com/canonical/identity-platform-admin-ui/commit/ace047aeed1a0228812ff408405a6903ae97394b))
+* add goose migration sql file + makefile targets ([8d743da](https://github.com/canonical/identity-platform-admin-ui/commit/8d743daef2d51d6eac3244ddee645ccccc438349))
+* add migrate CLI command ([3542a1a](https://github.com/canonical/identity-platform-admin-ui/commit/3542a1a55e40d9ef2aa458e9e48fd089fc8acd78))
+* introduce DBClient for database support ([911f345](https://github.com/canonical/identity-platform-admin-ui/commit/911f3454c1ec275cd81226bb4b1b74e71347ecf5))
+* porting clients API ([aec21db](https://github.com/canonical/identity-platform-admin-ui/commit/aec21db3ca90c5b3b887d2b4e2fcfa660abe0313))
+* porting clients API ([f4b408f](https://github.com/canonical/identity-platform-admin-ui/commit/f4b408f75c497c707f235435a4947268d357aef5))
+* porting IDP API ([bbe8b8c](https://github.com/canonical/identity-platform-admin-ui/commit/bbe8b8c13fafac282e37d66451973ce5546f74fb))
+* porting IDP API ([54d942c](https://github.com/canonical/identity-platform-admin-ui/commit/54d942ccd56ff8870d1df654b342317e0847f9f4))
+* porting schemas API ([6558694](https://github.com/canonical/identity-platform-admin-ui/commit/65586942a689fec3d4012bda5837e51f268d8d3f))
+* porting schemas API ([21ff190](https://github.com/canonical/identity-platform-admin-ui/commit/21ff190880805e7b62640c18403cb0ab7623a89f))
+
+
+### Bug Fixes
+
+* **sql:** reorder statements to avoid dependency error ([1a77d82](https://github.com/canonical/identity-platform-admin-ui/commit/1a77d82797432a2379ab89d931fa801bebeddc97))
+
 ## [1.24.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.0...v1.24.1) (2025-05-21)
 
 

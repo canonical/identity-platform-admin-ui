@@ -114,10 +114,11 @@ func TestServiceListRoles(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoles").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().ListObjects(gomock.Any(), fmt.Sprintf("user:%s", test.input), "can_view", "role").Return(test.expected.roles, test.expected.err)
@@ -194,10 +195,11 @@ func TestServiceListRoleGroups(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoleGroups").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().ListUsers(gomock.Any(), "group#member", authorization.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input)).Return(test.expected.tuples, test.expected.err)
@@ -279,10 +281,11 @@ func TestServiceGetRole(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.GetRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().Check(gomock.Any(), fmt.Sprintf("user:%s", test.input.user), "can_view", fmt.Sprintf("role:%s", test.input.role)).Return(test.expected.check, test.expected.err)
@@ -342,10 +345,11 @@ func TestServiceCreateRole(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.CreateRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
@@ -412,13 +416,14 @@ func TestServiceDeleteRole(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 7; i++ {
 				setupMockSubmit(workerPool, nil)
 			}
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.DeleteRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removePermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -589,6 +594,7 @@ func TestServiceListPermissions(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 			workerPool := NewMockWorkerPoolInterface(ctrl)
@@ -596,7 +602,7 @@ func TestServiceListPermissions(t *testing.T) {
 				setupMockSubmit(workerPool, nil)
 			}
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.listPermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
@@ -729,10 +735,11 @@ func TestServiceAssignPermissions(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.AssignPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
@@ -808,10 +815,11 @@ func TestServiceRemovePermissions(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
-			svc := NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger)
+			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.RemovePermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
@@ -911,12 +919,13 @@ func TestV1ServiceListRoles(t *testing.T) {
 				SkipIssuerCheck:            true,
 				InsecureSkipSignatureCheck: true,
 			}))
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
 			principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1020,12 +1029,13 @@ func TestV1ServiceCreateRole(t *testing.T) {
 				SkipIssuerCheck:            true,
 				InsecureSkipSignatureCheck: true,
 			}))
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
 			principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1169,12 +1179,13 @@ func TestV1ServiceGetRole(t *testing.T) {
 				SkipIssuerCheck:            true,
 				InsecureSkipSignatureCheck: true,
 			}))
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
 			principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1237,12 +1248,13 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 				SkipIssuerCheck:            true,
 				InsecureSkipSignatureCheck: true,
 			}))
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
 			principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1425,9 +1437,10 @@ func TestV1ServiceListPermissions(t *testing.T) {
 					return ctx, trace.SpanFromContext(ctx)
 				},
 			)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1584,6 +1597,7 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 6; i++ {
@@ -1599,7 +1613,7 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 			)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()
@@ -1708,9 +1722,10 @@ func TestV1ServicePatchRoleEntitlementseRemovesPermissions(t *testing.T) {
 					return ctx, trace.SpanFromContext(ctx)
 				},
 			)
+			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			svc := NewV1Service(
-				NewService(mockOpenFGA, workerPool, mockTracer, mockMonitor, mockLogger),
+				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
 			ctx := context.Background()

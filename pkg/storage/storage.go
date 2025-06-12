@@ -18,36 +18,30 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
-type QueryAction func(builderType sq.StatementBuilderType) (*ActionResult, error)
-type RollbackAction func(error)
-
-var (
-	NoopAction   QueryAction    = func(builderType sq.StatementBuilderType) (*ActionResult, error) { return nil, nil }
-	NoopRollback RollbackAction = func(error) {}
+const (
+	defaultPage     uint64 = 1
+	defaultPageSize uint64 = 100
 )
 
-type ActionResult struct {
-	Rows *sql.Rows
-	Row  sq.RowScanner
+func Offset(pageParam int64, pageSize uint64) uint64 {
+	if pageParam <= 0 {
+		return (defaultPage - 1) * pageSize
+	}
+	return uint64(pageParam) * pageSize
 }
 
-func (a *ActionResult) hasSingleRow() bool {
-	return a.Row != nil
+func PageSize(sizeParam int64) uint64 {
+	if sizeParam <= 0 {
+		return defaultPageSize
+	}
+	return uint64(sizeParam)
 }
 
-func (a *ActionResult) hasMultipleRows() bool {
-	return a.Rows != nil
-}
-
-func NewMultipleActionResult(rows *sql.Rows) *ActionResult {
-	return &ActionResult{Rows: rows}
-}
-
-func NewSingleActionResult(row sq.RowScanner) *ActionResult {
-	return &ActionResult{Row: row}
-}
+var ErrNotFound = fmt.Errorf("storage: resource not found")
 
 type DBClient struct {
+	// pool is the native PGX pool we hold to allow closing
+	pool *pgxpool.Pool
 	// db original instance to handle transactions
 	db *sql.DB
 	// dbRunner is the runner instance of choice (either original DB or db with query cache, cannot be used for transactions)
@@ -58,83 +52,29 @@ type DBClient struct {
 	logger  logging.LoggerInterface
 }
 
-func (d *DBClient) Run(ctx context.Context, action QueryAction) (*ActionResult, error) {
-	ctx, span := d.tracer.Start(ctx, "storage.DBClient.Run")
-	defer span.End()
-
-	if action == nil {
-		d.logger.Error("query action cannot be null")
-		return nil, fmt.Errorf("query action cannot be null")
-	}
-
-	statementBuilder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(d.dbRunner)
-
-	ret, err := action(statementBuilder)
-	if err != nil {
-		d.logger.Errorf("Failed to execute QueryAction, err: %v", err)
-		return nil, err
-	}
-
-	return ret, nil
+func (d *DBClient) Statement() sq.StatementBuilderType {
+	return sq.StatementBuilder.
+		PlaceholderFormat(sq.Dollar).
+		RunWith(d.dbRunner)
 }
 
-func (d *DBClient) RunInTransaction(ctx context.Context, action QueryAction, rollback RollbackAction) (*ActionResult, error) {
-	ctx, span := d.tracer.Start(ctx, "storage.DBClient.RunInTransaction")
-	defer span.End()
-
-	if action == nil {
-		d.logger.Error("query action cannot be null")
-		return nil, fmt.Errorf("query action cannot be null")
-	}
-
-	if rollback == nil {
-		rollback = NoopRollback
-	}
-
+func (d *DBClient) TxStatement(ctx context.Context) (TxInterface, sq.StatementBuilderType, error) {
 	tx, err := d.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted, ReadOnly: false})
 	if err != nil {
-		d.logger.Errorf("Failed to begin transaction, err: %v", err)
-		return nil, err
+		return nil, sq.StatementBuilderType{}, err
 	}
 
-	statementBuilder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(tx)
-
-	defer func() {
-		if err := recover(); err != nil {
-			d.logger.Errorf("Recovered from panic (rolling back tx): %v", err)
-			rollback(fmt.Errorf("recovered from panic: %v", err))
-			_ = tx.Rollback()
-		}
-	}()
-
-	ret, actionErr := action(statementBuilder)
-	if actionErr != nil {
-		d.logger.Errorf("Failed to execute QueryAction, err: %v", actionErr)
-
-		rollback(actionErr)
-
-		if err := tx.Rollback(); err != nil {
-			d.logger.Errorf("Failed to rollback transaction, err: %v", err)
-			return nil, err
-		}
-
-		return nil, actionErr
-	}
-
-	if err := tx.Commit(); err != nil {
-		d.logger.Errorf("Failed to commit transaction, err: %v", err)
-		return nil, err
-	}
-
-	return ret, nil
+	return tx, sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(tx), nil
 }
 
-func (d *DBClient) Close() error {
+func (d *DBClient) Close() {
 	if d.db != nil {
-		return d.db.Close()
+		_ = d.db.Close()
 	}
 
-	return nil
+	if d.pool != nil {
+		d.pool.Close()
+	}
 }
 
 func NewDBClient(dsn string, queryCacheEnabled bool, tracingEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
@@ -166,6 +106,7 @@ func NewDBClient(dsn string, queryCacheEnabled bool, tracingEnabled bool, tracer
 	}
 
 	d := new(DBClient)
+	d.pool = pool
 	d.db = db
 	d.dbRunner = db
 

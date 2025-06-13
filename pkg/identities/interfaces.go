@@ -5,12 +5,10 @@ package identities
 
 import (
 	"context"
-	"net/http"
 
 	kClient "github.com/ory/kratos-client-go"
 
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
-	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 type AuthorizerInterface interface {
@@ -19,8 +17,6 @@ type AuthorizerInterface interface {
 }
 
 type ServiceInterface interface {
-	GetIdentitySession(context.Context, []*http.Cookie) (authentication.KratosSession, error)
-	DisableSession(context.Context, string) (authentication.KratosSession, error)
 	ListIdentities(context.Context, int64, string, string) (*IdentityData, error)
 	GetIdentity(context.Context, string) (*IdentityData, error)
 	CreateIdentity(context.Context, *kClient.CreateIdentityBody) (*IdentityData, error)

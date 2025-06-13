@@ -1,0 +1,111 @@
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
+package authentication
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
+	monitoring "github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/kratos"
+	kClient "github.com/ory/kratos-client-go"
+)
+
+type SessionManager struct {
+	kratos       kClient.IdentityAPI
+	kratosPublic kClient.FrontendAPI
+
+	tracer  tracing.TracingInterface
+	monitor monitoring.MonitorInterface
+	logger  logging.LoggerInterface
+}
+
+type SessionData struct {
+	Session kClient.Session
+	Error   *kClient.GenericError
+}
+
+type KratosError struct {
+	Error *kClient.GenericError `json:"error,omitempty"`
+}
+
+func (s *SessionData) GetError() *kClient.GenericError {
+	return s.Error
+}
+
+func (s *SessionData) GetSession() kClient.Session {
+	return s.Session
+}
+
+func (s *SessionManager) cookiesToString(cookies []*http.Cookie) string {
+	var ret = make([]string, len(cookies))
+	for i, c := range cookies {
+		ret[i] = fmt.Sprintf("%s=%s", c.Name, c.Value)
+	}
+	return strings.Join(ret, "; ")
+}
+
+func (s *SessionManager) GetIdentitySession(ctx context.Context, cookies []*http.Cookie) (*SessionData, error) {
+	ctx, span := s.tracer.Start(ctx, "authentication.SessionManager.GetIdentitySession")
+	defer span.End()
+
+	// GET /sessions/whoami
+	session, rr, err := s.kratosPublic.
+		ToSession(ctx).
+		Cookie(s.cookiesToString(cookies)).
+		Execute()
+
+	data := new(SessionData)
+	if err != nil {
+		s.logger.Errorf("failed to get identity session: %v", err)
+		// data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
+		return data, err
+	}
+
+	if session != nil {
+		data.Session = *session
+	} else {
+		data.Session = kClient.Session{}
+	}
+
+	return data, nil
+}
+
+func (s *SessionManager) DisableSession(ctx context.Context, sessionID string) (*SessionData, error) {
+	ctx, span := s.tracer.Start(ctx, "authentication.SessionManager.DisableSession")
+	defer span.End()
+
+	// DEL /admin/sessions/{id}
+	rr, err := s.kratos.DisableSessionExecute(
+		s.kratos.DisableSession(ctx, sessionID),
+	)
+
+	data := new(SessionData)
+	if err != nil {
+		s.logger.Errorf("failed to disable kratos session: %v", err)
+		// data.Error = s.parseError(rr)
+		data.Error = kratos.ParseKratosError(rr)
+		return data, err
+	}
+
+	return data, err
+}
+
+func NewSessionManagerService(kratos kClient.IdentityAPI, kratosPublic kClient.FrontendAPI, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *SessionManager {
+	s := new(SessionManager)
+
+	s.kratos = kratos
+	s.kratosPublic = kratosPublic
+
+	s.tracer = tracer
+	s.monitor = monitor
+	s.logger = logger
+
+	return s
+}

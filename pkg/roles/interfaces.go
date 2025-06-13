@@ -32,3 +32,12 @@ type OpenFGAClientInterface interface {
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
 }
+
+// RoleRepositoryInterface implements a data access object with the repository pattern
+type RoleRepositoryInterface interface {
+	FindRole(ctx context.Context, userID, ID string) (*Role, error)
+	ListRoles(ctx context.Context, userID string) ([]string, error)
+	ListRoleGroups(ctx context.Context, roleID string) ([]string, error)
+	CreateRole(ctx context.Context, userID, roleName string) (*Role, error)
+	DeleteRole(ctx context.Context, userID, roleID string) (int64, error)
+}

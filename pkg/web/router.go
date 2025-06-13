@@ -5,8 +5,9 @@ package web
 
 import (
 	"context"
-	v0Clients "github.com/canonical/identity-platform-api/v0/clients"
 	"net/http"
+
+	v0Clients "github.com/canonical/identity-platform-api/v0/clients"
 
 	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
 	v0Identities "github.com/canonical/identity-platform-api/v0/identities"
@@ -41,6 +42,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
+	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
@@ -55,10 +57,11 @@ type RouterConfig struct {
 	external                 ExternalClientsConfigInterface
 	oauth2                   *authentication.Config
 	mail                     *mail.Config
+	dsn                      string
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, mail *mail.Config, olly O11yConfigInterface) *RouterConfig {
+func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, mail *mail.Config, dbDsn string, olly O11yConfigInterface) *RouterConfig {
 	return &RouterConfig{
 		contextPath:              contextPath,
 		payloadValidationEnabled: payloadValidationEnabled,
@@ -69,11 +72,12 @@ func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp
 		external:                 external,
 		oauth2:                   oauth2,
 		mail:                     mail,
+		dsn:                      dbDsn,
 		olly:                     olly,
 	}
 }
 
-func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handler {
+func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterface) http.Handler {
 	router := chi.NewMux()
 
 	idpConfig := config.idp
@@ -106,11 +110,13 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 		)
 	}
 
+	roleRepository := roles.NewRoleRepository(dbClient, tracer, monitor, logger)
+
 	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
 
 	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
 	idpSvc := idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger)
-	rolesSvc := roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
+	rolesSvc := roles.NewService(externalConfig.OpenFGA(), roleRepository, wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 	schemaSvc := schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger)
 	clientsSvc := clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger)

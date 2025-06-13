@@ -18,6 +18,8 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
+var ErrNotFound = fmt.Errorf("storage: resource not found")
+
 type QueryAction func(builderType sq.StatementBuilderType) (*ActionResult, error)
 type RollbackAction func(error)
 
@@ -48,6 +50,7 @@ func NewSingleActionResult(row sq.RowScanner) *ActionResult {
 }
 
 type DBClient struct {
+	pool *pgxpool.Pool
 	// db original instance to handle transactions
 	db *sql.DB
 	// dbRunner is the runner instance of choice (either original DB or db with query cache, cannot be used for transactions)
@@ -58,24 +61,10 @@ type DBClient struct {
 	logger  logging.LoggerInterface
 }
 
-func (d *DBClient) Run(ctx context.Context, action QueryAction) (*ActionResult, error) {
-	ctx, span := d.tracer.Start(ctx, "storage.DBClient.Run")
-	defer span.End()
-
-	if action == nil {
-		d.logger.Error("query action cannot be null")
-		return nil, fmt.Errorf("query action cannot be null")
-	}
-
-	statementBuilder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(d.dbRunner)
-
-	ret, err := action(statementBuilder)
-	if err != nil {
-		d.logger.Errorf("Failed to execute QueryAction, err: %v", err)
-		return nil, err
-	}
-
-	return ret, nil
+func (d *DBClient) Statement() sq.StatementBuilderType {
+	return sq.StatementBuilder.
+		PlaceholderFormat(sq.Dollar).
+		RunWith(d.dbRunner)
 }
 
 func (d *DBClient) RunInTransaction(ctx context.Context, action QueryAction, rollback RollbackAction) (*ActionResult, error) {
@@ -129,12 +118,14 @@ func (d *DBClient) RunInTransaction(ctx context.Context, action QueryAction, rol
 	return ret, nil
 }
 
-func (d *DBClient) Close() error {
+func (d *DBClient) Close() {
 	if d.db != nil {
-		return d.db.Close()
+		_ = d.db.Close()
 	}
 
-	return nil
+	if d.pool != nil {
+		d.pool.Close()
+	}
 }
 
 func NewDBClient(dsn string, queryCacheEnabled bool, tracingEnabled bool, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *DBClient {
@@ -166,6 +157,7 @@ func NewDBClient(dsn string, queryCacheEnabled bool, tracingEnabled bool, tracer
 	}
 
 	d := new(DBClient)
+	d.pool = pool
 	d.db = db
 	d.dbRunner = db
 

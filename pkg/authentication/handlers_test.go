@@ -472,11 +472,9 @@ func TestLogout(t *testing.T) {
 				m.EXPECT().ClearAccessTokenCookie(gomock.Any())
 				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
 
-				mockKratosSession := NewMockKratosSession(ctrl)
-				mockKratosSession.EXPECT().GetSession().Return(kClient.Session{Id: "mock-session-id"})
-
-				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(mockKratosSession, nil)
-				s.EXPECT().DisableSession(gomock.Any(), "mock-session-id").Return(mockKratosSession, nil)
+				sessionID := "test"
+				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{Session: kClient.Session{Id: sessionID}}, nil)
+				s.EXPECT().DisableSession(gomock.Any(), sessionID).Return(&SessionData{Session: kClient.Session{}}, nil)
 
 				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(nil)
 			},

@@ -108,7 +108,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
 
-	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.KratosPublic().FrontendAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
+	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
 	idpSvc := idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger)
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
@@ -282,12 +282,13 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface) http.Handle
 
 	if oauth2Config.Enabled {
 
+		sessionManager := authentication.NewSessionManagerService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.KratosPublic().FrontendAPI(), tracer, monitor, logger)
 		login := authentication.NewAPI(
 			config.contextPath,
 			oauth2Context,
 			authentication.NewOAuth2Helper(),
 			cookieManager,
-			identitiesSvc,
+			sessionManager,
 			tracer,
 			logger,
 		)

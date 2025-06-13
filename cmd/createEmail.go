@@ -115,5 +115,5 @@ func initializeIdentityService(specs *config.EnvSpec, logger logging.LoggerInter
 	)
 	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
 
-	return identities.NewService(kratosClient.IdentityAPI(), kratosClient.FrontendAPI(), authorizer, mailService, tracer, monitor, logger)
+	return identities.NewService(kratosClient.IdentityAPI(), authorizer, mailService, tracer, monitor, logger)
 }

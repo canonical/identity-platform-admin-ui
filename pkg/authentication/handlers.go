@@ -254,18 +254,14 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 	a.cookieManager.ClearAccessTokenCookie(w)
 	a.cookieManager.ClearRefreshTokenCookie(w)
 
-	session, err := a.sessions.GetIdentitySession(ctx, r.Cookies())
+	s, err := a.sessions.GetIdentitySession(ctx, r.Cookies())
 	if err != nil {
 		a.logger.Errorf("failed to retrieve kratos session, err: %v", err)
 		a.badRequest(w, err)
 		return
 	}
-	if session == nil {
-		a.badRequest(w, fmt.Errorf("failed to get session id"))
-		return
-	}
 
-	sessionID := session.GetSession().Id
+	sessionID := s.Session.Id
 	_, err = a.sessions.DisableSession(ctx, sessionID)
 
 	if err != nil {

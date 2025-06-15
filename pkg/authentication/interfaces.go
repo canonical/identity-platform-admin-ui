@@ -112,3 +112,8 @@ type PrincipalInterface interface {
 	RefreshToken() string
 	IDToken() string
 }
+
+type SessionManagerInterface interface {
+	GetIdentitySession(context.Context, []*http.Cookie) (*SessionData, error)
+	DisableSession(ctx context.Context, sessionID string) (*SessionData, error)
+}

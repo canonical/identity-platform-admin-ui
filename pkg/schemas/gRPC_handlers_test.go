@@ -89,7 +89,7 @@ func TestGrpcHandler_ListSchemas(t *testing.T) {
 				}},
 				Status:  http.StatusOK,
 				Message: strPtr("List of schemas"),
-				XMeta: &v0Types.Pagination{
+				Meta: &v0Types.Pagination{
 					Size: 1,
 					Next: strPtr("next"),
 					Prev: strPtr("prev"),

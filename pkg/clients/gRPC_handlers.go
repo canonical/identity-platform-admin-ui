@@ -74,7 +74,7 @@ func (g *GrpcHandler) ListClients(ctx context.Context, req *v0Clients.ListClient
 		Data:    data,
 		Status:  http.StatusOK,
 		Message: &message,
-		XMeta: &v0Types.Pagination{
+		Meta: &v0Types.Pagination{
 			Size: int32(len(data)),
 			Next: &res.Tokens.Next,
 			Prev: &res.Tokens.Prev,

@@ -74,7 +74,7 @@ func (g *GrpcHandler) ListIdentities(ctx context.Context, req *v0Identities.List
 		Data:    mappedIdentities,
 		Status:  http.StatusOK,
 		Message: &message,
-		XMeta: &v0Types.Pagination{
+		Meta: &v0Types.Pagination{
 			Size: int32(len(identities.Identities)),
 			Next: &next,
 			Prev: &prev,

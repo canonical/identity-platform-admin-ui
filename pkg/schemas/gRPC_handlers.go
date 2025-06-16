@@ -66,7 +66,7 @@ func (g *GrpcHandler) ListSchemas(ctx context.Context, req *v0Schemas.ListSchema
 		Data:    mappedSchemas,
 		Status:  http.StatusOK,
 		Message: &message,
-		XMeta: &v0Types.Pagination{
+		Meta: &v0Types.Pagination{
 			Size: int32(len(schemas.IdentitySchemas)),
 			Next: &next,
 			Prev: &prev,

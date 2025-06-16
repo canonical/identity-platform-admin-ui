@@ -67,7 +67,7 @@ func TestGrpcHandler_ListIdentities(t *testing.T) {
 				},
 				Status:  http.StatusOK,
 				Message: ptr("List of identities"),
-				XMeta: &v0Types.Pagination{
+				Meta: &v0Types.Pagination{
 					Size: 2,
 					Next: ptr("next"),
 					Prev: ptr("prev"),

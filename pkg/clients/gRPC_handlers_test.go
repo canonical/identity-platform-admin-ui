@@ -76,7 +76,7 @@ func TestGrpcHandler_ListClients(t *testing.T) {
 				Data:    []*v0Clients.Client{client},
 				Status:  http.StatusOK,
 				Message: strPtr("List of clients"),
-				XMeta: &v0Types.Pagination{
+				Meta: &v0Types.Pagination{
 					Size:      1,
 					PageToken: nil,
 					Next:      strPtr(""),

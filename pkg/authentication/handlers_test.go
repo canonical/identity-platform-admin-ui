@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
@@ -40,6 +41,7 @@ func TestHandleLogin(t *testing.T) {
 		Times(1).
 		Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 	mockMonitor := NewMockMonitorInterface(ctrl)
+	mockSessionManager := NewMockSessionManagerInterface(ctrl)
 
 	mockHelper := NewMockOAuth2HelperInterface(ctrl)
 	mockHelper.EXPECT().RandomURLString().Return("mock-nonce")
@@ -67,6 +69,7 @@ func TestHandleLogin(t *testing.T) {
 		NewOAuth2Context(config, mockOIDCProviderSupplier(&oidc.Provider{}, nil), mockTracer, mockLogger, mockMonitor),
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+		mockSessionManager,
 		mockTracer,
 		mockLogger,
 	)
@@ -108,6 +111,7 @@ func TestHandleLoginCallback(t *testing.T) {
 	mockLogger := NewMockLoggerInterface(ctrl)
 	mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).Times(1)
 	mockTracer := NewMockTracer(ctrl)
+	mockSessionManager := NewMockSessionManagerInterface(ctrl)
 
 	mockHelper := NewMockOAuth2HelperInterface(ctrl)
 	mockEncrypt := NewMockEncryptInterface(ctrl)
@@ -148,6 +152,7 @@ func TestHandleLoginCallback(t *testing.T) {
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+		mockSessionManager,
 		mockTracer,
 		mockLogger,
 	)
@@ -187,6 +192,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockTracer := NewMockTracer(ctrl)
+	mockSessionManager := NewMockSessionManagerInterface(ctrl)
 
 	mockToken := &oauth2.Token{}
 	mockToken.AccessToken = "mock-access-token"
@@ -355,6 +361,7 @@ func TestHandleLoginCallbackFailures(t *testing.T) {
 				mockOauth2Ctx,
 				mockHelper,
 				NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+				mockSessionManager,
 				mockTracer,
 				mockLogger,
 			)
@@ -400,6 +407,7 @@ func TestHandleMe(t *testing.T) {
 	mockTracer := NewMockTracer(ctrl)
 	mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSessionManager := NewMockSessionManagerInterface(ctrl)
 
 	mockHelper := NewMockOAuth2HelperInterface(ctrl)
 	mockEncrypt := NewMockEncryptInterface(ctrl)
@@ -411,6 +419,7 @@ func TestHandleMe(t *testing.T) {
 		mockOauth2Ctx,
 		mockHelper,
 		NewAuthCookieManager(mockTTLSeconds, mockTTLSeconds, mockEncrypt, mockLogger),
+		mockSessionManager,
 		mockTracer,
 		mockLogger,
 	)
@@ -453,15 +462,19 @@ func TestLogout(t *testing.T) {
 	for _, tt := range []struct {
 		name         string
 		errorMessage string
-		setupMocks   func(*MockOAuth2ContextInterface, *MockAuthCookieManagerInterface, *MockLoggerInterface)
+		setupMocks   func(*MockOAuth2ContextInterface, *MockAuthCookieManagerInterface, *MockLoggerInterface, *MockSessionManagerInterface)
 	}{
 		{
 			name:         "Success",
 			errorMessage: "",
-			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface) {
+			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface, s *MockSessionManagerInterface) {
 				m.EXPECT().ClearIDTokenCookie(gomock.Any())
 				m.EXPECT().ClearAccessTokenCookie(gomock.Any())
 				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
+
+				sessionID := "test"
+				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{Session: kClient.Session{Id: sessionID}}, nil)
+				s.EXPECT().DisableSession(gomock.Any(), sessionID).Return(&SessionData{Session: kClient.Session{}}, nil)
 
 				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(nil)
 			},
@@ -469,12 +482,36 @@ func TestLogout(t *testing.T) {
 		{
 			name:         "Failure",
 			errorMessage: "logout request failed, err mock-err",
-			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface) {
+			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface, s *MockSessionManagerInterface) {
 				err := errors.New("mock-error")
 				l.EXPECT().Errorf("logout request failed, err %v", err)
 
 				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(err)
 
+				m.EXPECT().ClearNonceCookie(gomock.Any()).Times(1)
+				m.EXPECT().ClearStateCookie(gomock.Any()).Times(1)
+				m.EXPECT().ClearNextToCookie(gomock.Any()).Times(1)
+			},
+		},
+		{
+			name:         "DisableSession failure",
+			errorMessage: "failed to disable kratos session, err: mock-disable-err",
+			setupMocks: func(c *MockOAuth2ContextInterface, m *MockAuthCookieManagerInterface, l *MockLoggerInterface, s *MockSessionManagerInterface) {
+				m.EXPECT().ClearIDTokenCookie(gomock.Any())
+				m.EXPECT().ClearAccessTokenCookie(gomock.Any())
+				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
+
+				sessionID := "test"
+				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{Session: kClient.Session{Id: sessionID}}, nil)
+
+				sessionData := &SessionData{
+					Error: &kClient.GenericError{Message: "failed to disable the session"},
+				}
+				s.EXPECT().DisableSession(gomock.Any(), sessionID).Return(sessionData, errors.New("mock-disable-err"))
+
+				l.EXPECT().Error("failed to disable kratos session, err: mock-disable-err")
+
+				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(nil)
 				m.EXPECT().ClearNonceCookie(gomock.Any()).Times(1)
 				m.EXPECT().ClearStateCookie(gomock.Any()).Times(1)
 				m.EXPECT().ClearNextToCookie(gomock.Any()).Times(1)
@@ -497,6 +534,7 @@ func TestLogout(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSessionManager := NewMockSessionManagerInterface(ctrl)
 
 			mockHelper := NewMockOAuth2HelperInterface(ctrl)
 
@@ -508,6 +546,7 @@ func TestLogout(t *testing.T) {
 				mockOauth2Ctx,
 				mockHelper,
 				mockCookieManager,
+				mockSessionManager,
 				mockTracer,
 				mockLogger,
 			)
@@ -515,8 +554,7 @@ func TestLogout(t *testing.T) {
 			mockRequest := httptest.NewRequest(http.MethodGet, "/api/v0/auth/logout", nil)
 			mockCtx := PrincipalContext(context.Background(), p)
 			mockRequest = mockRequest.WithContext(mockCtx)
-
-			tt.setupMocks(mockOauth2Ctx, mockCookieManager, mockLogger)
+			tt.setupMocks(mockOauth2Ctx, mockCookieManager, mockLogger, mockSessionManager)
 
 			api.handleLogout(mockResponse, mockRequest)
 
@@ -529,10 +567,9 @@ func TestLogout(t *testing.T) {
 
 			} else {
 				if response.StatusCode != http.StatusFound {
-					t.Fatalf("response code error, expected %d, got %d", http.StatusBadRequest, response.StatusCode)
+					t.Fatalf("response code error, expected %d, got %d", http.StatusFound, response.StatusCode)
 				}
 			}
-
 		})
 	}
 }

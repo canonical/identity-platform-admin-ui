@@ -78,7 +78,7 @@ outside k8s would look like:
 ```shell
 AUTHORIZATION_ENABLED=true
 HYDRA_ADMIN_URL=http://localhost:14445
-IDP_CONFIGMAP_NAME=idps
+IDP_CONFIGMAP_NAME=providers
 IDP_CONFIGMAP_NAMESPACE=default
 KRATOS_ADMIN_URL=http://localhost:14434
 KRATOS_PUBLIC_URL=http://localhost:14433
@@ -123,7 +123,7 @@ admin ui locally, run:
 $ printf "export " ; k get cm identity-platform-admin-ui -o yaml | yq .data | tr -d '"' | tr -d " " | tr ":" "=" | while read line; do echo "$line \\ " ; done ; echo
 export AUTHORIZATION_ENABLED=true \
 HYDRA_ADMIN_URL=http=//hydra-admin.default.svc.cluster.local=4445 \
-IDP_CONFIGMAP_NAME=idps \
+IDP_CONFIGMAP_NAME=providers \
 IDP_CONFIGMAP_NAMESPACE=default \
 KRATOS_ADMIN_URL=http=//kratos-public.default.svc.cluster.local \
 KRATOS_PUBLIC_URL=http=//kratos-public.default.svc.cluster.local \
@@ -140,7 +140,7 @@ RULES_CONFIGMAP_NAME=oathkeeper-rules \
 RULES_CONFIGMAP_NAMESPACE=default \
 SCHEMAS_CONFIGMAP_NAME=identity-schemas \
 SCHEMAS_CONFIGMAP_NAMESPACE=default \
-TRACING_ENABLED=false \
+TRACING_ENABLED=false
 ```
 
 

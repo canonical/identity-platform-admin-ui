@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -24,6 +25,23 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package roles -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 
+var (
+	db      *sql.DB
+	mock    sqlmock.Sqlmock
+	mockErr error
+)
+
+func TestMain(m *testing.M) {
+	db, mock, mockErr = sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
+	if mockErr != nil {
+		panic(mockErr)
+	}
+	defer db.Close()
+
+	code := m.Run()
+	os.Exit(code)
+}
+
 func TestRoleRepository_FindRoleByName(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -33,13 +51,7 @@ func TestRoleRepository_FindRoleByName(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
-	mockDBClient.EXPECT().Statement().Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(2)
+	mockDBClient.EXPECT().Statement().Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -82,6 +94,10 @@ func TestRoleRepository_FindRoleByName(t *testing.T) {
 		if role.Owner != "user1" {
 			t.Errorf("expected role.Owner = 'user1', got %q", role.Owner)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -103,10 +119,13 @@ func TestRoleRepository_FindRoleByName(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Not found", func(t *testing.T) {
-		t.Skipf("Skipping because of unexpected Sqlmock behavior, function works when manually tested")
 
 		query := `SELECT id, name, owner FROM role WHERE name = $1`
 
@@ -124,6 +143,10 @@ func TestRoleRepository_FindRoleByName(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -136,13 +159,7 @@ func TestRoleRepository_FindRoleByIdAndOwner(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
-	mockDBClient.EXPECT().Statement().Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(2)
+	mockDBClient.EXPECT().Statement().Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -185,14 +202,18 @@ func TestRoleRepository_FindRoleByIdAndOwner(t *testing.T) {
 		if role.Owner != "user1" {
 			t.Errorf("expected role.Owner = 'user1', got %q", role.Owner)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
 
-		query := `SELECT id, name FROM role WHERE id = $1 AND owner = $2`
+		query := `SELECT id, name, owner FROM role WHERE id = $1 AND owner = $2`
 		rows := sqlmock.NewRows([]string{"id"}).AddRow("123")
 
-		mock.ExpectQuery(query).WithArgs("user1").WillReturnRows(rows)
+		mock.ExpectQuery(query).WillReturnRows(rows)
 
 		role, err := repo.FindRoleByIdAndOwner(ctx, "123", "user1")
 		if err == nil {
@@ -206,14 +227,22 @@ func TestRoleRepository_FindRoleByIdAndOwner(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Not found", func(t *testing.T) {
-		t.Skipf("Skipping because of unexpected Sqlmock behavior, function works when manually tested")
 
-		query := `SELECT id, name FROM role WHERE id = $1 AND owner = $2`
+		query := `SELECT id, name, owner FROM role WHERE id = $1 AND owner = $2`
 
-		mock.ExpectQuery(query).WithArgs("1", "user123").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(query).WithArgs("1", "user123").
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id"}).
+					AddRow("123").
+					RowError(0, sql.ErrNoRows),
+			)
 
 		role, err := repo.FindRoleByIdAndOwner(ctx, "1", "user123")
 		if err == nil {
@@ -227,6 +256,10 @@ func TestRoleRepository_FindRoleByIdAndOwner(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -239,14 +272,8 @@ func TestRoleRepository_FindRoleByNameAndOwner(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
 	mockDBClient.EXPECT().Statement().
-		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(2)
+		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -289,6 +316,10 @@ func TestRoleRepository_FindRoleByNameAndOwner(t *testing.T) {
 		if role.Owner != "user1" {
 			t.Errorf("expected role.Owner = 'user1', got %q", role.Owner)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -296,7 +327,7 @@ func TestRoleRepository_FindRoleByNameAndOwner(t *testing.T) {
 		query := `SELECT id, name, owner FROM role WHERE name = $1 AND owner = $2`
 		rows := sqlmock.NewRows([]string{"id"}).AddRow("123")
 
-		mock.ExpectQuery(query).WithArgs("user1").WillReturnRows(rows)
+		mock.ExpectQuery(query).WillReturnRows(rows)
 
 		role, err := repo.FindRoleByNameAndOwner(ctx, "admin", "user1")
 		if err == nil {
@@ -306,14 +337,22 @@ func TestRoleRepository_FindRoleByNameAndOwner(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Not found", func(t *testing.T) {
-		t.Skipf("Skipping because of unexpected Sqlmock behavior, function works when manually tested")
 
-		query := `SELECT id, name FROM role WHERE name = $1 AND owner = $2`
+		query := `SELECT id, name, owner FROM role WHERE name = $1 AND owner = $2`
 
-		mock.ExpectQuery(query).WithArgs("123").WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(query).WithArgs("admin", "user1").
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id"}).
+					AddRow("123").
+					RowError(0, sql.ErrNoRows),
+			)
 
 		role, err := repo.FindRoleByNameAndOwner(ctx, "admin", "user1")
 		if err == nil {
@@ -327,6 +366,10 @@ func TestRoleRepository_FindRoleByNameAndOwner(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role on scan error, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -339,14 +382,8 @@ func TestRoleRepository_ListRoles(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
 	mockDBClient.EXPECT().Statement().
-		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(4)
+		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -386,6 +423,10 @@ func TestRoleRepository_ListRoles(t *testing.T) {
 				t.Errorf("expected role %d to be %q, got %q", i, expected[i], result[i])
 			}
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -406,6 +447,10 @@ func TestRoleRepository_ListRoles(t *testing.T) {
 		if result != nil {
 			t.Errorf("expected nil result on scan error, got: %v", result)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("No rows", func(t *testing.T) {
@@ -424,6 +469,10 @@ func TestRoleRepository_ListRoles(t *testing.T) {
 
 		if len(result) != 0 {
 			t.Fatalf("expected empty slice, got %v", result)
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
 		}
 	})
 
@@ -444,6 +493,10 @@ func TestRoleRepository_ListRoles(t *testing.T) {
 		if result != nil {
 			t.Errorf("expected nil result, got: %v", result)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -456,14 +509,8 @@ func TestRoleRepository_ListRoleGroups(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
 	mockDBClient.EXPECT().Statement().
-		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(4)
+		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -502,6 +549,10 @@ func TestRoleRepository_ListRoleGroups(t *testing.T) {
 				t.Errorf("expected group %d to be %q, got %q", i, expected[i], result[i])
 			}
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -522,6 +573,10 @@ func TestRoleRepository_ListRoleGroups(t *testing.T) {
 		if result != nil {
 			t.Errorf("expected nil result on scan error, got: %v", result)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("No rows", func(t *testing.T) {
@@ -541,11 +596,15 @@ func TestRoleRepository_ListRoleGroups(t *testing.T) {
 		if len(result) != 0 {
 			t.Fatalf("expected empty slice, got %v", result)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Query error", func(t *testing.T) {
 		query := `SELECT name FROM "group" AS g INNER JOIN group_role AS gr ON gr.group_id = g.id WHERE role_id = $1 LIMIT 100 OFFSET 0`
-		mock.ExpectQuery(query).WithArgs("role123", "group.id").
+		mock.ExpectQuery(query).WithArgs("role123").
 			WillReturnError(fmt.Errorf("db failure"))
 
 		result, err := repo.ListRoleGroups(ctx, "role123", 0, 0)
@@ -560,6 +619,10 @@ func TestRoleRepository_ListRoleGroups(t *testing.T) {
 		if result != nil {
 			t.Errorf("expected nil result, got: %v", result)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -572,14 +635,8 @@ func TestRoleRepository_CreateRole(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
 	mockDBClient.EXPECT().Statement().
-		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(2)
+		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -617,6 +674,10 @@ func TestRoleRepository_CreateRole(t *testing.T) {
 		if role.Name != "admin" {
 			t.Errorf("expected Name 'admin', got %q", role.Name)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -637,6 +698,10 @@ func TestRoleRepository_CreateRole(t *testing.T) {
 		if role != nil {
 			t.Errorf("expected nil role, got: %+v", role)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -649,12 +714,6 @@ func TestRoleRepository_CreateRoleTx(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 	mockTx := NewMockTxInterface(ctrl)
-
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
 
 	st := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)
 
@@ -699,6 +758,10 @@ func TestRoleRepository_CreateRoleTx(t *testing.T) {
 		if tx == nil {
 			t.Error("expected transaction, got nil")
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error triggers rollback", func(t *testing.T) {
@@ -726,6 +789,10 @@ func TestRoleRepository_CreateRoleTx(t *testing.T) {
 		if tx != nil {
 			t.Errorf("expected nil tx, got: %+v", tx)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("TxStatement error", func(t *testing.T) {
@@ -747,6 +814,10 @@ func TestRoleRepository_CreateRoleTx(t *testing.T) {
 		if tx != nil {
 			t.Errorf("expected nil tx, got: %+v", tx)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -759,14 +830,8 @@ func TestRoleRepository_DeleteRole(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
-
 	mockDBClient.EXPECT().Statement().
-		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).Times(2)
+		Return(sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)).AnyTimes()
 
 	repo := RoleRepository{
 		db:      mockDBClient,
@@ -798,6 +863,10 @@ func TestRoleRepository_DeleteRole(t *testing.T) {
 		if id != "123" {
 			t.Errorf("expected 123, got %v", id)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error", func(t *testing.T) {
@@ -816,6 +885,10 @@ func TestRoleRepository_DeleteRole(t *testing.T) {
 		if id != "" {
 			t.Errorf("expected empty id, got %v", id)
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 }
 
@@ -828,12 +901,6 @@ func TestRoleRepository_DeleteRoleTx(t *testing.T) {
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 	mockDBClient := NewMockDBClientInterface(ctrl)
 	mockTx := NewMockTxInterface(ctrl)
-
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	if err != nil {
-		t.Fatalf("sqlmock.New() failed: %v", err)
-	}
-	defer db.Close()
 
 	st := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(db)
 
@@ -873,6 +940,10 @@ func TestRoleRepository_DeleteRoleTx(t *testing.T) {
 		if tx == nil {
 			t.Error("expected non-nil transaction")
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("Scan error triggers rollback", func(t *testing.T) {
@@ -899,6 +970,10 @@ func TestRoleRepository_DeleteRoleTx(t *testing.T) {
 		if tx != nil {
 			t.Error("expected nil transaction on failure")
 		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
+		}
 	})
 
 	t.Run("TxStatement error", func(t *testing.T) {
@@ -917,6 +992,10 @@ func TestRoleRepository_DeleteRoleTx(t *testing.T) {
 
 		if tx != nil {
 			t.Error("expected nil transaction")
+		}
+
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Fatalf("there were unfulfilled expectations: %v", err)
 		}
 	})
 }

@@ -351,7 +351,7 @@ func NewService(config *Config, authz AuthorizerInterface, tracer tracing.Tracin
 	s.cmNamespace = config.Namespace
 	s.authz = authz
 	// TODO @shipperizer fetch it from the config.KeyName
-	s.keyName = "idps.yaml"
+	s.keyName = "idps.json"
 
 	s.monitor = monitor
 	s.tracer = tracer

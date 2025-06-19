@@ -93,9 +93,12 @@ func (g *GrpcPbMapper) ToUpdateIdpBody(idp *v0Idps.UpdateIdpBody) (*Configuratio
 
 func (g *GrpcPbMapper) fromConfiguration(configuration *Configuration) (*v0Idps.Idp, error) {
 	var requestedClaims string
-	err := json.Unmarshal(configuration.RequestedClaims, &requestedClaims)
-	if err != nil {
-		return nil, err
+
+	if configuration.RequestedClaims != nil {
+		err := json.Unmarshal(configuration.RequestedClaims, &requestedClaims)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &v0Idps.Idp{

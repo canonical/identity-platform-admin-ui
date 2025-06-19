@@ -42,7 +42,7 @@ func TestListResourcesSuccess(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -112,7 +112,7 @@ func TestListResourcesSuccessButEmpty(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -149,7 +149,7 @@ func TestListResourcesFailsOnConfigMap(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -183,7 +183,7 @@ func TestListResourcesFailsOnMissingKey(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -253,7 +253,7 @@ func TestGetResourceSuccess(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -322,7 +322,7 @@ func TestGetResourceNotfound(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -391,7 +391,7 @@ func TestGetResourceSuccessButEmpty(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -428,7 +428,7 @@ func TestGetResourceFails(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -464,7 +464,7 @@ func TestEditResourceSuccess(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -538,7 +538,7 @@ func TestEditResourceNotfound(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -610,7 +610,7 @@ func TestEditResourceFails(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -683,7 +683,7 @@ func TestCreateResourceSuccess(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -775,7 +775,7 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -844,7 +844,7 @@ func TestCreateResourceFails(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -935,7 +935,7 @@ func TestDeleteResourceSuccess(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -1015,7 +1015,7 @@ func TestDeleteResourceFails(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -1173,7 +1173,7 @@ func TestV1ServiceListIdentityProviders(t *testing.T) {
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
-			cfg.KeyName = "idps.yaml"
+			cfg.KeyName = "idps.json"
 			cfg.Name = "idps"
 			cfg.Namespace = "default"
 
@@ -1242,7 +1242,7 @@ func TestV1ServiceListAvailableIdentityProviders(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -1287,7 +1287,7 @@ func TestV1ServiceRegisterConfiguration(t *testing.T) {
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
-	cfg.KeyName = "idps.yaml"
+	cfg.KeyName = "idps.json"
 	cfg.Name = "idps"
 	cfg.Namespace = "default"
 
@@ -1383,7 +1383,7 @@ func TestV1ServiceDeleteConfiguration(t *testing.T) {
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
-			cfg.KeyName = "idps.yaml"
+			cfg.KeyName = "idps.json"
 			cfg.Name = "idps"
 			cfg.Namespace = "default"
 
@@ -1521,7 +1521,7 @@ func TestV1ServiceGetConfiguration(t *testing.T) {
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
-			cfg.KeyName = "idps.yaml"
+			cfg.KeyName = "idps.json"
 			cfg.Name = "idps"
 			cfg.Namespace = "default"
 
@@ -1663,7 +1663,7 @@ func TestV1ServiceUpdateConfiguration(t *testing.T) {
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
-			cfg.KeyName = "idps.yaml"
+			cfg.KeyName = "idps.json"
 			cfg.Name = "idps"
 			cfg.Namespace = "default"
 

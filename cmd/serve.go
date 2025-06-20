@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package cmd
@@ -33,6 +33,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
+	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
@@ -124,6 +125,9 @@ func serve() {
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()
 
+	dbClient := storage.NewDBClient(specs.DSN, true, specs.TracingEnabled, tracer, monitor, logger)
+	defer dbClient.Close()
+
 	if specs.AuthorizationEnabled {
 		authorizer := authorization.NewAuthorizer(
 			externalConfig.OpenFGA(),
@@ -169,9 +173,9 @@ func serve() {
 
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, mailConfig, ollyConfig)
+	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, mailConfig, specs.DSN, ollyConfig)
 
-	router := web.NewRouter(routerConfig, wpool)
+	router := web.NewRouter(routerConfig, wpool, dbClient)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

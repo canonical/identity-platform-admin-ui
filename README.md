@@ -63,6 +63,7 @@ This is the Admin UI for the Canonical Identity Platform.
 - `MAIL_PASSWORD`: password to use for the simple authentication on the mail server
 - `MAIL_FROM_ADDRESS`: email address sending the email (required)
 - `MAIL_SEND_TIMEOUT_SECONDS`: timeout used to send emails (defaults to 15 seconds)
+- `DSN`: data source name for the database to use
 
 ## Development setup
 

@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package roles
@@ -104,7 +104,9 @@ func TestValidate(t *testing.T) {
 			endpoint: "",
 			body: func() []byte {
 				role := new(Role)
+				role.ID = "mock-role-id"
 				role.Name = "mock-role-id"
+				role.Owner = "mock-subject-id"
 
 				marshal, _ := json.Marshal(role)
 				return marshal

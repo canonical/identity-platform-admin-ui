@@ -96,6 +96,7 @@ RULES_CONFIGMAP_NAMESPACE=default
 SCHEMAS_CONFIGMAP_NAME=identity-schemas
 SCHEMAS_CONFIGMAP_NAMESPACE=default
 TRACING_ENABLED=false
+DSN=postgresql://user:user@localhost:5432/admin-service?sslmode=disable
 ```
 
 ## Stopping
@@ -140,7 +141,8 @@ RULES_CONFIGMAP_NAME=oathkeeper-rules \
 RULES_CONFIGMAP_NAMESPACE=default \
 SCHEMAS_CONFIGMAP_NAME=identity-schemas \
 SCHEMAS_CONFIGMAP_NAMESPACE=default \
-TRACING_ENABLED=false
+TRACING_ENABLED=false \
+DSN=postgresql://user:user@localhost:5432/admin-service?sslmode=disable
 ```
 
 

@@ -40,7 +40,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
 	"github.com/canonical/identity-platform-admin-ui/pkg/resources"
 	"github.com/canonical/identity-platform-admin-ui/pkg/roles"
-	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
@@ -59,12 +58,6 @@ func WithIDPConfig(cfg *idp.Config) RouterOption {
 func WithSchemasConfig(cfg *schemas.Config) RouterOption {
 	return func(c *routerConfig) {
 		c.schemas = cfg
-	}
-}
-
-func WithRulesConfig(cfg *rules.Config) RouterOption {
-	return func(c *routerConfig) {
-		c.rules = cfg
 	}
 }
 
@@ -115,7 +108,6 @@ type routerConfig struct {
 	payloadValidationEnabled bool
 	idp                      *idp.Config
 	schemas                  *schemas.Config
-	rules                    *rules.Config
 	uiDistFS                 *fs.FS
 	external                 ExternalClientsConfigInterface
 	oauth2                   *authentication.Config
@@ -197,13 +189,6 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 		logger,
 	)
 
-	rulesAPI := rules.NewAPI(
-		rules.NewService(config.rules, externalConfig.Authorizer(), tracer, monitor, logger),
-		tracer,
-		monitor,
-		logger,
-	)
-
 	rolesAPI := roles.NewAPI(
 		rolesSvc,
 		tracer,
@@ -257,7 +242,6 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 		clientsAPI.RegisterValidation(validationRegistry)
 		idpAPI.RegisterValidation(validationRegistry)
 		schemasAPI.RegisterValidation(validationRegistry)
-		rulesAPI.RegisterValidation(validationRegistry)
 		rolesAPI.RegisterValidation(validationRegistry)
 		groupsAPI.RegisterValidation(validationRegistry)
 	}
@@ -270,7 +254,6 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 	//clientsAPI.RegisterEndpoints(apiRouter)
 	//idpAPI.RegisterEndpoints(apiRouter)
 	//schemasAPI.RegisterEndpoints(apiRouter)
-	rulesAPI.RegisterEndpoints(apiRouter)
 	// while we port APIs to the new gRPC-gateway based implementation, we disable the original ones step by step
 	// rolesAPI.RegisterEndpoints(apiRouter)
 	// groupsAPI.RegisterEndpoints(apiRouter)

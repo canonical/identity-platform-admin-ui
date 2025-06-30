@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authorization
@@ -25,7 +25,6 @@ type Middleware struct {
 	IdentityConverter
 	ClientConverter
 	ProviderConverter
-	RuleConverter
 	SchemeConverter
 	RoleConverter
 	GroupConverter
@@ -58,9 +57,6 @@ func (mdw *Middleware) v0mapper(r *http.Request) []Permission {
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/idps") {
 		return mdw.ProviderConverter.MapV0(r)
-	}
-	if strings.HasPrefix(r.URL.Path, "/api/v0/rules") {
-		return mdw.RuleConverter.MapV0(r)
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v0/schemas") {
 		return mdw.SchemeConverter.MapV0(r)

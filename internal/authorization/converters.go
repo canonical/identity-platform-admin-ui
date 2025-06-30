@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd.
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 // these constants relate directly to the authorization model types
@@ -17,7 +18,6 @@ const (
 	IDENTITY_TYPE = "identity"
 	CLIENT_TYPE   = "client"
 	PROVIDER_TYPE = "provider"
-	RULE_TYPE     = "rule"
 	SCHEME_TYPE   = "scheme"
 	ROLE_TYPE     = "role"
 	GROUP_TYPE    = "group"
@@ -150,38 +150,6 @@ func (c ProviderConverter) MapV1(r *http.Request) []Permission {
 }
 
 func (c ProviderConverter) MapV0(r *http.Request) []Permission {
-	id := chi.URLParam(r, "id")
-	var resourceId string
-	var contextualTuples []openfga.Tuple
-
-	if id == "" {
-		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), GLOBAL_ACCESS_OBJECT_NAME)
-		contextualTuples = append(
-			contextualTuples,
-			*openfga.NewTuple("user:*", CAN_VIEW, resourceId),
-		)
-	} else {
-		resourceId = fmt.Sprintf("%s:%s", c.TypeName(), id)
-	}
-
-	// Admins have privileged access to resource
-	contextualTuples = append(
-		contextualTuples,
-		*openfga.NewTuple(ADMIN_OBJECT, PRIVILEGED_RELATION, resourceId),
-	)
-
-	return []Permission{
-		{Relation: relation(r), ResourceID: resourceId, ContextualTuples: contextualTuples},
-	}
-}
-
-type RuleConverter struct{}
-
-func (c RuleConverter) TypeName() string {
-	return RULE_TYPE
-}
-
-func (c RuleConverter) MapV0(r *http.Request) []Permission {
 	id := chi.URLParam(r, "id")
 	var resourceId string
 	var contextualTuples []openfga.Tuple

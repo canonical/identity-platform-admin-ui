@@ -172,8 +172,6 @@ github.com/ory/hydra-client-go/v2 v2.1.1 h1:3JatU9uFbw5XhF3lgPCas1l1Kok2v5Mq1p26
 github.com/ory/hydra-client-go/v2 v2.1.1/go.mod h1:IiIwChp/9wRvPoyFQblqPvg78uVishCCrV9+/M7Pl34=
 github.com/ory/kratos-client-go v1.1.0 h1:mCk5wxNTxjYq/sbZfoEY/JcxuBtuixStHD14Y0sU1E8=
 github.com/ory/kratos-client-go v1.1.0/go.mod h1:ultwfjWsBxshnZgopqQ3DrKOe/t6SXsM+KKOd21PaTQ=
-github.com/ory/oathkeeper-client-go v0.40.6 h1:Qm/odusPn6DTJ8mXXElNzfXYpcD5wqmb/k3dOYKUfTg=
-github.com/ory/oathkeeper-client-go v0.40.6/go.mod h1:9JUPR04XPH3e53TYbfu+KveCnTIYtlSTJiQ23rEQLJI=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
 github.com/perimeterx/marshmallow v1.1.5/go.mod h1:dsXbUu8CRzfYP5a87xpp0xq9S3u0Vchtcl8we9tYaXw=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

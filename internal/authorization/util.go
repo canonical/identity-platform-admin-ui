@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authorization
@@ -51,10 +51,6 @@ func ClientForTuple(clientId string) string {
 
 func ProviderForTuple(providerId string) string {
 	return fmt.Sprintf("provider:%s", providerId)
-}
-
-func RuleForTuple(ruleId string) string {
-	return fmt.Sprintf("rule:%s", ruleId)
 }
 
 func ApplicationForTuple(applicationId string) string {

@@ -25,13 +25,11 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring/prometheus"
-	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
-	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
@@ -77,7 +75,6 @@ func serve() {
 		hydraAdminClient,
 		ik.NewClient(specs.KratosAdminURL, specs.Debug),
 		ik.NewClient(specs.KratosPublicURL, specs.Debug),
-		io.NewClient(specs.OathkeeperPublicURL, specs.Debug),
 		openfga.NewClient(
 			openfga.NewConfig(
 				specs.ApiScheme,
@@ -100,7 +97,7 @@ func serve() {
 		panic(err)
 	}
 
-	// TODO @shipperizer standardize idp, schemas and rules configs
+	// TODO @shipperizer standardize idp and schemas configs
 	idpConfig := &idp.Config{
 		K8s:       k8sCoreV1,
 		Name:      specs.IDPConfigMapName,
@@ -113,8 +110,6 @@ func serve() {
 		Name:      specs.SchemasConfigMapName,
 		Namespace: specs.SchemasConfigMapNamespace,
 	}
-
-	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()
@@ -173,7 +168,6 @@ func serve() {
 		web.WithIDPConfig(idpConfig),
 		web.WithSchemasConfig(schemasConfig),
 		web.WithUIDistFS(&distFS),
-		web.WithRulesConfig(rulesConfig),
 		web.WithExternalClients(externalConfig),
 		web.WithOAuth2Config(oauth2Config),
 		web.WithMailConfig(mailConfig),

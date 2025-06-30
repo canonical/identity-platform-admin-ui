@@ -20,7 +20,6 @@ require (
 	github.com/openfga/language/pkg/go v0.0.0-20240122114256-aaa86ab89379
 	github.com/ory/hydra-client-go/v2 v2.1.1
 	github.com/ory/kratos-client-go v1.1.0
-	github.com/ory/oathkeeper-client-go v0.40.6
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/cobra v1.8.0

@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package web
@@ -10,7 +10,6 @@ import (
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
-	io "github.com/canonical/identity-platform-admin-ui/internal/oathkeeper"
 )
 
 // O11yConfig is a wrapper config for all the observability objects
@@ -48,12 +47,11 @@ func NewO11yConfig(tracer trace.Tracer, monitor monitoring.MonitorInterface, log
 
 // ExternalClientsConfig is a wrapper config for all the third party clients
 type ExternalClientsConfig struct {
-	hydraAdmin       *ih.Client
-	kratosAdmin      *ik.Client
-	kratosPublic     *ik.Client
-	oathkeeperPublic *io.Client
-	ofga             OpenFGAClientInterface
-	authorizer       AuthorizerClientInterface
+	hydraAdmin   *ih.Client
+	kratosAdmin  *ik.Client
+	kratosPublic *ik.Client
+	ofga         OpenFGAClientInterface
+	authorizer   AuthorizerClientInterface
 }
 
 // HydraAdmin returns an hydra client to interact with the admin API
@@ -69,11 +67,6 @@ func (c *ExternalClientsConfig) KratosAdmin() *ik.Client {
 // KratosPublic returns a kratos client to interact with the public API
 func (c *ExternalClientsConfig) KratosPublic() *ik.Client {
 	return c.kratosPublic
-}
-
-// OathkeeperPublic returns an oathkeeper client to interact with the public API
-func (c *ExternalClientsConfig) OathkeeperPublic() *io.Client {
-	return c.oathkeeperPublic
 }
 
 // OpenFGA returns an openfga client
@@ -92,13 +85,12 @@ func (c *ExternalClientsConfig) SetAuthorizer(o AuthorizerClientInterface) {
 }
 
 // NewExternalClientsConfig create a third party config object for all the external clients needed
-func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, oathkeeper *io.Client, ofga OpenFGAClientInterface, authorizer AuthorizerClientInterface) *ExternalClientsConfig {
+func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, ofga OpenFGAClientInterface, authorizer AuthorizerClientInterface) *ExternalClientsConfig {
 	c := new(ExternalClientsConfig)
 
 	c.hydraAdmin = hydra
 	c.kratosAdmin = kratosAdmin
 	c.kratosPublic = kratosPublic
-	c.oathkeeperPublic = oathkeeper
 	c.ofga = ofga
 	c.authorizer = authorizer
 

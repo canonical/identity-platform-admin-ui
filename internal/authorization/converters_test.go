@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd.
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
@@ -11,8 +11,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 func TestIdentityConverterMapV0ReturnsPermissions(t *testing.T) {
@@ -304,105 +305,6 @@ func TestProviderConverterMapV0ReturnsPermissions(t *testing.T) {
 			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
 
 			result := new(ProviderConverter).MapV0(r)
-
-			if !reflect.DeepEqual(result, test.output) {
-				t.Errorf("Map returned %v", result)
-			}
-		})
-	}
-}
-
-func TestRuleConverterMapV0ReturnsPermissions(t *testing.T) {
-	type input struct {
-		method   string
-		endpoint string
-		ID       string
-	}
-
-	tests := []struct {
-		name   string
-		input  input
-		output []Permission
-	}{
-		{
-			name:  "GET /api/v0/rules",
-			input: input{method: http.MethodGet, endpoint: "/api/v0/rules"},
-			output: []Permission{
-				{
-					Relation:   CAN_VIEW,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "__system__global"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
-						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
-					},
-				},
-			},
-		},
-		{
-			name:  "POST /api/v0/rules",
-			input: input{method: http.MethodPost, endpoint: "/api/v0/rules"},
-			output: []Permission{
-				{
-					Relation:   CAN_CREATE,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "__system__global"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("user:*", CAN_VIEW, fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
-						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, GLOBAL_ACCESS_OBJECT_NAME)),
-					},
-				},
-			},
-		},
-		{
-			name:  "GET /api/v0/rules/id-1234",
-			input: input{method: http.MethodGet, endpoint: "/api/v0/rules/id-1234", ID: "id-1234"},
-			output: []Permission{
-				{
-					Relation:   CAN_VIEW,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234")),
-					},
-				},
-			},
-		},
-		{
-			name:  "PUT /api/v0/rules/id-1234",
-			input: input{method: http.MethodPut, endpoint: "/api/v0/rules/id-1234", ID: "id-1234"},
-			output: []Permission{
-				{
-					Relation:   CAN_EDIT,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234")),
-					},
-				},
-			},
-		},
-		{
-			name:  "DELETE /api/v0/rules/id-1234",
-			input: input{method: http.MethodDelete, endpoint: "/api/v0/rules/id-1234", ID: "id-1234"},
-			output: []Permission{
-				{
-					Relation:   CAN_DELETE,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("privileged:superuser", "privileged", fmt.Sprintf("%s:%s", RULE_TYPE, "id-1234")),
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			r := httptest.NewRequest(test.input.method, test.input.endpoint, nil)
-
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", test.input.ID)
-
-			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-
-			result := new(RuleConverter).MapV0(r)
 
 			if !reflect.DeepEqual(result, test.output) {
 				t.Errorf("Map returned %v", result)

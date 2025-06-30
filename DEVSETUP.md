@@ -61,7 +61,6 @@ Port forwarding service/openfga in namespace default, remote port 8080 -> http:/
 Port forwarding service/hydra-admin in namespace default, remote port 4445 -> http://127.0.0.1:14445
 Port forwarding service/hydra-public in namespace default, remote port 4444 -> http://127.0.0.1:14444
 Port forwarding service/kratos-public in namespace default, remote port 80 -> http://127.0.0.1:14433
-Port forwarding service/oathkeeper-api in namespace default, remote port 4456 -> http://127.0.0.1:14456
 WARN[0118] could not map pods to service default/kratos-courier/80: no pods match service kratos-courier/80  subtask=service/kratos-courier task=PortForward
 Port forwarding service/openfga in namespace default, remote port 2112 -> http://127.0.0.1:2112
 Port forwarding service/kratos-courier in namespace default, remote port 80 -> http://127.0.0.1:4503
@@ -84,15 +83,12 @@ KRATOS_ADMIN_URL=http://localhost:14434
 KRATOS_PUBLIC_URL=http://localhost:14433
 KUBECONFIG_FILE=/home/barco/.kube/config
 LOG_LEVEL=DEBUG
-OATHKEEPER_PUBLIC_URL=http://localhost:14456
 OPENFGA_API_HOST=localhost:14457
 OPENFGA_API_SCHEME=http
 OPENFGA_API_TOKEN=42
 OPENFGA_AUTHORIZATION_MODEL_ID=01HW5SHYBH9EXMARE01E1MC14A
 OPENFGA_STORE_ID=01HW5SHYB4ZTFBNSH05R0NVWX8
 PORT=8888
-RULES_CONFIGMAP_NAME=oathkeeper-rules
-RULES_CONFIGMAP_NAMESPACE=default
 SCHEMAS_CONFIGMAP_NAME=identity-schemas
 SCHEMAS_CONFIGMAP_NAMESPACE=default
 TRACING_ENABLED=false
@@ -129,16 +125,12 @@ IDP_CONFIGMAP_NAMESPACE=default \
 KRATOS_ADMIN_URL=http=//kratos-public.default.svc.cluster.local \
 KRATOS_PUBLIC_URL=http=//kratos-public.default.svc.cluster.local \
 LOG_LEVEL=DEBUG \
-OATHKEEPER_PUBLIC_URL=http=//oathkeeper-api.default.svc.cluster.local=4456 \
 OPENFGA_API_HOST=openfga.default.svc.cluster.local=8080 \
 OPENFGA_API_SCHEME=http \
 OPENFGA_API_TOKEN=42 \
 OPENFGA_AUTHORIZATION_MODEL_ID=01HW5SHYBH9EXMARE01E1MC14A \
 OPENFGA_STORE_ID=01HW5SHYB4ZTFBNSH05R0NVWX8 \
 PORT=8000 \
-RULES_CONFIGMAP_FILE_NAME=access-rules.json \
-RULES_CONFIGMAP_NAME=oathkeeper-rules \
-RULES_CONFIGMAP_NAMESPACE=default \
 SCHEMAS_CONFIGMAP_NAME=identity-schemas \
 SCHEMAS_CONFIGMAP_NAMESPACE=default \
 TRACING_ENABLED=false \

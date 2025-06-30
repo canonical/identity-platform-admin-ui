@@ -122,13 +122,3 @@ PUT /api/v0/schemas/default
   }
 }
 ```
-
-## Rules API (Oathkeeper Access Rules)
-
-```text
-GET /api/v0/rules
-GET /api/v0/rules/{id}
-POST /api/v0/rules - [payload](https://www.ory.sh/docs/oathkeeper/reference/api#tag/api/operation/getRule)
-PUT /api/v0/rules/{id} - [payload](https://www.ory.sh/docs/oathkeeper/reference/api#tag/api/operation/getRule)
-DELETE /api/v0/rules/{id}
-```

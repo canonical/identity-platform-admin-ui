@@ -34,7 +34,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/rules"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
 	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
-	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 	"github.com/canonical/identity-platform-admin-ui/pkg/web"
 )
 
@@ -117,11 +116,6 @@ func serve() {
 
 	rulesConfig := rules.NewConfig(specs.RulesConfigMapName, specs.RulesConfigFileName, specs.RulesConfigMapNamespace, k8sCoreV1, externalConfig.OathkeeperPublic().ApiApi())
 
-	uiConfig := &ui.Config{
-		DistFS:      distFS,
-		ContextPath: specs.ContextPath,
-	}
-
 	wpool := pool.NewWorkerPool(specs.OpenFGAWorkersTotal, tracer, monitor, logger)
 	defer wpool.Stop()
 
@@ -173,9 +167,20 @@ func serve() {
 
 	ollyConfig := web.NewO11yConfig(tracer, monitor, logger)
 
-	routerConfig := web.NewRouterConfig(specs.ContextPath, specs.PayloadValidationEnabled, idpConfig, schemasConfig, rulesConfig, uiConfig, externalConfig, oauth2Config, mailConfig, specs.DSN, ollyConfig)
-
-	router := web.NewRouter(routerConfig, wpool, dbClient)
+	router := web.NewRouter(
+		wpool,
+		dbClient,
+		web.WithIDPConfig(idpConfig),
+		web.WithSchemasConfig(schemasConfig),
+		web.WithUIDistFS(&distFS),
+		web.WithRulesConfig(rulesConfig),
+		web.WithExternalClients(externalConfig),
+		web.WithOAuth2Config(oauth2Config),
+		web.WithMailConfig(mailConfig),
+		web.WithO11y(ollyConfig),
+		web.WithContextPath(specs.ContextPath),
+		web.WithPayloadValidationEnabled(specs.PayloadValidationEnabled),
+	)
 
 	logger.Infof("Starting server on port %v", specs.Port)
 

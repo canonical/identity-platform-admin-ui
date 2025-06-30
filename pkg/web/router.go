@@ -5,6 +5,7 @@ package web
 
 import (
 	"context"
+	"io/fs"
 	"net/http"
 
 	v0Clients "github.com/canonical/identity-platform-api/v0/clients"
@@ -47,46 +48,91 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
-type RouterConfig struct {
+type RouterOption func(*routerConfig)
+
+func WithIDPConfig(cfg *idp.Config) RouterOption {
+	return func(c *routerConfig) {
+		c.idp = cfg
+	}
+}
+
+func WithSchemasConfig(cfg *schemas.Config) RouterOption {
+	return func(c *routerConfig) {
+		c.schemas = cfg
+	}
+}
+
+func WithRulesConfig(cfg *rules.Config) RouterOption {
+	return func(c *routerConfig) {
+		c.rules = cfg
+	}
+}
+
+func WithUIDistFS(distFS *fs.FS) RouterOption {
+	return func(c *routerConfig) {
+		c.uiDistFS = distFS
+	}
+}
+
+func WithExternalClients(cfg ExternalClientsConfigInterface) RouterOption {
+	return func(c *routerConfig) {
+		c.external = cfg
+	}
+}
+
+func WithOAuth2Config(cfg *authentication.Config) RouterOption {
+	return func(c *routerConfig) {
+		c.oauth2 = cfg
+	}
+}
+
+func WithMailConfig(cfg *mail.Config) RouterOption {
+	return func(c *routerConfig) {
+		c.mail = cfg
+	}
+}
+
+func WithO11y(cfg O11yConfigInterface) RouterOption {
+	return func(c *routerConfig) {
+		c.olly = cfg
+	}
+}
+
+func WithContextPath(path string) RouterOption {
+	return func(c *routerConfig) {
+		c.contextPath = path
+	}
+}
+
+func WithPayloadValidationEnabled(enabled bool) RouterOption {
+	return func(c *routerConfig) {
+		c.payloadValidationEnabled = enabled
+	}
+}
+
+type routerConfig struct {
 	contextPath              string
 	payloadValidationEnabled bool
 	idp                      *idp.Config
 	schemas                  *schemas.Config
 	rules                    *rules.Config
-	ui                       *ui.Config
+	uiDistFS                 *fs.FS
 	external                 ExternalClientsConfigInterface
 	oauth2                   *authentication.Config
 	mail                     *mail.Config
-	dsn                      string
 	olly                     O11yConfigInterface
 }
 
-func NewRouterConfig(contextPath string, payloadValidationEnabled bool, idp *idp.Config, schemas *schemas.Config, rules *rules.Config, ui *ui.Config, external ExternalClientsConfigInterface, oauth2 *authentication.Config, mail *mail.Config, dbDsn string, olly O11yConfigInterface) *RouterConfig {
-	return &RouterConfig{
-		contextPath:              contextPath,
-		payloadValidationEnabled: payloadValidationEnabled,
-		idp:                      idp,
-		schemas:                  schemas,
-		rules:                    rules,
-		ui:                       ui,
-		external:                 external,
-		oauth2:                   oauth2,
-		mail:                     mail,
-		dsn:                      dbDsn,
-		olly:                     olly,
-	}
-}
-
-func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterface) http.Handler {
+func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterface, opts ...RouterOption) http.Handler {
 	router := chi.NewMux()
 
-	idpConfig := config.idp
-	schemasConfig := config.schemas
-	rulesConfig := config.rules
-	uiConfig := config.ui
+	config := &routerConfig{}
+	for _, opt := range opts {
+		opt(config)
+	}
+
 	externalConfig := config.external
 	oauth2Config := config.oauth2
-	mailConfig := config.mail
 
 	logger := config.olly.Logger()
 	monitor := config.olly.Monitor()
@@ -112,19 +158,16 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 
 	roleRepository := roles.NewRoleRepository(dbClient, tracer, monitor, logger)
 
-	mailService := mail.NewEmailService(mailConfig, tracer, monitor, logger)
+	mailService := mail.NewEmailService(config.mail, tracer, monitor, logger)
 
 	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
-	idpSvc := idp.NewService(idpConfig, externalConfig.Authorizer(), tracer, monitor, logger)
+	idpSvc := idp.NewService(config.idp, externalConfig.Authorizer(), tracer, monitor, logger)
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), roleRepository, wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
-	schemaSvc := schemas.NewService(schemasConfig, externalConfig.Authorizer(), tracer, monitor, logger)
+	schemaSvc := schemas.NewService(config.schemas, externalConfig.Authorizer(), tracer, monitor, logger)
 	clientsSvc := clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger)
 
 	router.Use(middlewares...)
-
-	//statusAPI := status.NewAPI(tracer, monitor, logger)
-	metricsAPI := metrics.NewAPI(logger)
 
 	identitiesAPI := identities.NewAPI(
 		identitiesSvc,
@@ -155,7 +198,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 	)
 
 	rulesAPI := rules.NewAPI(
-		rules.NewService(rulesConfig, externalConfig.Authorizer(), tracer, monitor, logger),
+		rules.NewService(config.rules, externalConfig.Authorizer(), tracer, monitor, logger),
 		tracer,
 		monitor,
 		logger,
@@ -174,8 +217,6 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 		monitor,
 		logger,
 	)
-
-	uiAPI := ui.NewAPI(uiConfig, tracer, monitor, logger)
 
 	// Create a new router for the API so that we can add extra middlewares
 	apiRouter := router.Group(nil).(*chi.Mux)
@@ -283,7 +324,7 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 	apiRouter.Mount("/api/v0/clients", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
 	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/metrics", metricsAPI.Handler())
+	apiRouter.Mount("/api/v0/metrics", metrics.NewAPI(logger).Handler())
 	/********* gRPC gateway integration **********/
 
 	if oauth2Config.Enabled {
@@ -308,9 +349,9 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 			Groups:    groups.NewV1Service(groupsSvc, tracer, monitor, logger),
 			Identities: identities.NewV1Service(
 				&identities.Config{
-					Name:         idpConfig.Name,
-					Namespace:    idpConfig.Namespace,
-					K8s:          idpConfig.K8s,
+					Name:         config.idp.Name,
+					Namespace:    config.idp.Namespace,
+					K8s:          config.idp.K8s,
 					OpenFGAStore: store,
 				},
 				identitiesSvc,
@@ -326,7 +367,8 @@ func NewRouter(config *RouterConfig, wpool pool.WorkerPoolInterface, dbClient st
 
 	apiRouter.Mount("/api/", rebacAPI.Handler(""))
 
-	uiAPI.RegisterEndpoints(router)
+	ui.NewAPI(config.contextPath, *config.uiDistFS, tracer, monitor, logger).
+		RegisterEndpoints(router)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)
 }

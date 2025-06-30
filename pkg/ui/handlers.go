@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package ui
@@ -23,11 +23,6 @@ const (
 	UIPrefix      = "/ui"
 	indexTemplate = "index.html"
 )
-
-type Config struct {
-	DistFS      fs.FS
-	ContextPath string
-}
 
 type API struct {
 	contextPath string
@@ -121,12 +116,12 @@ func (a *API) uiFiles(w http.ResponseWriter, r *http.Request) {
 	a.fileServer.ServeHTTP(w, r)
 }
 
-func NewAPI(config *Config, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
+func NewAPI(contextPath string, distFS fs.FS, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *API {
 	a := new(API)
 
-	a.distFS = config.DistFS
-	a.fileServer = http.FileServer(http.FS(config.DistFS))
-	a.contextPath = config.ContextPath
+	a.distFS = distFS
+	a.fileServer = http.FileServer(http.FS(distFS))
+	a.contextPath = contextPath
 
 	a.tracer = tracer
 	a.monitor = monitor

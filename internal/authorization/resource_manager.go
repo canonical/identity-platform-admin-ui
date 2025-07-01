@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authorization
@@ -84,14 +84,6 @@ func (a *Authorizer) SetCreateProviderEntitlements(ctx context.Context, provider
 
 func (a *Authorizer) SetDeleteProviderEntitlements(ctx context.Context, providerID string) error {
 	return a.deleteTuple(ctx, a.getResource(providerID, PROVIDER_TYPE))
-}
-
-func (a *Authorizer) SetCreateRuleEntitlements(ctx context.Context, ruleID string) error {
-	return a.createTuple(ctx, a.getResource(ruleID, RULE_TYPE))
-}
-
-func (a *Authorizer) SetDeleteRuleEntitlements(ctx context.Context, ruleID string) error {
-	return a.deleteTuple(ctx, a.getResource(ruleID, RULE_TYPE))
 }
 
 func (a *Authorizer) SetCreateSchemaEntitlements(ctx context.Context, schemeID string) error {

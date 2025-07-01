@@ -21,8 +21,7 @@ type EnvSpec struct {
 	KratosPublicURL string `envconfig:"kratos_public_url" required:"true"`
 	KratosAdminURL  string `envconfig:"kratos_admin_url" required:"true"`
 	// with no slash suffix
-	HydraAdminURL       string `envconfig:"hydra_admin_url" required:"true"`
-	OathkeeperPublicURL string `envconfig:"oathkeeper_public_url" required:"true"`
+	HydraAdminURL string `envconfig:"hydra_admin_url" required:"true"`
 
 	AuthenticationEnabled       bool     `envconfig:"authentication_enabled" default:"false" validate:"required"`
 	OIDCIssuer                  string   `envconfig:"oidc_issuer" validate:"required"`
@@ -41,10 +40,6 @@ type EnvSpec struct {
 
 	SchemasConfigMapName      string `envconfig:"schemas_configmap_name" required:"true"`
 	SchemasConfigMapNamespace string `envconfig:"schemas_configmap_namespace" required:"true"`
-
-	RulesConfigMapName      string `envconfig:"rules_configmap_name" required:"true"`
-	RulesConfigFileName     string `envconfig:"rules_configmap_file_name" default:"admin_ui_rules.json"`
-	RulesConfigMapNamespace string `envconfig:"rules_configmap_namespace" required:"true"`
 
 	ApiScheme string `envconfig:"openfga_api_scheme" default:""`
 	ApiHost   string `envconfig:"openfga_api_host"`

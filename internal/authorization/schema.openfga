@@ -63,15 +63,6 @@ type provider
     define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
-type rule
- relations
-    define privileged: [privileged]
-
-    define can_create: [user, role#assignee, group#member] or admin from privileged
-    define can_delete: [user, role#assignee, group#member] or admin from privileged
-    define can_edit: [user, role#assignee, group#member] or can_delete or admin from privileged
-    define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
-
 # need to model how to assign applications for the login UI, if copying current model or adjusting it
 type application
  relations

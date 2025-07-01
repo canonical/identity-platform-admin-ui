@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // SPDX-License-Identifier: AGPL-3.0
 
 package authorization
@@ -28,7 +28,6 @@ func (a *API) RegisterEndpoints(router *chi.Mux) {
 	router.Get("/api/v0/identities/1", a.handleAll)
 	router.Post("/api/v0/clients", a.handleAll)
 	router.Get("/api/v0/idps/github", a.handleAll)
-	router.Delete("/api/v0/rules/1", a.handleAll)
 	router.Patch("/api/v0/schemas/x", a.handleAll)
 	router.Post("/api/v0/roles/viewer/identities/1", a.handleAll)
 	router.Get("/api/v0/groups/viewer/roles", a.handleAll)
@@ -133,21 +132,6 @@ func TestMiddlewareAuthorize(t *testing.T) {
 					ResourceID: fmt.Sprintf("%s:%s", SCHEME_TYPE, "x"),
 					ContextualTuples: []openfga.Tuple{
 						*openfga.NewTuple("privileged:superuser", "privileged", SCHEME_TYPE+":x"),
-					},
-				},
-			},
-			isGlobal: false,
-			output:   true,
-		},
-		{
-			name:  "DELETE /api/v0/rules/1",
-			input: input{method: http.MethodDelete, endpoint: "/api/v0/rules/1", ID: "1"},
-			expect: []Permission{
-				{
-					Relation:   CAN_DELETE,
-					ResourceID: fmt.Sprintf("%s:%s", RULE_TYPE, "1"),
-					ContextualTuples: []openfga.Tuple{
-						*openfga.NewTuple("privileged:superuser", "privileged", RULE_TYPE+":1"),
 					},
 				},
 			},

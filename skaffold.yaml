@@ -49,11 +49,6 @@ deploy:
         repo: https://k8s.ory.sh/helm/charts
         valuesFiles: ["deployments/helm/hydra/values.yaml"]
         wait: false
-      - name: oathkeeper
-        remoteChart: oathkeeper
-        repo: https://k8s.ory.sh/helm/charts
-        valuesFiles: ["deployments/helm/oathkeeper/values.yaml"]
-        wait: false
       - name: openfga
         remoteChart: openfga
         repo: https://openfga.github.io/helm-charts
@@ -90,11 +85,6 @@ portForward:
   namespace: default
   port: 4444
   localPort: 4444
-- resourceType: service
-  resourceName: oathkeeper-api
-  namespace: default
-  port: 4456
-  localPort: 14456
 - resourceType: service
   resourceName: openfga
   namespace: default

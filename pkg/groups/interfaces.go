@@ -9,6 +9,7 @@ import (
 	"github.com/openfga/go-sdk/client"
 
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 )
 
 // ServiceInterface is the interface that each business logic service needs to implement
@@ -39,4 +40,16 @@ type OpenFGAClientInterface interface {
 	DeleteTuples(context.Context, ...ofga.Tuple) error
 	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
 	BatchCheck(context.Context, ...ofga.Tuple) (bool, error)
+}
+
+// GroupRepositoryInterface implements a data access object with the repository pattern
+type GroupRepositoryInterface interface {
+	FindGroupByName(context.Context, string) (*Group, error)
+	FindGroupByIdAndOwner(context.Context, string, string) (*Group, error)
+	FindGroupByNameAndOwner(context.Context, string, string) (*Group, error)
+	ListGroups(context.Context, string, int64, int64) ([]string, error)
+	CreateGroup(context.Context, string, string) (*Group, error)
+	CreateGroupTx(context.Context, string, string) (*Group, storage.TxInterface, error)
+	DeleteGroupByName(context.Context, string) (string, error)
+	DeleteGroupTx(context.Context, string) (string, storage.TxInterface, error)
 }

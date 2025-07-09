@@ -149,13 +149,14 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 	}
 
 	roleRepository := roles.NewRoleRepository(dbClient, tracer, monitor, logger)
+	groupRepository := groups.NewGroupRepository(dbClient, tracer, monitor, logger)
 
 	mailService := mail.NewEmailService(config.mail, tracer, monitor, logger)
 
 	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
 	idpSvc := idp.NewService(config.idp, externalConfig.Authorizer(), tracer, monitor, logger)
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), roleRepository, wpool, tracer, monitor, logger)
-	groupsSvc := groups.NewService(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
+	groupsSvc := groups.NewService(externalConfig.OpenFGA(), groupRepository, wpool, tracer, monitor, logger)
 	schemaSvc := schemas.NewService(config.schemas, externalConfig.Authorizer(), tracer, monitor, logger)
 	clientsSvc := clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger)
 

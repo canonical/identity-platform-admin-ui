@@ -16,6 +16,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
+	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 
 	authz "github.com/canonical/identity-platform-admin-ui/internal/authorization"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
@@ -34,6 +35,7 @@ type listPermissionsResult struct {
 // Service contains the business logic to deal with groups on the Admin UI OpenFGA model
 type Service struct {
 	ofga OpenFGAClientInterface
+	repo GroupRepositoryInterface
 
 	wpool pool.WorkerPoolInterface
 
@@ -47,8 +49,7 @@ func (s *Service) ListGroups(ctx context.Context, userID string) ([]string, erro
 	ctx, span := s.tracer.Start(ctx, "groups.Service.ListGroups")
 	defer span.End()
 
-	groups, err := s.ofga.ListObjects(ctx, authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, "group")
-
+	groups, err := s.repo.ListGroups(ctx, userID, 0, 200)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
@@ -133,24 +134,22 @@ func (s *Service) ListPermissions(ctx context.Context, ID string, continuationTo
 
 // GetGroup returns the specified group using the ID argument, userID is used to validate the visibility by the user
 // making the call
-func (s *Service) GetGroup(ctx context.Context, userID, ID string) (*Group, error) {
+func (s *Service) GetGroup(ctx context.Context, userID, groupName string) (*Group, error) {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.GetGroup")
 	defer span.End()
 
-	exists, err := s.ofga.Check(ctx, authz.UserForTuple(userID), authz.CAN_VIEW_RELATION, authz.GroupForTuple(ID))
+	group, err := s.repo.FindGroupByNameAndOwner(ctx, groupName, userID)
 
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil, err
-	}
-
-	if !exists {
+	if errors.Is(err, storage.ErrNotFound) {
+		s.logger.Debugf("group %s for owner %s not found", groupName, userID)
 		return nil, nil
 	}
 
-	group := new(Group)
-	group.ID = ID
-	group.Name = ID
+	if err != nil {
+		err = fmt.Errorf("unable to get group %s for owner %s, %w", groupName, userID, err)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
 
 	return group, nil
 }
@@ -161,31 +160,42 @@ func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) (*G
 	ctx, span := s.tracer.Start(ctx, "groups.Service.CreateGroup")
 	defer span.End()
 
-	// TODO @shipperizer will we need also the can_view?
-	// does creating a group mean that you are the owner, therefore u get all the permissions on it?
-	// right now assumption is only admins will be able to do this
-	// potentially changing the model to say
-	// `define can_view: [user, user:*, group#assignee, group#member] or assignee or admin from privileged`
-	// might sort the problem
-
-	group := authz.GroupForTuple(groupName)
-	user := authz.UserForTuple(userID)
-
-	err := s.ofga.WriteTuples(
-		ctx,
-		*ofga.NewTuple(user, authz.MEMBER_RELATION, group),
-		*ofga.NewTuple(user, authz.CAN_VIEW_RELATION, group),
-	)
-
+	createdGroup, tx, err := s.repo.CreateGroupTx(ctx, groupName, userID)
 	if err != nil {
+		err = fmt.Errorf("unable to create group %s for user %s, %w", groupName, userID, err)
 		s.logger.Error(err.Error())
 		return nil, err
 	}
 
-	return &Group{
-		ID:   groupName,
-		Name: groupName,
-	}, nil
+	group := authz.GroupForTuple(groupName)
+	user := authz.UserForTuple(userID)
+
+	tuples := []ofga.Tuple{
+		*ofga.NewTuple(user, authz.MEMBER_RELATION, group),
+		*ofga.NewTuple(user, authz.CAN_DELETE, group),
+	}
+
+	err = s.ofga.WriteTuples(ctx, tuples...)
+
+	if err != nil {
+		rollbackErr := tx.Rollback()
+
+		err = errors.Join(err, rollbackErr)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	// if commit fails, we rollback db transaction and the newly created tuples on OpenFGA
+	if err = tx.Commit(); err != nil {
+		rollbackErr := tx.Rollback()
+		deleteTuplesErr := s.ofga.DeleteTuples(ctx, tuples...)
+
+		err = errors.Join(err, rollbackErr, deleteTuplesErr)
+		s.logger.Error(err.Error())
+		return nil, err
+	}
+
+	return createdGroup, nil
 }
 
 // AssignRoles assigns roles to a group
@@ -312,15 +322,20 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 }
 
 // DeleteGroup deletes a group and all the related tuples
-func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
+func (s *Service) DeleteGroup(ctx context.Context, groupName string) error {
 	ctx, span := s.tracer.Start(ctx, "groups.Service.DeleteGroup")
 	defer span.End()
 
+	// TODO: @barco,@shipperizer use DeleteGroupTx when we actually check errors from pool submitted jobs
+	_, err := s.repo.DeleteGroupByName(ctx, groupName)
+	if err != nil {
+		err = fmt.Errorf("unable to delete group %s, %w", groupName, err)
+		s.logger.Error(err.Error())
+		return err
+	}
+
 	// keep it a buffered channel, if set to unbuffered we would need a goroutine
 	// to consume from it before pushing to it
-	// https://go.dev/ref/spec#Send_statements
-	// A send on an unbuffered channel can proceed if a receiver is ready.
-	// A send on a buffered channel can proceed if there is room in the buffer
 	permissionTypes := s.permissionTypes()
 	directRelations := s.directRelations()
 
@@ -333,7 +348,7 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 	// TODO @shipperizer use a background operator
 	for _, t := range s.permissionTypes() {
 		s.wpool.Submit(
-			s.removePermissionsFunc(ctx, ID, t),
+			s.removePermissionsFunc(ctx, groupName, t),
 			results,
 			&wg,
 		)
@@ -341,7 +356,7 @@ func (s *Service) DeleteGroup(ctx context.Context, ID string) error {
 
 	for _, t := range directRelations {
 		s.wpool.Submit(
-			s.removeDirectAssociationsFunc(ctx, ID, t),
+			s.removeDirectAssociationsFunc(ctx, groupName, t),
 			results,
 			&wg,
 		)
@@ -580,10 +595,11 @@ func (s *Service) directRelations() []string {
 }
 
 // NewService returns the implementation of the business logic for the groups API
-func NewService(ofga OpenFGAClientInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga OpenFGAClientInterface, repo GroupRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga
+	s.repo = repo
 
 	s.wpool = wpool
 

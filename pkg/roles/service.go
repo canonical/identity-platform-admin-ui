@@ -62,13 +62,7 @@ func (s *Service) ListRoleGroups(ctx context.Context, roleName string) ([]string
 	ctx, span := s.tracer.Start(ctx, "roles.Service.ListRoleGroups")
 	defer span.End()
 
-	role, err := s.repo.FindRoleByName(ctx, roleName)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return nil, err
-	}
-
-	groups, err := s.repo.ListRoleGroups(ctx, role.ID, 0, 200)
+	groups, err := s.ofga.ListUsers(ctx, "group#member", authorization.ASSIGNEE_RELATION, authorization.RoleForTuple(roleName))
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, err
@@ -105,7 +99,7 @@ func (s *Service) CreateRole(ctx context.Context, userID, roleName string) (*Rol
 	ctx, span := s.tracer.Start(ctx, "roles.Service.CreateRole")
 	defer span.End()
 
-	createdRole, tx, err := s.repo.CreateRoleTx(ctx, userID, roleName)
+	createdRole, tx, err := s.repo.CreateRoleTx(ctx, roleName, userID)
 	if err != nil {
 		err = fmt.Errorf("unable to create role %s for user %s, %w", roleName, userID, err)
 		s.logger.Error(err.Error())

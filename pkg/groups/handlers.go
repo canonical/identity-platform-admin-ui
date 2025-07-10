@@ -41,8 +41,9 @@ type UpdatePermissionsRequest struct {
 }
 
 type Group struct {
-	ID   string `json:"id,omitempty"`
-	Name string `json:"name,omitempty" validate:"required,notblank"`
+	ID    string `json:"id,omitempty"`
+	Name  string `json:"name,omitempty" validate:"required,notblank"`
+	Owner string `json:"owner,omitempty"`
 }
 
 type UpdateIdentitiesRequest struct {

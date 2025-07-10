@@ -27,7 +27,7 @@ func Offset(pageParam int64, pageSize uint64) uint64 {
 	if pageParam <= 0 {
 		return (defaultPage - 1) * pageSize
 	}
-	return uint64(pageParam) * pageSize
+	return uint64(pageParam-1) * pageSize
 }
 
 func PageSize(sizeParam int64) uint64 {

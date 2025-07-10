@@ -202,8 +202,7 @@ func TestServiceListRoleGroups(t *testing.T) {
 			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.ListRoleGroups").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockRepo.EXPECT().FindRoleByName(gomock.Any(), test.input).Times(1).Return(&Role{ID: test.input, Name: test.input}, nil)
-			mockRepo.EXPECT().ListRoleGroups(gomock.Any(), test.input, gomock.Any(), gomock.Any()).Times(1).Return(test.expected.tuples, test.expected.err)
+			mockOpenFGA.EXPECT().ListUsers(gomock.Any(), "group#member", authorization.ASSIGNEE_RELATION, fmt.Sprintf("role:%s", test.input)).Return(test.expected.tuples, test.expected.err)
 			if test.expected.err != nil {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
@@ -359,7 +358,7 @@ func TestServiceCreateRole(t *testing.T) {
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.CreateRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
 
-			mockRepo.EXPECT().CreateRoleTx(gomock.Any(), test.input.user, test.input.role).Times(1).Return(&Role{ID: test.input.role, Name: test.input.role, Owner: test.input.user}, mockTx, nil)
+			mockRepo.EXPECT().CreateRoleTx(gomock.Any(), test.input.role, test.input.user).Times(1).Return(&Role{ID: test.input.role, Name: test.input.role, Owner: test.input.user}, mockTx, nil)
 
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
@@ -1050,7 +1049,7 @@ func TestV1ServiceCreateRole(t *testing.T) {
 				mockTx.EXPECT().Commit().Times(1).Return(nil)
 			}
 
-			mockRepo.EXPECT().CreateRoleTx(gomock.Any(), "mock-subject", test.input.role).Times(1).Return(&Role{ID: test.input.role, Name: test.input.role, Owner: "mock-subject"}, mockTx, nil)
+			mockRepo.EXPECT().CreateRoleTx(gomock.Any(), test.input.role, "mock-subject").Times(1).Return(&Role{ID: test.input.role, Name: test.input.role, Owner: "mock-subject"}, mockTx, nil)
 
 			token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtb2NrLXN1YmplY3QiLCJhdWQiOiJtb2NrLWNsaWVudC1pZCIsIm5hbWUiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.BdspASNsnxeXnqZXZnFnkvv-ClMq0U6X1gCIUrh9V7c"
 			principal, _ := authentication.NewJWKSTokenVerifier(mockProvider, "mock-client-id", mockTracer, mockLogger, mockMonitor).VerifyAccessToken(context.TODO(), token)

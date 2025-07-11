@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.25.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.1...v1.25.0) (2025-07-11)
+
+
+### Features
+
+* add Close method on dbclient ([acec456](https://github.com/canonical/identity-platform-admin-ui/commit/acec45674d00916af69a6bd5602fdd3e6f149bd9))
+* add DataSourceName config for the DB ([20fa02f](https://github.com/canonical/identity-platform-admin-ui/commit/20fa02f494b755554fafd44efdf9ac56a0e8a57c))
+* add embedded migrations ([ace047a](https://github.com/canonical/identity-platform-admin-ui/commit/ace047aeed1a0228812ff408405a6903ae97394b))
+* add goose migration sql file + makefile targets ([8d743da](https://github.com/canonical/identity-platform-admin-ui/commit/8d743daef2d51d6eac3244ddee645ccccc438349))
+* add migrate CLI command ([3542a1a](https://github.com/canonical/identity-platform-admin-ui/commit/3542a1a55e40d9ef2aa458e9e48fd089fc8acd78))
+* add RoleRepositoryInterface, DBClientInterface and TxInterface ([fde0984](https://github.com/canonical/identity-platform-admin-ui/commit/fde0984658163479c9766d4e174833b42c273edb))
+* disable kratos session on logout ([5121f0d](https://github.com/canonical/identity-platform-admin-ui/commit/5121f0d765bf12aa1268957fdf3614c7726fc8c8))
+* disable kratos session on logout ([e0cb058](https://github.com/canonical/identity-platform-admin-ui/commit/e0cb058320cdfa9a6f6ccddf2ea358870855bcda))
+* implement CRUD ops for Groups ([76be9de](https://github.com/canonical/identity-platform-admin-ui/commit/76be9deb17c54dcf0dcd1ceaafe08d0422e8d746))
+* introduce DBClient for database support ([911f345](https://github.com/canonical/identity-platform-admin-ui/commit/911f3454c1ec275cd81226bb4b1b74e71347ecf5))
+* introduce the roleRepository implementation ([b0ab7d1](https://github.com/canonical/identity-platform-admin-ui/commit/b0ab7d132797ed06f81b2944f06ca533da14b96b))
+* porting clients API ([aec21db](https://github.com/canonical/identity-platform-admin-ui/commit/aec21db3ca90c5b3b887d2b4e2fcfa660abe0313))
+* porting clients API ([f4b408f](https://github.com/canonical/identity-platform-admin-ui/commit/f4b408f75c497c707f235435a4947268d357aef5))
+* porting IDP API ([bbe8b8c](https://github.com/canonical/identity-platform-admin-ui/commit/bbe8b8c13fafac282e37d66451973ce5546f74fb))
+* porting IDP API ([54d942c](https://github.com/canonical/identity-platform-admin-ui/commit/54d942ccd56ff8870d1df654b342317e0847f9f4))
+* porting schemas API ([6558694](https://github.com/canonical/identity-platform-admin-ui/commit/65586942a689fec3d4012bda5837e51f268d8d3f))
+* porting schemas API ([21ff190](https://github.com/canonical/identity-platform-admin-ui/commit/21ff190880805e7b62640c18403cb0ab7623a89f))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.2 [security] ([e6ac61a](https://github.com/canonical/identity-platform-admin-ui/commit/e6ac61aad79941f25fe1761d60d0c8dc64e8b33c))
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.2 [security] ([4ae33de](https://github.com/canonical/identity-platform-admin-ui/commit/4ae33de6d8512a9f09589988667145266aa0b96f))
+* fix the idp k8s configmap name to align with kratos charm ([16ec9ed](https://github.com/canonical/identity-platform-admin-ui/commit/16ec9edb6a7a2a83ec5db6a172a3fcb6986c3ba9))
+* fix the idp mapper ([f7c8703](https://github.com/canonical/identity-platform-admin-ui/commit/f7c8703d86435f4a98b9b349841ada4884828631))
+* fix the pagination field ([b500304](https://github.com/canonical/identity-platform-admin-ui/commit/b500304aa1a7eea9509d104ac13d92f873700111))
+* fix the pagination field ([34884f6](https://github.com/canonical/identity-platform-admin-ui/commit/34884f665a82e32e0e7f5cbd4d693fadb7fbba71))
+* **sql:** reorder statements to avoid dependency error ([1a77d82](https://github.com/canonical/identity-platform-admin-ui/commit/1a77d82797432a2379ab89d931fa801bebeddc97))
+* upgrade to 1.24.4 to patch CVE-2025-22874 ([a24b5ec](https://github.com/canonical/identity-platform-admin-ui/commit/a24b5ecdc71c652eef9d829e52e829f2677d20c7)), closes [#585](https://github.com/canonical/identity-platform-admin-ui/issues/585)
+
 ## [1.24.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.0...v1.24.1) (2025-05-21)
 
 

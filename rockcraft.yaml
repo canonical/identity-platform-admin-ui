@@ -38,6 +38,7 @@ parts:
       opt/identity-platform-admin-ui/bin/app: usr/bin/identity-platform-admin-ui
     stage-packages:
       - base-files_var
+      - base-files_chisel
   deb-security-manifest:
     plugin: make
     after:

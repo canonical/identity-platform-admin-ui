@@ -13,8 +13,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-//go:embed schema.openfga
-var schema string
+//go:embed authorization_model.v0.openfga
+var v0Schema string
+
+//go:embed authorization_model.v2.openfga
+var v2Schema string
 
 // Taken from
 // https://github.com/openfga/cli/blob/d5bfb08cd540dc7c10737bcda12dbc292a649e22/internal/authorizationmodel/model.go#L156

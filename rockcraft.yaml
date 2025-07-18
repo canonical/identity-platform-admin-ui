@@ -38,16 +38,12 @@ parts:
       opt/identity-platform-admin-ui/bin/app: usr/bin/identity-platform-admin-ui
     stage-packages:
       - base-files_var
+      - base-files_chisel
   deb-security-manifest:
-    plugin: nil
+    plugin: make
     after:
       - certificates
-    override-prime: >
-      set -x
-
-      mkdir -p $CRAFT_PRIME/usr/share/rocks/
-
-      (echo "# os-release" && cat /etc/os-release && echo "# dpkg-query" &&
-      dpkg-query --admindir=$CRAFT_PRIME/var/lib/dpkg/ -f
-      '${db:Status-Abbrev},${binary:Package},${Version},${source:Package},${Source:Version}\n'
-      -W) > $CRAFT_PRIME/usr/share/rocks/dpkg.query
+    source: https://github.com/canonical/rocks-security-manifest
+    source-type: git
+    source-branch: main
+    override-prime: gen_manifest

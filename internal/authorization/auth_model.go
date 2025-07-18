@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package authorization
 
@@ -19,11 +19,14 @@ var v0Schema string
 //go:embed authorization_model.v2.openfga
 var v2Schema string
 
-// Taken from
-// https://github.com/openfga/cli/blob/d5bfb08cd540dc7c10737bcda12dbc292a649e22/internal/authorizationmodel/model.go#L156
-var AuthModel = func() openfga.AuthorizationModel {
+type AuthorizationModelProvider struct {
+	apiVersion string
+	model      *openfga.AuthorizationModel
+}
+
+func readAuthzModelFromDSLString(dslString string) *openfga.AuthorizationModel {
 	var jsonAuthModel openfga.AuthorizationModel
-	parsedAuthModel, err := transformer.TransformDSLToProto(schema)
+	parsedAuthModel, err := transformer.TransformDSLToProto(dslString)
 	if err != nil {
 		panic(fmt.Errorf("failed to transform due to %w", err))
 	}
@@ -37,5 +40,41 @@ var AuthModel = func() openfga.AuthorizationModel {
 	if err != nil {
 		panic(fmt.Errorf("failed to transform due to %w", err))
 	}
-	return jsonAuthModel
-}()
+
+	return &jsonAuthModel
+}
+
+func (a *AuthorizationModelProvider) prepareModel() *openfga.AuthorizationModel {
+	var model string
+	switch a.apiVersion {
+	case "v2":
+		model = v2Schema
+	default:
+		model = v0Schema
+	}
+
+	return readAuthzModelFromDSLString(model)
+}
+
+func (a *AuthorizationModelProvider) GetModel() *openfga.AuthorizationModel {
+	if a.model == nil {
+		a.model = a.prepareModel()
+	}
+
+	return a.model
+}
+
+func NewAuthorizationModelProvider(apiVersion string) *AuthorizationModelProvider {
+	a := new(AuthorizationModelProvider)
+	a.apiVersion = apiVersion
+
+	return a
+}
+
+var V0AuthzModelProvider *AuthorizationModelProvider = nil
+var V2AuthzModelProvider *AuthorizationModelProvider = nil
+
+func init() {
+	V0AuthzModelProvider = NewAuthorizationModelProvider("v0")
+	V2AuthzModelProvider = NewAuthorizationModelProvider("v2")
+}

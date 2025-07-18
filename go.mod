@@ -6,14 +6,14 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/canonical/identity-platform-api v0.0.0-20250616070112-4e11f02ad08a
-	github.com/canonical/rebac-admin-ui-handlers v0.1.0
+	github.com/canonical/rebac-admin-ui-handlers v0.1.2
 	github.com/coreos/go-oidc/v3 v3.14.1
 	github.com/exaring/otelpgx v0.9.3
 	github.com/go-chi/chi/v5 v5.2.2
-	github.com/go-chi/cors v1.2.1
-	github.com/go-playground/validator/v10 v10.22.0
+	github.com/go-chi/cors v1.2.2
+	github.com/go-playground/validator/v10 v10.22.1
 	github.com/google/uuid v1.6.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/openfga/go-sdk v0.3.7
@@ -22,7 +22,7 @@ require (
 	github.com/ory/kratos-client-go v1.1.0
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/prometheus/client_golang v1.17.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/wneessen/go-mail v0.4.4
@@ -39,11 +39,11 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/oauth2 v0.28.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.3
 	google.golang.org/protobuf v1.36.6
-	k8s.io/api v0.28.3
-	k8s.io/apimachinery v0.28.3
-	k8s.io/client-go v0.28.3
+	k8s.io/api v0.28.15
+	k8s.io/apimachinery v0.28.15
+	k8s.io/client-go v0.28.15
 )
 
 require (
@@ -114,7 +114,7 @@ require (
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250227231956-55c901821b1e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

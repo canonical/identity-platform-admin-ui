@@ -6,9 +6,6 @@ package groups
 import (
 	"context"
 
-	"github.com/openfga/go-sdk/client"
-
-	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
 )
 
@@ -29,17 +26,6 @@ type ServiceInterface interface {
 	RemoveIdentities(context.Context, string, ...string) error
 	CanAssignRoles(context.Context, string, ...string) (bool, error)
 	CanAssignIdentities(context.Context, string, ...string) (bool, error)
-}
-
-// OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation
-type OpenFGAClientInterface interface {
-	ListObjects(context.Context, string, string, string) ([]string, error)
-	ListUsers(context.Context, string, string, string) ([]string, error)
-	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
-	WriteTuples(context.Context, ...ofga.Tuple) error
-	DeleteTuples(context.Context, ...ofga.Tuple) error
-	Check(context.Context, string, string, string, ...ofga.Tuple) (bool, error)
-	BatchCheck(context.Context, ...ofga.Tuple) (bool, error)
 }
 
 // GroupRepositoryInterface implements a data access object with the repository pattern

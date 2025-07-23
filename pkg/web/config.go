@@ -6,10 +6,12 @@ package web
 import (
 	trace "go.opentelemetry.io/otel/trace"
 
+	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	ih "github.com/canonical/identity-platform-admin-ui/internal/hydra"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 )
 
 // O11yConfig is a wrapper config for all the observability objects
@@ -50,8 +52,8 @@ type ExternalClientsConfig struct {
 	hydraAdmin   *ih.Client
 	kratosAdmin  *ik.Client
 	kratosPublic *ik.Client
-	ofga         OpenFGAClientInterface
-	authorizer   AuthorizerClientInterface
+	ofga         openfga.OpenFGAClientInterface
+	authorizer   config.AuthorizerClientInterface
 }
 
 // HydraAdmin returns an hydra client to interact with the admin API
@@ -70,22 +72,22 @@ func (c *ExternalClientsConfig) KratosPublic() *ik.Client {
 }
 
 // OpenFGA returns an openfga client
-func (c *ExternalClientsConfig) OpenFGA() OpenFGAClientInterface {
+func (c *ExternalClientsConfig) OpenFGA() openfga.OpenFGAClientInterface {
 	return c.ofga
 }
 
 // Authorizer returns an openfga client used for the authorization middleware
-func (c *ExternalClientsConfig) Authorizer() AuthorizerClientInterface {
+func (c *ExternalClientsConfig) Authorizer() config.AuthorizerClientInterface {
 	return c.authorizer
 }
 
 // SetAuthorizer sets the authorization middleware
-func (c *ExternalClientsConfig) SetAuthorizer(o AuthorizerClientInterface) {
+func (c *ExternalClientsConfig) SetAuthorizer(o config.AuthorizerClientInterface) {
 	c.authorizer = o
 }
 
 // NewExternalClientsConfig create a third party config object for all the external clients needed
-func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, ofga OpenFGAClientInterface, authorizer AuthorizerClientInterface) *ExternalClientsConfig {
+func NewExternalClientsConfig(hydra *ih.Client, kratosAdmin *ik.Client, kratosPublic *ik.Client, ofga openfga.OpenFGAClientInterface, authorizer config.AuthorizerClientInterface) *ExternalClientsConfig {
 	c := new(ExternalClientsConfig)
 
 	c.hydraAdmin = hydra

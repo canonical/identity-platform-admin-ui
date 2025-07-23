@@ -6,6 +6,7 @@ package openfga
 import (
 	"context"
 
+	openfga "github.com/openfga/go-sdk"
 	"github.com/openfga/go-sdk/client"
 )
 
@@ -35,11 +36,17 @@ type OpenFGACoreClientInterface interface {
 
 // OpenFGAClientInterface is the interface used to decouple the OpenFGA store implementation
 type OpenFGAClientInterface interface {
+	ReadModel(context.Context) (*openfga.AuthorizationModel, error)
+	CompareModel(context.Context, openfga.AuthorizationModel) (bool, error)
 	ListObjects(context.Context, string, string, string) ([]string, error)
+	ListUsers(context.Context, string, string, string) ([]string, error)
 	ReadTuples(context.Context, string, string, string, string) (*client.ClientReadResponse, error)
+	WriteTuple(ctx context.Context, user, relation, object string) error
 	WriteTuples(context.Context, ...Tuple) error
+	DeleteTuple(ctx context.Context, user, relation, object string) error
 	DeleteTuples(context.Context, ...Tuple) error
 	Check(context.Context, string, string, string, ...Tuple) (bool, error)
+	BatchCheck(context.Context, ...Tuple) (bool, error)
 }
 
 type ListPermissionsFiltersInterface interface {

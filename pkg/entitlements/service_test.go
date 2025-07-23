@@ -1,3 +1,6 @@
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
+
 package entitlements
 
 import (
@@ -8,16 +11,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	openfga "github.com/openfga/go-sdk"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/mock/gomock"
+
+	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
-//go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_interfaces.go -source=./interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_interfaces.go -source=../../internal/openfga/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package entitlements -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.25.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.0...v1.25.1) (2025-07-23)
+
+
+### Bug Fixes
+
+* **deps:** update go deps ([e8e212d](https://github.com/canonical/identity-platform-admin-ui/commit/e8e212ddabf499582a7f58a92a05649a34aa2559))
+* **deps:** update go deps (patch) ([b3cdd0a](https://github.com/canonical/identity-platform-admin-ui/commit/b3cdd0a57106ced5f66f60bbd4ef828bd61934f1))
+
 ## [1.25.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.1...v1.25.0) (2025-07-11)
 
 

@@ -4,13 +4,13 @@ model
 type user
 
 type privileged
- relations
-   define admin: [user]
+  relations
+    define admin: [user]
 
 type role
   relations
-   define privileged: [privileged]
-   define assignee: [user, group#member] or admin from privileged
+    define privileged: [privileged]
+    define assignee: [user, group#member] or admin from privileged
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
     define can_delete: [user, role#assignee, group#member] or admin from privileged
@@ -18,7 +18,7 @@ type role
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type group
- relations
+  relations
     define privileged: [privileged]
     define member: [user, group#member]
 
@@ -28,7 +28,7 @@ type group
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type identity
- relations
+  relations
     define privileged: [privileged]
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
@@ -37,7 +37,7 @@ type identity
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type scheme
- relations
+  relations
     define privileged: [privileged]
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
@@ -46,7 +46,7 @@ type scheme
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type client
- relations
+  relations
     define privileged: [privileged]
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
@@ -55,7 +55,7 @@ type client
     define can_view: [user, user:*, role#assignee, group#member] or can_edit or admin from privileged
 
 type provider
- relations
+  relations
     define privileged: [privileged]
 
     define can_create: [user, role#assignee, group#member] or admin from privileged
@@ -65,7 +65,7 @@ type provider
 
 # need to model how to assign applications for the login UI, if copying current model or adjusting it
 type application
- relations
+  relations
     define privileged: [privileged]
 
     define can_create: [user, role#assignee, group#member] or admin from privileged

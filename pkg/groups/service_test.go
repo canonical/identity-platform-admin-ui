@@ -36,6 +36,7 @@ import (
 
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_interfaces.go -source=./interfaces.go
+//go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_openfga_interfaces.go -source=../../internal/openfga/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package groups -destination ./mock_pool.go -source=../../internal/pool/interfaces.go

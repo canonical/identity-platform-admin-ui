@@ -15,11 +15,12 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 )
 
 type V1Service struct {
-	ofga OpenFGAClientInterface
+	ofga ofga.OpenFGAClientInterface
 
 	authModel *openfga.AuthorizationModel
 
@@ -93,7 +94,7 @@ func buildReceivers(relationReferences []openfga.RelationReference) string {
 	return builder.String()
 }
 
-func NewV1Service(ofga OpenFGAClientInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
+func NewV1Service(ofga ofga.OpenFGAClientInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *V1Service {
 	authModel, err := ofga.ReadModel(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to read the authorization model: %v", err))

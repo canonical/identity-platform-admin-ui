@@ -1,5 +1,5 @@
-// Copyright 2024 Canonical Ltd
-// SPDX-License-Identifier: AGPL
+// Copyright 2025 Canonical Ltd.
+// SPDX-License-Identifier: AGPL-3.0
 
 package cmd
 
@@ -89,12 +89,15 @@ func createModel(apiUrl, apiToken, storeId, kubeconfig, k8sConfigMap string) {
 		fgaClient.SetStoreID(ctx, storeId)
 	}
 
+	authzModel := authorization.NewAuthorizationModelProvider("v0").
+		GetModel()
+
 	modelId, err := fgaClient.WriteModel(
 		context.Background(),
 		&client.ClientWriteAuthorizationModelRequest{
-			TypeDefinitions: authorization.AuthModel.TypeDefinitions,
-			SchemaVersion:   authorization.AuthModel.SchemaVersion,
-			Conditions:      authorization.AuthModel.Conditions,
+			TypeDefinitions: authzModel.TypeDefinitions,
+			SchemaVersion:   authzModel.SchemaVersion,
+			Conditions:      authzModel.Conditions,
 		},
 	)
 

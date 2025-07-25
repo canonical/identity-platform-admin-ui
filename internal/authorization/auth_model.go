@@ -70,11 +70,3 @@ func NewAuthorizationModelProvider(apiVersion string) *AuthorizationModelProvide
 
 	return a
 }
-
-var V0AuthzModelProvider *AuthorizationModelProvider = nil
-var V2AuthzModelProvider *AuthorizationModelProvider = nil
-
-func init() {
-	V0AuthzModelProvider = NewAuthorizationModelProvider("v0")
-	V2AuthzModelProvider = NewAuthorizationModelProvider("v2")
-}

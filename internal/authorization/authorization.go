@@ -68,7 +68,10 @@ func (a *Authorizer) ValidateModel(ctx context.Context) error {
 	ctx, span := a.tracer.Start(ctx, "authorization.Authorizer.ValidateModel")
 	defer span.End()
 
-	eq, err := a.client.CompareModel(ctx, *V0AuthzModelProvider.GetModel())
+	v0AuthzModel := NewAuthorizationModelProvider("v0")
+	model := *v0AuthzModel.GetModel()
+
+	eq, err := a.client.CompareModel(ctx, model)
 	if err != nil {
 		return err
 	}

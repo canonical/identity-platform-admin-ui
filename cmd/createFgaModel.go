@@ -89,7 +89,8 @@ func createModel(apiUrl, apiToken, storeId, kubeconfig, k8sConfigMap string) {
 		fgaClient.SetStoreID(ctx, storeId)
 	}
 
-	authzModel := authorization.V0AuthzModelProvider.GetModel()
+	authzModel := authorization.NewAuthorizationModelProvider("v0").
+		GetModel()
 
 	modelId, err := fgaClient.WriteModel(
 		context.Background(),

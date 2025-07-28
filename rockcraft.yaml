@@ -15,10 +15,6 @@ services:
     command: /usr/bin/identity-platform-admin-ui serve
     startup: enabled
 parts:
-  certificates:
-    plugin: nil
-    stage-packages:
-      - ca-certificates_data
   go-build:
     plugin: go
     source: .
@@ -37,12 +33,11 @@ parts:
     organize:
       opt/identity-platform-admin-ui/bin/app: usr/bin/identity-platform-admin-ui
     stage-packages:
+      - ca-certificates_data
       - base-files_var
       - base-files_chisel
   deb-security-manifest:
     plugin: make
-    after:
-      - certificates
     source: https://github.com/canonical/rocks-security-manifest
     source-type: git
     source-branch: main

@@ -34,7 +34,7 @@ type listPermissionsResult struct {
 
 // Service contains the business logic to deal with groups on the Admin UI OpenFGA model
 type Service struct {
-	ofga OpenFGAClientInterface
+	ofga ofga.OpenFGAClientInterface
 	repo GroupRepositoryInterface
 
 	wpool pool.WorkerPoolInterface
@@ -595,7 +595,7 @@ func (s *Service) directRelations() []string {
 }
 
 // NewService returns the implementation of the business logic for the groups API
-func NewService(ofga OpenFGAClientInterface, repo GroupRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga ofga.OpenFGAClientInterface, repo GroupRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga

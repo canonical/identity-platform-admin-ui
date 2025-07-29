@@ -33,7 +33,7 @@ type listPermissionsResult struct {
 
 // Service contains the business logic to deal with roles on the Admin UI OpenFGA model
 type Service struct {
-	ofga OpenFGAClientInterface
+	ofga ofga.OpenFGAClientInterface
 	repo RoleRepositoryInterface
 
 	wpool pool.WorkerPoolInterface
@@ -435,7 +435,7 @@ func (s *Service) getRoleAssigneeUser(roleID string) string {
 }
 
 // NewService returns the implementtation of the business logic for the roles API
-func NewService(ofga OpenFGAClientInterface, repo RoleRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
+func NewService(ofga ofga.OpenFGAClientInterface, repo RoleRepositoryInterface, wpool pool.WorkerPoolInterface, tracer tracing.TracingInterface, monitor monitoring.MonitorInterface, logger logging.LoggerInterface) *Service {
 	s := new(Service)
 
 	s.ofga = ofga

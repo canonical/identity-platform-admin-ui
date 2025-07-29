@@ -4,45 +4,32 @@
 package web
 
 import (
-	"context"
 	"io/fs"
 	"net/http"
 
-	v0Clients "github.com/canonical/identity-platform-api/v0/clients"
-
-	v0Groups "github.com/canonical/identity-platform-api/v0/groups"
-	v0Identities "github.com/canonical/identity-platform-api/v0/identities"
-	v0Idps "github.com/canonical/identity-platform-api/v0/idps"
-	v0Roles "github.com/canonical/identity-platform-api/v0/roles"
-	v0Schemas "github.com/canonical/identity-platform-api/v0/schemas"
-	v0Status "github.com/canonical/identity-platform-api/v0/status"
-	v1 "github.com/canonical/rebac-admin-ui-handlers/v1"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/authorization"
-	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
+	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/pool"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
-	"github.com/canonical/identity-platform-admin-ui/pkg/entitlements"
 	"github.com/canonical/identity-platform-admin-ui/pkg/groups"
 	"github.com/canonical/identity-platform-admin-ui/pkg/identities"
 	"github.com/canonical/identity-platform-admin-ui/pkg/idp"
-	"github.com/canonical/identity-platform-admin-ui/pkg/metrics"
-	"github.com/canonical/identity-platform-admin-ui/pkg/resources"
 	"github.com/canonical/identity-platform-admin-ui/pkg/roles"
 	"github.com/canonical/identity-platform-admin-ui/pkg/schemas"
-	"github.com/canonical/identity-platform-admin-ui/pkg/status"
 	"github.com/canonical/identity-platform-admin-ui/pkg/storage"
+	"github.com/canonical/identity-platform-admin-ui/pkg/web/v0"
+	"github.com/canonical/identity-platform-admin-ui/pkg/web/v1"
+	v2 "github.com/canonical/identity-platform-admin-ui/pkg/web/v2"
 
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
@@ -67,7 +54,7 @@ func WithUIDistFS(distFS *fs.FS) RouterOption {
 	}
 }
 
-func WithExternalClients(cfg ExternalClientsConfigInterface) RouterOption {
+func WithExternalClients(cfg config.ExternalClientsConfigInterface) RouterOption {
 	return func(c *routerConfig) {
 		c.external = cfg
 	}
@@ -85,7 +72,7 @@ func WithMailConfig(cfg *mail.Config) RouterOption {
 	}
 }
 
-func WithO11y(cfg O11yConfigInterface) RouterOption {
+func WithO11y(cfg config.O11yConfigInterface) RouterOption {
 	return func(c *routerConfig) {
 		c.olly = cfg
 	}
@@ -109,26 +96,25 @@ type routerConfig struct {
 	idp                      *idp.Config
 	schemas                  *schemas.Config
 	uiDistFS                 *fs.FS
-	external                 ExternalClientsConfigInterface
+	external                 config.ExternalClientsConfigInterface
 	oauth2                   *authentication.Config
 	mail                     *mail.Config
-	olly                     O11yConfigInterface
+	olly                     config.O11yConfigInterface
 }
 
 func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterface, opts ...RouterOption) http.Handler {
 	router := chi.NewMux()
 
-	config := &routerConfig{}
+	cfg := &routerConfig{}
 	for _, opt := range opts {
-		opt(config)
+		opt(cfg)
 	}
 
-	externalConfig := config.external
-	oauth2Config := config.oauth2
+	externalConfig := cfg.external
 
-	logger := config.olly.Logger()
-	monitor := config.olly.Monitor()
-	tracer := config.olly.Tracer()
+	logger := cfg.olly.Logger()
+	monitor := cfg.olly.Monitor()
+	tracer := cfg.olly.Tracer()
 	store := ofga.NewOpenFGAStore(externalConfig.OpenFGA(), wpool, tracer, monitor, logger)
 
 	middlewares := make(chi.Middlewares, 0)
@@ -138,7 +124,7 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 		monitoring.NewMiddleware(monitor, logger).ResponseTime(),
 		middlewareCORS([]string{"*"}),
 	)
-	authorizationMiddleware := authorization.NewMiddleware(config.external.Authorizer(), monitor, logger).Authorize()
+	authorizationMiddleware := authorization.NewMiddleware(cfg.external.Authorizer(), monitor, logger).Authorize()
 
 	// TODO @shipperizer add a proper configuration to enable http logger middleware as it's expensive
 	if true {
@@ -151,58 +137,16 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 	roleRepository := roles.NewRoleRepository(dbClient, tracer, monitor, logger)
 	groupRepository := groups.NewGroupRepository(dbClient, tracer, monitor, logger)
 
-	mailService := mail.NewEmailService(config.mail, tracer, monitor, logger)
+	mailService := mail.NewEmailService(cfg.mail, tracer, monitor, logger)
 
 	identitiesSvc := identities.NewService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.Authorizer(), mailService, tracer, monitor, logger)
-	idpSvc := idp.NewService(config.idp, externalConfig.Authorizer(), tracer, monitor, logger)
+	idpSvc := idp.NewService(cfg.idp, externalConfig.Authorizer(), tracer, monitor, logger)
 	rolesSvc := roles.NewService(externalConfig.OpenFGA(), roleRepository, wpool, tracer, monitor, logger)
 	groupsSvc := groups.NewService(externalConfig.OpenFGA(), groupRepository, wpool, tracer, monitor, logger)
-	schemaSvc := schemas.NewService(config.schemas, externalConfig.Authorizer(), tracer, monitor, logger)
+	schemaSvc := schemas.NewService(cfg.schemas, externalConfig.Authorizer(), tracer, monitor, logger)
 	clientsSvc := clients.NewService(externalConfig.HydraAdmin(), externalConfig.Authorizer(), tracer, monitor, logger)
 
 	router.Use(middlewares...)
-
-	identitiesAPI := identities.NewAPI(
-		identitiesSvc,
-		tracer,
-		monitor,
-		logger,
-	)
-
-	clientsAPI := clients.NewAPI(
-		clientsSvc,
-		tracer,
-		monitor,
-		logger,
-	)
-
-	idpAPI := idp.NewAPI(
-		idpSvc,
-		tracer,
-		monitor,
-		logger,
-	)
-
-	schemasAPI := schemas.NewAPI(
-		schemaSvc,
-		tracer,
-		monitor,
-		logger,
-	)
-
-	rolesAPI := roles.NewAPI(
-		rolesSvc,
-		tracer,
-		monitor,
-		logger,
-	)
-
-	groupsAPI := groups.NewAPI(
-		groupsSvc,
-		tracer,
-		monitor,
-		logger,
-	)
 
 	// Create a new router for the API so that we can add extra middlewares
 	apiRouter := router.Group(nil).(*chi.Mux)
@@ -210,17 +154,33 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 	var oauth2Context authentication.OAuth2ContextInterface
 	var cookieManager authentication.AuthCookieManagerInterface
 
-	if oauth2Config.Enabled {
-		oauth2Context = authentication.NewOAuth2Context(config.oauth2, oidc.NewProvider, tracer, logger, monitor)
-		encrypt := authentication.NewEncrypt([]byte(oauth2Config.CookiesEncryptionKey), logger, tracer)
+	if cfg.oauth2.Enabled {
+		oauth2Context = authentication.NewOAuth2Context(
+			cfg.oauth2,
+			oidc.NewProvider,
+			tracer,
+			logger,
+			monitor,
+		)
+		encrypt := authentication.NewEncrypt(
+			[]byte(cfg.oauth2.CookiesEncryptionKey),
+			logger,
+			tracer,
+		)
+
 		cookieManager = authentication.NewAuthCookieManager(
-			oauth2Config.AuthCookieTTLSeconds,
-			oauth2Config.UserSessionCookieTTLSeconds,
+			cfg.oauth2.AuthCookieTTLSeconds,
+			cfg.oauth2.UserSessionCookieTTLSeconds,
 			encrypt,
 			logger,
 		)
 
-		authenticationMiddleware := authentication.NewAuthenticationMiddleware(oauth2Context, cookieManager, tracer, logger)
+		authenticationMiddleware := authentication.NewAuthenticationMiddleware(
+			oauth2Context,
+			cookieManager,
+			tracer,
+			logger,
+		)
 		authenticationMiddleware.SetAllowListedEndpoints(
 			"/api/v0/auth",
 			"/api/v0/auth/callback",
@@ -235,123 +195,70 @@ func NewRouter(wpool pool.WorkerPoolInterface, dbClient storage.DBClientInterfac
 	// register authorizationMiddleware after authentication so Principal is available if necessary
 	apiRouter.Use(authorizationMiddleware)
 
-	if config.payloadValidationEnabled {
-		validationRegistry := validation.NewRegistry(tracer, monitor, logger)
-		apiRouter.Use(validationRegistry.ValidationMiddleware)
-
-		identitiesAPI.RegisterValidation(validationRegistry)
-		clientsAPI.RegisterValidation(validationRegistry)
-		idpAPI.RegisterValidation(validationRegistry)
-		schemasAPI.RegisterValidation(validationRegistry)
-		rolesAPI.RegisterValidation(validationRegistry)
-		groupsAPI.RegisterValidation(validationRegistry)
+	v0Api, err := v0.NewV0APIRouter(
+		v0.WithContextPath(cfg.contextPath),
+		v0.WithOAuth2Context(oauth2Context),
+		v0.WithCookieManager(cookieManager),
+		v0.WithPayloadValidation(cfg.payloadValidationEnabled),
+		v0.WithIDPConfig(cfg.idp),
+		v0.WithStore(store),
+		v0.WithRolesService(rolesSvc),
+		v0.WithGroupsService(groupsSvc),
+		v0.WithClientsService(clientsSvc),
+		v0.WithIdentitiesService(identitiesSvc),
+		v0.WithIDPService(idpSvc),
+		v0.WithSchemasService(schemaSvc),
+		v0.WithOpenFGA(externalConfig.OpenFGA()),
+		v0.WithKratos(externalConfig.KratosAdmin(), externalConfig.KratosPublic()),
+		v0.WithO11yConfig(cfg.olly),
+	)
+	if err != nil {
+		panic(err)
 	}
 
-	// register endpoints as last step
-	//statusAPI.RegisterEndpoints(apiRouter)
-	//metricsAPI.RegisterEndpoints(apiRouter)
-
-	//identitiesAPI.RegisterEndpoints(apiRouter)
-	//clientsAPI.RegisterEndpoints(apiRouter)
-	//idpAPI.RegisterEndpoints(apiRouter)
-	//schemasAPI.RegisterEndpoints(apiRouter)
-	// while we port APIs to the new gRPC-gateway based implementation, we disable the original ones step by step
-	// rolesAPI.RegisterEndpoints(apiRouter)
-	// groupsAPI.RegisterEndpoints(apiRouter)
-
-	/********* gRPC gateway integration **********/
-	gRPCGatewayMux := runtime.NewServeMux(
-		runtime.WithForwardResponseOption(types.SetHeaderFromMetadataFilter),
-		runtime.WithForwardResponseRewriter(types.ForwardErrorResponseRewriter),
+	v1Api, err := v1.NewV1APIRouter(
+		v1.WithIDPConfig(cfg.idp),
+		v1.WithStore(store),
+		v1.WithRolesService(rolesSvc),
+		v1.WithGroupsService(groupsSvc),
+		v1.WithIdentitiesService(identitiesSvc),
+		v1.WithIDPService(idpSvc),
+		v1.WithOpenFGA(externalConfig.OpenFGA()),
+		v1.WithO11yConfig(cfg.olly),
 	)
 
-	err := v0Roles.RegisterRolesServiceHandlerServer(context.Background(), gRPCGatewayMux, roles.NewGrpcHandler(rolesSvc, tracer, monitor, logger))
 	if err != nil {
 		panic(err)
 	}
 
-	err = v0Groups.RegisterGroupsServiceHandlerServer(context.Background(), gRPCGatewayMux, groups.NewGrpcHandler(groupsSvc, tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	err = v0Status.RegisterStatusServiceHandlerServer(context.Background(), gRPCGatewayMux, status.NewGrpcHandler(tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	err = v0Identities.RegisterIdentitiesServiceHandlerServer(context.Background(), gRPCGatewayMux, identities.NewGrpcHandler(identitiesSvc, identities.NewGrpcMapper(logger), tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	err = v0Idps.RegisterIdpsServiceHandlerServer(context.Background(), gRPCGatewayMux, idp.NewGrpcHandler(idpSvc, idp.NewGrpcMapper(logger), tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	err = v0Schemas.RegisterSchemasServiceHandlerServer(context.Background(), gRPCGatewayMux, schemas.NewGrpcHandler(schemaSvc, schemas.NewGrpcMapper(logger), tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	err = v0Clients.RegisterClientsServiceHandlerServer(context.Background(), gRPCGatewayMux, clients.NewGrpcHandler(clientsSvc, clients.NewGrpcMapper(logger), tracer, monitor, logger))
-	if err != nil {
-		panic(err)
-	}
-
-	apiRouter.Mount("/api/v0/identities", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/roles", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/groups", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/idps", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/schemas", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/clients", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/status", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/version", gRPCGatewayMux)
-	apiRouter.Mount("/api/v0/metrics", metrics.NewAPI(logger).Handler())
-	/********* gRPC gateway integration **********/
-
-	if oauth2Config.Enabled {
-
-		sessionManager := authentication.NewSessionManagerService(externalConfig.KratosAdmin().IdentityAPI(), externalConfig.KratosPublic().FrontendAPI(), tracer, monitor, logger)
-		login := authentication.NewAPI(
-			config.contextPath,
+	if cfg.oauth2.Enabled {
+		authentication.NewAPI(
+			cfg.contextPath,
 			oauth2Context,
 			authentication.NewOAuth2Helper(),
 			cookieManager,
-			sessionManager,
+			authentication.NewSessionManagerService(
+				externalConfig.KratosAdmin().IdentityAPI(),
+				externalConfig.KratosPublic().FrontendAPI(),
+				tracer,
+				monitor,
+				logger,
+			),
 			tracer,
 			logger,
-		)
-		login.RegisterEndpoints(apiRouter)
+		).RegisterEndpoints(apiRouter)
 	}
 
-	rebacAPI, err := v1.NewReBACAdminBackend(
-		v1.ReBACAdminBackendParams{
-			Resources: resources.NewV1Service(store, tracer, monitor, logger),
-			Roles:     roles.NewV1Service(rolesSvc),
-			Groups:    groups.NewV1Service(groupsSvc, tracer, monitor, logger),
-			Identities: identities.NewV1Service(
-				&identities.Config{
-					Name:         config.idp.Name,
-					Namespace:    config.idp.Namespace,
-					K8s:          config.idp.K8s,
-					OpenFGAStore: store,
-				},
-				identitiesSvc,
-			),
-			Entitlements:      entitlements.NewV1Service(externalConfig.OpenFGA(), tracer, monitor, logger),
-			IdentityProviders: idp.NewV1Service(idpSvc),
-		},
-	)
-
+	v2Api, err := v2.NewV2APIRouter()
 	if err != nil {
 		panic(err)
 	}
 
-	apiRouter.Mount("/api/", rebacAPI.Handler(""))
+	apiRouter.Mount("/api/v0", v0Api)
+	apiRouter.Mount("/api", v1Api) // v1 library provides the `/v1` prefix already
+	apiRouter.Mount("/api/v2", v2Api)
 
-	ui.NewAPI(config.contextPath, *config.uiDistFS, tracer, monitor, logger).
+	ui.NewAPI(cfg.contextPath, *cfg.uiDistFS, tracer, monitor, logger).
 		RegisterEndpoints(router)
 
 	return tracing.NewMiddleware(monitor, logger).OpenTelemetry(router)

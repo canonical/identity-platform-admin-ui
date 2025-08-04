@@ -27,5 +27,8 @@ export default defineConfig(({ mode }) => {
       outDir: "./dist",
       minify: "esbuild",
     },
+    resolve: {
+      conditions: ["module-sync"],
+    },
   };
 });

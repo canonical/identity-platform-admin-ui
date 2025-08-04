@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/dom";
+import { screen, waitFor } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { Location } from "react-router";
 
@@ -17,7 +17,7 @@ test("opens the edit provider panel", async () => {
   await userEvent.click(
     screen.getByRole("button", { name: EditPanelButtonLabel.EDIT }),
   );
-  expect((location as Location | null)?.search).toBe(
-    "?panel=provider-edit&id=provider1",
-  );
+  await waitFor(() => {
+    expect(location?.search).toBe("?panel=provider-edit&id=provider1");
+  });
 });

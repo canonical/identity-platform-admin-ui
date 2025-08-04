@@ -135,12 +135,11 @@ test("handles a successful delete call", async () => {
   );
   await userEvent.click(screen.getByRole("button", { name: Label.DELETE }));
   await userEvent.click(screen.getByRole("button", { name: "Confirm" }));
-  expect(
-    screen
-      .getByText("successfully formed")
-      .closest(".p-notification--positive"),
-  ).toBeInTheDocument();
-  expect((location as Location | null)?.pathname).toBe("/nebulous");
+  const message = await screen.findByText("successfully formed");
+  expect(message.closest(".p-notification--positive")).toBeInTheDocument();
+  await waitFor(() => {
+    expect(location?.pathname).toBe("/nebulous");
+  });
 });
 
 test("notifies on error", async () => {

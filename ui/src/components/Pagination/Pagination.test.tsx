@@ -44,7 +44,7 @@ test("can navigate to the first page", async () => {
     },
   });
   await userEvent.click(screen.getByRole("button", { name: Label.FIRST_PAGE }));
-  expect((location as Location | null)?.search).toBe("?page_token=");
+  expect(location?.search).toBe("?page_token=");
 });
 
 test("can navigate to the previous page", async () => {
@@ -65,7 +65,7 @@ test("can navigate to the previous page", async () => {
   await userEvent.click(
     screen.getByRole("button", { name: Label.PREVIOUS_PAGE }),
   );
-  expect((location as Location | null)?.search).toBe("?page_token=token2");
+  expect(location?.search).toBe("?page_token=token2");
 });
 
 test("can navigate to the next page", async () => {
@@ -84,5 +84,5 @@ test("can navigate to the next page", async () => {
     },
   );
   await userEvent.click(screen.getByRole("button", { name: Label.NEXT_PAGE }));
-  expect((location as Location | null)?.search).toBe("?page_token=token2");
+  expect(location?.search).toBe("?page_token=token2");
 });

@@ -17,7 +17,5 @@ test("opens the edit client panel", async () => {
   await userEvent.click(
     screen.getByRole("button", { name: EditPanelButtonLabel.EDIT }),
   );
-  expect((location as Location | null)?.search).toBe(
-    "?panel=client-edit&id=client1",
-  );
+  expect(location?.search).toBe("?panel=client-edit&id=client1");
 });

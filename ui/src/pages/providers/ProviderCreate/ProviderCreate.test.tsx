@@ -46,7 +46,9 @@ test("can cancel", async () => {
     },
   });
   await userEvent.click(screen.getByRole("button", { name: Label.CANCEL }));
-  expect((location as Location | null)?.pathname).toBe(urls.providers.index);
+  await waitFor(() => {
+    expect(location?.pathname).toBe(urls.providers.index);
+  });
 });
 
 test("calls the API on submit", async () => {
@@ -103,7 +105,9 @@ test("handles API success", async () => {
   expect(document.querySelector(".p-notification--positive")).toHaveTextContent(
     Label.SUCCESS,
   );
-  expect((location as Location | null)?.pathname).toBe(urls.providers.index);
+  await waitFor(() => {
+    expect(location?.pathname).toBe(urls.providers.index);
+  });
 });
 
 test("handles API failure", async () => {

@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/dom";
+import { screen, waitFor } from "@testing-library/dom";
 import MockAdapter from "axios-mock-adapter";
 import userEvent from "@testing-library/user-event";
 import { faker } from "@faker-js/faker";
@@ -56,9 +56,9 @@ test("opens add provider panel", async () => {
     },
   });
   await userEvent.click(screen.getByRole("button", { name: Label.ADD }));
-  expect((location as Location | null)?.search).toBe(
-    `?panel=${panels.providerCreate}`,
-  );
+  await waitFor(() => {
+    expect(location?.search).toBe(`?panel=${panels.providerCreate}`);
+  });
 });
 
 test("displays edit and delete buttons", async () => {

@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { Location } from "react-router";
 
 import { renderComponent, renderWrappedHook } from "test/utils";
@@ -9,8 +9,21 @@ import {
   NotificationConsumer,
   useNotify,
 } from "@canonical/react-components";
-import userEvent from "@testing-library/user-event";
+import userEvent, { UserEvent } from "@testing-library/user-event";
 import { useEffect } from "react";
+
+let userEventWithTimers: UserEvent;
+
+beforeEach(() => {
+  userEventWithTimers = userEvent.setup({
+    advanceTimers: vi.advanceTimersByTime,
+  });
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test("fetches the current panel", () => {
   const { result } = renderWrappedHook(() => usePanelParams(), {
@@ -40,14 +53,15 @@ test("sets the panel and args", () => {
   );
 });
 
-test("dispatches a resize event", async () => {
+test("dispatches a resize event", () => {
   const listener = vi.fn();
   addEventListener("resize", listener);
   const { result } = renderWrappedHook(() => usePanelParams(), {
     url: "/",
   });
   act(() => result.current.openProviderCreate());
-  await waitFor(() => expect(listener).toHaveBeenCalled());
+  vi.runAllTimers();
+  expect(listener).toHaveBeenCalled();
   removeEventListener("resize", listener);
 });
 
@@ -69,13 +83,13 @@ test("clears notifications", async () => {
   expect(
     document.querySelector(".p-notification--positive"),
   ).toBeInTheDocument();
-  await userEvent.click(screen.getByRole("button", { name: "Test" }));
+  await userEventWithTimers.click(screen.getByRole("button", { name: "Test" }));
   expect(
     document.querySelector(".p-notification--positive"),
   ).not.toBeInTheDocument();
 });
 
-test("clears the panel", async () => {
+test("clears the panel", () => {
   let location: Location | null = null;
   const listener = vi.fn();
   addEventListener("resize", listener);
@@ -86,7 +100,8 @@ test("clears the panel", async () => {
     },
   });
   act(() => result.current.clear());
-  await waitFor(() => expect(listener).toHaveBeenCalled());
+  vi.runAllTimers();
+  expect(listener).toHaveBeenCalled();
   expect((location as Location | null)?.search).toBe("");
   removeEventListener("resize", listener);
 });

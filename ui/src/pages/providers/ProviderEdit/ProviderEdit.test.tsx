@@ -66,8 +66,10 @@ test("can cancel", async () => {
     },
   });
   await userEvent.click(screen.getByRole("button", { name: Label.CANCEL }));
-  expect((location as Location | null)?.pathname).toBe("/");
-  expect((location as Location | null)?.search).toBe("");
+  await waitFor(() => {
+    expect(location?.pathname).toBe("/");
+    expect(location?.search).toBe("");
+  });
 });
 
 test("calls the API on submit", async () => {

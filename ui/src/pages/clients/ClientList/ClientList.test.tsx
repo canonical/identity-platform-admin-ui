@@ -77,9 +77,7 @@ test("opens add client panel", async () => {
     },
   });
   await userEvent.click(screen.getByRole("button", { name: Label.ADD }));
-  expect((location as Location | null)?.search).toBe(
-    `?panel=${panels.clientCreate}`,
-  );
+  expect(location?.search).toBe(`?panel=${panels.clientCreate}`);
 });
 
 test("displays edit and delete buttons", async () => {

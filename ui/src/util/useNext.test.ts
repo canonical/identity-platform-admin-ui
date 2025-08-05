@@ -1,6 +1,7 @@
 import { renderWrappedHook } from "test/utils";
 import { useNext } from "./useNext";
 import { Location } from "react-router";
+import { waitFor } from "@testing-library/dom";
 
 vi.mock("./basePaths", async () => {
   const actual = await vi.importActual("./basePaths");
@@ -10,7 +11,7 @@ vi.mock("./basePaths", async () => {
   };
 });
 
-test("handles the 'next' path param", () => {
+test("handles the 'next' path param", async () => {
   let location: Location | null = null;
   renderWrappedHook(() => useNext(), {
     url: "/example/ui/?next=clients",
@@ -18,10 +19,12 @@ test("handles the 'next' path param", () => {
       location = newLocation;
     },
   });
-  expect((location as Location | null)?.pathname).toBe("/client");
+  await waitFor(() => {
+    expect(location?.pathname).toBe("/client");
+  });
 });
 
-test("handles no 'next' param", () => {
+test("handles no 'next' param", async () => {
   let location: Location | null = null;
   renderWrappedHook(() => useNext(), {
     url: "/example/ui/current/?search=query",
@@ -29,11 +32,13 @@ test("handles no 'next' param", () => {
       location = newLocation;
     },
   });
-  expect((location as Location | null)?.pathname).toBe("/example/ui/current/");
-  expect((location as Location | null)?.search).toBe("?search=query");
+  await waitFor(() => {
+    expect(location?.pathname).toBe("/example/ui/current/");
+    expect(location?.search).toBe("?search=query");
+  });
 });
 
-test("no redirect if the next param matches the current page", () => {
+test("no redirect if the next param matches the current page", async () => {
   let location: Location | null = null;
   renderWrappedHook(() => useNext(), {
     url: "/example/ui/client/?next=clients",
@@ -41,6 +46,8 @@ test("no redirect if the next param matches the current page", () => {
       location = newLocation;
     },
   });
-  expect((location as Location | null)?.pathname).toBe("/client");
-  expect((location as Location | null)?.search).toBe("");
+  await waitFor(() => {
+    expect(location?.pathname).toBe("/client");
+    expect(location?.search).toBe("");
+  });
 });

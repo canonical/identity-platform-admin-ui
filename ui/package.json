@@ -32,7 +32,7 @@
     "react-dom": "19.1.1",
     "react-router": "7.5.2",
     "serve": "14.2.4",
-    "vanilla-framework": "4.21.0",
+    "vanilla-framework": "4.21.2",
     "yup": "1.7.0"
   },
   "devDependencies": {

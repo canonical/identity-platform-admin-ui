@@ -23,7 +23,7 @@ jobs:
       image: ${{ steps.set.outputs.image }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
 
     - name: Download Artifact
       uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
@@ -73,7 +73,7 @@ jobs:
     if: github.ref_type == 'tag'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4
       - name: Golang setup
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:

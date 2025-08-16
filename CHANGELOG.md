@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.25.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.0...v1.25.1) (2025-08-16)
+
+
+### Bug Fixes
+
+* add ca-certificates to other stage-packages ([9e8edc9](https://github.com/canonical/identity-platform-admin-ui/commit/9e8edc94882e9a4f54644c7dc91a75e63c54d18e))
+* add ca-certificates to other stage-packages ([619bf42](https://github.com/canonical/identity-platform-admin-ui/commit/619bf423e0d62b49d0a395a0f3a3155e66939c21))
+* **deps:** update dependency axios to v1.8.2 [security] ([02e1c8a](https://github.com/canonical/identity-platform-admin-ui/commit/02e1c8a4a2f3c1f2997188f827fefb526a32c40a))
+* **deps:** update dependency axios to v1.8.2 [security] ([b658986](https://github.com/canonical/identity-platform-admin-ui/commit/b6589868766e805fb24868f9e3b4f2fda8bab64a))
+* **deps:** update dependency react-router to v7.5.2 [security] ([f35d3b5](https://github.com/canonical/identity-platform-admin-ui/commit/f35d3b53f281cfd698a65923131713b69ddc6279))
+* **deps:** update dependency react-router to v7.5.2 [security] ([8c05297](https://github.com/canonical/identity-platform-admin-ui/commit/8c05297c9f11ca84a7b72f15eeade50513f62263))
+* **deps:** update dependency vanilla-framework to v4.21.2 ([b4aefb6](https://github.com/canonical/identity-platform-admin-ui/commit/b4aefb665c43b9472fff3a5484134630fd1dcd19))
+* **deps:** update dependency vanilla-framework to v4.21.2 ([3423e0b](https://github.com/canonical/identity-platform-admin-ui/commit/3423e0bc3f9a999728bb35e7198d5668f8801849))
+* **deps:** update go deps ([e8e212d](https://github.com/canonical/identity-platform-admin-ui/commit/e8e212ddabf499582a7f58a92a05649a34aa2559))
+* **deps:** update go deps (patch) ([b3cdd0a](https://github.com/canonical/identity-platform-admin-ui/commit/b3cdd0a57106ced5f66f60bbd4ef828bd61934f1))
+* **deps:** update internal ui dependencies ([0bd898c](https://github.com/canonical/identity-platform-admin-ui/commit/0bd898cbf046da8ca7d42d8760819a1ed5a638fa))
+* **deps:** update internal ui dependencies (minor) ([38f2a09](https://github.com/canonical/identity-platform-admin-ui/commit/38f2a09b14fcc267cefcb78e981cc83ea8cc0eef))
+* **deps:** update module google.golang.org/protobuf to v1.36.7 ([0bda79b](https://github.com/canonical/identity-platform-admin-ui/commit/0bda79b4117ca9ae47ccd68246d662c9aee2a02f))
+* **deps:** update module google.golang.org/protobuf to v1.36.7 ([43ec9fd](https://github.com/canonical/identity-platform-admin-ui/commit/43ec9fdcb9e91dd04ab7490cae8f1c156799869e))
+* **deps:** update ui deps ([0b10644](https://github.com/canonical/identity-platform-admin-ui/commit/0b10644874ed513bb0210832ba1c803210832054))
+* **deps:** update ui deps ([36b9509](https://github.com/canonical/identity-platform-admin-ui/commit/36b9509ff20d490fc93f550af1b4b577f5789130))
+* **deps:** update ui deps (minor) ([794802f](https://github.com/canonical/identity-platform-admin-ui/commit/794802f19ec212f971fccb2a9ac4c99f4c5ab63e))
+* **deps:** update ui deps (patch) ([0d94de5](https://github.com/canonical/identity-platform-admin-ui/commit/0d94de58c36eb7f46f72bfc9989782ee8d32cb61))
+* wait for nodes in tests ([4650556](https://github.com/canonical/identity-platform-admin-ui/commit/46505565070cbbd47a4fcd09f96afbfcdb9e8f7c))
+
 ## [1.25.0](https://github.com/canonical/identity-platform-admin-ui/compare/v1.24.1...v1.25.0) (2025-07-11)
 
 

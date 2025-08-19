@@ -75,13 +75,13 @@ db:
 	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
 	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
 	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) up
-.PHONY: migrate
+.PHONY: db
 
 db-down:
 	@GOOSE_DRIVER=$(GOOSE_DRIVER) \
 	GOOSE_DBSTRING=$(GOOSE_DBSTRING) \
 	$(GOOSE) -dir $(GOOSE_MIGRATION_DIR) down-to 0
-.PHONY: migrate-down
+.PHONY: db-down
 
 install-goose:
 	go install github.com/pressly/goose/v3/cmd/goose@v3.24.3

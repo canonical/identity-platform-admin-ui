@@ -12,6 +12,7 @@ primary:
         CREATE DATABASE kratos;
         CREATE DATABASE hydra;
         CREATE DATABASE openfga;
+        CREATE DATABASE "admin-service";
 
 auth:
   database: "iam"

@@ -31,6 +31,7 @@ data:
   MAIL_HOST: "mailhog.default.svc.cluster.local"
   MAIL_PORT: "1025"
   MAIL_FROM_ADDRESS: "identity-team@canonical.com"
+  DSN: "postgres://iam:iam@postgresql.default.svc.cluster.local/admin-service?sslmode=disable"
 ---
 apiVersion: v1
 kind: ConfigMap

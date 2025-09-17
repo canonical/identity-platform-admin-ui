@@ -62,7 +62,7 @@ dev:
 
 GOOSE=goose
 GOOSE_DRIVER=postgres
-GOOSE_DBSTRING?=postgresql://user:user@localhost:5432/admin-service?sslmode=disable
+GOOSE_DBSTRING?=postgresql://iam:iam@localhost:5432/admin-service?sslmode=disable
 GOOSE_MIGRATION_DIR?=./migrations
 
 db-status:

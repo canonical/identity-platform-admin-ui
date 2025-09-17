@@ -55,7 +55,7 @@ data:
         "provider": "google",
         "client_secret": "3y38Q~aslkdhaskjhd~W0xWDB.123u98asd",
         "mapper_url": "file:///etc/config/kratos/google_schema.jsonnet",
-        "scope": ["profile", "email", "address", "phone"]
+        "scope": ["profile", "email", "address", "phone"],
         "requested_claims": "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null},\"id_token\":{\"auth_time\":{\"essential\":true},\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\"]}}}"
       }
     ]

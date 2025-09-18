@@ -9,7 +9,7 @@ globalEnvVars:
   - key: "HYDRA_ADMIN_URL"
     value: "https://hydra.iam.admin"
   - key: "IDP_CONFIGMAP_NAME"
-    value: idps
+    value: providers
   - key: "IDP_CONFIGMAP_NAMESPACE"
     value: default
   - key: "SCHEMAS_CONFIGMAP_NAME"

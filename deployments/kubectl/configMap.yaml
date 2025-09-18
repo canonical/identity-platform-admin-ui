@@ -10,7 +10,7 @@ data:
   KRATOS_PUBLIC_URL: http://kratos-public.default.svc.cluster.local
   KRATOS_ADMIN_URL: http://kratos-admin.default.svc.cluster.local
   HYDRA_ADMIN_URL: http://hydra-admin.default.svc.cluster.local:4445
-  IDP_CONFIGMAP_NAME: idps
+  IDP_CONFIGMAP_NAME: providers
   IDP_CONFIGMAP_NAMESPACE: default
   SCHEMAS_CONFIGMAP_NAME: identity-schemas
   SCHEMAS_CONFIGMAP_NAMESPACE: default
@@ -31,6 +31,7 @@ data:
   MAIL_HOST: "mailhog.default.svc.cluster.local"
   MAIL_PORT: "1025"
   MAIL_FROM_ADDRESS: "identity-team@canonical.com"
+  DSN: "postgres://iam:iam@postgresql.default.svc.cluster.local/admin-service?sslmode=disable"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -54,7 +55,7 @@ data:
         "provider": "google",
         "client_secret": "3y38Q~aslkdhaskjhd~W0xWDB.123u98asd",
         "mapper_url": "file:///etc/config/kratos/google_schema.jsonnet",
-        "scope": ["profile", "email", "address", "phone"]
+        "scope": ["profile", "email", "address", "phone"],
         "requested_claims": "{\"userinfo\":{\"given_name\":{\"essential\":true},\"nickname\":null,\"email\":{\"essential\":true},\"email_verified\":{\"essential\":true},\"picture\":null,\"http://example.info/claims/groups\":null},\"id_token\":{\"auth_time\":{\"essential\":true},\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\"]}}}"
       }
     ]

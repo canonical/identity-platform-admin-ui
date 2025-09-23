@@ -28,9 +28,11 @@ test("does not display login for successful responses", async () => {
   mock.onGet("/test").reply(200, {});
   renderComponent(<App />);
   await axiosInstance.get("/test");
-  expect(
-    await screen.findByRole("heading", { name: LoginLabel.TITLE }),
-  ).not.toBeInTheDocument();
+  await waitFor(() => {
+    expect(
+      screen.queryByRole("heading", { name: LoginLabel.TITLE }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 test("does not display login for non-authentication errors", async () => {

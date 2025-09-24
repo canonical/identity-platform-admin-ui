@@ -26,7 +26,7 @@
     "@canonical/rebac-admin-admin-ui": "0.0.3",
     "@tanstack/react-query": "^5.28.6",
     "@use-it/event-listener": "0.1.7",
-    "axios": "1.8.4",
+    "axios": "1.12.0",
     "formik": "2.4.6",
     "react": "19.1.1",
     "react-dom": "19.1.1",

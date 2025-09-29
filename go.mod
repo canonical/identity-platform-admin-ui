@@ -25,7 +25,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
-	github.com/wneessen/go-mail v0.4.4
+	github.com/wneessen/go-mail v0.7.1
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.20.0
 	go.opentelemetry.io/otel v1.35.0
@@ -109,10 +109,10 @@ require (
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
+	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

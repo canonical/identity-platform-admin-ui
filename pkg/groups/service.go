@@ -195,6 +195,14 @@ func (s *Service) CreateGroup(ctx context.Context, userID, groupName string) (*G
 		return nil, err
 	}
 
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"created",
+		"group",
+		group,
+		logging.WithContext(ctx),
+	)
+
 	return createdGroup, nil
 }
 
@@ -218,6 +226,14 @@ func (s *Service) AssignRoles(ctx context.Context, ID string, roles ...string) e
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"assigned roles to",
+		"group",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("roles", strings.Join(roles, ",")),
+	)
 
 	return nil
 }
@@ -243,6 +259,11 @@ func (s *Service) CanAssignRoles(ctx context.Context, userID string, roles ...st
 		s.logger.Error(err.Error())
 		return false, err
 	}
+	s.logger.Security().AuthzFailureRoleAssignment(
+		userID,
+		strings.Join(roles, ","),
+		logging.WithContext(ctx),
+	)
 
 	return check, nil
 }
@@ -267,6 +288,14 @@ func (s *Service) RemoveRoles(ctx context.Context, ID string, roles ...string) e
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"removed role",
+		"group",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("roles", strings.Join(roles, ",")),
+	)
 
 	return nil
 }
@@ -292,6 +321,14 @@ func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions 
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"assigned permissions to",
+		"group",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("permissions", fmt.Sprintf("%+v", permissions)),
+	)
 
 	return nil
 }
@@ -317,6 +354,14 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"removed permissions",
+		"group",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("permissions", fmt.Sprintf("%+v", permissions)),
+	)
 
 	return nil
 }
@@ -367,6 +412,13 @@ func (s *Service) DeleteGroup(ctx context.Context, groupName string) error {
 
 	// close result channel
 	close(results)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"deleted",
+		"group",
+		groupName,
+		logging.WithContext(ctx),
+	)
 
 	// TODO: @barco collect errors from results chan and return composite error or single summing up
 	return nil
@@ -410,6 +462,14 @@ func (s *Service) AssignIdentities(ctx context.Context, ID string, identities ..
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction( // This line was already changed in the previous diff.
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"assigned identities to",
+		"group",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("identities", strings.Join(identities, ",")),
+	)
 
 	return nil
 }
@@ -435,6 +495,11 @@ func (s *Service) CanAssignIdentities(ctx context.Context, userID string, identi
 		s.logger.Error(err.Error())
 		return false, err
 	}
+	s.logger.Security().AuthzFailureIdentityAssignment(
+		userID,
+		strings.Join(identities, ","),
+		logging.WithContext(ctx),
+	)
 
 	return check, nil
 }
@@ -456,6 +521,14 @@ func (s *Service) RemoveIdentities(ctx context.Context, ID string, identities ..
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"removed identity",
+		"group",
+		ID,
+		logging.WithContext(ctx), // This line was already changed in the previous diff.
+		logging.WithLabel("identities", strings.Join(identities, ",")),
+	)
 
 	return nil
 }

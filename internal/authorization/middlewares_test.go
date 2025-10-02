@@ -179,6 +179,7 @@ func TestMiddlewareAuthorize(t *testing.T) {
 
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockAuthorizer := NewMockAuthorizerInterface(ctrl)
 
 			router := chi.NewMux().With(
@@ -190,6 +191,8 @@ func TestMiddlewareAuthorize(t *testing.T) {
 			calls := []*gomock.Call{}
 
 			mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).AnyTimes()
+			mockSecurityLogger.EXPECT().AuthzFailureInsufficientPermissions(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			adminAuth := NewMockAdminAuthorizerInterface(ctrl)
 			adminAuth.EXPECT().CheckAdmin(gomock.Any(), gomock.Any()).Return(true, nil)

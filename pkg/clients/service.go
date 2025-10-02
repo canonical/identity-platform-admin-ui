@@ -15,6 +15,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 type ListClientsRequest struct {
@@ -86,6 +87,13 @@ func (s *Service) DeleteClient(ctx context.Context, clientID string) (*ServiceRe
 		return ret, nil
 	}
 	s.authz.SetDeleteClientEntitlements(ctx, clientID)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"deleted",
+		"client",
+		clientID,
+		logging.WithContext(ctx),
+	)
 	return ret, nil
 }
 
@@ -110,6 +118,13 @@ func (s *Service) CreateClient(ctx context.Context, client *hClient.OAuth2Client
 		return ret, nil
 	}
 	s.authz.SetCreateClientEntitlements(ctx, *c.ClientId)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"created",
+		"client",
+		*c.ClientId,
+		logging.WithContext(ctx),
+	)
 
 	return ret, nil
 }
@@ -132,6 +147,14 @@ func (s *Service) UpdateClient(ctx context.Context, client *hClient.OAuth2Client
 		}
 		ret.ServiceError = se
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"updated",
+		"client",
+		*client.ClientId,
+		logging.WithContext(ctx),
+	)
+
 	ret.Resp = c
 	return ret, nil
 }

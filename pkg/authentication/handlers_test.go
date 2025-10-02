@@ -109,6 +109,7 @@ func TestHandleLoginCallback(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockLogger.EXPECT().Debugf(gomock.Any(), gomock.Any()).Times(1)
 	mockTracer := NewMockTracer(ctrl)
 	mockSessionManager := NewMockSessionManagerInterface(ctrl)
@@ -120,6 +121,8 @@ func TestHandleLoginCallback(t *testing.T) {
 	mockEncrypt.EXPECT().Encrypt(gomock.Any()).Times(3).
 		DoAndReturn(func(data string) (string, error) { return data, nil })
 
+	mockSecurityLogger.EXPECT().SuccessfulLogin(gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockVerifier := NewMockTokenVerifier(ctrl)
 	mockVerifier.EXPECT().VerifyIDToken(gomock.Any(), gomock.Any()).Return(&UserPrincipal{Subject: "mock-subject", Nonce: "mock-nonce"}, nil)
 
@@ -458,6 +461,7 @@ func TestHandleMe(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	ctrl := gomock.NewController(t)
+	identity := kClient.Identity{Id: "test"}
 
 	for _, tt := range []struct {
 		name         string
@@ -473,7 +477,13 @@ func TestLogout(t *testing.T) {
 				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
 
 				sessionID := "test"
-				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{Session: kClient.Session{Id: sessionID}}, nil)
+				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(
+					&SessionData{
+						Session: kClient.Session{
+							Id:       sessionID,
+							Identity: &identity,
+						},
+					}, nil)
 				s.EXPECT().DisableSession(gomock.Any(), sessionID).Return(&SessionData{Session: kClient.Session{}}, nil)
 
 				c.EXPECT().Logout(gomock.Any(), gomock.Any()).Times(1).Return(nil)
@@ -502,7 +512,12 @@ func TestLogout(t *testing.T) {
 				m.EXPECT().ClearRefreshTokenCookie(gomock.Any())
 
 				sessionID := "test"
-				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{Session: kClient.Session{Id: sessionID}}, nil)
+				s.EXPECT().GetIdentitySession(gomock.Any(), gomock.Any()).Return(&SessionData{
+					Session: kClient.Session{
+						Id:       sessionID,
+						Identity: &identity,
+					},
+				}, nil)
 
 				sessionData := &SessionData{
 					Error: &kClient.GenericError{Message: "failed to disable the session"},
@@ -534,7 +549,10 @@ func TestLogout(t *testing.T) {
 			mockTracer := NewMockTracer(ctrl)
 			mockOauth2Ctx := NewMockOAuth2ContextInterface(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockSessionManager := NewMockSessionManagerInterface(ctrl)
+			mockSecurityLogger.EXPECT().TokenDelete(gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			mockHelper := NewMockOAuth2HelperInterface(ctrl)
 

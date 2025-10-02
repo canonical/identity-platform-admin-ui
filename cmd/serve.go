@@ -6,6 +6,7 @@ package cmd
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -45,7 +46,7 @@ var serveCmd = &cobra.Command{
 	Short: "Serve starts the web server",
 	Long:  `Launch the web application, list of environment variables is available in the README.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		serve()
+		main()
 	},
 }
 
@@ -53,7 +54,7 @@ func init() {
 	rootCmd.AddCommand(serveCmd)
 }
 
-func serve() {
+func serve() int {
 
 	specs := new(config.EnvSpec)
 
@@ -62,6 +63,7 @@ func serve() {
 	}
 
 	logger := logging.NewLogger(specs.LogLevel)
+	defer logger.Sync()
 	monitor := prometheus.NewMonitor("identity-admin-ui", logger)
 	tracer := tracing.NewTracer(tracing.NewConfig(specs.TracingEnabled, specs.OtelGRPCEndpoint, specs.OtelHTTPEndpoint, logger))
 
@@ -187,7 +189,8 @@ func serve() {
 	}
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		logger.Security().SystemStartup()
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal(err)
 		}
 	}()
@@ -204,13 +207,14 @@ func serve() {
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
 	srv.Shutdown(ctx)
-
-	logger.Desugar().Sync()
+	logger.Security().SystemShutdown()
 
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
-	logger.Info("Shutting down")
-	os.Exit(0)
+	return 0
+}
 
+func main() {
+	os.Exit(serve())
 }

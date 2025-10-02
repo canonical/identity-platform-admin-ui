@@ -12,6 +12,7 @@ import (
 	reflect "reflect"
 	"testing"
 
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	kClient "github.com/ory/kratos-client-go"
 	"go.opentelemetry.io/otel/trace"
 	gomock "go.uber.org/mock/gomock"
@@ -455,13 +456,15 @@ func TestEdiSchemaSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -549,6 +552,8 @@ func TestEdiSchemaSuccess(t *testing.T) {
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.EditSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, nil)
@@ -759,13 +764,14 @@ func TestCreateSchemaSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -809,6 +815,8 @@ func TestCreateSchemaSuccess(t *testing.T) {
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -853,13 +861,14 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -902,6 +911,8 @@ func TestCreateSchemaSuccessWithEmptyConfigmap(t *testing.T) {
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -946,13 +957,14 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -996,6 +1008,8 @@ func TestCreateSchemaSuccessIfIDIsMissing(t *testing.T) {
 	c.Schema = v0Schema
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.CreateSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateSchemaEntitlements(gomock.Any(), *c.Id)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -1203,13 +1217,14 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -1291,6 +1306,8 @@ func TestDeleteSchemaSuccess(t *testing.T) {
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.DeleteSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetDeleteSchemaEntitlements(gomock.Any(), v0ID)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -1750,13 +1767,14 @@ func TestUpdateDefaultSchemaSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -1799,6 +1817,8 @@ func TestUpdateDefaultSchemaSuccess(t *testing.T) {
 	}
 
 	mockTracer.EXPECT().Start(ctx, "schemas.Service.UpdateDefaultSchema").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).DoAndReturn(

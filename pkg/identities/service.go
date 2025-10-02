@@ -22,6 +22,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 // TODO @shipperizer unify this value with schemas/service.go
@@ -147,6 +148,13 @@ func (s *Service) CreateIdentity(ctx context.Context, bodyID *kClient.CreateIden
 	}
 
 	s.authz.SetCreateIdentityEntitlements(ctx, identity.Id)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"created",
+		"identity",
+		identity.Id,
+		logging.WithContext(ctx),
+	)
 
 	return data, err
 }
@@ -247,6 +255,13 @@ func (s *Service) UpdateIdentity(ctx context.Context, ID string, bodyID *kClient
 	} else {
 		data.Identities = []kClient.Identity{}
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"updated",
+		"identity",
+		ID,
+		logging.WithContext(ctx),
+	)
 
 	return data, err
 }
@@ -269,6 +284,13 @@ func (s *Service) DeleteIdentity(ctx context.Context, ID string) (*IdentityData,
 	}
 
 	s.authz.SetDeleteIdentityEntitlements(ctx, ID)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"deleted",
+		"identity",
+		ID,
+		logging.WithContext(ctx),
+	)
 
 	return data, err
 }

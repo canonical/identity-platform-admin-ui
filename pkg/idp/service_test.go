@@ -17,6 +17,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/interfaces"
 	"github.com/canonical/rebac-admin-ui-handlers/v1/resources"
 	"github.com/google/uuid"
@@ -455,12 +456,13 @@ func TestEditResourceSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -508,6 +510,8 @@ func TestEditResourceSuccess(t *testing.T) {
 	c.ClientSecret = "secret-9"
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.EditResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
 	mockConfigMapV1.EXPECT().Update(gomock.Any(), cm, gomock.Any()).Times(1).Return(cm, nil)
@@ -674,12 +678,13 @@ func TestCreateResourceSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -732,6 +737,8 @@ func TestCreateResourceSuccess(t *testing.T) {
 	c.Scope = []string{"email"}
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.CreateResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateProviderEntitlements(gomock.Any(), gomock.Any())
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -766,12 +773,13 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -792,6 +800,8 @@ func TestCreateResourceSuccessSetsIDIfMissing(t *testing.T) {
 	c.RequestedClaims = []byte("null")
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.CreateResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateProviderEntitlements(gomock.Any(), gomock.Any())
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -926,12 +936,13 @@ func TestDeleteResourceSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockCoreV1 := NewMockCoreV1Interface(ctrl)
 	mockConfigMapV1 := NewMockConfigMapInterface(ctrl)
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	cfg := new(Config)
 	cfg.K8s = mockCoreV1
@@ -976,6 +987,8 @@ func TestDeleteResourceSuccess(t *testing.T) {
 	cm.Data[cfg.KeyName] = string(rawIdps)
 
 	mockTracer.EXPECT().Start(ctx, "idp.Service.DeleteResource").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetDeleteProviderEntitlements(gomock.Any(), idps[0].ID)
 	mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 	mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -1372,9 +1385,10 @@ func TestV1ServiceDeleteConfiguration(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			ctx := context.Background()
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
@@ -1397,6 +1411,8 @@ func TestV1ServiceDeleteConfiguration(t *testing.T) {
 			cm.Data[cfg.KeyName] = string(rawIdps)
 
 			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockAuthz.EXPECT().SetDeleteProviderEntitlements(gomock.Any(), idps[0].ID).MinTimes(0).MaxTimes(1)
 			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).Times(2).Return(mockConfigMapV1)
 			mockConfigMapV1.EXPECT().Get(ctx, cfg.Name, gomock.Any()).Times(1).Return(cm, nil)
@@ -1652,9 +1668,10 @@ func TestV1ServiceUpdateConfiguration(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			ctx := context.Background()
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockAuthz := NewMockAuthorizerInterface(ctrl)
@@ -1677,6 +1694,8 @@ func TestV1ServiceUpdateConfiguration(t *testing.T) {
 			cm.Data[cfg.KeyName] = string(rawIdps)
 
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 			mockCoreV1.EXPECT().ConfigMaps(cfg.Namespace).MinTimes(1).MaxTimes(2).Return(mockConfigMapV1)
 

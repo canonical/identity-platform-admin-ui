@@ -304,6 +304,19 @@ func (g *GrpcHandler) UpdateGroupRoles(ctx context.Context, req *v0Groups.Update
 	}
 
 	roles := req.GetRoles().GetRoles()
+	principal := authentication.PrincipalFromContext(ctx)
+	canAssign, err := g.svc.CanAssignRoles(ctx, principal.Identifier(), roles...)
+	if err != nil {
+		g.logger.Errorf("failed to check if roles can be assigned: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to check if roles can be assigned: %v", err)
+	}
+	if !canAssign {
+		return nil, status.Errorf(
+			codes.PermissionDenied,
+			"user %s is not allowed to assign specified roles",
+			principal.Identifier(),
+		)
+	}
 
 	if err := g.svc.AssignRoles(ctx, groupID, roles...); err != nil {
 		g.logger.Errorf("failed to assign roles: %v", err)
@@ -384,6 +397,20 @@ func (g *GrpcHandler) UpdateGroupIdentities(ctx context.Context, req *v0Groups.U
 	}
 
 	identities := req.GetIdentities().GetIdentities()
+
+	principal := authentication.PrincipalFromContext(ctx)
+	canAssign, err := g.svc.CanAssignIdentities(ctx, principal.Identifier(), identities...)
+	if err != nil {
+		g.logger.Errorf("failed to check if identities can be assigned: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to check if identities can be assigned: %v", err)
+	}
+	if !canAssign {
+		return nil, status.Errorf(
+			codes.PermissionDenied,
+			"user %s is not allowed to assign specified identities",
+			principal.Identifier(),
+		)
+	}
 
 	if err := g.svc.AssignIdentities(ctx, groupID, identities...); err != nil {
 		g.logger.Errorf("failed to assign identities: %v", err)

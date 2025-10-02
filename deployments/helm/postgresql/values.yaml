@@ -1,3 +1,5 @@
+image:
+  repository: bitnamilegacy/postgresql
 global:
   postgresql:
     auth:

@@ -17,6 +17,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package clients -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -111,6 +112,7 @@ func TestDeleteClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
@@ -125,12 +127,14 @@ func TestDeleteClientSuccess(t *testing.T) {
 		ApiService: mockHydraOAuth2Api,
 	}
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetDeleteClientEntitlements(gomock.Any(), clientId)
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().DeleteOAuth2Client(gomock.Any(), clientId).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().DeleteOAuth2ClientExecute(gomock.Any()).Times(1).Return(new(http.Response), nil)
-	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.DeleteOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
+	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.DeleteOAuth2Client").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 
 	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).DeleteClient(ctx, clientId)
 
@@ -195,6 +199,7 @@ func TestCreateClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
@@ -207,13 +212,15 @@ func TestCreateClientSuccess(t *testing.T) {
 		ApiService: mockHydraOAuth2Api,
 	}
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockAuthz.EXPECT().SetCreateClientEntitlements(gomock.Any(), "client_id")
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().CreateOAuth2Client(gomock.Any()).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().CreateOAuth2ClientExecute(gomock.Any()).Times(1).Return(c, new(http.Response), nil)
-	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.CreateOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
+	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.CreateOAuth2Client").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 
 	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).CreateClient(ctx, c)
 
@@ -277,6 +284,7 @@ func TestUpdateClientSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
@@ -290,11 +298,13 @@ func TestUpdateClientSuccess(t *testing.T) {
 		ApiService: mockHydraOAuth2Api,
 	}
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().SetOAuth2Client(gomock.Any(), clientId).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().SetOAuth2ClientExecute(gomock.Any()).Times(1).Return(c, new(http.Response), nil)
-	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
+	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 
 	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
 
@@ -314,6 +324,7 @@ func TestUpdateClientFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockHydra := NewMockHydraClientInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
@@ -335,11 +346,13 @@ func TestUpdateClientFails(t *testing.T) {
 		StatusCode: 404,
 	}
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockHydra.EXPECT().OAuth2Api().Times(1).Return(mockHydraOAuth2Api)
 	mockHydraOAuth2Api.EXPECT().SetOAuth2Client(gomock.Any(), clientId).Times(1).Return(clientReq)
 	mockHydraOAuth2Api.EXPECT().SetOAuth2ClientExecute(gomock.Any()).Times(1).Return(nil, serviceResp, fmt.Errorf("error"))
-	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(nil, trace.SpanFromContext(ctx))
+	mockTracer.EXPECT().Start(ctx, "hydra.OAuth2Api.SetOAuth2Client").Times(1).Return(ctx, trace.SpanFromContext(ctx))
 
 	resp, err := NewService(mockHydra, mockAuthz, mockTracer, mockMonitor, mockLogger).UpdateClient(ctx, c)
 	expectedError := new(ErrorOAuth2)

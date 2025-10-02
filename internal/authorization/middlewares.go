@@ -33,6 +33,15 @@ type Middleware struct {
 	logger  logging.LoggerInterface
 }
 
+func (mdw *Middleware) apiNameFromPath(r *http.Request) string {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 3 {
+		return ""
+	}
+
+	return parts[2] + "/" + parts[3]
+}
+
 func (mdw *Middleware) mapper(r *http.Request) []Permission {
 	// TODO @shipperizer exploit https://pkg.go.dev/github.com/go-chi/chi/v5#URLParam to fetch
 	// resource ids like {id}, {<x>_id}, also parse the path to understand type to check against
@@ -152,6 +161,7 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 				if principal == nil {
 					// should never happen if authentication is configured correctly
 					mdw.logger.Error("principal not available in context, cannot proceed with authorization")
+					mdw.logger.Security().AuthzFailureNoSession(mdw.apiNameFromPath(r), logging.WithRequest(r))
 					mdw.error("unable to retrieve authenticated user", http.StatusInternalServerError, w)
 					return
 				}
@@ -177,6 +187,7 @@ func (mdw *Middleware) Authorize() func(http.Handler) http.Handler {
 
 				if !authorized {
 					mdw.logger.Debugf("%s not authorized to perform operation", ID)
+					mdw.logger.Security().AuthzFailureInsufficientPermissions(principal.Identifier(), r.Method, mdw.apiNameFromPath(r), logging.WithRequest(r))
 					mdw.error("insufficient permissions to execute operation", http.StatusForbidden, w)
 
 					return

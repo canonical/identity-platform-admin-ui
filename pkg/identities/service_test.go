@@ -23,6 +23,7 @@ import (
 
 	"github.com/canonical/identity-platform-admin-ui/internal/mail"
 	ofga "github.com/canonical/identity-platform-admin-ui/internal/openfga"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 //go:generate mockgen -build_flags=--mod=mod -package identities -destination ./mock_logger.go -source=../../internal/logging/interfaces.go
@@ -283,13 +284,14 @@ func TestCreateIdentitySuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	identityRequest := kClient.IdentityAPICreateIdentityRequest{
 		ApiService: mockKratosIdentityAPI,
@@ -300,6 +302,8 @@ func TestCreateIdentitySuccess(t *testing.T) {
 	identityBody := kClient.NewCreateIdentityBody("test.json", map[string]interface{}{"name": "name", "email": "test@example.com"})
 	identityBody.SetCredentials(*credentials)
 
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 	mockAuthz.EXPECT().SetCreateIdentityEntitlements(gomock.Any(), identity.Id)
 	mockKratosIdentityAPI.EXPECT().CreateIdentity(ctx).Times(1).Return(identityRequest)
@@ -399,13 +403,14 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	identityRequest := kClient.IdentityAPIUpdateIdentityRequest{
 		ApiService: mockKratosIdentityAPI,
@@ -417,6 +422,8 @@ func TestUpdateIdentitySuccess(t *testing.T) {
 	identityBody.SetTraits(map[string]interface{}{"name": "name"})
 	identityBody.SetCredentials(*credentials)
 
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 	mockKratosIdentityAPI.EXPECT().UpdateIdentity(ctx, identity.Id).Times(1).Return(identityRequest)
 	mockKratosIdentityAPI.EXPECT().UpdateIdentityExecute(gomock.Any()).Times(1).DoAndReturn(
@@ -447,13 +454,14 @@ func TestUpdateIdentityFails(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 	credID := "test"
 
@@ -466,6 +474,8 @@ func TestUpdateIdentityFails(t *testing.T) {
 	identityBody.SetTraits(map[string]interface{}{"name": "name"})
 	identityBody.SetCredentials(*credentials)
 
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 	mockKratosIdentityAPI.EXPECT().UpdateIdentity(ctx, credID).Times(1).Return(identityRequest)
@@ -518,19 +528,22 @@ func TestDeleteIdentitySuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockLogger := NewMockLoggerInterface(ctrl)
+	mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 	mockTracer := NewMockTracer(ctrl)
 	mockMonitor := NewMockMonitorInterface(ctrl)
 	mockAuthz := NewMockAuthorizerInterface(ctrl)
 	mockKratosIdentityAPI := NewMockIdentityAPI(ctrl)
 	mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-	ctx := context.Background()
+	ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 	credID := "test-1"
 
 	identityRequest := kClient.IdentityAPIDeleteIdentityRequest{
 		ApiService: mockKratosIdentityAPI,
 	}
 
+	mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+	mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 	mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 	mockAuthz.EXPECT().SetDeleteIdentityEntitlements(gomock.Any(), credID)
 	mockKratosIdentityAPI.EXPECT().DeleteIdentity(ctx, credID).Times(1).Return(identityRequest)
@@ -896,6 +909,7 @@ func TestV1ServiceCreateIdentity(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
@@ -915,7 +929,7 @@ func TestV1ServiceCreateIdentity(t *testing.T) {
 			cm.Data = make(map[string]string)
 			cm.Data[DEFAULT_SCHEMA] = "test"
 
-			ctx := context.Background()
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			identityRequest := kClient.IdentityAPICreateIdentityRequest{
 				ApiService: mockKratosIdentityAPI,
@@ -930,6 +944,8 @@ func TestV1ServiceCreateIdentity(t *testing.T) {
 			)
 			identityBody.SetState("StateActive")
 
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 			mockAuthz.EXPECT().SetCreateIdentityEntitlements(gomock.Any(), id).MinTimes(0).MaxTimes(1)
@@ -1214,6 +1230,7 @@ func TestV1ServiceUpdateIdentity(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
@@ -1222,7 +1239,7 @@ func TestV1ServiceUpdateIdentity(t *testing.T) {
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-			ctx := context.Background()
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
@@ -1246,6 +1263,8 @@ func TestV1ServiceUpdateIdentity(t *testing.T) {
 			},
 			)
 
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 			mockKratosIdentityAPI.EXPECT().UpdateIdentity(gomock.Any(), *test.input.Id).Times(1).Return(identityRequest)
@@ -1354,6 +1373,7 @@ func TestV1ServiceDeleteIdentity(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
 			mockCoreV1 := NewMockCoreV1Interface(ctrl)
@@ -1362,7 +1382,7 @@ func TestV1ServiceDeleteIdentity(t *testing.T) {
 			mockOpenFGAStore := NewMockOpenFGAStoreInterface(ctrl)
 			mockEmail := mail.NewMockEmailServiceInterface(ctrl)
 
-			ctx := context.Background()
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			cfg := new(Config)
 			cfg.K8s = mockCoreV1
@@ -1378,6 +1398,8 @@ func TestV1ServiceDeleteIdentity(t *testing.T) {
 				ApiService: mockKratosIdentityAPI,
 			}
 
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockTracer.EXPECT().Start(ctx, gomock.Any()).AnyTimes().Return(ctx, trace.SpanFromContext(ctx))
 			mockAuthz.EXPECT().SetDeleteIdentityEntitlements(gomock.Any(), test.input).MinTimes(0).MaxTimes(1)

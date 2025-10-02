@@ -133,6 +133,13 @@ func (s *Service) CreateRole(ctx context.Context, userID, roleName string) (*Rol
 		s.logger.Error(err.Error())
 		return nil, err
 	}
+	s.logger.Security().AdminAction(
+		userID,
+		"created",
+		"role",
+		roleName,
+		logging.WithContext(ctx),
+	)
 
 	return createdRole, nil
 }
@@ -158,6 +165,13 @@ func (s *Service) AssignPermissions(ctx context.Context, ID string, permissions 
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"assigned permissions to",
+		"role",
+		ID,
+		logging.WithContext(ctx),
+	)
 
 	return nil
 }
@@ -183,6 +197,14 @@ func (s *Service) RemovePermissions(ctx context.Context, ID string, permissions 
 		s.logger.Error(err.Error())
 		return err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"removed permissions from",
+		"role",
+		ID,
+		logging.WithContext(ctx),
+		logging.WithLabel("permissions", fmt.Sprintf("%+v", permissions)),
+	)
 
 	return nil
 }
@@ -292,6 +314,13 @@ func (s *Service) DeleteRole(ctx context.Context, roleName string) error {
 
 	// close result channel
 	close(results)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"delete",
+		"role",
+		roleName,
+		logging.WithContext(ctx),
+	)
 
 	// TODO: @barco collect errors from results chan and return composite error or single summing up
 	return nil

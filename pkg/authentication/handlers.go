@@ -16,7 +16,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
-	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 	"github.com/canonical/identity-platform-admin-ui/pkg/ui"
 )
 
@@ -26,18 +25,18 @@ const (
 )
 
 type Config struct {
-	Enabled                     bool                         `validate:"required,boolean"`
-	AuthCookieTTLSeconds        int                          `validate:"required"`
-	UserSessionCookieTTLSeconds int                          `validate:"required"`
-	CookiesEncryptionKey        string                       `validate:"required,min=32,max=32"`
-	issuer                      string                       `validate:"required"`
-	clientID                    string                       `validate:"required"`
-	clientSecret                string                       `validate:"required"`
-	redirectURL                 string                       `validate:"required"`
-	verificationStrategy        string                       `validate:"required,oneof=jwks userinfo"`
-	scopes                      []string                     `validate:"required,dive,required"`
-	hydraPublicAPIClient        clients.HydraClientInterface `validate:"required"`
-	hydraAdminAPIClient         clients.HydraClientInterface `validate:"required"`
+	Enabled                     bool                 `validate:"required,boolean"`
+	AuthCookieTTLSeconds        int                  `validate:"required"`
+	UserSessionCookieTTLSeconds int                  `validate:"required"`
+	CookiesEncryptionKey        string               `validate:"required,min=32,max=32"`
+	issuer                      string               `validate:"required"`
+	clientID                    string               `validate:"required"`
+	clientSecret                string               `validate:"required"`
+	redirectURL                 string               `validate:"required"`
+	verificationStrategy        string               `validate:"required,oneof=jwks userinfo"`
+	scopes                      []string             `validate:"required,dive,required"`
+	hydraPublicAPIClient        HydraClientInterface `validate:"required"`
+	hydraAdminAPIClient         HydraClientInterface `validate:"required"`
 }
 
 func NewAuthenticationConfig(
@@ -108,6 +107,13 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 	// add the Otel HTTP Client
 	r = r.WithContext(OtelHTTPClientContext(r.Context()))
 
+	oidcError := r.URL.Query().Get("error")
+	if oidcError != "" {
+		a.logger.Security().FailedLogin(oidcError, logging.WithRequest(r))
+		a.badRequest(w, fmt.Errorf("login failed"))
+		return
+	}
+
 	code := r.URL.Query().Get(codeParameter)
 	if code == "" {
 		a.logger.Error("OAuth2 code not found")
@@ -161,6 +167,7 @@ func (a *API) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.logger.Security().SuccessfulLogin(principal.Email, logging.WithRequest(r))
 	a.cookieManager.SetIDTokenCookie(w, rawIDToken)
 	a.cookieManager.SetAccessTokenCookie(w, oauth2Token.AccessToken)
 	a.cookieManager.SetRefreshTokenCookie(w, oauth2Token.RefreshToken)
@@ -270,6 +277,7 @@ func (a *API) handleLogout(w http.ResponseWriter, r *http.Request) {
 		a.badRequest(w, err)
 		return
 	}
+	a.logger.Security().TokenDelete(s.Session.Identity.Id, logging.WithRequest(r))
 
 	nextTo := r.URL.Query().Get("next")
 	a.uiRedirect(w, r, nextTo)

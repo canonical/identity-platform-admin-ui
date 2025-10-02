@@ -18,6 +18,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 type Config struct {
@@ -131,9 +132,15 @@ func (s *Service) EditResource(ctx context.Context, providerID string, data *Con
 
 		return nil, err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"updated",
+		"idp",
+		providerID,
+		logging.WithContext(ctx),
+	)
 
 	return []*Configuration{idp}, nil
-
 }
 
 func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*Configuration, error) {
@@ -189,6 +196,13 @@ func (s *Service) CreateResource(ctx context.Context, data *Configuration) ([]*C
 	}
 
 	s.authz.SetCreateProviderEntitlements(ctx, data.ID)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"created",
+		"idp",
+		data.ID,
+		logging.WithContext(ctx),
+	)
 
 	return []*Configuration{data}, nil
 }
@@ -244,9 +258,15 @@ func (s *Service) DeleteResource(ctx context.Context, providerID string) error {
 		return err
 	}
 	s.authz.SetDeleteProviderEntitlements(ctx, providerID)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"deleted",
+		"idp",
+		providerID,
+		logging.WithContext(ctx),
+	)
 
 	return nil
-
 }
 
 // TODO @shipperizer ugly but safe, other way is to json/yaml Marshal/Unmarshal and use omitempty

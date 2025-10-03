@@ -755,6 +755,7 @@ func TestUpdateGroupRoles(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
@@ -762,7 +763,9 @@ func TestUpdateGroupRoles(t *testing.T) {
 
 			mockCtx := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "test-user"})
 
-			mockTracer.EXPECT().Start(gomock.Any(), "groups.GrpcHandler.UpdateGroupRoles").Return(mockCtx, mockSpan)
+			mockTracer.EXPECT().Start(gomock.Any(), "groups.GrpcHandler.UpdateGroupRoles").AnyTimes().Return(mockCtx, mockSpan)
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			if test.name == "Empty group ID" {
 				mockLogger.EXPECT().Debug(gomock.Any())
@@ -771,6 +774,7 @@ func TestUpdateGroupRoles(t *testing.T) {
 			}
 
 			if test.name != "Empty group ID" {
+				mockService.EXPECT().CanAssignRoles(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 				mockService.EXPECT().AssignRoles(gomock.Any(), gomock.Any(), gomock.Any()).Return(test.err)
 			}
 
@@ -1018,6 +1022,7 @@ func TestUpdateGroupIdentities(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mockService := NewMockServiceInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockLogger := NewMockLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := NewMockMonitorInterface(ctrl)
@@ -1026,6 +1031,8 @@ func TestUpdateGroupIdentities(t *testing.T) {
 			mockCtx := authentication.PrincipalContext(context.TODO(), &authentication.UserPrincipal{Email: "test-user"})
 
 			mockTracer.EXPECT().Start(gomock.Any(), "groups.GrpcHandler.UpdateGroupIdentities").Return(mockCtx, mockSpan)
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			if test.name == "Empty group ID" {
 				mockLogger.EXPECT().Debug(gomock.Any())
@@ -1034,6 +1041,7 @@ func TestUpdateGroupIdentities(t *testing.T) {
 			}
 
 			if test.name != "Empty group ID" {
+				mockService.EXPECT().CanAssignIdentities(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 				mockService.EXPECT().AssignIdentities(gomock.Any(), gomock.Any(), gomock.Any()).Return(test.err)
 			}
 

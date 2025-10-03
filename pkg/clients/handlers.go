@@ -153,7 +153,6 @@ func (a *API) UpdateClient(w http.ResponseWriter, r *http.Request) {
 		a.WriteJSONResponse(w, res.ServiceError, "Failed to update client", res.ServiceError.StatusCode, nil, nil)
 		return
 	}
-
 	a.WriteJSONResponse(w, res.Resp, "Updated client", http.StatusOK, nil, nil)
 }
 

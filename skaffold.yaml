@@ -31,7 +31,7 @@ manifests:
 
 deploy:
   statusCheck: true
-  statusCheckDeadlineSeconds:	180
+  statusCheckDeadlineSeconds: 180
   tolerateFailuresUntilDeadline: true
   kubectl: {}
   helm:
@@ -95,3 +95,8 @@ portForward:
   namespace: default
   port: 8025
   localPort: 18025
+- resourceType: service
+  resourceName: postgresql
+  namespace: default
+  port: 5432
+  localPort: 15432

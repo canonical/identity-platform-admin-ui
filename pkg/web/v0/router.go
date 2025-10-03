@@ -22,6 +22,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/config"
 	"github.com/canonical/identity-platform-admin-ui/internal/http/types"
 	ik "github.com/canonical/identity-platform-admin-ui/internal/kratos"
+	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/openfga"
 	"github.com/canonical/identity-platform-admin-ui/internal/validation"
 	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
@@ -159,6 +160,7 @@ func NewV0APIRouter(opts ...RouterOption) (http.Handler, error) {
 	o11yConfig := cfg.o11yConfig
 
 	apiRouter := chi.NewRouter()
+	apiRouter.Use(logging.LogContextMiddleware)
 
 	identitiesAPI := identities.NewAPI(
 		cfg.identitiesSvc,

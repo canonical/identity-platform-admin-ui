@@ -17,7 +17,6 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
-	"github.com/canonical/identity-platform-admin-ui/pkg/clients"
 )
 
 var (
@@ -33,8 +32,8 @@ type OIDCProviderSupplier = func(ctx context.Context, issuer string) (*oidc.Prov
 type OAuth2Context struct {
 	client      *oauth2.Config
 	verifier    TokenVerifier
-	hydraAdmin  clients.HydraClientInterface
-	hydraPublic clients.HydraClientInterface
+	hydraAdmin  HydraClientInterface
+	hydraPublic HydraClientInterface
 
 	tracer  tracing.TracingInterface
 	logger  logging.LoggerInterface

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.25.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.1...v1.25.2) (2025-10-08)
+
+
+### Bug Fixes
+
+* **deps:** update module google.golang.org/protobuf to v1.36.10 ([f351938](https://github.com/canonical/identity-platform-admin-ui/commit/f351938f2016b9a8adb225d1d6ad501332254025))
+* **deps:** update module google.golang.org/protobuf to v1.36.10 ([0b6c15f](https://github.com/canonical/identity-platform-admin-ui/commit/0b6c15f48dd1c9ee2ade2c4e69d9e6b06737ac69))
+
 ## [1.25.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.0...v1.25.1) (2025-10-01)
 
 

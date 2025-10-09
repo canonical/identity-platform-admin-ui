@@ -19,24 +19,10 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8000"
     spec:
-      volumes:
-        - name: certificates
-          persistentVolumeClaim:
-            claimName: certificates-volume-claim
-      initContainers:
-        - name: init-ca-certificates
-          image: ubuntu:22.04
-          command: ["sh", "-c", "apt update && apt install -y ca-certificates"]
-          volumeMounts:
-            - mountPath: /etc/ssl/certs
-              name: certificates
       containers:
         - image: identity-platform-admin-ui
           name: identity-platform-admin-ui
           command: ["/usr/bin/identity-platform-admin-ui", "serve"]
-          volumeMounts:
-            - mountPath: /etc/ssl/certs
-              name: certificates
           envFrom:
             - configMapRef:
                 name: identity-platform-admin-ui

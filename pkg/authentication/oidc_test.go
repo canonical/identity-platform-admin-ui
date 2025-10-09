@@ -24,7 +24,6 @@ import (
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_tracing.go go.opentelemetry.io/otel/trace Tracer
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_monitor.go -source=../../internal/monitoring/interfaces.go
 //go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_hydra.go github.com/ory/hydra-client-go/v2 OAuth2Api
-//go:generate mockgen -build_flags=--mod=mod -package authentication -destination ./mock_clients.go -source=../clients/interfaces.go
 
 func TestNewPrincipalFromClaims(t *testing.T) {
 	ctrl := gomock.NewController(t)

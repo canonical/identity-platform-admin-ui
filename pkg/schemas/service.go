@@ -20,6 +20,7 @@ import (
 	"github.com/canonical/identity-platform-admin-ui/internal/logging"
 	"github.com/canonical/identity-platform-admin-ui/internal/monitoring"
 	"github.com/canonical/identity-platform-admin-ui/internal/tracing"
+	"github.com/canonical/identity-platform-admin-ui/pkg/authentication"
 )
 
 const DEFAULT_SCHEMA = "default.schema"
@@ -178,11 +179,17 @@ func (s *Service) EditSchema(ctx context.Context, ID string, data *kClient.Ident
 
 		return nil, err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"updated",
+		"schema",
+		ID,
+		logging.WithContext(ctx),
+	)
 
 	i.IdentitySchemas = []kClient.IdentitySchemaContainer{*data}
 
 	return i, nil
-
 }
 
 func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchemaContainer) (*IdentitySchemaData, error) {
@@ -232,6 +239,13 @@ func (s *Service) CreateSchema(ctx context.Context, data *kClient.IdentitySchema
 	}
 
 	s.authz.SetCreateSchemaEntitlements(ctx, *data.Id)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"created",
+		"schema",
+		*data.Id,
+		logging.WithContext(ctx),
+	)
 
 	i.IdentitySchemas = []kClient.IdentitySchemaContainer{*data}
 
@@ -265,9 +279,15 @@ func (s *Service) DeleteSchema(ctx context.Context, ID string) error {
 	}
 
 	s.authz.SetDeleteSchemaEntitlements(ctx, ID)
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"deleted",
+		"schema",
+		ID,
+		logging.WithContext(ctx),
+	)
 
 	return nil
-
 }
 
 func (s *Service) GetDefaultSchema(ctx context.Context) (*DefaultSchema, error) {
@@ -313,6 +333,13 @@ func (s *Service) UpdateDefaultSchema(ctx context.Context, schemaID *DefaultSche
 	if _, err = s.k8s.ConfigMaps(s.cmNamespace).Update(ctx, cm, metaV1.UpdateOptions{}); err != nil {
 		return nil, err
 	}
+	s.logger.Security().AdminAction(
+		authentication.PrincipalFromContext(ctx).Identifier(),
+		"updated",
+		"schema",
+		schemaID.ID,
+		logging.WithContext(ctx),
+	)
 
 	return schemaID, nil
 }

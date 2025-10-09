@@ -347,17 +347,21 @@ func TestServiceCreateRole(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 			mockTx := NewMockTxInterface(ctrl)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 
 			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
 			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.CreateRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			mockRepo.EXPECT().CreateRoleTx(gomock.Any(), test.input.role, test.input.user).Times(1).Return(&Role{ID: test.input.role, Name: test.input.role, Owner: test.input.user}, mockTx, nil)
 
@@ -386,7 +390,7 @@ func TestServiceCreateRole(t *testing.T) {
 				mockTx.EXPECT().Commit().Times(1).Return(nil)
 			}
 
-			role, err := svc.CreateRole(context.Background(), test.input.user, test.input.role)
+			role, err := svc.CreateRole(ctx, test.input.user, test.input.role)
 
 			if test.expected != nil && err.Error() != test.expected.Error() {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
@@ -424,10 +428,12 @@ func TestServiceDeleteRole(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 			mockRepo := NewMockRoleRepositoryInterface(ctrl)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 7; i++ {
@@ -436,9 +442,12 @@ func TestServiceDeleteRole(t *testing.T) {
 
 			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.DeleteRole").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removePermissionsByType").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
-			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removeDirectAssociations").Times(6).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.DeleteRole").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removePermissionsByType").Times(6).Return(ctx, trace.SpanFromContext(ctx))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.removeDirectAssociations").Times(6).Return(ctx, trace.SpanFromContext(ctx))
+
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 
 			mockRepo.EXPECT().DeleteRoleByName(gomock.Any(), test.input).Times(1).Return(test.input, nil)
 
@@ -562,7 +571,7 @@ func TestServiceDeleteRole(t *testing.T) {
 			}
 
 			gomock.InAnyOrder(calls)
-			_ = svc.DeleteRole(context.Background(), test.input)
+			_ = svc.DeleteRole(ctx, test.input)
 
 		})
 	}
@@ -745,16 +754,20 @@ func TestServiceAssignPermissions(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.AssignPermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.AssignPermissions").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ps := make([]ofga.Tuple, 0)
@@ -775,7 +788,7 @@ func TestServiceAssignPermissions(t *testing.T) {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			err := svc.AssignPermissions(context.Background(), test.input.role, test.input.permissions...)
+			err := svc.AssignPermissions(ctx, test.input.role, test.input.permissions...)
 
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
@@ -825,16 +838,20 @@ func TestServiceRemovePermissions(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 			mockRepo := NewMockRoleRepositoryInterface(ctrl)
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			svc := NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger)
 
-			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.RemovePermissions").Times(1).Return(context.TODO(), trace.SpanFromContext(context.TODO()))
+			mockTracer.EXPECT().Start(gomock.Any(), "roles.Service.RemovePermissions").Times(1).Return(ctx, trace.SpanFromContext(ctx))
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
 					ps := make([]ofga.Tuple, 0)
@@ -855,7 +872,7 @@ func TestServiceRemovePermissions(t *testing.T) {
 				mockLogger.EXPECT().Error(gomock.Any()).Times(1)
 			}
 
-			err := svc.RemovePermissions(context.Background(), test.input.role, test.input.permissions...)
+			err := svc.RemovePermissions(ctx, test.input.role, test.input.permissions...)
 
 			if err != test.expected {
 				t.Errorf("expected error to be %v got %v", test.expected, err)
@@ -1022,14 +1039,18 @@ func TestV1ServiceCreateRole(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 			setupMockSubmit(workerPool, nil)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			mockProvider := NewMockProviderInterface(ctrl)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
 				func(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 					return ctx, trace.SpanFromContext(ctx)
@@ -1059,7 +1080,6 @@ func TestV1ServiceCreateRole(t *testing.T) {
 				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
 
-			ctx := context.Background()
 			ctx = authentication.PrincipalContext(ctx, principal)
 
 			calls := []*gomock.Call{}
@@ -1250,6 +1270,7 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
@@ -1261,6 +1282,8 @@ func TestV1ServiceDeleteRole(t *testing.T) {
 				setupMockSubmit(workerPool, nil)
 			}
 
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockLogger.EXPECT().Errorf(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
@@ -1621,6 +1644,7 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
@@ -1630,7 +1654,10 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 			for i := 0; i < 6; i++ {
 				setupMockSubmit(workerPool, nil)
 			}
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
 			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
@@ -1642,8 +1669,6 @@ func TestV1ServicePatchRoleEntitlementseAssignPermissions(t *testing.T) {
 			svc := NewV1Service(
 				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
-
-			ctx := context.Background()
 
 			mockOpenFGA.EXPECT().WriteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {
@@ -1733,9 +1758,11 @@ func TestV1ServicePatchRoleEntitlementseRemovesPermissions(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockLogger := NewMockLoggerInterface(ctrl)
+			mockSecurityLogger := NewMockSecurityLoggerInterface(ctrl)
 			mockTracer := NewMockTracer(ctrl)
 			mockMonitor := monitoring.NewMockMonitorInterface(ctrl)
 			mockOpenFGA := NewMockOpenFGAClientInterface(ctrl)
+			ctx := authentication.PrincipalContext(context.Background(), &authentication.UserPrincipal{Email: "test-user"})
 
 			workerPool := NewMockWorkerPoolInterface(ctrl)
 			for i := 0; i < 6; i++ {
@@ -1744,6 +1771,8 @@ func TestV1ServicePatchRoleEntitlementseRemovesPermissions(t *testing.T) {
 
 			mockLogger.EXPECT().Error(gomock.Any()).AnyTimes()
 			mockLogger.EXPECT().Info(gomock.Any()).AnyTimes()
+			mockLogger.EXPECT().Security().AnyTimes().Return(mockSecurityLogger)
+			mockSecurityLogger.EXPECT().AdminAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return()
 			mockTracer.EXPECT().Start(gomock.Any(), gomock.Any()).AnyTimes().DoAndReturn(
 				func(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 					return ctx, trace.SpanFromContext(ctx)
@@ -1754,8 +1783,6 @@ func TestV1ServicePatchRoleEntitlementseRemovesPermissions(t *testing.T) {
 			svc := NewV1Service(
 				NewService(mockOpenFGA, mockRepo, workerPool, mockTracer, mockMonitor, mockLogger),
 			)
-
-			ctx := context.Background()
 
 			mockOpenFGA.EXPECT().DeleteTuples(gomock.Any(), gomock.Any()).Times(1).DoAndReturn(
 				func(ctx context.Context, tuples ...ofga.Tuple) error {

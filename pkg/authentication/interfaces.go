@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	hClient "github.com/ory/hydra-client-go/v2"
 	"golang.org/x/oauth2"
 )
 
@@ -116,4 +117,8 @@ type PrincipalInterface interface {
 type SessionManagerInterface interface {
 	GetIdentitySession(context.Context, []*http.Cookie) (*SessionData, error)
 	DisableSession(ctx context.Context, sessionID string) (*SessionData, error)
+}
+
+type HydraClientInterface interface {
+	OAuth2Api() hClient.OAuth2Api
 }

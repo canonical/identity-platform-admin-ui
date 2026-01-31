@@ -1120,10 +1120,10 @@
   resolved "https://registry.yarnpkg.com/@cacheable/utils/-/utils-2.0.2.tgz#5b28f9c653ca25ad9ab638ed4a98103afd7d88cf"
   integrity sha512-JTFM3raFhVv8LH95T7YnZbf2YoE9wEtkPPStuRF9a6ExZ103hFvs+QyCuYJ6r0hA9wRtbzgZtwUCoDWxssZd4Q==
 
-"@canonical/react-components@3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@canonical/react-components/-/react-components-3.1.0.tgz#dfcb95d701050adf8b635ddfc47bfd6b5454ac74"
-  integrity sha512-eORYAW5NX37C+0u+u2+2DheHagKZWN38EzNyTHGcdHlUJYrPafTHX958sdpYeR1BL7Sn/t5371RZF2RHxM6S6w==
+"@canonical/react-components@3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@canonical/react-components/-/react-components-3.9.0.tgz#90be4574d6f3a8e8240d90ac16a869fe4bb32e4b"
+  integrity sha512-F9Tk/hBhkIYwJ1ePbjX8mTigfeTtHPF+1reAnu6dOSPHOwN3ehIJZDzAtXFQbXB41D0fSwujJ+JZA/gKrPUJZQ==
   dependencies:
     "@types/jest" "29.5.14"
     "@types/node" "20.17.19"
@@ -8011,10 +8011,10 @@ util-deprecate@^1.0.2:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
-vanilla-framework@4.34.1:
-  version "4.34.1"
-  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.34.1.tgz#99da5661c10fa1539b263b87df9b455cc09761f6"
-  integrity sha512-ycuVdn0yYsDuRbMD7mTbGPQ2r8y0FtL601Sa0id5ozHS24wzBd7Yp1w1TLYprvP5q7dCO5r6fne/k/bw08e0tg==
+vanilla-framework@4.42.0:
+  version "4.42.0"
+  resolved "https://registry.yarnpkg.com/vanilla-framework/-/vanilla-framework-4.42.0.tgz#a5cef44b4727259e4e6c097a7c9b8f5c85d48e4a"
+  integrity sha512-36hrQMz2dQId4JGON6xhxEdrmC44NzoqjTofQAs4EZepHAE/Ves38ZNq59vnMBtGBEJUu3ctr5pa7k/pTHymYw==
 
 vary@~1.1.2:
   version "1.1.2"

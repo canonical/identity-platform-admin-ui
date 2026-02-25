@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.25.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.1...v1.25.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* add security logger ([4e41be3](https://github.com/canonical/identity-platform-admin-ui/commit/4e41be3643facef7c9394207753b3fee4d83bbd5))
+* check if user can assign on grpc ([5bacacb](https://github.com/canonical/identity-platform-admin-ui/commit/5bacacb7ebe9e1c935f3f52c6d7ffea8eaa37eee))
+* **deps:** update module github.com/exaring/otelpgx to v0.9.4 ([796a970](https://github.com/canonical/identity-platform-admin-ui/commit/796a970c04121e6ef1e5702b40f67b796b893864))
+* **deps:** update module github.com/exaring/otelpgx to v0.9.4 ([#724](https://github.com/canonical/identity-platform-admin-ui/issues/724)) ([08cc2db](https://github.com/canonical/identity-platform-admin-ui/commit/08cc2dbe27d6c7d3f3b2c313d51a289958c1ea58))
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.4 ([97e41bd](https://github.com/canonical/identity-platform-admin-ui/commit/97e41bd39904124134cdb3766415ed6965bfd9ef))
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.4 ([#738](https://github.com/canonical/identity-platform-admin-ui/issues/738)) ([d0d84a3](https://github.com/canonical/identity-platform-admin-ui/commit/d0d84a3526661ef2f5a57b0149b4e95d24423cb0))
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.5 ([f64bd35](https://github.com/canonical/identity-platform-admin-ui/commit/f64bd352325d34e54746bdcde4afbcc060cc78e0))
+* **deps:** update module github.com/go-chi/chi/v5 to v5.2.5 ([#751](https://github.com/canonical/identity-platform-admin-ui/issues/751)) ([9781b3e](https://github.com/canonical/identity-platform-admin-ui/commit/9781b3e30e30cfdcf7a20b548da57cbdad86e256))
+* **deps:** update module github.com/grpc-ecosystem/grpc-gateway/v2 to v2.26.7 ([d8cc202](https://github.com/canonical/identity-platform-admin-ui/commit/d8cc2028cd14b4d31980a70aeeb9cc474fd3e07f))
+* **deps:** update module github.com/grpc-ecosystem/grpc-gateway/v2 to v2.26.7 ([#744](https://github.com/canonical/identity-platform-admin-ui/issues/744)) ([b8133b1](https://github.com/canonical/identity-platform-admin-ui/commit/b8133b1455ae9bf891fb738a340aef727b5ea56b))
+* **deps:** update module go.uber.org/zap to v1.27.1 ([a48bff8](https://github.com/canonical/identity-platform-admin-ui/commit/a48bff85f56c6985bc6a26dbf36ea3481ba32410))
+* **deps:** update module go.uber.org/zap to v1.27.1 ([#705](https://github.com/canonical/identity-platform-admin-ui/issues/705)) ([072a144](https://github.com/canonical/identity-platform-admin-ui/commit/072a1441bc2c2b42f2969e305b712d024e771fab))
+* **deps:** update module google.golang.org/protobuf to v1.36.10 ([f351938](https://github.com/canonical/identity-platform-admin-ui/commit/f351938f2016b9a8adb225d1d6ad501332254025))
+* **deps:** update module google.golang.org/protobuf to v1.36.10 ([0b6c15f](https://github.com/canonical/identity-platform-admin-ui/commit/0b6c15f48dd1c9ee2ade2c4e69d9e6b06737ac69))
+* **deps:** update module google.golang.org/protobuf to v1.36.11 ([f066f6b](https://github.com/canonical/identity-platform-admin-ui/commit/f066f6b99f0688a0553d8d2a219e559317472a00))
+* **deps:** update module google.golang.org/protobuf to v1.36.11 ([#727](https://github.com/canonical/identity-platform-admin-ui/issues/727)) ([860d01b](https://github.com/canonical/identity-platform-admin-ui/commit/860d01b8db26ae35c60cdcde9b86d0a4219d2ec2))
+* improve startup logic ([45d3e78](https://github.com/canonical/identity-platform-admin-ui/commit/45d3e78a0543afa8bc0650573281284977c5e82d))
+
 ## [1.25.1](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.0...v1.25.1) (2025-10-01)
 
 

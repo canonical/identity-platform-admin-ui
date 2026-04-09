@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.25.3](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.2...v1.25.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* **deps:** update module go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp to v1.43.0 [security] ([28bbc24](https://github.com/canonical/identity-platform-admin-ui/commit/28bbc2422aafdb6270377a36c749f06cd4892489))
+* **deps:** update module go.opentelemetry.io/otel/sdk to v1.40.0 [security] ([3566e7a](https://github.com/canonical/identity-platform-admin-ui/commit/3566e7a41251e56c38ce2f38aeca6191bfaf0b3d))
+* **deps:** update module google.golang.org/grpc to v1.79.3 [security] ([c2049d8](https://github.com/canonical/identity-platform-admin-ui/commit/c2049d8f66267c11d752fe522df9c14a2868c055))
+* **deps:** update module google.golang.org/grpc to v1.79.3 [security] ([#759](https://github.com/canonical/identity-platform-admin-ui/issues/759)) ([6f2c8ed](https://github.com/canonical/identity-platform-admin-ui/commit/6f2c8ed5dfdfc3021584141aa6b15d6fa9bf3fb7))
+
 ## [1.25.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.1...v1.25.2) (2026-02-18)
 
 

@@ -1,3 +1,4 @@
+import React from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { render, renderHook } from "@testing-library/react";
 
@@ -27,7 +28,7 @@ const getQueryClient = (options: Options | null | undefined) =>
       });
 
 export const renderComponent = (
-  component: JSX.Element,
+  component: React.ReactElement,
   options?: Options | null,
 ) => {
   const queryClient = getQueryClient(options);

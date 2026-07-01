@@ -1,0 +1,12 @@
+{
+  "name": "identity-platform-admin-ui-root",
+  "private": true,
+  "workspaces": [
+    "ui"
+  ],
+  "scripts": {
+    "lint-js": "yarn --cwd ui lint-js",
+    "format-js": "yarn --cwd ui format-js",
+    "build-ui": "yarn --cwd ui build"
+  }
+}

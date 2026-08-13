@@ -18,6 +18,9 @@ on:
 
 jobs:
   publish:
+    permissions:
+      packages: write
+      contents: read
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.set.outputs.image }}
@@ -68,6 +71,8 @@ jobs:
       run: echo "image=$image" >> "$GITHUB_OUTPUT"
 
   oci-factory:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     # only release to oci-factory in case of release
     if: github.ref_type == 'tag'

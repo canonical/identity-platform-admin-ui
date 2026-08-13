@@ -19,6 +19,9 @@ jobs:
   build:
     uses: ./.github/workflows/build.yaml
   publish:
+    permissions:
+      packages: write
+      contents: read
     if: ${{ (github.ref == 'refs/heads/main') || (github.ref_type == 'tag') }}
     needs: [build, unit-test]
     uses: ./.github/workflows/publish.yaml
@@ -27,6 +30,11 @@ jobs:
     secrets:
       token: ${{ secrets.PAT_TOKEN }}
   scan:
+    permissions:
+      packages: read
+      contents: read
+      security-events: write
+      actions: read
     if: ${{ (github.ref == 'refs/heads/main') || (github.ref_type == 'tag') }}
     needs: publish
     uses: ./.github/workflows/scan.yaml

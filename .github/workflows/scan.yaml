@@ -17,7 +17,7 @@ jobs:
       actions: read
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
     - name: Scan image with Trivy
       uses: aquasecurity/trivy-action@master
       with:
@@ -26,6 +26,6 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload scan results to GitHub
-      uses: github/codeql-action/upload-sarif@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4
+      uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
       with:
         sarif_file: 'trivy-results.sarif'

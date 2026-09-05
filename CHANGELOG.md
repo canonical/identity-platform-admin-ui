@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.25.3](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.2...v1.25.3) (2026-09-05)
+
+
+### Bug Fixes
+
+* **deps:** update go deps ([193bd90](https://github.com/canonical/identity-platform-admin-ui/commit/193bd904511c55bc5af52aecc9ec6a37dcc4a878))
+* **deps:** update go deps (patch) ([#808](https://github.com/canonical/identity-platform-admin-ui/issues/808)) ([a037a4e](https://github.com/canonical/identity-platform-admin-ui/commit/a037a4e435194641a0ec133f242de365374fc1cb))
+* **deps:** update module github.com/jackc/pgx/v5 to v5.9.2 [security] ([85f5791](https://github.com/canonical/identity-platform-admin-ui/commit/85f57919551f0ab0a97795ac878405fda0c26817))
+* **deps:** update module github.com/jackc/pgx/v5 to v5.9.2 [security] ([#771](https://github.com/canonical/identity-platform-admin-ui/issues/771)) ([3bba1de](https://github.com/canonical/identity-platform-admin-ui/commit/3bba1de82a71c86b75e447c30ee284f6433bcd8e))
+* **deps:** update module go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp to v1.43.0 [security] ([28bbc24](https://github.com/canonical/identity-platform-admin-ui/commit/28bbc2422aafdb6270377a36c749f06cd4892489))
+* **deps:** update module go.opentelemetry.io/otel/sdk to v1.40.0 [security] ([3566e7a](https://github.com/canonical/identity-platform-admin-ui/commit/3566e7a41251e56c38ce2f38aeca6191bfaf0b3d))
+* **deps:** update module google.golang.org/grpc to v1.79.3 [security] ([c2049d8](https://github.com/canonical/identity-platform-admin-ui/commit/c2049d8f66267c11d752fe522df9c14a2868c055))
+* **deps:** update module google.golang.org/grpc to v1.79.3 [security] ([#759](https://github.com/canonical/identity-platform-admin-ui/issues/759)) ([6f2c8ed](https://github.com/canonical/identity-platform-admin-ui/commit/6f2c8ed5dfdfc3021584141aa6b15d6fa9bf3fb7))
+* **deps:** update module google.golang.org/grpc to v1.82.1 [security] ([cd72ecf](https://github.com/canonical/identity-platform-admin-ui/commit/cd72ecfb0927fa04b3700ea8140b36ea4f052bd5))
+* **deps:** update module google.golang.org/grpc to v1.82.1 [security] ([#803](https://github.com/canonical/identity-platform-admin-ui/issues/803)) ([1145584](https://github.com/canonical/identity-platform-admin-ui/commit/11455845a6682030f051efa77d3811fad03d491e))
+* **deps:** update module google.golang.org/grpc to v1.83.1 [security] ([d2d1414](https://github.com/canonical/identity-platform-admin-ui/commit/d2d1414134f1e80d13c3380443b7359e20e41a1f))
+* **deps:** update module google.golang.org/grpc to v1.83.1 [security] ([#804](https://github.com/canonical/identity-platform-admin-ui/issues/804)) ([cd72907](https://github.com/canonical/identity-platform-admin-ui/commit/cd7290706d8b0f33b57ede1d3160003305b1a91d))
+
 ## [1.25.2](https://github.com/canonical/identity-platform-admin-ui/compare/v1.25.1...v1.25.2) (2026-02-18)
 
 

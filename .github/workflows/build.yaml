@@ -17,7 +17,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-    - uses: canonical/craft-actions/rockcraft-pack@main
+    - uses: canonical/craft-actions/rockcraft-pack@b66c5f4b3c4454735c1814a1627fd0da24384b23 # main
       id: rockcraft
     - name: Set rock output
       id: set

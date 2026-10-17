@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
     - name: Scan image with Trivy
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@6abccf398f78b4c337599c0656f933d91efb91a0 # master
       with:
         image-ref: ${{ inputs.image }}
         format: 'sarif'

@@ -32,7 +32,7 @@ jobs:
                 issue: ${{ fromJson(needs.list-all-issues.outputs.issues) }}
         needs: 
             - list-all-issues                    
-        uses: canonical/identity-team/.github/workflows/cve-check.yaml@d4ec4d65ae3cdd37b223a0fb5ecf7e87866e20e0 # v1.19.0
+        uses: canonical/identity-team/.github/workflows/cve-check.yaml@00995831ff788db43992012900820edf7967305f # v1.19.2
         with: 
             issue: ${{ matrix.issue }}
 
@@ -40,5 +40,5 @@ jobs:
         permissions:
             contents: write
             issues: write
-        uses: canonical/identity-team/.github/workflows/cve-check.yaml@d4ec4d65ae3cdd37b223a0fb5ecf7e87866e20e0 # v1.19.0
+        uses: canonical/identity-team/.github/workflows/cve-check.yaml@00995831ff788db43992012900820edf7967305f # v1.19.2
         if: ${{ github.event.issue.id }}

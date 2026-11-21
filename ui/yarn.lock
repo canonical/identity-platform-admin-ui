@@ -1910,9 +1910,7 @@
   integrity sha512-k/TcR3YalnzibscALLwxeiLUub6jN5EDLwKDiO7q5f4ICEoptJ+n9+7vcEFy5/x/i6Q+Lb/tXrsKCggf5uQJXQ==
 
 "@tanstack/react-query@^5.28.6":
-  version "5.90.2"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.90.2.tgz#2f045931b7d44bef02c5261fedba75ef1a418726"
-  integrity sha512-CLABiR+h5PYfOWr/z+vWFt5VsOA2ekQeRQBFSKlcoW6Ndx/f8rfyVmq4LbgOM4GG2qtxAxjLYLOpCNTYm4uKzw==
+  version "5.90.21"
   dependencies:
     "@tanstack/query-core" "5.90.2"
 
@@ -2300,9 +2298,7 @@
   integrity sha512-hgfExDzUU9uTRTPDCpw2s9jWTxcxmpJya3fK5ADpf5VDpSy8WYwY/kh28XE0tUcbsljeP8wfan48QvAQTSSa3Q==
 
 "@vitejs/plugin-react@^5.0.0":
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/@vitejs/plugin-react/-/plugin-react-5.0.3.tgz#182ea45406d89e55b4e35c92a4a8c2c8388726c8"
-  integrity sha512-PFVHhosKkofGH0Yzrw1BipSedTH68BFF8ZWy1kfUpCtJcouXXY0+racG8sExw7hw0HoX36813ga5o3LTWZ4FUg==
+  version "5.0.4"
   dependencies:
     "@babel/core" "^7.28.4"
     "@babel/plugin-transform-react-jsx-self" "^7.27.1"
